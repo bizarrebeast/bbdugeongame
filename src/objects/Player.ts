@@ -1,9 +1,11 @@
 import GameSettings from "../config/GameSettings"
+import { TouchControls } from "./TouchControls"
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private isClimbing: boolean = false
   private currentLadder: Phaser.GameObjects.GameObject | null = null
+  private touchControls: TouchControls | null = null
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Create a placeholder sprite (colored rectangle for now)
@@ -32,22 +34,33 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
   }
   
+  setTouchControls(touchControls: TouchControls): void {
+    this.touchControls = touchControls
+  }
+
   update(): void {
     const onGround = this.body!.blocked.down
     const spaceKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     
+    // Get input from keyboard or touch controls
+    const leftPressed = this.cursors.left.isDown || (this.touchControls?.getHorizontal() || 0) < -0.3
+    const rightPressed = this.cursors.right.isDown || (this.touchControls?.getHorizontal() || 0) > 0.3
+    const upPressed = this.cursors.up.isDown || (this.touchControls?.getVertical() || 0) < -0.3
+    const downPressed = this.cursors.down.isDown || (this.touchControls?.getVertical() || 0) > 0.3
+    const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || (this.touchControls?.isJumpJustPressed() || false)
+    
     // Horizontal movement
     if (!this.isClimbing) {
-      if (this.cursors.left.isDown) {
+      if (leftPressed) {
         this.setVelocityX(-GameSettings.game.playerSpeed)
-      } else if (this.cursors.right.isDown) {
+      } else if (rightPressed) {
         this.setVelocityX(GameSettings.game.playerSpeed)
       } else {
         this.setVelocityX(0)
       }
       
       // Jumping
-      if (Phaser.Input.Keyboard.JustDown(spaceKey) && onGround) {
+      if (jumpJustPressed && onGround) {
         this.setVelocityY(GameSettings.game.jumpVelocity)
       }
     }
@@ -58,23 +71,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.body!.setAllowGravity(false)
       this.setVelocityX(0)
       
-      if (this.cursors.up.isDown) {
+      if (upPressed) {
         this.setVelocityY(-GameSettings.game.climbSpeed)
-      } else if (this.cursors.down.isDown) {
-        this.setVelocityY(GameSettings.game.climbSpeed)
+      } else if (downPressed) {
+        // Don't allow climbing down if we're on the ground floor
+        const currentFloor = Math.max(0, Math.floor((GameSettings.canvas.height - this.y - GameSettings.game.tileSize/2) / (GameSettings.game.tileSize * 4)))
+        if (currentFloor > 0) {
+          this.setVelocityY(GameSettings.game.climbSpeed)
+        } else {
+          this.setVelocityY(0)
+        }
       } else {
         this.setVelocityY(0)
       }
       
       // Allow horizontal movement at top of ladder when standing on platform
-      if (onGround && this.cursors.up.isUp) {
-        if (this.cursors.left.isDown || this.cursors.right.isDown) {
+      if (onGround && !upPressed) {
+        if (leftPressed || rightPressed) {
           this.exitClimbing()
         }
       }
       
       // Exit climbing with jump
-      if (Phaser.Input.Keyboard.JustDown(spaceKey)) {
+      if (jumpJustPressed) {
         this.exitClimbing()
         this.setVelocityY(GameSettings.game.jumpVelocity)
       }
@@ -98,7 +117,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   checkLadderProximity(ladder: Phaser.GameObjects.GameObject): boolean {
     // Check if player is pressing up or down near a ladder
-    if (this.cursors.up.isDown || this.cursors.down.isDown) {
+    const upPressed = this.cursors.up.isDown || (this.touchControls?.getVertical() || 0) < -0.3
+    const downPressed = this.cursors.down.isDown || (this.touchControls?.getVertical() || 0) > 0.3
+    
+    if (upPressed || downPressed) {
       const ladderSprite = ladder as Phaser.GameObjects.Rectangle
       const distance = Math.abs(this.x - ladderSprite.x)
       return distance < 20 // Within 20 pixels of ladder center

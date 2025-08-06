@@ -2,6 +2,7 @@ import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
 import { Beetle } from "../objects/Beetle"
 import { Coin } from "../objects/Coin"
+import { TouchControls } from "../objects/TouchControls"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -16,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   private currentFloor: number = 0
   private floorText!: Phaser.GameObjects.Text
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
+  private touchControls!: TouchControls
   
   constructor() {
     super({ key: "GameScene" })
@@ -138,6 +140,12 @@ export class GameScene extends Phaser.Scene {
       fontStyle: 'bold'
     }).setDepth(100)
     this.floorText.setScrollFactor(0)
+    
+    // Create touch controls for mobile
+    this.touchControls = new TouchControls(this)
+    
+    // Connect touch controls to player
+    this.player.setTouchControls(this.touchControls)
   }
 
   private createTestLevel(): void {
@@ -603,6 +611,9 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, _deltaTime: number): void {
     if (this.isGameOver) return
+    
+    // Update touch controls
+    this.touchControls.update()
     
     // Update player
     this.player.update()
