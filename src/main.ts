@@ -12,20 +12,31 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     parent: "gameContainer",
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    // Support for high DPI displays
+    resolution: window.devicePixelRatio || 1,
   },
   canvas: canvas,
-  backgroundColor: "#111111",
+  backgroundColor: "#1a0f2e", // Dark underground purple
   scene: [GameScene],
   physics: {
     default: "arcade",
+    arcade: {
+      gravity: { y: GameSettings.game.gravity },
+      debug: GameSettings.debug,
+    },
   },
   // Target frame rate
   fps: {
     target: 60,
   },
   // Additional WebGL settings
-  pixelArt: false,
-  antialias: true,
+  pixelArt: true, // Pixel perfect for retro style
+  antialias: false,
+  render: {
+    pixelArt: true,
+    roundPixels: true,
+  },
 }
 
 // Create the game instance
