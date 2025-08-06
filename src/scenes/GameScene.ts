@@ -29,6 +29,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Enable multi-touch support
+    this.input.addPointer(2) // Allow up to 3 pointers total (default 1 + 2 more)
+    
     // Reset game state
     this.isGameOver = false
     this.score = 0

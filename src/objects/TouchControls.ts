@@ -21,6 +21,10 @@ export class TouchControls {
   public jumpJustPressed: boolean = false
   
   private lastJumpState: boolean = false
+  
+  // Track individual touches
+  private joystickPointerId: number = -1
+  private jumpPointerId: number = -1
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -73,51 +77,80 @@ export class TouchControls {
   }
 
   private setupInputHandlers(): void {
-    // Set up global touch handling
+    // Track active pointers for each control area
+    const activePointers = new Set<number>()
+    
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      const touchX = pointer.x
-      const touchY = pointer.y
-      
-      // Check if touch is on joystick
-      const joystickDist = Math.sqrt(
-        Math.pow(touchX - this.joystickCenter.x, 2) + 
-        Math.pow(touchY - this.joystickCenter.y, 2)
-      )
-      
-      if (joystickDist <= this.joystickRadius) {
-        this.isDragging = true
-        this.updateJoystickFromScreen(touchX, touchY)
-        return
-      }
-      
-      // Check if touch is on jump button
-      const buttonX = GameSettings.canvas.width - 60
-      const buttonY = GameSettings.canvas.height - 80
-      const buttonDist = Math.sqrt(
-        Math.pow(touchX - buttonX, 2) + 
-        Math.pow(touchY - buttonY, 2)
-      )
-      
-      if (buttonDist <= 35) {
-        this.jumpPressed = true
-        this.jumpButtonCircle.setFillStyle(0x6666ff, 0.9)
-      }
+      activePointers.add(pointer.id)
+      this.handlePointerDown(pointer)
     })
 
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (this.isDragging) {
-        this.updateJoystickFromScreen(pointer.x, pointer.y)
+      if (activePointers.has(pointer.id)) {
+        this.handlePointerMove(pointer)
       }
     })
 
-    this.scene.input.on('pointerup', () => {
-      if (this.isDragging) {
-        this.isDragging = false
-        this.resetJoystick()
+    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      activePointers.delete(pointer.id)
+      this.handlePointerUp(pointer)
+    })
+  }
+
+  private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    const touchX = pointer.x
+    const touchY = pointer.y
+    
+    // Check if touch is on joystick area
+    const joystickDist = Math.sqrt(
+      Math.pow(touchX - this.joystickCenter.x, 2) + 
+      Math.pow(touchY - this.joystickCenter.y, 2)
+    )
+    
+    if (joystickDist <= this.joystickRadius + 20) { // Slightly larger hit area
+      if (this.joystickPointerId === -1) {
+        this.joystickPointerId = pointer.id
+        this.isDragging = true
+        this.updateJoystickFromScreen(touchX, touchY)
       }
+      return
+    }
+    
+    // Check if touch is on jump button area
+    const buttonX = GameSettings.canvas.width - 60
+    const buttonY = GameSettings.canvas.height - 80
+    const buttonDist = Math.sqrt(
+      Math.pow(touchX - buttonX, 2) + 
+      Math.pow(touchY - buttonY, 2)
+    )
+    
+    if (buttonDist <= 50) { // Larger hit area for easier tapping
+      if (this.jumpPointerId === -1) {
+        this.jumpPointerId = pointer.id
+        this.jumpPressed = true
+        this.jumpButtonCircle.setFillStyle(0x6666ff, 0.9)
+      }
+    }
+  }
+
+  private handlePointerMove(pointer: Phaser.Input.Pointer): void {
+    if (pointer.id === this.joystickPointerId && this.isDragging) {
+      this.updateJoystickFromScreen(pointer.x, pointer.y)
+    }
+  }
+
+  private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    if (pointer.id === this.joystickPointerId) {
+      this.joystickPointerId = -1
+      this.isDragging = false
+      this.resetJoystick()
+    }
+    
+    if (pointer.id === this.jumpPointerId) {
+      this.jumpPointerId = -1
       this.jumpPressed = false
       this.jumpButtonCircle.setFillStyle(0x4444aa, 0.7)
-    })
+    }
   }
 
   private updateJoystickFromScreen(screenX: number, screenY: number): void {
