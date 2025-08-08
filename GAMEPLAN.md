@@ -53,11 +53,17 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ## Enemies & Obstacles ✅ IMPLEMENTED
 
 ### Enemy Types ✅ ACTIVE
-- **Beetles:** ✅ Move horizontally across platforms with patrol boundaries
-- **Movement Patterns:** ✅ Predictable back-and-forth patterns within platform sections
-- **Collision Behavior:** ✅ Beetles reverse direction when hitting each other
-- **Smart Placement:** ✅ Respect platform gaps and safe zones
-- **No Falling:** ✅ Beetles stay on their designated platform sections
+- **Ground Cats:** ✅ Three color variants with unique AI behaviors
+  - **Blue Cats:** Standard patrol behavior at normal speed
+  - **Yellow Cats:** Slower speed with random movement patterns  
+  - **Green Cats:** Fast bouncing movement across full floor width
+- **Red Stalker Cats:** ✅ Timed mine behavior with warning system
+  - **Hidden State:** Invisible until player triggers within 1 tile
+  - **Warning Phase:** 2-second countdown with glowing yellow eyes
+  - **Chase Phase:** Pop out and chase at 1.5x speed indefinitely
+- **Movement Patterns:** ✅ Advanced AI with collision behavior and boundary detection
+- **Combat Integration:** ✅ All cats can be defeated via jump-to-kill mechanics
+- **Cross-Floor AI:** ✅ Cats can climb ladders to pursue player between floors
 
 ### Future Additions 🔄 PLANNED
 - **Spiders:** Crawl along platforms and down ladders (not yet implemented)
@@ -97,17 +103,20 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ### Point Awards ✅ ACTIVE
 - **Collecting Coins:** ✅ 50 points per coin
 - **Height Milestones:** ✅ 500 bonus points for reaching new floors
-- **Professional HUD:** ✅ Real-time score display with stylish UI
+- **Defeating Cats:** ✅ 200 points per cat with combo multipliers
+- **Combo System:** ✅ Consecutive kills multiply score (x1, x2, x3...)
 
 ### Current Implementation ✅ WORKING
 - ✅ Live score tracking with formatted display
 - ✅ Floor counter showing current height
-- ✅ Semi-transparent HUD background for readability
+- ✅ Translucent white HUD background for atmospheric visibility
 - ✅ Bold styling for clear mobile visibility
+- ✅ Point popups showing earned scores at kill locations
+- ✅ Animated combo counter with visual feedback
+- ✅ 1-second combo window to maintain multiplier chains
 
 ### Future Additions 🔄 PLANNED
-- **Defeating Enemies:** 100 points per enemy (combat system needed)
-- **Combo System:** Consecutive actions multiply score
+- **Enhanced Collectibles:** Blue coins (500), diamonds (1000), treasure chests (2500)
 - **High Score Integration:** Remix platform leaderboards
 
 ## Player Character
@@ -176,26 +185,59 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 **✅ What's Working:**
 - Complete mobile and desktop gameplay
-- Endless procedural generation
-- Enemy AI with collision behavior  
-- Coin collection system
-- Professional UI and controls
-- Multi-touch support for mobile
-- Game over and restart system
-- Ground floor boundary protection
+- Endless procedural generation with smart ladder placement
+- Advanced cat AI system with 4 unique enemy types
+- Jump-to-kill combat with combo multipliers and visual feedback
+- Atmospheric visibility system with darkness overlay
+- Professional UI with translucent backgrounds and depth layering
+- Multi-touch support for mobile with responsive controls
+- Complete scoring system with points, combos, and popups
+- Game over and restart system with combo reset
+- Ground floor boundary protection and cross-floor enemy AI
 
 ---
 
-## 📂 ACTIVE SPRINTS
+## 📂 COMPLETED SPRINTS
 
-**Current Sprint:** [SPRINT_CAT_CHAOS.md](./SPRINT_CAT_CHAOS.md)
-- Cat enemy system with variants
-- Combat mechanics with combos
-- Visibility/vignette system
-- Enhanced collectibles
-- UI/UX improvements
+### ✅ Cat Chaos Update - COMPLETED
+*Detailed implementation plan: [SPRINT_CAT_CHAOS.md](./SPRINT_CAT_CHAOS.md)*
 
-*Sprint documents contain detailed implementation plans and are removed after completion.*
+**Phase 1: Enemy System Overhaul** ✅ COMPLETE
+- [x] Convert beetles to cats with 3 color variants (blue, yellow, green)
+- [x] Implement different behaviors per color (blue=patrol, yellow=random, green=bouncing)  
+- [x] Add visual variety with colored cat sprites
+
+**Phase 2: Red Stalker Cats** ✅ COMPLETE  
+- [x] Create CeilingCat class (red stalker cats on floors)
+- [x] Implement timed mine behavior with 2-second delay
+- [x] Add glowing eyes warning system during countdown
+- [x] Chase AI with 1.5x speed after activation
+
+**Phase 3: Combat System** ✅ COMPLETE
+- [x] Jump-to-kill detection (player landing on cats)
+- [x] Player bounce mechanic after successful kill
+- [x] Combo system with score multipliers (x1, x2, x3...)
+- [x] Point popup system showing earned points
+- [x] Visual combo counter with animations
+- [x] 1-second combo window to maintain multiplier
+
+**Phase 4: Visibility System** ✅ COMPLETE
+- [x] Create darkness overlay covering entire game
+- [x] Implement 5-tile visibility radius around player (square spotlight)
+- [x] Four black rectangles creating proper visibility window
+- [x] Proper depth ordering (behind HUD, over game elements)
+- [x] Translucent white HUD background for better visibility
+
+### 🔄 REMAINING FEATURES (Future Sprints)
+
+**Phase 5: Enhanced Collectibles** 📋 PLANNED
+- [ ] Add blue coins (500 points), diamonds (1000 points)
+- [ ] Create treasure chests requiring action button
+- [ ] Implement flash power-up system
+
+**Phase 6: UI/UX Polish** 📋 PLANNED 
+- [ ] Implement WASD keyboard controls
+- [ ] Create action button for treasure chests
 
 ## Art Assets Needed
 
