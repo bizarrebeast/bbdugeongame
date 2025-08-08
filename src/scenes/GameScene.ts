@@ -1,6 +1,7 @@
 import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
-import { Beetle } from "../objects/Beetle"
+import { Cat } from "../objects/Cat"
+import { CeilingCat } from "../objects/CeilingCat"
 import { Coin } from "../objects/Coin"
 import { TouchControls } from "../objects/TouchControls"
 
@@ -8,7 +9,8 @@ export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
   private ladders!: Phaser.Physics.Arcade.StaticGroup
   private player!: Player
-  private beetles!: Phaser.Physics.Arcade.Group
+  private cats!: Phaser.Physics.Arcade.Group
+  private ceilingCats!: Phaser.Physics.Arcade.Group
   private coins: Coin[] = []
   private isGameOver: boolean = false
   private floorLayouts: { gapStart: number, gapSize: number }[] = []
@@ -42,9 +44,15 @@ export class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup()
     this.ladders = this.physics.add.staticGroup()
     
-    // Create beetles group
-    this.beetles = this.physics.add.group({
-      classType: Beetle,
+    // Create cats group
+    this.cats = this.physics.add.group({
+      classType: Cat,
+      runChildUpdate: true
+    })
+    
+    // Create ceiling cats group
+    this.ceilingCats = this.physics.add.group({
+      classType: CeilingCat,
       runChildUpdate: true
     })
     
@@ -61,8 +69,11 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height - 80
     )
     
-    // Add some beetles to test (pass floor layouts)
-    this.createBeetles()
+    // Add some cats to test (pass floor layouts)
+    this.createCats()
+    
+    // Add ceiling cats
+    this.createCeilingCats()
     
     // Add coins to collect
     this.createCoins()
@@ -76,23 +87,44 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
-    // Beetles collide with platforms
-    this.physics.add.collider(this.beetles, this.platforms)
+    // Cats collide with platforms
+    this.physics.add.collider(this.cats, this.platforms)
     
-    // Beetles collide with each other and reverse direction
+    // Ceiling cats collide with platforms (after dropping)
+    this.physics.add.collider(this.ceilingCats, this.platforms)
+    
+    // Cats collide with each other and reverse direction
     this.physics.add.collider(
-      this.beetles,
-      this.beetles,
-      this.handleBeetleBeetleCollision,
+      this.cats,
+      this.cats,
+      this.handleCatCatCollision,
       undefined,
       this
     )
     
-    // Player vs beetle collision (game over)
+    // Player vs cat collision (game over)
     this.physics.add.overlap(
       this.player,
-      this.beetles,
-      this.handlePlayerBeetleCollision,
+      this.cats,
+      this.handlePlayerCatCollision,
+      undefined,
+      this
+    )
+    
+    // Player vs ceiling cat collision (game over)
+    this.physics.add.overlap(
+      this.player,
+      this.ceilingCats,
+      this.handlePlayerCatCollision,
+      undefined,
+      this
+    )
+    
+    // Ceiling cats can use ladders
+    this.physics.add.overlap(
+      this.ceilingCats,
+      this.ladders,
+      this.handleCeilingCatLadderOverlap,
       undefined,
       this
     )
@@ -159,7 +191,7 @@ export class GameScene extends Phaser.Scene {
     // Calculate how many floors we can fit
     const numFloors = Math.floor(GameSettings.canvas.height / floorSpacing)
     
-    // Track ladder positions and floor layouts for beetle placement
+    // Track ladder positions and floor layouts for cat placement
     const ladderPositions: number[] = []
     const floorLayouts: { gapStart: number, gapSize: number }[] = []
     
@@ -184,7 +216,7 @@ export class GameScene extends Phaser.Scene {
           const gapStart = Math.floor(Math.random() * (floorWidth - 5)) + 2
           const gapSize = Math.floor(Math.random() * 2) + 2 // Gap of 2-3 tiles
           
-          // Store gap info for beetle placement
+          // Store gap info for cat placement
           floorLayouts[floor] = { gapStart, gapSize }
           
           // Create platform tiles, skipping the gap
@@ -249,7 +281,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     
-    // Store floor layouts for beetle creation
+    // Store floor layouts for cat creation
     this.floorLayouts = floorLayouts
     
     // Create ladders ensuring solid ground above and below
@@ -366,81 +398,109 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private createBeetles(): void {
+  private createCats(): void {
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 4
     const floorWidth = GameSettings.game.floorWidth
     
-    // Add beetles on floors 1-4 (skip ground floor where player starts) 
+    // Add cats on floors 1-4 (skip ground floor where player starts) 
     for (let floor = 1; floor <= 4 && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       const y = GameSettings.canvas.height - (floor * floorSpacing) - 40
       
       if (layout.gapStart === -1) {
-        // Complete floor - can fit more beetles with wider floors
-        const numBeetles = Math.floor(Math.random() * 3) + 2 // 2-4 beetles
-        const sectionSize = Math.floor(floorWidth / numBeetles)
+        // Complete floor - place 2-4 cats with full floor bounds for green cats
+        const numCats = Math.floor(Math.random() * 3) + 2 // 2-4 cats
+        const sectionSize = Math.floor(floorWidth / numCats)
         
-        for (let i = 0; i < numBeetles; i++) {
+        for (let i = 0; i < numCats; i++) {
           const leftBound = Math.max(tileSize * 1.5, i * sectionSize * tileSize)
           const rightBound = Math.min(tileSize * (floorWidth - 1.5), (i + 1) * sectionSize * tileSize)
           
           if (rightBound - leftBound > tileSize * 3) {
-            const beetle = new Beetle(
+            // Green cats get full floor bounds, others get section bounds
+            const cat = new Cat(
               this,
               (leftBound + rightBound) / 2,
               y,
               leftBound,
               rightBound
             )
-            this.beetles.add(beetle)
+            
+            // Override bounds for green cats to use full floor
+            if (cat.getCatColor() === 'green') {
+              cat.platformBounds = {
+                left: tileSize * 1.5,
+                right: tileSize * (floorWidth - 1.5)
+              }
+            }
+            
+            this.cats.add(cat)
           }
         }
       } else {
-        // Floor with gap - place beetles on sections that are big enough
+        // Floor with gap - place cats on sections
         const leftSectionSize = layout.gapStart
         const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
         
-        // Left section beetles (can fit 1-2)
+        // Left section cats
         if (leftSectionSize > 4) {
-          const leftBeetles = leftSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1
-          for (let i = 0; i < leftBeetles; i++) {
-            const leftSectionTileSize = Math.floor(leftSectionSize / leftBeetles)
+          const leftCats = leftSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1
+          for (let i = 0; i < leftCats; i++) {
+            const leftSectionTileSize = Math.floor(leftSectionSize / leftCats)
             const leftBound = tileSize * (0.5 + i * leftSectionTileSize)
             const rightBound = tileSize * (0.5 + (i + 1) * leftSectionTileSize - 0.5)
             
             if (rightBound - leftBound > tileSize * 2) {
-              const beetle = new Beetle(
+              const cat = new Cat(
                 this,
                 (leftBound + rightBound) / 2,
                 y,
                 leftBound,
                 Math.min(rightBound, tileSize * (layout.gapStart - 0.5))
               )
-              this.beetles.add(beetle)
+              
+              // Green cats use full left section bounds
+              if (cat.getCatColor() === 'green') {
+                cat.platformBounds = {
+                  left: tileSize * 0.5,
+                  right: tileSize * (layout.gapStart - 0.5)
+                }
+              }
+              
+              this.cats.add(cat)
             }
           }
         }
         
-        // Right section beetles (can fit 1-2)
+        // Right section cats
         if (rightSectionSize > 4) {
           const rightStart = layout.gapStart + layout.gapSize
-          const rightBeetles = rightSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1
+          const rightCats = rightSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1
           
-          for (let i = 0; i < rightBeetles; i++) {
-            const rightSectionTileSize = Math.floor(rightSectionSize / rightBeetles)
+          for (let i = 0; i < rightCats; i++) {
+            const rightSectionTileSize = Math.floor(rightSectionSize / rightCats)
             const leftBound = tileSize * (rightStart + 0.5 + i * rightSectionTileSize)
             const rightBound = tileSize * (rightStart + 0.5 + (i + 1) * rightSectionTileSize - 0.5)
             
             if (rightBound - leftBound > tileSize * 2) {
-              const beetle = new Beetle(
+              const cat = new Cat(
                 this,
                 (leftBound + rightBound) / 2,
                 y,
                 leftBound,
                 Math.min(rightBound, tileSize * (floorWidth - 0.5))
               )
-              this.beetles.add(beetle)
+              
+              // Green cats use full right section bounds
+              if (cat.getCatColor() === 'green') {
+                cat.platformBounds = {
+                  left: tileSize * (rightStart + 0.5),
+                  right: tileSize * (floorWidth - 0.5)
+                }
+              }
+              
+              this.cats.add(cat)
             }
           }
         }
@@ -448,16 +508,122 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
-  private handleBeetleBeetleCollision(
-    beetle1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    beetle2: Phaser.Types.Physics.Arcade.GameObjectWithBody
-  ): void {
-    // Both beetles reverse direction when they bump into each other
-    const beetleObj1 = beetle1 as Beetle
-    const beetleObj2 = beetle2 as Beetle
+  private createCeilingCats(): void {
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 4
+    const floorWidth = GameSettings.game.floorWidth
     
-    beetleObj1.reverseDirection()
-    beetleObj2.reverseDirection()
+    // Add ceiling cats starting from floor 2 (0-1 per floor until level 20, then 0-2)
+    for (let floor = 2; floor <= 5 && floor < this.floorLayouts.length; floor++) {
+      const layout = this.floorLayouts[floor]
+      
+      // Calculate floor position for stalker cats (on the floor, not ceiling)
+      // Place stalker cats directly on the current floor
+      const floorY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      const stalkerY = floorY - 16 // Just above the floor platform
+      
+      // Determine number of ceiling cats (0-1 for now, will scale later)
+      const maxCeilingCats = floor < 20 ? 1 : 2
+      const numCeilingCats = Math.random() < 0.6 ? Math.floor(Math.random() * maxCeilingCats) + 1 : 0
+      
+      if (numCeilingCats === 0) continue
+      
+      // Find valid positions (where there are platforms below)
+      const validPositions: number[] = []
+      
+      if (layout.gapStart === -1) {
+        // Complete floor - can place anywhere
+        for (let x = 2; x < floorWidth - 2; x++) {
+          validPositions.push(x)
+        }
+      } else {
+        // Floor with gap - place only over platform sections
+        for (let x = 2; x < layout.gapStart - 1; x++) {
+          validPositions.push(x)
+        }
+        for (let x = layout.gapStart + layout.gapSize + 1; x < floorWidth - 2; x++) {
+          validPositions.push(x)
+        }
+      }
+      
+      // Place ceiling cats at random valid positions
+      for (let i = 0; i < Math.min(numCeilingCats, validPositions.length); i++) {
+        const randomIndex = Math.floor(Math.random() * validPositions.length)
+        const tileX = validPositions[randomIndex]
+        const ceilingCatX = tileX * tileSize + tileSize/2
+        
+        // Remove position to avoid overlapping ceiling cats
+        validPositions.splice(randomIndex, 1)
+        
+        // Calculate platform bounds for the section below
+        let leftBound = tileSize * 0.5
+        let rightBound = tileSize * (floorWidth - 0.5)
+        
+        if (layout.gapStart !== -1) {
+          if (tileX < layout.gapStart) {
+            // Left section
+            rightBound = tileSize * (layout.gapStart - 0.5)
+          } else {
+            // Right section
+            leftBound = tileSize * (layout.gapStart + layout.gapSize + 0.5)
+          }
+        }
+        
+        const stalkerCat = new CeilingCat(
+          this,
+          ceilingCatX,
+          stalkerY,
+          leftBound,
+          rightBound
+        )
+        
+        // Set player reference for detection
+        stalkerCat.setPlayerReference(this.player)
+        
+        this.ceilingCats.add(stalkerCat)
+      }
+    }
+  }
+  
+  private handleCatCatCollision(
+    cat1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    cat2: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    // Both cats reverse direction when they bump into each other
+    const catObj1 = cat1 as Cat
+    const catObj2 = cat2 as Cat
+    
+    catObj1.reverseDirection()
+    catObj2.reverseDirection()
+  }
+  
+  private handleCeilingCatLadderOverlap(
+    ceilingCat: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    ladder: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    const catObj = ceilingCat as CeilingCat
+    
+    // Only allow ladder climbing if in chasing state
+    if (catObj.getState() !== 'chasing' || !catObj.playerRef) return
+    
+    const playerY = catObj.playerRef.y
+    const catY = catObj.y
+    const playerIsAbove = playerY < catY - 50
+    const playerIsBelow = playerY > catY + 50
+    
+    // If player is on different floor, use ladder
+    if (playerIsAbove && catObj.body!.touching.down) {
+      // Player is above, climb up
+      catObj.setVelocityY(-120) // Climb speed
+      catObj.body!.setGravityY(0) // Disable gravity while climbing
+    } else if (playerIsBelow) {
+      // Player is below, climb down
+      catObj.setVelocityY(120) // Climb speed
+      catObj.body!.setGravityY(0) // Disable gravity while climbing
+    } else {
+      // On same level, restore normal gravity
+      catObj.body!.setGravityY(800) // Normal gravity
+    }
   }
   
   private createCoins(): void {
@@ -552,11 +718,18 @@ export class GameScene extends Phaser.Scene {
     return !this.player.getIsClimbing()
   }
   
-  private handlePlayerBeetleCollision(
+  private handlePlayerCatCollision(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    beetle: Phaser.Types.Physics.Arcade.GameObjectWithBody
+    cat: Phaser.Types.Physics.Arcade.GameObjectWithBody
   ): void {
     if (this.isGameOver) return
+    
+    // Check if this is a stalker cat that can't damage the player yet
+    const catObj = cat as any
+    if (catObj.canDamagePlayer && !catObj.canDamagePlayer()) {
+      // This is a hidden or activated stalker cat - don't damage player
+      return
+    }
     
     // Game over!
     this.isGameOver = true
@@ -621,9 +794,14 @@ export class GameScene extends Phaser.Scene {
     // Update player
     this.player.update()
     
-    // Update all beetles
-    this.beetles.children.entries.forEach(beetle => {
-      (beetle as Beetle).update()
+    // Update all cats
+    this.cats.children.entries.forEach(cat => {
+      (cat as Cat).update(this.time.now, this.game.loop.delta)
+    })
+    
+    // Update all ceiling cats
+    this.ceilingCats.children.entries.forEach(ceilingCat => {
+      (ceilingCat as CeilingCat).update(this.time.now, this.game.loop.delta)
     })
     
     // Check if player is no longer overlapping any ladder while climbing
@@ -748,28 +926,96 @@ export class GameScene extends Phaser.Scene {
         )
       }
       
-      // Add beetle on some floors
+      // Add cat on some floors
       if (floor > 1 && Math.random() > 0.5) {
         if (layout.gapStart === -1) {
           // Complete floor
-          const beetle = new Beetle(
+          const cat = new Cat(
             this,
             (floorWidth / 2) * tileSize,
             y - 40,
             tileSize * 1.5,
             tileSize * (floorWidth - 1.5)
           )
-          this.beetles.add(beetle)
+          // Green cats already get full floor bounds by default
+          this.cats.add(cat)
         } else if (layout.gapStart > 3) {
           // Place on left section if big enough
-          const beetle = new Beetle(
+          const cat = new Cat(
             this,
             (layout.gapStart / 2) * tileSize,
             y - 40,
             tileSize * 0.5,
             tileSize * (layout.gapStart - 0.5)
           )
-          this.beetles.add(beetle)
+          // Green cats use full left section bounds
+          if (cat.getCatColor() === 'green') {
+            cat.platformBounds = {
+              left: tileSize * 0.5,
+              right: tileSize * (layout.gapStart - 0.5)
+            }
+          }
+          this.cats.add(cat)
+        }
+      }
+      
+      // Add ceiling cats to some floors
+      if (floor > 2 && Math.random() > 0.4) { // 60% chance
+        const maxCeilingCats = floor < 20 ? 1 : 2
+        const numCeilingCats = Math.floor(Math.random() * maxCeilingCats) + 1
+        
+        // Find valid ceiling positions
+        const validCeilingPositions: number[] = []
+        
+        if (layout.gapStart === -1) {
+          // Complete floor
+          for (let x = 2; x < floorWidth - 2; x++) {
+            validCeilingPositions.push(x)
+          }
+        } else {
+          // Floor with gap
+          for (let x = 2; x < layout.gapStart - 1; x++) {
+            validCeilingPositions.push(x)
+          }
+          for (let x = layout.gapStart + layout.gapSize + 1; x < floorWidth - 2; x++) {
+            validCeilingPositions.push(x)
+          }
+        }
+        
+        // Place ceiling cats
+        for (let j = 0; j < Math.min(numCeilingCats, validCeilingPositions.length); j++) {
+          const randomIndex = Math.floor(Math.random() * validCeilingPositions.length)
+          const tileX = validCeilingPositions[randomIndex]
+          const ceilingCatX = tileX * tileSize + tileSize/2
+          
+          // Calculate floor Y position for stalker cats (on the floor, not ceiling)
+          const currentFloorY = -floor * floorSpacing + GameSettings.canvas.height - tileSize/2
+          const stalkerY = currentFloorY - 16 // Just above the floor platform
+          
+          validCeilingPositions.splice(randomIndex, 1)
+          
+          // Calculate platform bounds
+          let leftBound = tileSize * 0.5
+          let rightBound = tileSize * (floorWidth - 0.5)
+          
+          if (layout.gapStart !== -1) {
+            if (tileX < layout.gapStart) {
+              rightBound = tileSize * (layout.gapStart - 0.5)
+            } else {
+              leftBound = tileSize * (layout.gapStart + layout.gapSize + 0.5)
+            }
+          }
+          
+          const stalkerCat = new CeilingCat(
+            this,
+            ceilingCatX,
+            stalkerY,
+            leftBound,
+            rightBound
+          )
+          
+          stalkerCat.setPlayerReference(this.player)
+          this.ceilingCats.add(stalkerCat)
         }
       }
     }

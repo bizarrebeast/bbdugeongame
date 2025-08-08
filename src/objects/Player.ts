@@ -74,11 +74,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (upPressed) {
         this.setVelocityY(-GameSettings.game.climbSpeed)
       } else if (downPressed) {
-        // Don't allow climbing down if we're on the ground floor
-        const currentFloor = Math.max(0, Math.floor((GameSettings.canvas.height - this.y - GameSettings.game.tileSize/2) / (GameSettings.game.tileSize * 4)))
-        if (currentFloor > 0) {
+        // Always allow climbing down, but with floor boundary protection
+        const tileSize = GameSettings.game.tileSize
+        const groundFloorY = GameSettings.canvas.height - tileSize/2 // Ground floor platform position
+        const groundFloorLimit = groundFloorY - 20 // Allow player to reach just above ground platforms
+        
+        if (this.y < groundFloorLimit) {
+          // Safe to climb down
           this.setVelocityY(GameSettings.game.climbSpeed)
         } else {
+          // At ground floor limit - stop here to prevent falling through
           this.setVelocityY(0)
         }
       } else {
