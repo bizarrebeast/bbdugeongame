@@ -20,6 +20,12 @@ export class GameScene extends Phaser.Scene {
   private floorText!: Phaser.GameObjects.Text
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
   private touchControls!: TouchControls
+  private justKilledCat: boolean = false
+  private comboCount: number = 0
+  private comboTimer: Phaser.Time.TimerEvent | null = null
+  private comboText!: Phaser.GameObjects.Text
+  private visibilityMask: any // Store visibility system components
+  private visibilityRadius: number = 160 // 5 tiles * 32 pixels
   
   constructor() {
     super({ key: "GameScene" })
@@ -102,20 +108,20 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
-    // Player vs cat collision (game over)
+    // Player vs cat collision - check for jump-to-kill vs damage
     this.physics.add.overlap(
       this.player,
       this.cats,
-      this.handlePlayerCatCollision,
+      this.handlePlayerCatInteraction,
       undefined,
       this
     )
     
-    // Player vs ceiling cat collision (game over)
+    // Player vs ceiling cat collision - check for jump-to-kill vs damage  
     this.physics.add.overlap(
       this.player,
       this.ceilingCats,
-      this.handlePlayerCatCollision,
+      this.handlePlayerCeilingCatInteraction,
       undefined,
       this
     )
@@ -149,11 +155,14 @@ export class GameScene extends Phaser.Scene {
     // Keep camera centered horizontally, only follow vertically
     this.cameras.main.followOffset.set(0, 100)
     
+    // Create visibility/vignette system
+    this.createVisibilitySystem()
+    
     // Game title removed - focusing on clean HUD
     
-    // Create HUD background panel
+    // Create HUD background panel (translucent white)
     const hudBg = this.add.graphics()
-    hudBg.fillStyle(0x000000, 0.7)
+    hudBg.fillStyle(0xffffff, 0.3)  // White with 30% opacity
     hudBg.fillRoundedRect(8, 8, 200, 60, 8)
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
@@ -165,7 +174,30 @@ export class GameScene extends Phaser.Scene {
       fontFamily: 'Arial Black',
       fontStyle: 'bold'
     }).setDepth(100)
+    
+    // Create combo text (hidden initially)
+    this.comboText = this.add.text(
+      GameSettings.canvas.width / 2,
+      80,
+      '',
+      {
+        fontSize: '13px',
+        color: '#ffff00',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        stroke: '#ff0000',
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 1,
+          offsetY: 1,
+          color: '#000000',
+          blur: 2,
+          fill: true
+        }
+      }
+    ).setOrigin(0.5).setDepth(200).setVisible(false)
     this.scoreText.setScrollFactor(0)
+    this.comboText.setScrollFactor(0)
     
     // Add floor counter with better styling
     this.floorText = this.add.text(20, 40, 'FLOOR: 0', {
@@ -701,7 +733,7 @@ export class GameScene extends Phaser.Scene {
     this.score += GameSettings.scoring.coinCollect
     
     // Update score display
-    this.scoreText.setText(`SCORE: ${this.score}`)
+    this.updateScoreDisplay()
     
     // Play collection animation and remove coin
     coin.collect()
@@ -718,27 +750,273 @@ export class GameScene extends Phaser.Scene {
     return !this.player.getIsClimbing()
   }
   
-  private handlePlayerCatCollision(
+  private handlePlayerCatInteraction(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     cat: Phaser.Types.Physics.Arcade.GameObjectWithBody
   ): void {
-    if (this.isGameOver) return
+    if (this.isGameOver || this.justKilledCat) return
+    
+    const playerObj = player as Player
+    const catObj = cat as Cat
+    
+    // Check if player is falling down onto the cat (jump-to-kill)
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const catBody = catObj.body as Phaser.Physics.Arcade.Body
+    
+    const playerFalling = playerBody.velocity.y > 0 // Moving downward
+    const playerAboveCat = playerBody.bottom <= catBody.top + 15 // Player's bottom is near cat's top (increased tolerance)
+    
+    if (playerFalling && playerAboveCat) {
+      // Jump-to-kill!
+      this.justKilledCat = true
+      this.handleCatKill(playerObj, catObj)
+      
+      // Reset flag after a short delay to allow for physics processing
+      this.time.delayedCall(100, () => {
+        this.justKilledCat = false
+      })
+    } else if (!this.justKilledCat) {
+      // Regular collision - damage player (only if we didn't just kill)
+      this.handlePlayerDamage(playerObj, catObj)
+    }
+  }
+  
+  private handlePlayerCeilingCatInteraction(
+    player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    cat: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    if (this.isGameOver || this.justKilledCat) return
+    
+    const playerObj = player as Player
+    const ceilingCatObj = cat as CeilingCat
     
     // Check if this is a stalker cat that can't damage the player yet
-    const catObj = cat as any
-    if (catObj.canDamagePlayer && !catObj.canDamagePlayer()) {
+    if (ceilingCatObj.canDamagePlayer && !ceilingCatObj.canDamagePlayer()) {
       // This is a hidden or activated stalker cat - don't damage player
       return
     }
+    
+    // Check if player is falling down onto the cat (jump-to-kill)
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const catBody = ceilingCatObj.body as Phaser.Physics.Arcade.Body
+    
+    const playerFalling = playerBody.velocity.y > 0 // Moving downward
+    const playerAboveCat = playerBody.bottom <= catBody.top + 15 // Player's bottom is near cat's top (increased tolerance)
+    
+    if (playerFalling && playerAboveCat && ceilingCatObj.getState() === 'chasing') {
+      // Jump-to-kill ceiling cat (only when chasing)
+      this.justKilledCat = true
+      this.handleCeilingCatKill(playerObj, ceilingCatObj)
+      
+      // Reset flag after a short delay to allow for physics processing
+      this.time.delayedCall(100, () => {
+        this.justKilledCat = false
+      })
+    } else if (!this.justKilledCat) {
+      // Regular collision - damage player (only if we didn't just kill)
+      this.handlePlayerDamage(playerObj, ceilingCatObj)
+    }
+  }
+  
+  private handleCatKill(player: Player, cat: Cat): void {
+    // Increment combo
+    this.comboCount++
+    
+    // Calculate points with combo multiplier
+    const basePoints = 200
+    const comboMultiplier = this.comboCount
+    const points = basePoints * comboMultiplier
+    
+    // Award points
+    this.score += points
+    this.updateScoreDisplay()
+    
+    // Update combo display
+    this.updateComboDisplay()
+    
+    // Reset combo timer
+    if (this.comboTimer) {
+      this.comboTimer.destroy()
+    }
+    
+    // Set new combo timer (1 second to maintain combo)
+    this.comboTimer = this.time.delayedCall(1000, () => {
+      this.resetCombo()
+    })
+    
+    // Make player bounce up (slightly less than normal jump)
+    player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+    
+    // Squish the cat
+    cat.squish()
+    
+    // Show point popup at cat position
+    this.showPointPopup(cat.x, cat.y - 20, points)
+    
+    console.log(`Cat squished! Score: ${this.score}, Combo: x${this.comboCount}, Points: ${points}`)
+  }
+  
+  private handleCeilingCatKill(player: Player, ceilingCat: CeilingCat): void {
+    // Increment combo
+    this.comboCount++
+    
+    // Calculate points with combo multiplier
+    const basePoints = 200
+    const comboMultiplier = this.comboCount
+    const points = basePoints * comboMultiplier
+    
+    // Award points
+    this.score += points
+    this.updateScoreDisplay()
+    
+    // Update combo display
+    this.updateComboDisplay()
+    
+    // Reset combo timer
+    if (this.comboTimer) {
+      this.comboTimer.destroy()
+    }
+    
+    // Set new combo timer (1 second to maintain combo)
+    this.comboTimer = this.time.delayedCall(1000, () => {
+      this.resetCombo()
+    })
+    
+    // Make player bounce up (slightly less than normal jump)
+    player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+    
+    // Squish the ceiling cat
+    ceilingCat.squish()
+    
+    // Show point popup at cat position
+    this.showPointPopup(ceilingCat.x, ceilingCat.y - 20, points)
+    
+    console.log(`Ceiling cat squished! Score: ${this.score}, Combo: x${this.comboCount}, Points: ${points}`)
+  }
+  
+  private updateScoreDisplay(): void {
+    this.scoreText.setText(`SCORE: ${this.score}`)
+  }
+  
+  private updateComboDisplay(): void {
+    if (this.comboCount > 1) {
+      this.comboText.setText(`COMBO x${this.comboCount}!`)
+      this.comboText.setVisible(true)
+      
+      // Animate combo text
+      this.tweens.add({
+        targets: this.comboText,
+        scaleX: 1.2,
+        scaleY: 1.2,
+        duration: 100,
+        ease: 'Power2',
+        yoyo: true
+      })
+    }
+  }
+  
+  private resetCombo(): void {
+    this.comboCount = 0
+    this.comboText.setVisible(false)
+    if (this.comboTimer) {
+      this.comboTimer.destroy()
+      this.comboTimer = null
+    }
+  }
+  
+  private createVisibilitySystem(): void {
+    // Create four black rectangles to surround the visible area
+    const width = GameSettings.canvas.width * 3
+    const height = GameSettings.canvas.height * 3
+    
+    this.visibilityMask = {
+      top: this.add.rectangle(0, 0, width, height, 0x000000),
+      bottom: this.add.rectangle(0, 0, width, height, 0x000000),
+      left: this.add.rectangle(0, 0, width, height, 0x000000),
+      right: this.add.rectangle(0, 0, width, height, 0x000000)
+    }
+    
+    // Set depth for all darkness rectangles (in front of hitboxes but behind HUD)
+    Object.values(this.visibilityMask).forEach(rect => {
+      rect.setDepth(98)
+      rect.setOrigin(0, 0)
+    })
+  }
+  
+  private updateVisibilitySystem(): void {
+    if (!this.visibilityMask) return
+    
+    const { top, bottom, left, right } = this.visibilityMask
+    const radius = this.visibilityRadius
+    
+    // Get player world position
+    const playerX = this.player.x
+    const playerY = this.player.y
+    
+    // Position the black rectangles around the visible square
+    // Top rectangle (extend way up to cover top of screen)
+    top.setPosition(playerX - radius * 3, playerY - radius * 10) 
+    top.setSize(radius * 6, radius * 9)
+    
+    // Bottom rectangle (extend way down to cover bottom of screen)
+    bottom.setPosition(playerX - radius * 3, playerY + radius)
+    bottom.setSize(radius * 6, radius * 9)
+    
+    // Left rectangle (extend way left to cover left of screen)
+    left.setPosition(playerX - radius * 10, playerY - radius)
+    left.setSize(radius * 9, radius * 2)
+    
+    // Right rectangle (extend way right to cover right of screen)
+    right.setPosition(playerX + radius, playerY - radius)
+    right.setSize(radius * 9, radius * 2)
+  }
+  
+  private showPointPopup(x: number, y: number, points: number): void {
+    // Create popup text (40% of original size)
+    const popupText = this.add.text(x, y, `+${points}`, {
+      fontSize: '10px',
+      color: '#00ff00',
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 1
+    }).setOrigin(0.5).setDepth(150)
+    
+    // Animate popup: float up and fade out (adjusted for smaller size)
+    this.tweens.add({
+      targets: popupText,
+      y: y - 30,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        popupText.destroy()
+      }
+    })
+    
+    // Also animate scale (reduced from 1.5 to 1.2 for smaller text)
+    this.tweens.add({
+      targets: popupText,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 200,
+      ease: 'Back.easeOut'
+    })
+  }
+  
+  private handlePlayerDamage(player: Player, cat: any): void {
+    if (this.isGameOver) return
+    
+    // Reset combo on death
+    this.resetCombo()
     
     // Game over!
     this.isGameOver = true
     
     // Stop the player and disable physics
-    const playerObj = player as Player
-    playerObj.setVelocity(0, 0)
-    playerObj.setTint(0xff0000) // Turn player red
-    playerObj.body!.enable = false // Disable physics to prevent further collisions
+    player.setVelocity(0, 0)
+    player.setTint(0xff0000) // Turn player red
+    player.body!.enable = false // Disable physics to prevent further collisions
     
     // Display game over message
     const gameOverText = this.add.text(
@@ -793,6 +1071,9 @@ export class GameScene extends Phaser.Scene {
     
     // Update player
     this.player.update()
+    
+    // Update visibility system
+    this.updateVisibilitySystem()
     
     // Update all cats
     this.cats.children.entries.forEach(cat => {

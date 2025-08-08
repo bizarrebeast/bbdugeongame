@@ -226,9 +226,14 @@ export class CeilingCat extends Cat {
   
   // Override squish to handle different states
   squish(): void {
-    if (this.state === 'hanging') {
-      // Can't squish hanging cats
+    // Stalker cats can only be squished when chasing
+    if (this.state !== 'chasing') {
       return
+    }
+    
+    // Hide eyes when squished
+    if (this.eyesSprite) {
+      this.eyesSprite.setVisible(false)
     }
     
     super.squish()
