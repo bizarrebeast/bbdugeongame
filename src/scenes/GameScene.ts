@@ -3,6 +3,10 @@ import { Player } from "../objects/Player"
 import { Cat } from "../objects/Cat"
 import { CeilingCat } from "../objects/CeilingCat"
 import { Coin } from "../objects/Coin"
+import { BlueCoin } from "../objects/BlueCoin"
+import { Diamond } from "../objects/Diamond"
+import { TreasureChest } from "../objects/TreasureChest"
+import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
 
 export class GameScene extends Phaser.Scene {
@@ -12,8 +16,13 @@ export class GameScene extends Phaser.Scene {
   private cats!: Phaser.Physics.Arcade.Group
   private ceilingCats!: Phaser.Physics.Arcade.Group
   private coins: Coin[] = []
+  private blueCoins: BlueCoin[] = []
+  private diamonds: Diamond[] = []
+  private treasureChests: TreasureChest[] = []
+  private flashPowerUps: FlashPowerUp[] = []
   private isGameOver: boolean = false
   private floorLayouts: { gapStart: number, gapSize: number }[] = []
+  private ladderPositions: Map<number, number[]> = new Map() // floor -> ladder x positions
   private score: number = 0
   private scoreText!: Phaser.GameObjects.Text
   private currentFloor: number = 0
@@ -26,6 +35,9 @@ export class GameScene extends Phaser.Scene {
   private comboText!: Phaser.GameObjects.Text
   private visibilityMask: any // Store visibility system components
   private visibilityRadius: number = 160 // 5 tiles * 32 pixels
+  private flashPowerUpActive: boolean = false
+  private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
+  private nearTreasureChest: TreasureChest | null = null
   
   constructor() {
     super({ key: "GameScene" })
@@ -62,8 +74,12 @@ export class GameScene extends Phaser.Scene {
       runChildUpdate: true
     })
     
-    // Initialize coins array
+    // Initialize collectibles arrays
     this.coins = []
+    this.blueCoins = []
+    this.diamonds = []
+    this.treasureChests = []
+    this.flashPowerUps = []
     
     // Create a test level with platforms and ladders
     this.createTestLevel()
@@ -81,8 +97,8 @@ export class GameScene extends Phaser.Scene {
     // Add ceiling cats
     this.createCeilingCats()
     
-    // Add coins to collect
-    this.createCoins()
+    // Add collectibles
+    this.createAllCollectibles()
     
     // Set up collisions (with condition check for climbing)
     this.physics.add.collider(
@@ -346,30 +362,49 @@ export class GameScene extends Phaser.Scene {
             
             if (leftPositions.length > 0 && rightPositions.length > 0) {
               const leftLadder = leftPositions[Math.floor(Math.random() * leftPositions.length)]
-              const rightLadder = rightPositions[Math.floor(Math.random() * rightPositions.length)]
-              this.createContinuousLadder(leftLadder * tileSize, bottomY, topY)
-              this.createContinuousLadder(rightLadder * tileSize, bottomY, topY)
+              // Ensure right ladder is at least 4 tiles away from left
+              const validRightPositions = rightPositions.filter(pos => Math.abs(pos - leftLadder) >= 4)
+              if (validRightPositions.length > 0) {
+                const rightLadder = validRightPositions[Math.floor(Math.random() * validRightPositions.length)]
+                this.createContinuousLadder(leftLadder * tileSize, bottomY, topY)
+                this.createContinuousLadder(rightLadder * tileSize, bottomY, topY)
+                this.storeLadderPositions(floor, [leftLadder, rightLadder])
+              } else {
+                // Only place left ladder if right can't be properly spaced
+                this.createContinuousLadder(leftLadder * tileSize, bottomY, topY)
+                this.storeLadderPositions(floor, [leftLadder])
+              }
             } else {
-              // Place 2 ladders from available positions
+              // Place 2 ladders from available positions with proper spacing
               const pos1 = validPositions[Math.floor(Math.random() * validPositions.length)]
-              const pos2 = validPositions.filter(p => Math.abs(p - pos1) > 2)[0] || validPositions[validPositions.length - 1]
+              const validPos2Options = validPositions.filter(p => Math.abs(p - pos1) >= 4)
               this.createContinuousLadder(pos1 * tileSize, bottomY, topY)
-              if (pos2 !== pos1) {
+              if (validPos2Options.length > 0) {
+                const pos2 = validPos2Options[Math.floor(Math.random() * validPos2Options.length)]
                 this.createContinuousLadder(pos2 * tileSize, bottomY, topY)
+                this.storeLadderPositions(floor, [pos1, pos2])
+              } else {
+                this.storeLadderPositions(floor, [pos1])
               }
             }
           } else {
             // Only one valid position
             this.createContinuousLadder(validPositions[0] * tileSize, bottomY, topY)
+            this.storeLadderPositions(floor, [validPositions[0]])
           }
         } else {
           // Upper floors - place 1 ladder
           const randomPos = validPositions[Math.floor(Math.random() * validPositions.length)]
           this.createContinuousLadder(randomPos * tileSize, bottomY, topY)
+          this.storeLadderPositions(floor, [randomPos])
         }
       }
       // If no valid positions, skip this connection (emergency fallback)
     }
+  }
+  
+  private storeLadderPositions(floor: number, positions: number[]): void {
+    this.ladderPositions.set(floor, positions)
   }
   
   private hasPlatformAt(floorLayout: { gapStart: number, gapSize: number }, x: number): boolean {
@@ -640,92 +675,189 @@ export class GameScene extends Phaser.Scene {
     
     const playerY = catObj.playerRef.y
     const catY = catObj.y
-    const playerIsAbove = playerY < catY - 50
-    const playerIsBelow = playerY > catY + 50
+    const ladderRect = ladder as Phaser.GameObjects.Rectangle
+    const ladderTop = ladderRect.y - ladderRect.height / 2
+    const ladderBottom = ladderRect.y + ladderRect.height / 2
     
-    // If player is on different floor, use ladder
-    if (playerIsAbove && catObj.body!.touching.down) {
-      // Player is above, climb up
-      catObj.setVelocityY(-120) // Climb speed
-      catObj.body!.setGravityY(0) // Disable gravity while climbing
-    } else if (playerIsBelow) {
-      // Player is below, climb down
-      catObj.setVelocityY(120) // Climb speed
-      catObj.body!.setGravityY(0) // Disable gravity while climbing
+    // Check if player is on a significantly different floor
+    const floorDifference = playerY - catY
+    
+    if (Math.abs(floorDifference) > 60) {
+      if (floorDifference < -60 && catY > ladderTop + 20) {
+        // Player is above, climb up if not at top
+        catObj.startLadderClimb('up')
+      } else if (floorDifference > 60 && catY < ladderBottom - 20) {
+        // Player is below, climb down if not at bottom
+        catObj.startLadderClimb('down')
+      }
     } else {
-      // On same level, restore normal gravity
-      catObj.body!.setGravityY(800) // Normal gravity
+      // Player is on same level, stop climbing
+      catObj.stopLadderClimb()
     }
   }
   
-  private createCoins(): void {
+  private createAllCollectibles(): void {
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 4
     
-    // Place coins on each floor
+    // Place collectibles on each floor based on rarity rules from sprint plan
     for (let floor = 0; floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       
       // Calculate Y position above the platform
       const platformY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
-      const coinY = platformY - tileSize - 8 // Float above the platform
-      
-      // Place 2-4 coins per floor randomly on platforms
-      const numCoins = Math.floor(Math.random() * 3) + 2
-      const validPositions: number[] = []
+      const collectibleY = platformY - tileSize - 8 // Float above the platform
       
       // Find all valid positions (where there are platforms, avoiding ladders)
+      const validPositions: number[] = []
       for (let x = 1; x < GameSettings.game.floorWidth - 1; x++) {
         if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, floor)) {
           validPositions.push(x)
         }
       }
       
-      // Place coins at random valid positions
-      for (let i = 0; i < Math.min(numCoins, validPositions.length); i++) {
-        const randomIndex = Math.floor(Math.random() * validPositions.length)
-        const tileX = validPositions[randomIndex]
-        const coinX = tileX * tileSize + tileSize/2 // Center on tile
+      if (validPositions.length === 0) continue
+      
+      // Track all used positions for this floor across all collectible types
+      const floorUsedPositions: number[] = []
+      
+      // Regular coins: 2-4 per floor (most common)
+      const numCoins = Math.floor(Math.random() * 3) + 2
+      this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
+      
+      // Blue coins: 1 per 1-2 floors (500 points)
+      if (floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
+        this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor, floorUsedPositions)
+      }
+      
+      // Diamonds: 1 per 1-3 floors (1000 points)
+      if (floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
+        this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
+      }
+      
+      // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
+      if (floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
+        this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
+      }
+      
+      // Flash power-ups: Rare collectible after floor 20 or from treasure chests
+      if (floor > 20 && Math.random() < 0.1) {
+        this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+      }
+    }
+  }
+  
+  private placeCollectiblesOfType(
+    validPositions: number[], 
+    count: number, 
+    type: 'coin' | 'blueCoin' | 'diamond' | 'treasureChest' | 'flashPowerUp',
+    y: number,
+    floor: number,
+    floorUsedPositions: number[]
+  ): void {
+    const tileSize = GameSettings.game.tileSize
+    
+    // Filter positions to avoid ladders
+    const availablePositions = validPositions.filter(x => !this.hasLadderAt(x, floor))
+    
+    for (let i = 0; i < Math.min(count, availablePositions.length); i++) {
+      // Find a position that's not occupied
+      let attempts = 0
+      let tileX = -1
+      
+      while (attempts < 20 && tileX === -1) {
+        const candidateIndex = Math.floor(Math.random() * availablePositions.length)
+        const candidate = availablePositions[candidateIndex]
         
-        // Remove this position so we don't place multiple coins in the same spot
-        validPositions.splice(randomIndex, 1)
-        
-        const coin = new Coin(this, coinX, coinY)
-        this.coins.push(coin)
-        
-        // Set up overlap detection for this coin
-        this.physics.add.overlap(
-          this.player,
-          coin.sprite,
-          () => this.handleCoinCollection(coin),
-          undefined,
-          this
-        )
+        if (!this.isPositionOccupied(candidate, floor, floorUsedPositions)) {
+          tileX = candidate
+          floorUsedPositions.push(tileX)
+          // Remove this position and nearby positions to prevent clustering
+          for (let j = availablePositions.length - 1; j >= 0; j--) {
+            if (Math.abs(availablePositions[j] - tileX) < 2) {
+              availablePositions.splice(j, 1)
+            }
+          }
+        }
+        attempts++
+      }
+      
+      if (tileX === -1) break // Couldn't find a valid position
+      
+      const x = tileX * tileSize + tileSize/2
+      
+      switch (type) {
+        case 'coin':
+          const coin = new Coin(this, x, y)
+          this.coins.push(coin)
+          this.physics.add.overlap(
+            this.player,
+            coin.sprite,
+            () => this.handleCoinCollection(coin),
+            undefined,
+            this
+          )
+          break
+          
+        case 'blueCoin':
+          const blueCoin = new BlueCoin(this, x, y)
+          this.blueCoins.push(blueCoin)
+          this.physics.add.overlap(
+            this.player,
+            blueCoin.sprite,
+            () => this.handleBlueCoinCollection(blueCoin),
+            undefined,
+            this
+          )
+          break
+          
+        case 'diamond':
+          const diamond = new Diamond(this, x, y)
+          this.diamonds.push(diamond)
+          this.physics.add.overlap(
+            this.player,
+            diamond.sprite,
+            () => this.handleDiamondCollection(diamond),
+            undefined,
+            this
+          )
+          break
+          
+        case 'treasureChest':
+          const chest = new TreasureChest(this, x, y)
+          this.treasureChests.push(chest)
+          // Treasure chests use interaction system, not automatic collection
+          break
+          
+        case 'flashPowerUp':
+          const flashPowerUp = new FlashPowerUp(this, x, y)
+          this.flashPowerUps.push(flashPowerUp)
+          this.physics.add.overlap(
+            this.player,
+            flashPowerUp.sprite,
+            () => this.handleFlashPowerUpCollection(flashPowerUp),
+            undefined,
+            this
+          )
+          break
       }
     }
   }
   
   private hasLadderAt(x: number, floor: number): boolean {
-    // Simple check to avoid placing coins where ladders might be
-    // This is a basic implementation - we could make it more sophisticated
-    const tileSize = GameSettings.game.tileSize
-    const coinX = x * tileSize + tileSize/2
+    // Check if there's a ladder at this position using stored positions
+    const ladders = this.ladderPositions.get(floor) || []
+    return ladders.includes(x)
+  }
+  
+  private isPositionOccupied(x: number, floor: number, usedPositions: number[]): boolean {
+    // Check if position has ladder
+    if (this.hasLadderAt(x, floor)) {
+      return true
+    }
     
-    // Check if there are any ladders near this position
-    let hasLadder = false
-    this.ladders.children.entries.forEach(ladder => {
-      const ladderSprite = ladder as Phaser.GameObjects.Rectangle
-      if (Math.abs(ladderSprite.x - coinX) < tileSize/2) {
-        const floorSpacing = tileSize * 4
-        const floorY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
-        // Check if ladder intersects with this floor
-        if (Math.abs(ladderSprite.y - floorY) < ladderSprite.height/2) {
-          hasLadder = true
-        }
-      }
-    })
-    
-    return hasLadder
+    // Check if position is already used by another item (minimum 2 tile spacing)
+    return usedPositions.some(pos => Math.abs(pos - x) < 2)
   }
   
   private handleCoinCollection(coin: Coin): void {
@@ -735,6 +867,9 @@ export class GameScene extends Phaser.Scene {
     // Update score display
     this.updateScoreDisplay()
     
+    // Show point popup
+    this.showPointPopup(coin.sprite.x, coin.sprite.y - 20, GameSettings.scoring.coinCollect)
+    
     // Play collection animation and remove coin
     coin.collect()
     
@@ -743,6 +878,90 @@ export class GameScene extends Phaser.Scene {
     if (index > -1) {
       this.coins.splice(index, 1)
     }
+  }
+  
+  private handleBlueCoinCollection(blueCoin: BlueCoin): void {
+    const points = 500
+    this.score += points
+    this.updateScoreDisplay()
+    
+    // Show point popup
+    this.showPointPopup(blueCoin.sprite.x, blueCoin.sprite.y - 20, points)
+    
+    // Play collection animation
+    blueCoin.collect()
+    
+    // Remove from array
+    const index = this.blueCoins.indexOf(blueCoin)
+    if (index > -1) {
+      this.blueCoins.splice(index, 1)
+    }
+  }
+  
+  private handleDiamondCollection(diamond: Diamond): void {
+    const points = 1000
+    this.score += points
+    this.updateScoreDisplay()
+    
+    // Show point popup
+    this.showPointPopup(diamond.sprite.x, diamond.sprite.y - 20, points)
+    
+    // Play collection animation
+    diamond.collect()
+    
+    // Remove from array
+    const index = this.diamonds.indexOf(diamond)
+    if (index > -1) {
+      this.diamonds.splice(index, 1)
+    }
+  }
+  
+  private handleFlashPowerUpCollection(flashPowerUp: FlashPowerUp): void {
+    // Activate flash power-up (reveals full screen for 5 seconds)
+    this.activateFlashPowerUp()
+    
+    // Play collection animation
+    flashPowerUp.collect()
+    
+    // Remove from array
+    const index = this.flashPowerUps.indexOf(flashPowerUp)
+    if (index > -1) {
+      this.flashPowerUps.splice(index, 1)
+    }
+  }
+  
+  private activateFlashPowerUp(): void {
+    this.flashPowerUpActive = true
+    
+    // Clear existing timer if any
+    if (this.flashPowerUpTimer) {
+      this.flashPowerUpTimer.destroy()
+    }
+    
+    // Set 5-second timer
+    this.flashPowerUpTimer = this.time.delayedCall(5000, () => {
+      this.flashPowerUpActive = false
+      this.flashPowerUpTimer = null
+    })
+    
+    // Show flash effect
+    const flash = this.add.rectangle(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      this.cameras.main.width,
+      this.cameras.main.height,
+      0xffffff
+    )
+    flash.setAlpha(0.8)
+    flash.setDepth(101)
+    flash.setScrollFactor(0)
+    
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => flash.destroy()
+    })
   }
   
   private shouldCollideWithPlatform(): boolean {
@@ -790,9 +1009,9 @@ export class GameScene extends Phaser.Scene {
     const playerObj = player as Player
     const ceilingCatObj = cat as CeilingCat
     
-    // Check if this is a stalker cat that can't damage the player yet
-    if (ceilingCatObj.canDamagePlayer && !ceilingCatObj.canDamagePlayer()) {
-      // This is a hidden or activated stalker cat - don't damage player
+    // Check if this stalker cat can damage the player
+    if (!ceilingCatObj.canDamagePlayer()) {
+      // This stalker cat can't damage player right now
       return
     }
     
@@ -803,7 +1022,7 @@ export class GameScene extends Phaser.Scene {
     const playerFalling = playerBody.velocity.y > 0 // Moving downward
     const playerAboveCat = playerBody.bottom <= catBody.top + 15 // Player's bottom is near cat's top (increased tolerance)
     
-    if (playerFalling && playerAboveCat && ceilingCatObj.getState() === 'chasing') {
+    if (playerFalling && playerAboveCat) {
       // Jump-to-kill ceiling cat (only when chasing)
       this.justKilledCat = true
       this.handleCeilingCatKill(playerObj, ceilingCatObj)
@@ -946,6 +1165,19 @@ export class GameScene extends Phaser.Scene {
   private updateVisibilitySystem(): void {
     if (!this.visibilityMask) return
     
+    // If flash power-up is active, hide all visibility masks
+    if (this.flashPowerUpActive) {
+      Object.values(this.visibilityMask).forEach((rect: any) => {
+        rect.setVisible(false)
+      })
+      return
+    }
+    
+    // Show visibility masks and update positions
+    Object.values(this.visibilityMask).forEach((rect: any) => {
+      rect.setVisible(true)
+    })
+    
     const { top, bottom, left, right } = this.visibilityMask
     const radius = this.visibilityRadius
     
@@ -972,35 +1204,23 @@ export class GameScene extends Phaser.Scene {
   }
   
   private showPointPopup(x: number, y: number, points: number): void {
-    // Create popup text (40% of original size)
+    // Create popup text matching HUD font style
     const popupText = this.add.text(x, y, `+${points}`, {
-      fontSize: '10px',
+      fontSize: '16px',
       color: '#00ff00',
       fontFamily: 'Arial Black',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 1
+      fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(150)
     
-    // Animate popup: float up and fade out (adjusted for smaller size)
+    // Simple fade out animation - no movement
     this.tweens.add({
       targets: popupText,
-      y: y - 30,
       alpha: 0,
-      duration: 1000,
-      ease: 'Power2',
+      duration: 1200,
+      ease: 'Power1.easeOut',
       onComplete: () => {
         popupText.destroy()
       }
-    })
-    
-    // Also animate scale (reduced from 1.5 to 1.2 for smaller text)
-    this.tweens.add({
-      targets: popupText,
-      scaleX: 1.2,
-      scaleY: 1.2,
-      duration: 200,
-      ease: 'Back.easeOut'
     })
   }
   
@@ -1062,12 +1282,180 @@ export class GameScene extends Phaser.Scene {
       }
     }
   }
+  
+  private updateTreasureChestInteraction(): void {
+    // Check if player is near any treasure chest
+    let nearChest: TreasureChest | null = null
+    
+    for (const chest of this.treasureChests) {
+      if (!chest.canInteract()) continue
+      
+      const distance = Phaser.Math.Distance.Between(
+        this.player.x, this.player.y,
+        chest.sprite.x, chest.sprite.y
+      )
+      
+      if (distance < 50) { // Within interaction range
+        nearChest = chest
+        break
+      }
+    }
+    
+    // Update action button visibility and current chest
+    if (nearChest !== this.nearTreasureChest) {
+      this.nearTreasureChest = nearChest
+      this.touchControls.showActionButton(nearChest !== null)
+    }
+    
+    // Check for interaction input (E key or action button)
+    const eKey = this.input.keyboard?.addKey('E')
+    const eKeyJustPressed = eKey ? Phaser.Input.Keyboard.JustDown(eKey) : false
+    const actionPressed = this.touchControls.isActionJustPressed()
+    
+    if ((eKeyJustPressed || actionPressed) && this.nearTreasureChest) {
+      this.openTreasureChest(this.nearTreasureChest)
+    }
+  }
+  
+  private openTreasureChest(chest: TreasureChest): void {
+    const contents = chest.open()
+    
+    // Award base chest points (2500)
+    this.score += 2500
+    this.updateScoreDisplay()
+    
+    // Show point popup for chest
+    this.showPointPopup(chest.sprite.x, chest.sprite.y - 30, 2500)
+    
+    // Spawn items on the floor around the chest
+    this.spawnTreasureChestContents(chest.sprite.x, chest.sprite.y, contents)
+    
+    // Make chest fade away after opening
+    this.tweens.add({
+      targets: chest.sprite,
+      alpha: 0,
+      duration: 2000,
+      ease: 'Power2.easeOut',
+      onComplete: () => {
+        // Remove from treasureChests array
+        const index = this.treasureChests.indexOf(chest)
+        if (index > -1) {
+          this.treasureChests.splice(index, 1)
+        }
+        chest.destroy()
+      }
+    })
+    
+    // Remove interaction
+    this.nearTreasureChest = null
+    this.touchControls.showActionButton(false)
+  }
+  
+  private spawnTreasureChestContents(chestX: number, chestY: number, contents: any): void {
+    const spawnPositions = [
+      { x: chestX - 60, y: chestY },
+      { x: chestX + 60, y: chestY },
+      { x: chestX - 45, y: chestY },
+      { x: chestX + 45, y: chestY },
+      { x: chestX - 30, y: chestY },
+      { x: chestX + 30, y: chestY },
+      { x: chestX - 15, y: chestY },
+      { x: chestX + 15, y: chestY },
+      { x: chestX, y: chestY - 30 },
+      { x: chestX, y: chestY + 15 }
+    ]
+    
+    let positionIndex = 0
+    
+    // Spawn coins (5-10 as specified in contents)
+    for (let i = 0; i < contents.coins; i++) {
+      if (positionIndex >= spawnPositions.length) break
+      
+      const pos = spawnPositions[positionIndex++]
+      const coin = new Coin(this, pos.x, pos.y)
+      this.coins.push(coin)
+      
+      // Add physics overlap detection
+      this.physics.add.overlap(
+        this.player,
+        coin.sprite,
+        () => this.handleCoinCollection(coin),
+        undefined,
+        this
+      )
+      
+      // Add bouncy spawn animation
+      this.tweens.add({
+        targets: coin.sprite,
+        scaleX: 1.3,
+        scaleY: 1.3,
+        duration: 300,
+        ease: 'Back.easeOut',
+        yoyo: true
+      })
+    }
+    
+    // Spawn diamond if present
+    if (contents.diamond && positionIndex < spawnPositions.length) {
+      const pos = spawnPositions[positionIndex++]
+      const diamond = new Diamond(this, pos.x, pos.y)
+      this.diamonds.push(diamond)
+      
+      // Add physics overlap detection
+      this.physics.add.overlap(
+        this.player,
+        diamond.sprite,
+        () => this.handleDiamondCollection(diamond),
+        undefined,
+        this
+      )
+      
+      // Add dramatic spawn animation
+      this.tweens.add({
+        targets: [diamond.sprite, diamond.diamondGraphics],
+        scaleX: 1.5,
+        scaleY: 1.5,
+        duration: 500,
+        ease: 'Back.easeOut',
+        yoyo: true
+      })
+    }
+    
+    // Spawn flash power-up if present
+    if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
+      const pos = spawnPositions[positionIndex++]
+      const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
+      this.flashPowerUps.push(flashPowerUp)
+      
+      // Add physics overlap detection
+      this.physics.add.overlap(
+        this.player,
+        flashPowerUp.sprite,
+        () => this.handleFlashPowerUpCollection(flashPowerUp),
+        undefined,
+        this
+      )
+      
+      // Add electric spawn animation
+      this.tweens.add({
+        targets: flashPowerUp.sprite,
+        scaleX: 1.4,
+        scaleY: 1.4,
+        duration: 400,
+        ease: 'Back.easeOut',
+        yoyo: true
+      })
+    }
+  }
 
   update(_time: number, _deltaTime: number): void {
     if (this.isGameOver) return
     
     // Update touch controls
     this.touchControls.update()
+    
+    // Check for treasure chest interaction
+    this.updateTreasureChestInteraction()
     
     // Update player
     this.player.update()
@@ -1080,9 +1468,24 @@ export class GameScene extends Phaser.Scene {
       (cat as Cat).update(this.time.now, this.game.loop.delta)
     })
     
-    // Update all ceiling cats
+    // Update all ceiling cats and check ladder exits
     this.ceilingCats.children.entries.forEach(ceilingCat => {
-      (ceilingCat as CeilingCat).update(this.time.now, this.game.loop.delta)
+      const catObj = ceilingCat as CeilingCat
+      catObj.update(this.time.now, this.game.loop.delta)
+      
+      // Check if cat has exited all ladders while climbing
+      if (catObj.getState() === 'chasing') {
+        let stillOnLadder = false
+        this.ladders.children.entries.forEach(ladder => {
+          if (this.physics.world.overlap(catObj, ladder)) {
+            stillOnLadder = true
+          }
+        })
+        
+        if (!stillOnLadder) {
+          catObj.stopLadderClimb()
+        }
+      }
     })
     
     // Check if player is no longer overlapping any ladder while climbing
@@ -1174,37 +1577,44 @@ export class GameScene extends Phaser.Scene {
           const bottomY = -(floor - 1) * floorSpacing + GameSettings.canvas.height - tileSize
           const topY = -floor * floorSpacing + GameSettings.canvas.height - tileSize
           this.createContinuousLadder(ladderX * tileSize, bottomY, topY)
+          this.storeLadderPositions(floor - 1, [ladderX]) // Store for the bottom floor
         }
       }
       
-      // Add coins on the new floor
-      const numCoins = Math.floor(Math.random() * 2) + 1
-      const validCoinPositions: number[] = []
+      // Add collectibles on the new floor using the same system as initial creation
+      const collectibleY = y - tileSize - 8
+      const validPositions: number[] = []
       
       for (let x = 1; x < floorWidth - 1; x++) {
         if (this.hasPlatformAt(layout, x)) {
-          validCoinPositions.push(x)
+          validPositions.push(x)
         }
       }
       
-      for (let j = 0; j < Math.min(numCoins, validCoinPositions.length); j++) {
-        const randomIndex = Math.floor(Math.random() * validCoinPositions.length)
-        const tileX = validCoinPositions[randomIndex]
-        const coinX = tileX * tileSize + tileSize/2
-        const coinY = y - tileSize - 8
+      if (validPositions.length > 0) {
+        // Regular coins: 2-4 per floor
+        const numCoins = Math.floor(Math.random() * 3) + 2
+        this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor)
         
-        validCoinPositions.splice(randomIndex, 1)
+        // Blue coins: 1 per 1-2 floors (500 points)
+        if (floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
+          this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor)
+        }
         
-        const coin = new Coin(this, coinX, coinY)
-        this.coins.push(coin)
+        // Diamonds: 1 per 1-3 floors (1000 points)  
+        if (floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
+          this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor)
+        }
         
-        this.physics.add.overlap(
-          this.player,
-          coin.sprite,
-          () => this.handleCoinCollection(coin),
-          undefined,
-          this
-        )
+        // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
+        if (floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
+          this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor)
+        }
+        
+        // Flash power-ups: Rare collectible after floor 20
+        if (floor > 20 && Math.random() < 0.1) {
+          this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor)
+        }
       }
       
       // Add cat on some floors

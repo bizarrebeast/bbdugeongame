@@ -8,6 +8,9 @@ export class TouchControls {
   private jumpButton: Phaser.GameObjects.Container
   private jumpButtonCircle: Phaser.GameObjects.Arc
   private jumpButtonText: Phaser.GameObjects.Text
+  private actionButton: Phaser.GameObjects.Container
+  private actionButtonCircle: Phaser.GameObjects.Arc
+  private actionButtonText: Phaser.GameObjects.Text
   
   private isDragging: boolean = false
   private joystickCenter: { x: number, y: number }
@@ -19,12 +22,16 @@ export class TouchControls {
   public vertical: number = 0 // -1 to 1
   public jumpPressed: boolean = false
   public jumpJustPressed: boolean = false
+  public actionPressed: boolean = false
+  public actionJustPressed: boolean = false
   
   private lastJumpState: boolean = false
+  private lastActionState: boolean = false
   
   // Track individual touches
   private joystickPointerId: number = -1
   private jumpPointerId: number = -1
+  private actionPointerId: number = -1
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -32,6 +39,7 @@ export class TouchControls {
     
     this.createJoystick()
     this.createJumpButton()
+    this.createActionButton()
     this.setupInputHandlers()
   }
 
@@ -76,6 +84,31 @@ export class TouchControls {
     this.jumpButton.add([this.jumpButtonCircle, this.jumpButtonText])
   }
 
+  private createActionButton(): void {
+    const buttonX = GameSettings.canvas.width - 140 // Left of jump button
+    const buttonY = GameSettings.canvas.height - 80
+    
+    // Create action button container (initially hidden)
+    this.actionButton = this.scene.add.container(buttonX, buttonY)
+    this.actionButton.setDepth(1000)
+    this.actionButton.setScrollFactor(0)
+    this.actionButton.setVisible(false)
+
+    // Button circle (larger than jump button)
+    this.actionButtonCircle = this.scene.add.circle(0, 0, 40, 0xaa4444, 0.7)
+    this.actionButtonCircle.setStrokeStyle(3, 0xcc6666)
+    
+    // Button text
+    this.actionButtonText = this.scene.add.text(0, 0, 'ACTION', {
+      fontSize: '11px',
+      color: '#ffffff',
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold'
+    }).setOrigin(0.5)
+    
+    this.actionButton.add([this.actionButtonCircle, this.actionButtonText])
+  }
+
   private setupInputHandlers(): void {
     // Track active pointers for each control area
     const activePointers = new Set<number>()
@@ -117,18 +150,37 @@ export class TouchControls {
     }
     
     // Check if touch is on jump button area
-    const buttonX = GameSettings.canvas.width - 60
-    const buttonY = GameSettings.canvas.height - 80
-    const buttonDist = Math.sqrt(
-      Math.pow(touchX - buttonX, 2) + 
-      Math.pow(touchY - buttonY, 2)
+    const jumpButtonX = GameSettings.canvas.width - 60
+    const jumpButtonY = GameSettings.canvas.height - 80
+    const jumpButtonDist = Math.sqrt(
+      Math.pow(touchX - jumpButtonX, 2) + 
+      Math.pow(touchY - jumpButtonY, 2)
     )
     
-    if (buttonDist <= 50) { // Larger hit area for easier tapping
+    if (jumpButtonDist <= 50) { // Larger hit area for easier tapping
       if (this.jumpPointerId === -1) {
         this.jumpPointerId = pointer.id
         this.jumpPressed = true
         this.jumpButtonCircle.setFillStyle(0x6666ff, 0.9)
+      }
+      return
+    }
+    
+    // Check if touch is on action button area (only if visible)
+    if (this.actionButton.visible) {
+      const actionButtonX = GameSettings.canvas.width - 140
+      const actionButtonY = GameSettings.canvas.height - 80
+      const actionButtonDist = Math.sqrt(
+        Math.pow(touchX - actionButtonX, 2) + 
+        Math.pow(touchY - actionButtonY, 2)
+      )
+      
+      if (actionButtonDist <= 55) { // Larger hit area since button is bigger
+        if (this.actionPointerId === -1) {
+          this.actionPointerId = pointer.id
+          this.actionPressed = true
+          this.actionButtonCircle.setFillStyle(0xff6666, 0.9)
+        }
       }
     }
   }
@@ -150,6 +202,12 @@ export class TouchControls {
       this.jumpPointerId = -1
       this.jumpPressed = false
       this.jumpButtonCircle.setFillStyle(0x4444aa, 0.7)
+    }
+    
+    if (pointer.id === this.actionPointerId) {
+      this.actionPointerId = -1
+      this.actionPressed = false
+      this.actionButtonCircle.setFillStyle(0xaa4444, 0.7)
     }
   }
 
@@ -189,6 +247,10 @@ export class TouchControls {
     // Update jump just pressed state
     this.jumpJustPressed = this.jumpPressed && !this.lastJumpState
     this.lastJumpState = this.jumpPressed
+    
+    // Update action just pressed state
+    this.actionJustPressed = this.actionPressed && !this.lastActionState
+    this.lastActionState = this.actionPressed
   }
 
   public getHorizontal(): number {
@@ -207,8 +269,21 @@ export class TouchControls {
     return this.jumpJustPressed
   }
 
+  public isActionPressed(): boolean {
+    return this.actionPressed
+  }
+
+  public isActionJustPressed(): boolean {
+    return this.actionJustPressed
+  }
+
+  public showActionButton(show: boolean): void {
+    this.actionButton.setVisible(show)
+  }
+
   public destroy(): void {
     this.joystick.destroy()
     this.jumpButton.destroy()
+    this.actionButton.destroy()
   }
 }

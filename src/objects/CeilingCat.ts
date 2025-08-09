@@ -6,10 +6,14 @@ export class CeilingCat extends Cat {
   private triggerDistance: number = 32 // 1 tile away to activate mine
   public playerRef: Phaser.Physics.Arcade.Sprite | null = null
   private originalY: number
+  private isOnLadder: boolean = false
+  private ladderClimbDirection: number = 0 // -1 for up, 1 for down, 0 for none
   private hasPlayerPassed: boolean = false
   private eyesSprite: Phaser.GameObjects.Graphics | null = null
   private mineTimer: number = 0
-  private mineDelayDuration: number = 2000 // 2 second delay before popping out
+  private mineDelayDuration: number = 2000 // 2 second delay before chasing
+  private currentSpeed: number = 80 * 1.5 // Starting chase speed
+  private speedIncrement: number = 5 // Speed increase per update cycle
   
   constructor(
     scene: Phaser.Scene, 
@@ -22,11 +26,11 @@ export class CeilingCat extends Cat {
     
     this.originalY = y
     
-    // Create a hidden red cat on the floor (normal orientation)
+    // Create a hidden red stalker cat on the floor
     const graphics = scene.add.graphics()
     graphics.fillStyle(0xff0000, 1) // Red for stalker cat
     graphics.fillCircle(10, 8, 8)
-    // Eyes (initially hidden)
+    // Eyes (normal black eyes when hidden)
     graphics.fillStyle(0x000000, 1)
     graphics.fillCircle(6, 6, 2)
     graphics.fillCircle(14, 6, 2)
@@ -34,19 +38,19 @@ export class CeilingCat extends Cat {
     graphics.fillStyle(0xff0000, 1)
     graphics.fillTriangle(4, 2, 8, 0, 8, 4)
     graphics.fillTriangle(12, 0, 16, 2, 12, 4)
-    graphics.generateTexture('stalker-cat', 20, 16)
+    graphics.generateTexture('red-stalker-cat', 20, 16)
     graphics.destroy()
     
-    this.setTexture('stalker-cat')
+    this.setTexture('red-stalker-cat')
     
     // Start completely hidden
     this.setVisible(false)
     this.setVelocity(0, 0)
-    this.body!.setGravityY(0) // Disable gravity completely for stalker cats
+    this.body!.setGravityY(0) // Disable gravity while hidden
     this.body!.setImmovable(true) // Don't move while hidden
     this.setDepth(15) // Same level as other cats
     
-    // Create eyes-only sprite for peek state
+    // Create eyes-only sprite for activated state
     this.createEyesSprite()
   }
   
@@ -55,7 +59,7 @@ export class CeilingCat extends Cat {
   }
   
   private createEyesSprite(): void {
-    // Create glowing eyes sprite for the peek state
+    // Create glowing eyes sprite for the activated state
     const eyesGraphics = this.scene.add.graphics()
     eyesGraphics.fillStyle(0xffff00, 1) // Yellow glowing eyes
     eyesGraphics.fillCircle(6, 6, 3) // Slightly larger than normal eyes
@@ -66,7 +70,7 @@ export class CeilingCat extends Cat {
     eyesGraphics.fillCircle(14, 6, 5)
     
     this.eyesSprite = eyesGraphics
-    // Position eyes exactly at the cat's position (not relative offset)
+    // Position eyes exactly at the cat's position
     this.eyesSprite.setPosition(this.x - 10, this.y - 8)
     this.eyesSprite.setVisible(false)
     this.eyesSprite.setDepth(16)
@@ -109,7 +113,6 @@ export class CeilingCat extends Cat {
       if (this.eyesSprite) {
         this.eyesSprite.setPosition(this.x - 10, this.y - 8)
         this.eyesSprite.setVisible(true)
-        console.log('Stalker cat activated - eyes should be visible at', this.x, this.y)
       }
     }
   }
@@ -128,7 +131,6 @@ export class CeilingCat extends Cat {
     
     if (this.mineTimer <= 0) {
       // Timer finished - pop out!
-      console.log('Stalker cat timer finished - popping out!')
       this.popOut()
     }
   }
@@ -140,12 +142,14 @@ export class CeilingCat extends Cat {
     // Hide the eyes-only sprite
     if (this.eyesSprite) {
       this.eyesSprite.setVisible(false)
-      console.log('Stalker cat popped out - hiding eyes, showing full cat')
     }
     
     // Enable physics for chasing
-    this.body!.setGravityY(0) // Keep gravity disabled - stalker cats stay on their floor
+    this.body!.setGravityY(800) // Enable gravity for movement
     this.body!.setImmovable(false)
+    
+    // Reset speed to starting value
+    this.currentSpeed = 80 * 1.5
     
     // Pop out animation
     this.scene.tweens.add({
@@ -159,37 +163,60 @@ export class CeilingCat extends Cat {
   }
   
   private updateChasing(): void {
-    if (this.landingPauseTimer > 0) {
-      this.landingPauseTimer -= this.scene.game.loop.delta
+    // Gradually increase speed over time
+    this.currentSpeed += this.speedIncrement * 0.01 // Slow increase per frame
+    const maxSpeed = 80 * 2.25 // Cap the speed at 2.25x base speed (180)
+    if (this.currentSpeed > maxSpeed) {
+      this.currentSpeed = maxSpeed
+    }
+    
+    const playerX = this.playerRef!.x
+    const playerY = this.playerRef!.y
+    
+    // Check if we're currently on a ladder
+    if (this.isOnLadder && this.ladderClimbDirection !== 0) {
+      // Continue climbing in the set direction
+      this.setVelocityX(0)
+      this.setVelocityY(this.ladderClimbDirection * 100) // Climb speed
+      this.body!.setGravityY(0) // Disable gravity while climbing
       return
     }
     
-    // Chase player at 1.5x speed indefinitely (no timer limit)
-    const chaseSpeed = 80 * 1.5
-    const playerX = this.playerRef!.x
-    const playerY = this.playerRef!.y
-    const direction = playerX > this.x ? 1 : -1
+    // Normal gravity when not climbing
+    this.body!.setGravityY(800)
     
-    // Allow movement across platform boundaries - don't restrict to original platform
-    // Check world boundaries instead
-    const worldWidth = 24 * 32 // GameSettings.game.floorWidth * tileSize
+    const direction = playerX > this.x ? 1 : -1
+    const floorDifference = playerY - this.y
+    
+    // Check world boundaries
+    const worldWidth = 24 * 32
     if ((direction === 1 && this.x >= worldWidth - 20) ||
         (direction === -1 && this.x <= 20)) {
       this.setVelocityX(0)
       return
     }
     
-    // If player is on a different floor, try to follow by using ladders
-    const floorDifference = Math.abs(playerY - this.y)
-    if (floorDifference > 100) { // Player is on different floor
-      // Move towards player horizontally, will handle ladder climbing in scene
+    // If player is on a different floor (more than 50 pixels difference)
+    if (Math.abs(floorDifference) > 50) {
+      // We need to find a ladder - move horizontally towards player for now
       this.direction = direction
-      this.setVelocityX(chaseSpeed * direction)
+      this.setVelocityX(this.currentSpeed * direction)
     } else {
       // Same floor, chase normally
       this.direction = direction
-      this.setVelocityX(chaseSpeed * direction)
+      this.setVelocityX(this.currentSpeed * direction)
     }
+  }
+  
+  public startLadderClimb(direction: 'up' | 'down'): void {
+    this.isOnLadder = true
+    this.ladderClimbDirection = direction === 'up' ? -1 : 1
+  }
+  
+  public stopLadderClimb(): void {
+    this.isOnLadder = false
+    this.ladderClimbDirection = 0
+    this.body!.setGravityY(800) // Restore gravity
   }
   
   private updatePatrolling(delta: number): void {
@@ -220,22 +247,12 @@ export class CeilingCat extends Cat {
   }
   
   canDamagePlayer(): boolean {
-    // Only chasing stalker cats can damage the player
+    // Red stalker cats can only damage the player after popping out
     return this.state === 'chasing'
   }
   
-  // Override squish to handle different states
+  // Override squish - red cats can always be squished
   squish(): void {
-    // Stalker cats can only be squished when chasing
-    if (this.state !== 'chasing') {
-      return
-    }
-    
-    // Hide eyes when squished
-    if (this.eyesSprite) {
-      this.eyesSprite.setVisible(false)
-    }
-    
     super.squish()
   }
 }
