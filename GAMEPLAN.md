@@ -28,10 +28,11 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - **Jumping:** Jump button to clear gaps and avoid enemies
 - **Combat:** Fire button to defeat enemies (if applicable)
 
-### Controls ✅ IMPLEMENTED
-- **Mobile:** ✅ Virtual joystick for movement/climbing + jump button with multi-touch support
-- **Desktop:** ✅ Arrow keys for movement/climbing, spacebar for jump
-- **Dual Input:** ✅ Both control schemes work simultaneously
+### Controls ✅ FULLY IMPLEMENTED
+- **Mobile:** ✅ Virtual joystick for movement/climbing + jump button + ACTION button with multi-touch support
+- **Desktop:** ✅ Arrow keys + WASD for movement/climbing, spacebar for jump, E key for ACTION
+- **Dual Input:** ✅ All control schemes work simultaneously
+- **Action System:** ✅ Dedicated ACTION button for treasure chest interactions
 
 ## Level Design ✅ IMPLEMENTED
 
@@ -53,37 +54,49 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ## Enemies & Obstacles ✅ IMPLEMENTED
 
 ### Enemy Types ✅ ACTIVE
-- **Ground Cats:** ✅ Three color variants with unique AI behaviors
+- **Ground Cats:** ✅ Four color variants with unique AI behaviors
   - **Blue Cats:** Standard patrol behavior at normal speed
   - **Yellow Cats:** Slower speed with random movement patterns  
   - **Green Cats:** Fast bouncing movement across full floor width
-- **Red Stalker Cats:** ✅ Timed mine behavior with warning system
+  - **Red Cats:** Floor-based AI with smart chase behavior
+- **Red Stalker Cats:** ✅ Advanced mine behavior with warning system
   - **Hidden State:** Invisible until player triggers within 1 tile
-  - **Warning Phase:** 2-second countdown with glowing yellow eyes
+  - **Warning Phase:** 2-second countdown with glowing yellow eyes  
   - **Chase Phase:** Pop out and chase at 1.5x speed indefinitely
+  - **Floor Intelligence:** Chase on same floor, patrol on different floors
 - **Movement Patterns:** ✅ Advanced AI with collision behavior and boundary detection
-- **Combat Integration:** ✅ All cats can be defeated via jump-to-kill mechanics
-- **Cross-Floor AI:** ✅ Cats can climb ladders to pursue player between floors
+- **Combat Integration:** ✅ All cats can be defeated via jump-to-kill mechanics with combo system
+- **Cross-Floor AI:** ✅ Smart floor-based movement preventing stuck behaviors
 
 ### Future Additions 🔄 PLANNED
 - **Spiders:** Crawl along platforms and down ladders (not yet implemented)
 
-## Power-ups & Collectibles
+## Power-ups & Collectibles ✅ FULLY IMPLEMENTED
 
-### Collectible Items ✅ PARTIAL IMPLEMENTATION
-1. **Coins:** ✅ Basic point value items scattered throughout levels with spinning animations
-2. **Power-up Items:** 🔄 Grant temporary abilities (planned for future)
+### Collectible Items ✅ COMPLETE SYSTEM
+1. **Regular Coins:** ✅ Basic yellow coins (50 points) with spinning animations
+2. **Blue Coins:** ✅ Enhanced coins worth 500 points with distinct blue color
+3. **Diamonds:** ✅ High-value collectibles worth 1000 points with sparkle effects
+4. **Treasure Chests:** ✅ Interactive chests (2500 points + contents) requiring ACTION button
+5. **Flash Power-ups:** ✅ Removes darkness overlay for 5 seconds
 
-### Coin System ✅ ACTIVE
-- ✅ 2-4 coins randomly placed per floor on solid platforms
-- ✅ Avoid ladder positions for clean gameplay
-- ✅ Collection animation with scale/fade effects
-- ✅ 50 points per coin collected
+### Enhanced Collectible System ✅ ACTIVE
+- ✅ Smart collectible placement preventing overlaps
+- ✅ Shared positioning system across all collectible types
+- ✅ Progressive rarity scaling with floor progression
+- ✅ Collection animations with scale/fade effects
+- ✅ Point popups showing earned values
 
-### Future Power-ups 🔄 PLANNED
-- **Invincibility:** Brief immunity to enemies (5-10 seconds)
-- **Speed Boost:** Faster climbing and movement (8-12 seconds)  
-- **Double Points:** Multiplies all points earned (15-20 seconds)
+### Treasure Chest Mechanics ✅ IMPLEMENTED
+- ✅ Requires ACTION button interaction (E key / mobile ACTION button)
+- ✅ Brief opening animation with vulnerability window
+- ✅ Contains multiple coins plus chance of diamonds and flash power-ups
+- ✅ Full reset on death for replay value
+
+### Flash Power-up System ✅ ACTIVE
+- ✅ Removes darkness overlay revealing entire screen
+- ✅ 5-second duration with visual feedback
+- ✅ Found in treasure chests and as collectible items
 
 ## Difficulty Progression
 
@@ -100,11 +113,14 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ## Scoring System ✅ IMPLEMENTED
 
-### Point Awards ✅ ACTIVE
-- **Collecting Coins:** ✅ 50 points per coin
+### Point Awards ✅ COMPLETE
+- **Regular Coins:** ✅ 50 points per yellow coin
+- **Blue Coins:** ✅ 500 points per enhanced coin
+- **Diamonds:** ✅ 1000 points per diamond collectible
+- **Treasure Chests:** ✅ 2500 points plus contents
 - **Height Milestones:** ✅ 500 bonus points for reaching new floors
 - **Defeating Cats:** ✅ 200 points per cat with combo multipliers
-- **Combo System:** ✅ Consecutive kills multiply score (x1, x2, x3...)
+- **Combo System:** ✅ Consecutive kills multiply score (x1, x2, x3, x4+)
 
 ### Current Implementation ✅ WORKING
 - ✅ Live score tracking with formatted display
@@ -116,8 +132,8 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ 1-second combo window to maintain multiplier chains
 
 ### Future Additions 🔄 PLANNED
-- **Enhanced Collectibles:** Blue coins (500), diamonds (1000), treasure chests (2500)
 - **High Score Integration:** Remix platform leaderboards
+- **Additional Power-ups:** Speed boost, invincibility, double points
 
 ## Player Character
 
@@ -164,9 +180,8 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ### High Priority
 - **Additional enemy types** - Spiders that climb ladders
-- **Power-up system** - Invincibility, speed boost, double points
+- **Enhanced power-up system** - Invincibility, speed boost, double points
 - **Sound effects and background music** - Retro arcade audio
-- **Combat system** - Ability to defeat enemies for points
 
 ### Medium Priority  
 - **Online leaderboards** - Remix platform integration
@@ -184,16 +199,20 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ## 🎮 CURRENT GAME STATUS: FULLY PLAYABLE
 
 **✅ What's Working:**
-- Complete mobile and desktop gameplay
+- Complete mobile and desktop gameplay with WASD + arrow key support
 - Endless procedural generation with smart ladder placement
-- Advanced cat AI system with 4 unique enemy types
-- Jump-to-kill combat with combo multipliers and visual feedback
-- Atmospheric visibility system with darkness overlay
+- Advanced cat AI system with 4 unique enemy types (blue, yellow, green, red)
+- Complete combat system with jump-to-kill mechanics and combo multipliers
+- Full visibility system with 5-tile radius and dynamic darkness overlay
+- Flash power-up system removing darkness for 5 seconds
+- Enhanced collectibles: regular coins (50pts), blue coins (500pts), diamonds (1000pts), treasure chests (2500pts + contents)
+- Interactive treasure chest system with ACTION button
 - Professional UI with translucent backgrounds and depth layering
-- Multi-touch support for mobile with responsive controls
-- Complete scoring system with points, combos, and popups
-- Game over and restart system with combo reset
-- Ground floor boundary protection and cross-floor enemy AI
+- Multi-touch support with virtual joystick, jump button, and ACTION button
+- Complete scoring system with point popups and combo feedback
+- Progressive difficulty with speed increases
+- Game over and restart system with full state reset
+- Ground floor boundary protection and intelligent red cat floor-based AI
 
 ---
 
@@ -203,41 +222,58 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 *Detailed implementation plan: [SPRINT_CAT_CHAOS.md](./SPRINT_CAT_CHAOS.md)*
 
 **Phase 1: Enemy System Overhaul** ✅ COMPLETE
-- [x] Convert beetles to cats with 3 color variants (blue, yellow, green)
-- [x] Implement different behaviors per color (blue=patrol, yellow=random, green=bouncing)  
+- [x] Convert beetles to cats with 4 color variants (blue, yellow, green, red)
+- [x] Implement unique behaviors per color (blue=patrol, yellow=random, green=bouncing, red=floor-based AI)
 - [x] Add visual variety with colored cat sprites
+- [x] Smart red cat AI preventing stuck behaviors
 
-**Phase 2: Red Stalker Cats** ✅ COMPLETE  
-- [x] Create CeilingCat class (red stalker cats on floors)
+**Phase 2: Combat System** ✅ COMPLETE
+- [x] Jump-to-kill detection (player landing on cats)
+- [x] Player bounce mechanic after successful kill
+- [x] Combo system with score multipliers (x1, x2, x3, x4+)
+- [x] Point popup system showing earned points with consistent fonts
+- [x] Visual combo counter with animations
+- [x] 1-second combo window to maintain multiplier
+
+**Phase 3: Red Stalker Cats** ✅ COMPLETE  
 - [x] Implement timed mine behavior with 2-second delay
 - [x] Add glowing eyes warning system during countdown
 - [x] Chase AI with 1.5x speed after activation
-
-**Phase 3: Combat System** ✅ COMPLETE
-- [x] Jump-to-kill detection (player landing on cats)
-- [x] Player bounce mechanic after successful kill
-- [x] Combo system with score multipliers (x1, x2, x3...)
-- [x] Point popup system showing earned points
-- [x] Visual combo counter with animations
-- [x] 1-second combo window to maintain multiplier
+- [x] Floor-based intelligence: chase same floor, patrol different floors
+- [x] No ladder climbing to prevent exploitation
 
 **Phase 4: Visibility System** ✅ COMPLETE
 - [x] Create darkness overlay covering entire game
 - [x] Implement 5-tile visibility radius around player (square spotlight)
-- [x] Four black rectangles creating proper visibility window
+- [x] Dynamic darkness with proper reveal/hide mechanics
 - [x] Proper depth ordering (behind HUD, over game elements)
 - [x] Translucent white HUD background for better visibility
 
-### 🔄 REMAINING FEATURES (Future Sprints)
+**Phase 5: Enhanced Collectibles** ✅ COMPLETE
+- [x] Add blue coins (500 points) and diamonds (1000 points)
+- [x] Create treasure chest system requiring ACTION button
+- [x] Implement flash power-up removing darkness for 5 seconds
+- [x] Smart collectible placement preventing overlaps
+- [x] Point popups for all collectible types
 
-**Phase 5: Enhanced Collectibles** 📋 PLANNED
-- [ ] Add blue coins (500 points), diamonds (1000 points)
-- [ ] Create treasure chests requiring action button
-- [ ] Implement flash power-up system
+**Phase 6: UI/UX Polish** ✅ COMPLETE
+- [x] Implement WASD keyboard controls alongside arrow keys
+- [x] Create ACTION button for treasure chest interaction
+- [x] Optimize performance with visibility system
+- [x] Clean visual experience with debug lines disabled
+- [x] Mobile touch controls with ACTION button integration
 
-**Phase 6: UI/UX Polish** 📋 PLANNED 
-- [ ] Implement WASD keyboard controls
-- [ ] Create action button for treasure chests
+### 🔄 FUTURE ENHANCEMENTS (Next Sprints)
+
+**Phase 7: Audio System** 📋 PLANNED
+- [ ] Background music with retro arcade feel
+- [ ] Sound effects for jumps, collections, combat, and interactions
+- [ ] Dynamic audio mixing based on game state
+
+**Phase 8: Advanced Features** 📋 PLANNED
+- [ ] Additional power-ups (speed boost, invincibility, double points)
+- [ ] New enemy types (spiders with ladder climbing)
+- [ ] Enhanced difficulty scaling and balancing
 
 ## Art Assets Needed
 
