@@ -148,7 +148,7 @@ export class TreasureChest {
     // Generate contents based on sprint requirements
     const coins = Math.floor(Math.random() * 6) + 5 // 5-10 coins
     const diamond = Math.random() < 0.3 // 30% chance
-    const flashPowerUp = Math.random() < 0.2 // 20% chance
+    const flashPowerUp = Math.random() < 1.0 // TESTING: 100% chance (normally 20%)
     
     // Calculate total points
     let totalPoints = 2500 // Base chest value

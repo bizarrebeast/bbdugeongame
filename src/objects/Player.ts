@@ -42,11 +42,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const onGround = this.body!.blocked.down
     const spaceKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     
-    // Get input from keyboard or touch controls
-    const leftPressed = this.cursors.left.isDown || (this.touchControls?.getHorizontal() || 0) < -0.3
-    const rightPressed = this.cursors.right.isDown || (this.touchControls?.getHorizontal() || 0) > 0.3
-    const upPressed = this.cursors.up.isDown || (this.touchControls?.getVertical() || 0) < -0.3
-    const downPressed = this.cursors.down.isDown || (this.touchControls?.getVertical() || 0) > 0.3
+    // Add WASD keys support
+    const wKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W)
+    const aKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A)
+    const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
+    const dKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+    
+    // Get input from keyboard (arrows or WASD) or touch controls
+    const leftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.getHorizontal() || 0) < -0.3
+    const rightPressed = this.cursors.right.isDown || dKey.isDown || (this.touchControls?.getHorizontal() || 0) > 0.3
+    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.getVertical() || 0) < -0.3
+    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.getVertical() || 0) > 0.3
     const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || (this.touchControls?.isJumpJustPressed() || false)
     
     // Horizontal movement
@@ -122,8 +128,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   checkLadderProximity(ladder: Phaser.GameObjects.GameObject): boolean {
     // Check if player is pressing up or down near a ladder
-    const upPressed = this.cursors.up.isDown || (this.touchControls?.getVertical() || 0) < -0.3
-    const downPressed = this.cursors.down.isDown || (this.touchControls?.getVertical() || 0) > 0.3
+    const wKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W)
+    const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
+    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.getVertical() || 0) < -0.3
+    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.getVertical() || 0) > 0.3
     
     if (upPressed || downPressed) {
       const ladderSprite = ladder as Phaser.GameObjects.Rectangle

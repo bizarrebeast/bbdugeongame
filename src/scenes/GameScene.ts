@@ -142,14 +142,7 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
-    // Ceiling cats can use ladders
-    this.physics.add.overlap(
-      this.ceilingCats,
-      this.ladders,
-      this.handleCeilingCatLadderOverlap,
-      undefined,
-      this
-    )
+    // Red cats no longer climb ladders
     
     // Set up coin collection (we'll handle this individually per coin)
     
@@ -664,37 +657,6 @@ export class GameScene extends Phaser.Scene {
     catObj2.reverseDirection()
   }
   
-  private handleCeilingCatLadderOverlap(
-    ceilingCat: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    ladder: Phaser.Types.Physics.Arcade.GameObjectWithBody
-  ): void {
-    const catObj = ceilingCat as CeilingCat
-    
-    // Only allow ladder climbing if in chasing state
-    if (catObj.getState() !== 'chasing' || !catObj.playerRef) return
-    
-    const playerY = catObj.playerRef.y
-    const catY = catObj.y
-    const ladderRect = ladder as Phaser.GameObjects.Rectangle
-    const ladderTop = ladderRect.y - ladderRect.height / 2
-    const ladderBottom = ladderRect.y + ladderRect.height / 2
-    
-    // Check if player is on a significantly different floor
-    const floorDifference = playerY - catY
-    
-    if (Math.abs(floorDifference) > 60) {
-      if (floorDifference < -60 && catY > ladderTop + 20) {
-        // Player is above, climb up if not at top
-        catObj.startLadderClimb('up')
-      } else if (floorDifference > 60 && catY < ladderBottom - 20) {
-        // Player is below, climb down if not at bottom
-        catObj.startLadderClimb('down')
-      }
-    } else {
-      // Player is on same level, stop climbing
-      catObj.stopLadderClimb()
-    }
-  }
   
   private createAllCollectibles(): void {
     const tileSize = GameSettings.game.tileSize
@@ -944,24 +906,7 @@ export class GameScene extends Phaser.Scene {
       this.flashPowerUpTimer = null
     })
     
-    // Show flash effect
-    const flash = this.add.rectangle(
-      this.cameras.main.centerX,
-      this.cameras.main.centerY,
-      this.cameras.main.width,
-      this.cameras.main.height,
-      0xffffff
-    )
-    flash.setAlpha(0.8)
-    flash.setDepth(101)
-    flash.setScrollFactor(0)
-    
-    this.tweens.add({
-      targets: flash,
-      alpha: 0,
-      duration: 500,
-      onComplete: () => flash.destroy()
-    })
+    // No flash effect - darkness just disappears for 5 seconds
   }
   
   private shouldCollideWithPlatform(): boolean {
@@ -1473,19 +1418,7 @@ export class GameScene extends Phaser.Scene {
       const catObj = ceilingCat as CeilingCat
       catObj.update(this.time.now, this.game.loop.delta)
       
-      // Check if cat has exited all ladders while climbing
-      if (catObj.getState() === 'chasing') {
-        let stillOnLadder = false
-        this.ladders.children.entries.forEach(ladder => {
-          if (this.physics.world.overlap(catObj, ladder)) {
-            stillOnLadder = true
-          }
-        })
-        
-        if (!stillOnLadder) {
-          catObj.stopLadderClimb()
-        }
-      }
+      // Red cats no longer climb ladders
     })
     
     // Check if player is no longer overlapping any ladder while climbing
@@ -1592,28 +1525,31 @@ export class GameScene extends Phaser.Scene {
       }
       
       if (validPositions.length > 0) {
+        // Track all used positions for this floor across all collectible types
+        const floorUsedPositions: number[] = []
+        
         // Regular coins: 2-4 per floor
         const numCoins = Math.floor(Math.random() * 3) + 2
-        this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor)
+        this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
         
         // Blue coins: 1 per 1-2 floors (500 points)
         if (floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
-          this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor)
+          this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor, floorUsedPositions)
         }
         
         // Diamonds: 1 per 1-3 floors (1000 points)  
         if (floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
-          this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor)
+          this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
         }
         
         // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
         if (floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
-          this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor)
+          this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
         }
         
         // Flash power-ups: Rare collectible after floor 20
         if (floor > 20 && Math.random() < 0.1) {
-          this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor)
+          this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
         }
       }
       

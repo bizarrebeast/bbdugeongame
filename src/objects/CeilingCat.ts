@@ -6,8 +6,6 @@ export class CeilingCat extends Cat {
   private triggerDistance: number = 32 // 1 tile away to activate mine
   public playerRef: Phaser.Physics.Arcade.Sprite | null = null
   private originalY: number
-  private isOnLadder: boolean = false
-  private ladderClimbDirection: number = 0 // -1 for up, 1 for down, 0 for none
   private hasPlayerPassed: boolean = false
   private eyesSprite: Phaser.GameObjects.Graphics | null = null
   private mineTimer: number = 0
@@ -163,61 +161,42 @@ export class CeilingCat extends Cat {
   }
   
   private updateChasing(): void {
-    // Gradually increase speed over time
-    this.currentSpeed += this.speedIncrement * 0.01 // Slow increase per frame
-    const maxSpeed = 80 * 2.25 // Cap the speed at 2.25x base speed (180)
-    if (this.currentSpeed > maxSpeed) {
-      this.currentSpeed = maxSpeed
-    }
-    
     const playerX = this.playerRef!.x
     const playerY = this.playerRef!.y
     
-    // Check if we're currently on a ladder
-    if (this.isOnLadder && this.ladderClimbDirection !== 0) {
-      // Continue climbing in the set direction
-      this.setVelocityX(0)
-      this.setVelocityY(this.ladderClimbDirection * 100) // Climb speed
-      this.body!.setGravityY(0) // Disable gravity while climbing
-      return
-    }
-    
-    // Normal gravity when not climbing
+    // Normal gravity always
     this.body!.setGravityY(800)
     
-    const direction = playerX > this.x ? 1 : -1
-    const floorDifference = playerY - this.y
+    const floorDifference = Math.abs(playerY - this.y)
     
-    // Check world boundaries
-    const worldWidth = 24 * 32
-    if ((direction === 1 && this.x >= worldWidth - 20) ||
-        (direction === -1 && this.x <= 20)) {
-      this.setVelocityX(0)
-      return
-    }
-    
-    // If player is on a different floor (more than 50 pixels difference)
-    if (Math.abs(floorDifference) > 50) {
-      // We need to find a ladder - move horizontally towards player for now
+    // Check if player is on same floor (within 50 pixels vertically)
+    if (floorDifference < 50) {
+      // Same floor - chase the player with increasing speed
+      this.currentSpeed += this.speedIncrement * 0.01 // Slow increase per frame
+      const maxSpeed = 80 * 2.25 // Cap the speed at 2.25x base speed (180)
+      if (this.currentSpeed > maxSpeed) {
+        this.currentSpeed = maxSpeed
+      }
+      
+      const direction = playerX > this.x ? 1 : -1
+      
+      // Check world boundaries
+      const worldWidth = 24 * 32
+      if ((direction === 1 && this.x >= worldWidth - 20) ||
+          (direction === -1 && this.x <= 20)) {
+        this.setVelocityX(0)
+        return
+      }
+      
+      // Chase aggressively
       this.direction = direction
       this.setVelocityX(this.currentSpeed * direction)
     } else {
-      // Same floor, chase normally
-      this.direction = direction
-      this.setVelocityX(this.currentSpeed * direction)
+      // Different floor - patrol back and forth
+      this.updatePatrolling(16) // Pass delta as patrol uses it
     }
   }
   
-  public startLadderClimb(direction: 'up' | 'down'): void {
-    this.isOnLadder = true
-    this.ladderClimbDirection = direction === 'up' ? -1 : 1
-  }
-  
-  public stopLadderClimb(): void {
-    this.isOnLadder = false
-    this.ladderClimbDirection = 0
-    this.body!.setGravityY(800) // Restore gravity
-  }
   
   private updatePatrolling(delta: number): void {
     // Patrol like a yellow cat - slow speed with random movement

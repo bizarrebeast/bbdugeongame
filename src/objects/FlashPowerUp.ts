@@ -1,27 +1,28 @@
 export class FlashPowerUp {
-  public sprite: Phaser.GameObjects.Graphics
+  public sprite: Phaser.GameObjects.Rectangle
+  public flashGraphics: Phaser.GameObjects.Graphics
   private scene: Phaser.Scene
   private lightningBolts: Phaser.GameObjects.Graphics[] = []
+  private aura: Phaser.GameObjects.Arc | null = null
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
-    // Create flash power-up using Graphics
-    this.sprite = scene.add.graphics()
-    this.createFlashShape(x, y)
+    // Create invisible rectangle for physics
+    this.sprite = scene.add.rectangle(x, y, 24, 24, 0x000000, 0)
     this.sprite.setDepth(13)
     
-    // Add physics to the sprite
+    // Add physics to the invisible sprite
     scene.physics.add.existing(this.sprite, true) // Static body
     
-    // Set collision bounds
-    const body = this.sprite.body as Phaser.Physics.Arcade.StaticBody
-    body.setSize(24, 24)
-    body.setOffset(-12, -12)
+    // Create visible flash graphics
+    this.flashGraphics = scene.add.graphics()
+    this.createFlashShape(x, y)
+    this.flashGraphics.setDepth(13)
     
-    // Add dramatic pulsing animation
+    // Add dramatic pulsing animation to graphics
     scene.tweens.add({
-      targets: this.sprite,
+      targets: this.flashGraphics,
       scaleX: 1.3,
       scaleY: 1.3,
       duration: 500,
@@ -30,9 +31,9 @@ export class FlashPowerUp {
       ease: 'Power2.easeInOut'
     })
     
-    // Add floating motion
+    // Add floating motion to both sprites
     scene.tweens.add({
-      targets: this.sprite,
+      targets: [this.sprite, this.flashGraphics],
       y: y - 10,
       duration: 1000,
       yoyo: true,
@@ -45,11 +46,11 @@ export class FlashPowerUp {
   }
   
   private createFlashShape(x: number, y: number): void {
-    this.sprite.clear()
-    this.sprite.setPosition(x, y)
+    this.flashGraphics.clear()
+    this.flashGraphics.setPosition(x, y)
     
     // Draw lightning bolt shape
-    this.sprite.fillStyle(0xffff00, 1) // Bright yellow
+    this.flashGraphics.fillStyle(0xffff00, 1) // Bright yellow
     
     // Lightning bolt path
     const points = [
@@ -63,43 +64,43 @@ export class FlashPowerUp {
       [6, 12]     // Bottom point
     ]
     
-    this.sprite.beginPath()
+    this.flashGraphics.beginPath()
     points.forEach((point, index) => {
       if (index === 0) {
-        this.sprite.moveTo(point[0], point[1])
+        this.flashGraphics.moveTo(point[0], point[1])
       } else {
-        this.sprite.lineTo(point[0], point[1])
+        this.flashGraphics.lineTo(point[0], point[1])
       }
     })
-    this.sprite.closePath()
-    this.sprite.fillPath()
+    this.flashGraphics.closePath()
+    this.flashGraphics.fillPath()
     
     // Add white core
-    this.sprite.fillStyle(0xffffff, 1)
-    this.sprite.beginPath()
+    this.flashGraphics.fillStyle(0xffffff, 1)
+    this.flashGraphics.beginPath()
     points.forEach((point, index) => {
       const innerPoint = [point[0] * 0.6, point[1] * 0.6]
       if (index === 0) {
-        this.sprite.moveTo(innerPoint[0], innerPoint[1])
+        this.flashGraphics.moveTo(innerPoint[0], innerPoint[1])
       } else {
-        this.sprite.lineTo(innerPoint[0], innerPoint[1])
+        this.flashGraphics.lineTo(innerPoint[0], innerPoint[1])
       }
     })
-    this.sprite.closePath()
-    this.sprite.fillPath()
+    this.flashGraphics.closePath()
+    this.flashGraphics.fillPath()
     
     // Add electric outline
-    this.sprite.lineStyle(2, 0x00ffff, 1)
-    this.sprite.beginPath()
+    this.flashGraphics.lineStyle(2, 0x00ffff, 1)
+    this.flashGraphics.beginPath()
     points.forEach((point, index) => {
       if (index === 0) {
-        this.sprite.moveTo(point[0], point[1])
+        this.flashGraphics.moveTo(point[0], point[1])
       } else {
-        this.sprite.lineTo(point[0], point[1])
+        this.flashGraphics.lineTo(point[0], point[1])
       }
     })
-    this.sprite.closePath()
-    this.sprite.strokePath()
+    this.flashGraphics.closePath()
+    this.flashGraphics.strokePath()
   }
   
   private createLightningEffects(x: number, y: number): void {
@@ -146,12 +147,12 @@ export class FlashPowerUp {
     }
     
     // Create electric aura
-    const aura = this.scene.add.circle(x, y, 35, 0x00ffff)
-    aura.setAlpha(0.1)
-    aura.setDepth(11)
+    this.aura = this.scene.add.circle(x, y, 35, 0x00ffff)
+    this.aura.setAlpha(0.1)
+    this.aura.setDepth(11)
     
     this.scene.tweens.add({
-      targets: aura,
+      targets: this.aura,
       scaleX: 1.2,
       scaleY: 1.2,
       alpha: 0.3,
@@ -163,66 +164,35 @@ export class FlashPowerUp {
   }
   
   collect(): void {
-    // Create spectacular electric collection effect
-    const flash = this.scene.add.circle(this.sprite.x, this.sprite.y, 100, 0xffffff)
-    flash.setDepth(100)
-    flash.setAlpha(1)
-    
-    // Screen flash effect
+    // Simple collection - just fade out and destroy
     this.scene.tweens.add({
-      targets: flash,
-      scaleX: 5,
-      scaleY: 5,
+      targets: [this.sprite, this.flashGraphics],
       alpha: 0,
-      duration: 600,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      duration: 300,
       ease: 'Power2.easeOut',
-      onComplete: () => flash.destroy()
-    })
-    
-    // Electric burst
-    for (let i = 0; i < 12; i++) {
-      const angle = (Math.PI * 2 / 12) * i
-      const bolt = this.scene.add.graphics()
-      bolt.setPosition(this.sprite.x, this.sprite.y)
-      bolt.setDepth(99)
-      
-      bolt.lineStyle(4, 0x00ffff, 1)
-      bolt.beginPath()
-      bolt.moveTo(0, 0)
-      bolt.lineTo(Math.cos(angle) * 60, Math.sin(angle) * 60)
-      bolt.strokePath()
-      
-      this.scene.tweens.add({
-        targets: bolt,
-        alpha: 0,
-        scaleX: 2,
-        scaleY: 2,
-        duration: 400,
-        ease: 'Power2.easeOut',
-        onComplete: () => bolt.destroy()
-      })
-    }
-    
-    // Power-up collection animation
-    this.scene.tweens.add({
-      targets: this.sprite,
-      scaleX: 3,
-      scaleY: 3,
-      rotation: Math.PI * 4,
-      alpha: 0,
-      duration: 600,
-      ease: 'Back.easeIn',
       onComplete: () => {
         this.sprite.destroy()
+        this.flashGraphics.destroy()
       }
     })
     
-    // Destroy lightning bolts
+    // Clean up any lightning bolts
     this.lightningBolts.forEach(bolt => bolt.destroy())
+    
+    // Clean up aura if it exists
+    if (this.aura) {
+      this.aura.destroy()
+    }
   }
   
   destroy(): void {
     this.sprite.destroy()
+    this.flashGraphics.destroy()
     this.lightningBolts.forEach(bolt => bolt.destroy())
+    if (this.aura) {
+      this.aura.destroy()
+    }
   }
 }

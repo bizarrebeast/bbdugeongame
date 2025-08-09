@@ -4,7 +4,7 @@
  */
 
 export const GameSettings = {
-  debug: true,
+  debug: false,
 
   canvas: {
     width: 450,  // Portrait mode - 9:16 aspect ratio
