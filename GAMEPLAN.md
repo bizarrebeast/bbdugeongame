@@ -36,9 +36,12 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ## Level Design ✅ IMPLEMENTED
 
-### Structure ✅ FULLY BUILT
-- ✅ Single endless tower with procedurally generated floor layouts  
-- ✅ Dynamically generates new floors as player climbs higher
+### Structure ✅ FULLY BUILT  
+- ✅ Mario-style discrete levels with clear start and end points
+- ✅ Each level: start at bottom, climb to top to complete
+- ✅ Cumulative scoring carries across levels (not reset)
+- ✅ Level counter "LEVEL: X" displayed in HUD
+- ✅ Progressive content unlocks (new blobs and collectibles per level)
 - ✅ 24-tile wide floors for dynamic gameplay (expanded from 14 tiles)
 - ✅ Varying platform arrangements with random gaps
 - ✅ Smart ladder placement distributed across floor thirds
@@ -54,18 +57,18 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ## Enemies & Obstacles ✅ IMPLEMENTED
 
 ### Enemy Types ✅ ACTIVE
-- **Ground Cats:** ✅ Four color variants with unique AI behaviors
-  - **Blue Cats:** Standard patrol behavior at normal speed
-  - **Yellow Cats:** Slower speed with random movement patterns  
-  - **Green Cats:** Fast bouncing movement across full floor width
-  - **Red Cats:** Floor-based AI with smart chase behavior
-- **Red Stalker Cats:** ✅ Advanced mine behavior with warning system
+- **Ground Blobs:** ✅ Four color variants with unique AI behaviors
+  - **Blue Blobs:** Standard patrol behavior at normal speed
+  - **Yellow Blobs:** Slower speed with random movement patterns  
+  - **Green Blobs:** Fast bouncing movement across full floor width
+  - **Red Blobs:** Floor-based AI with smart chase behavior
+- **Red Stalker Blobs:** ✅ Advanced mine behavior with warning system
   - **Hidden State:** Invisible until player triggers within 1 tile
   - **Warning Phase:** 2-second countdown with glowing yellow eyes  
   - **Chase Phase:** Pop out and chase at 1.5x speed indefinitely
   - **Floor Intelligence:** Chase on same floor, patrol on different floors
 - **Movement Patterns:** ✅ Advanced AI with collision behavior and boundary detection
-- **Combat Integration:** ✅ All cats can be defeated via jump-to-kill mechanics with combo system
+- **Combat Integration:** ✅ All blobs can be defeated via jump-to-kill mechanics with combo system
 - **Cross-Floor AI:** ✅ Smart floor-based movement preventing stuck behaviors
 
 ### Future Additions 🔄 PLANNED
@@ -119,7 +122,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - **Diamonds:** ✅ 1000 points per diamond collectible
 - **Treasure Chests:** ✅ 2500 points plus contents
 - **Height Milestones:** ✅ 500 bonus points for reaching new floors
-- **Defeating Cats:** ✅ 200 points per cat with combo multipliers
+- **Defeating Blobs:** ✅ 200 points per blob with combo multipliers
 - **Combo System:** ✅ Consecutive kills multiply score (x1, x2, x3, x4+)
 
 ### Current Implementation ✅ WORKING
@@ -201,7 +204,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 **✅ What's Working:**
 - Complete mobile and desktop gameplay with WASD + arrow key support
 - Endless procedural generation with smart ladder placement
-- Advanced cat AI system with 4 unique enemy types (blue, yellow, green, red)
+- Advanced blob AI system with 4 unique enemy types (blue, yellow, green, red)
 - Complete combat system with jump-to-kill mechanics and combo multipliers
 - Full visibility system with 5-tile radius and dynamic darkness overlay
 - Flash power-up system removing darkness for 5 seconds
@@ -212,30 +215,30 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Complete scoring system with point popups and combo feedback
 - Progressive difficulty with speed increases
 - Game over and restart system with full state reset
-- Ground floor boundary protection and intelligent red cat floor-based AI
+- Ground floor boundary protection and intelligent red blob floor-based AI
 
 ---
 
 ## 📂 COMPLETED SPRINTS
 
-### ✅ Cat Chaos Update - COMPLETED
+### ✅ Blob Chaos Update - COMPLETED
 *Detailed implementation plan: [SPRINT_CAT_CHAOS.md](./SPRINT_CAT_CHAOS.md)*
 
 **Phase 1: Enemy System Overhaul** ✅ COMPLETE
-- [x] Convert beetles to cats with 4 color variants (blue, yellow, green, red)
+- [x] Convert beetles to blobs with 4 color variants (blue, yellow, green, red)
 - [x] Implement unique behaviors per color (blue=patrol, yellow=random, green=bouncing, red=floor-based AI)
-- [x] Add visual variety with colored cat sprites
-- [x] Smart red cat AI preventing stuck behaviors
+- [x] Add visual variety with colored blob sprites
+- [x] Smart red blob AI preventing stuck behaviors
 
 **Phase 2: Combat System** ✅ COMPLETE
-- [x] Jump-to-kill detection (player landing on cats)
+- [x] Jump-to-kill detection (player landing on blobs)
 - [x] Player bounce mechanic after successful kill
 - [x] Combo system with score multipliers (x1, x2, x3, x4+)
 - [x] Point popup system showing earned points with consistent fonts
 - [x] Visual combo counter with animations
 - [x] 1-second combo window to maintain multiplier
 
-**Phase 3: Red Stalker Cats** ✅ COMPLETE  
+**Phase 3: Red Stalker Blobs** ✅ COMPLETE  
 - [x] Implement timed mine behavior with 2-second delay
 - [x] Add glowing eyes warning system during countdown
 - [x] Chase AI with 1.5x speed after activation

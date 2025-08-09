@@ -1,19 +1,19 @@
-# ✅ SPRINT: CAT CHAOS UPDATE - COMPLETED
+# ✅ SPRINT: BLOB CHAOS UPDATE - COMPLETED
 
 ## Sprint Goal ✅ ACHIEVED
-Transform the game with cat enemies, combat system, visibility mechanics, and enhanced collectibles.
+Transform the game with blob enemies, combat system, visibility mechanics, and enhanced collectibles.
 
 **STATUS: ALL PHASES COMPLETED SUCCESSFULLY**
 
-## 1. Enemy System Overhaul 🐱
+## 1. Enemy System Overhaul 🟦
 
-### Cat Enemy Types
-**Ground Cats (formerly beetles):**
-- **Blue Cat:** Standard patrol behavior at normal speed
-- **Yellow Cat:** Slower speed, slightly random movement patterns  
-- **Green Cat:** Bouncing movement, travels full floor width
+### Blob Enemy Types
+**Ground Blobs (formerly beetles):**
+- **Blue Blob:** Standard patrol behavior at normal speed
+- **Yellow Blob:** Slower speed, slightly random movement patterns  
+- **Green Blob:** Bouncing movement, travels full floor width
 
-**Ceiling Cats (new enemy type):**
+**Ceiling Blobs (new enemy type):**
 - Start attached to ceiling (bottom of floor above)
 - Drop trigger: Player passes underneath and moves 1 tile away
 - Fall straight down with flip animation
@@ -22,19 +22,19 @@ Transform the game with cat enemies, combat system, visibility mechanics, and en
 - Placement: 0-1 per floor until level 20, then 0-2 per floor
 
 ### Implementation Notes:
-- Rename Beetle.ts to Cat.ts and update all references
-- Create CeilingCat.ts extending Cat with drop behavior
-- Add color property to Cat class for visual variety
+- Rename Beetle.ts to Blob.ts and update all references
+- Create CeilingBlob.ts extending Blob with drop behavior
+- Add color property to Blob class for visual variety
 - Implement chase AI with 1.5x speed multiplier
 
 ## 2. Combat System 🎯
 
 ### Jump-to-Kill Mechanic
-- Player can kill cats by jumping on them
+- Player can kill blobs by jumping on them
 - **Bounce behavior:** Auto-bounce on kill (slightly less than normal jump)
-- **Points:** 200 points per cat killed
+- **Points:** 200 points per blob killed
 - **Squish animation:** Simple scale down effect
-- **Vulnerability:** Ceiling cats only vulnerable after landing
+- **Vulnerability:** Ceiling blobs only vulnerable after landing
 
 ### Combo System
 - **Window:** 1 second between kills to maintain combo
@@ -101,11 +101,11 @@ Transform the game with cat enemies, combat system, visibility mechanics, and en
 
 ## Technical Implementation Order 📝
 
-### Phase 1: Cat Enemy Reskin ✅ COMPLETE
-- [x] Convert beetles to cats with 4 color variants (blue, yellow, green, red)
+### Phase 1: Blob Enemy Reskin ✅ COMPLETE
+- [x] Convert beetles to blobs with 4 color variants (blue, yellow, green, red)
 - [x] Implement unique behavior differences per color
 - [x] Add squish death animation with scale effects
-- [x] Smart red cat AI with floor-based intelligence
+- [x] Smart red blob AI with floor-based intelligence
 
 ### Phase 2: Combat System ✅ COMPLETE
 - [x] Add jump-to-kill detection with precise collision
@@ -114,7 +114,7 @@ Transform the game with cat enemies, combat system, visibility mechanics, and en
 - [x] Add point popup system with consistent fonts
 - [x] 1-second combo window for maintaining multipliers
 
-### Phase 3: Red Stalker Cats ✅ COMPLETE
+### Phase 3: Red Stalker Blobs ✅ COMPLETE
 - [x] Implement mine behavior with 2-second warning delay
 - [x] Add glowing eyes warning system during countdown
 - [x] Create chase AI with 1.5x speed after activation
@@ -144,12 +144,12 @@ Transform the game with cat enemies, combat system, visibility mechanics, and en
 - [x] Progressive difficulty scaling and balancing
 
 ## Success Criteria ✅ ALL ACHIEVED
-- ✅ All cat enemy types working with unique behaviors (4 variants implemented)
+- ✅ All blob enemy types working with unique behaviors (4 variants implemented)
 - ✅ Combat system allows skillful combo play with multipliers and bounce mechanics
 - ✅ Visibility system creates tension and exploration feel with 5-tile radius
 - ✅ Enhanced collectible variety adds strategic choices (coins, diamonds, chests, flash power-ups)
 - ✅ All features work perfectly on mobile and desktop with optimized controls
-- ✅ Red cat AI uses intelligent floor-based movement preventing stuck behaviors
+- ✅ Red blob AI uses intelligent floor-based movement preventing stuck behaviors
 - ✅ Treasure chest interaction system with ACTION button integration
 - ✅ Flash power-up system removes darkness overlay for strategic play
 - ✅ Complete mobile touch controls with multi-touch support
@@ -167,14 +167,14 @@ Transform the game with cat enemies, combat system, visibility mechanics, and en
 
 ## Technical Achievements
 - **Physics Integration:** Resolved Graphics object collision detection issues
-- **Smart AI:** Red cats use floor-based logic for optimal gameplay
+- **Smart AI:** Red blobs use floor-based logic for optimal gameplay
 - **Mobile Optimization:** Full touch control system with ACTION button
 - **Performance:** Visibility system runs smoothly with dynamic updates
 - **Code Quality:** Clean, maintainable implementation with proper separation of concerns
 
 ## Game State: FULLY PLAYABLE
-**The Cat Chaos Update sprint has been completed successfully. The game now features:**
-- Complete cat enemy system with 4 unique behavioral variants
+**The Blob Chaos Update sprint has been completed successfully. The game now features:**
+- Complete blob enemy system with 4 unique behavioral variants
 - Full combat system with jump-to-kill mechanics and combo multipliers
 - Atmospheric visibility system with strategic flash power-ups
 - Rich collectible ecosystem with multiple item types and values
