@@ -37,15 +37,14 @@ export class GameScene extends Phaser.Scene {
   private visibilityRadius: number = 160 // 5 tiles * 32 pixels
   private flashPowerUpActive: boolean = false
   private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
-  private nearTreasureChest: TreasureChest | null = null
   
   constructor() {
     super({ key: "GameScene" })
   }
 
   preload(): void {
-    // For now, we'll create colored rectangles as placeholders
-    // Later we'll load actual sprite assets
+    // Load the visibility overlay image
+    this.load.image('visibilityOverlay', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO')
   }
 
   create(): void {
@@ -900,13 +899,25 @@ export class GameScene extends Phaser.Scene {
       this.flashPowerUpTimer.destroy()
     }
     
+    // Immediately fade out the visibility mask for instant full screen reveal
+    // Scale up happens instantly but invisibly
+    this.visibilityMask.setScale(6, 6) // Instant scale
+    this.tweens.add({
+      targets: this.visibilityMask,
+      alpha: 0, // Immediate fade out
+      duration: 100, // Very fast fade
+      ease: 'Power2.easeOut'
+    })
+    
     // Set 5-second timer
     this.flashPowerUpTimer = this.time.delayedCall(5000, () => {
       this.flashPowerUpActive = false
       this.flashPowerUpTimer = null
+      
+      // Immediately return to normal - instant scale and fade back
+      this.visibilityMask.setScale(1, 1) // Instant scale back to normal
+      this.visibilityMask.setAlpha(1) // Instant fade back to visible
     })
-    
-    // No flash effect - darkness just disappears for 5 seconds
   }
   
   private shouldCollideWithPlatform(): boolean {
@@ -1089,63 +1100,38 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createVisibilitySystem(): void {
-    // Create four black rectangles to surround the visible area
-    const width = GameSettings.canvas.width * 3
-    const height = GameSettings.canvas.height * 3
-    
-    this.visibilityMask = {
-      top: this.add.rectangle(0, 0, width, height, 0x000000),
-      bottom: this.add.rectangle(0, 0, width, height, 0x000000),
-      left: this.add.rectangle(0, 0, width, height, 0x000000),
-      right: this.add.rectangle(0, 0, width, height, 0x000000)
-    }
-    
-    // Set depth for all darkness rectangles (in front of hitboxes but behind HUD)
-    Object.values(this.visibilityMask).forEach(rect => {
-      rect.setDepth(98)
-      rect.setOrigin(0, 0)
-    })
+    // Create single overlay image with transparent area for visibility
+    this.visibilityMask = this.add.image(0, 0, 'visibilityOverlay')
+    this.visibilityMask.setDepth(98) // In front of game objects but behind HUD
+    this.visibilityMask.setOrigin(0.5, 0.5) // Center origin for easy positioning
   }
   
   private updateVisibilitySystem(): void {
     if (!this.visibilityMask) return
     
-    // If flash power-up is active, hide all visibility masks
-    if (this.flashPowerUpActive) {
-      Object.values(this.visibilityMask).forEach((rect: any) => {
-        rect.setVisible(false)
-      })
-      return
-    }
-    
-    // Show visibility masks and update positions
-    Object.values(this.visibilityMask).forEach((rect: any) => {
-      rect.setVisible(true)
-    })
-    
-    const { top, bottom, left, right } = this.visibilityMask
-    const radius = this.visibilityRadius
+    // Always show and position the visibility mask
+    this.visibilityMask.setVisible(true)
     
     // Get player world position
     const playerX = this.player.x
     const playerY = this.player.y
     
-    // Position the black rectangles around the visible square
-    // Top rectangle (extend way up to cover top of screen)
-    top.setPosition(playerX - radius * 3, playerY - radius * 10) 
-    top.setSize(radius * 6, radius * 9)
+    // Position the overlay image so the player appears in the lower 40% of the transparent area
+    // 
+    // Image specs:
+    // - Total size: 2880 × 3200
+    // - Image center: (1440, 1600)
+    // - Transparent area: 320 × 320, positioned at y=1600 to y=1920 in image coordinates
+    // - Player should be 128px from bottom of transparent area (40% from bottom) = y=1792 in image coordinates
+    //
+    // Offset needed: Image center is at y=1600, player should be at y=1792
+    // So image needs to be positioned 192 pixels UP from player position
+    const overlayX = playerX
+    const overlayY = playerY - 192
     
-    // Bottom rectangle (extend way down to cover bottom of screen)
-    bottom.setPosition(playerX - radius * 3, playerY + radius)
-    bottom.setSize(radius * 6, radius * 9)
+    this.visibilityMask.setPosition(overlayX, overlayY)
     
-    // Left rectangle (extend way left to cover left of screen)
-    left.setPosition(playerX - radius * 10, playerY - radius)
-    left.setSize(radius * 9, radius * 2)
-    
-    // Right rectangle (extend way right to cover right of screen)
-    right.setPosition(playerX + radius, playerY - radius)
-    right.setSize(radius * 9, radius * 2)
+    // Scale handling is done in activateFlashPowerUp() and when timer expires
   }
   
   private showPointPopup(x: number, y: number, points: number): void {
@@ -1229,10 +1215,10 @@ export class GameScene extends Phaser.Scene {
   }
   
   private updateTreasureChestInteraction(): void {
-    // Check if player is near any treasure chest
-    let nearChest: TreasureChest | null = null
-    
-    for (const chest of this.treasureChests) {
+    // Check for automatic chest opening on contact
+    for (let i = this.treasureChests.length - 1; i >= 0; i--) {
+      const chest = this.treasureChests[i]
+      
       if (!chest.canInteract()) continue
       
       const distance = Phaser.Math.Distance.Between(
@@ -1240,25 +1226,17 @@ export class GameScene extends Phaser.Scene {
         chest.sprite.x, chest.sprite.y
       )
       
-      if (distance < 50) { // Within interaction range
-        nearChest = chest
-        break
+      // Check if player is touching the chest (smaller distance for contact)
+      if (distance < 32) { // Contact range - about 1 tile
+        // Check if player is on the same floor (within reasonable Y distance)
+        const playerBody = this.player.body as Phaser.Physics.Arcade.Body
+        const isOnGround = playerBody.blocked.down
+        
+        if (isOnGround) {
+          this.openTreasureChest(chest)
+          break // Only open one chest per frame
+        }
       }
-    }
-    
-    // Update action button visibility and current chest
-    if (nearChest !== this.nearTreasureChest) {
-      this.nearTreasureChest = nearChest
-      this.touchControls.showActionButton(nearChest !== null)
-    }
-    
-    // Check for interaction input (E key or action button)
-    const eKey = this.input.keyboard?.addKey('E')
-    const eKeyJustPressed = eKey ? Phaser.Input.Keyboard.JustDown(eKey) : false
-    const actionPressed = this.touchControls.isActionJustPressed()
-    
-    if ((eKeyJustPressed || actionPressed) && this.nearTreasureChest) {
-      this.openTreasureChest(this.nearTreasureChest)
     }
   }
   
@@ -1291,9 +1269,7 @@ export class GameScene extends Phaser.Scene {
       }
     })
     
-    // Remove interaction
-    this.nearTreasureChest = null
-    this.touchControls.showActionButton(false)
+    // No need to remove interaction since chests open automatically on contact
   }
   
   private spawnTreasureChestContents(chestX: number, chestY: number, contents: any): void {
