@@ -4,15 +4,17 @@
 
 **"Bizarre Underground"** - Retro endless climber in abandoned mine setting
 
-### ✅ COMPLETED: Blob Chaos Update Sprint (FULLY IMPLEMENTED)
+### ✅ COMPLETED: Blob Chaos Update Sprint + Visibility Enhancement (FULLY IMPLEMENTED)
 - **Game is 100% playable** with all core mechanics working
 - **4 Blob Enemy Types**: Blue (patrol), Yellow (slow), Green (fast), Red (stalker with mine behavior) 
 - **Complete Combat**: Jump-to-kill with combo multipliers and point popups
 - **Full Collectible System**: Coins (50), blue coins (500), diamonds (1000), treasure chests (2500+), flash power-ups
-- **Visibility System**: 5-tile darkness with flash power-up reveals (5 seconds)
-- **Complete Controls**: WASD + Arrow keys + mobile touch with ACTION button
-- **Mobile Support**: Virtual joystick, jump, ACTION button with multi-touch
-- **Visual Polish**: Debug mode OFF, clean UI, consistent fonts
+- **Professional Visibility System**: Custom overlay image with asymmetric player positioning (lower 40%)
+- **Enhanced Flash Power-up**: Instant scaling with seamless fade transitions
+- **Complete Controls**: WASD + Arrow keys + mobile touch (simplified from ACTION button)
+- **Mobile Support**: Virtual joystick + jump button with multi-touch
+- **Streamlined Interactions**: Automatic treasure chest opening on contact
+- **Visual Polish**: Debug mode OFF, clean UI, consistent fonts, professional overlay
 
 ### 🎯 IMMEDIATE NEXT STEP: CHOOSE SPRINT
 

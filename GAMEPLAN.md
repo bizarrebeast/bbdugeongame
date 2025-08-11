@@ -29,10 +29,10 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - **Combat:** Fire button to defeat enemies (if applicable)
 
 ### Controls ✅ FULLY IMPLEMENTED
-- **Mobile:** ✅ Virtual joystick for movement/climbing + jump button + ACTION button with multi-touch support
-- **Desktop:** ✅ Arrow keys + WASD for movement/climbing, spacebar for jump, E key for ACTION
+- **Mobile:** ✅ Virtual joystick for movement/climbing + jump button with multi-touch support
+- **Desktop:** ✅ Arrow keys + WASD for movement/climbing, spacebar for jump
 - **Dual Input:** ✅ All control schemes work simultaneously
-- **Action System:** ✅ Dedicated ACTION button for treasure chest interactions
+- **Interaction System:** ✅ Automatic contact-based treasure chest opening (simplified from ACTION button)
 
 ## Level Design ✅ IMPLEMENTED
 
@@ -91,14 +91,16 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ Point popups showing earned values
 
 ### Treasure Chest Mechanics ✅ IMPLEMENTED
-- ✅ Requires ACTION button interaction (E key / mobile ACTION button)
-- ✅ Brief opening animation with vulnerability window
+- ✅ Automatic opening on player contact when grounded
+- ✅ Brief opening animation with smooth fade-out effect
 - ✅ Contains multiple coins plus chance of diamonds and flash power-ups
 - ✅ Full reset on death for replay value
 
-### Flash Power-up System ✅ ACTIVE
-- ✅ Removes darkness overlay revealing entire screen
-- ✅ 5-second duration with visual feedback
+### Flash Power-up System ✅ ENHANCED
+- ✅ Professional custom overlay image with transparent window (320×320px)
+- ✅ Instant scaling + fade effects for seamless flash experience
+- ✅ Player positioned in lower 40% of visible area for optimal forward visibility
+- ✅ 5-second duration with instant transitions (no visible mechanics)
 - ✅ Found in treasure chests and as collectible items
 
 ## Difficulty Progression
@@ -206,12 +208,12 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Endless procedural generation with smart ladder placement
 - Advanced blob AI system with 4 unique enemy types (blue, yellow, green, red)
 - Complete combat system with jump-to-kill mechanics and combo multipliers
-- Full visibility system with 5-tile radius and dynamic darkness overlay
-- Flash power-up system removing darkness for 5 seconds
+- Professional custom visibility overlay system with asymmetric player positioning
+- Enhanced flash power-up with instant transitions and seamless effects
 - Enhanced collectibles: regular coins (50pts), blue coins (500pts), diamonds (1000pts), treasure chests (2500pts + contents)
-- Interactive treasure chest system with ACTION button
+- Automatic treasure chest system with contact-based opening
 - Professional UI with translucent backgrounds and depth layering
-- Multi-touch support with virtual joystick, jump button, and ACTION button
+- Multi-touch support with virtual joystick and jump button
 - Complete scoring system with point popups and combo feedback
 - Progressive difficulty with speed increases
 - Game over and restart system with full state reset
@@ -245,26 +247,27 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - [x] Floor-based intelligence: chase same floor, patrol different floors
 - [x] No ladder climbing to prevent exploitation
 
-**Phase 4: Visibility System** ✅ COMPLETE
-- [x] Create darkness overlay covering entire game
-- [x] Implement 5-tile visibility radius around player (square spotlight)
-- [x] Dynamic darkness with proper reveal/hide mechanics
+**Phase 4: Visibility System** ✅ ENHANCED
+- [x] Custom professional overlay image (2880×3200px) replacing four rectangles
+- [x] Asymmetric visibility with player in lower 40% for optimal forward sight
+- [x] 320×320px transparent window optimized for platforming gameplay
+- [x] Enhanced flash power-up with instant scaling and fade transitions
 - [x] Proper depth ordering (behind HUD, over game elements)
 - [x] Translucent white HUD background for better visibility
 
-**Phase 5: Enhanced Collectibles** ✅ COMPLETE
+**Phase 5: Enhanced Collectibles** ✅ SIMPLIFIED  
 - [x] Add blue coins (500 points) and diamonds (1000 points)
-- [x] Create treasure chest system requiring ACTION button
-- [x] Implement flash power-up removing darkness for 5 seconds
+- [x] Automatic treasure chest system with contact-based opening
+- [x] Enhanced flash power-up with professional overlay effects
 - [x] Smart collectible placement preventing overlaps
 - [x] Point popups for all collectible types
 
-**Phase 6: UI/UX Polish** ✅ COMPLETE
+**Phase 6: UI/UX Polish** ✅ STREAMLINED
 - [x] Implement WASD keyboard controls alongside arrow keys
-- [x] Create ACTION button for treasure chest interaction
-- [x] Optimize performance with visibility system
+- [x] Simplify interaction system with automatic chest opening
+- [x] Optimize performance with single overlay image system
 - [x] Clean visual experience with debug lines disabled
-- [x] Mobile touch controls with ACTION button integration
+- [x] Mobile touch controls optimized for core gameplay
 
 ### 🔄 FUTURE ENHANCEMENTS (Next Sprints)
 
