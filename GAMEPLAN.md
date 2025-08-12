@@ -36,15 +36,17 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ## Level Design ✅ IMPLEMENTED
 
-### Structure ✅ FULLY BUILT  
-- ✅ Mario-style discrete levels with clear start and end points
-- ✅ Each level: start at bottom, climb to top to complete
-- ✅ Cumulative scoring carries across levels (not reset)
-- ✅ Level counter "LEVEL: X" displayed in HUD
-- ✅ Progressive content unlocks (new blobs and collectibles per level)
-- ✅ 24-tile wide floors for dynamic gameplay (expanded from 14 tiles)
-- ✅ Varying platform arrangements with random gaps
-- ✅ Smart ladder placement distributed across floor thirds
+### Discrete Level System ✅ FULLY BUILT  
+- ✅ **Level Progression:** Discrete levels (1-100) then endless mode (101+)
+- ✅ **Level Structure:** Each level starts at bottom, climb to door at top to complete
+- ✅ **Floor Scaling:** Levels 1-5 (10 floors), 6-10 (15 floors), 11-15 (20 floors), +5 floors every 5 levels
+- ✅ **Door Completion:** Automatic activation on player contact at top floor
+- ✅ **Level Manager:** Complete system for level configurations and progression
+- ✅ **Progressive Content:** New enemies/collectibles unlock per level bracket
+- ✅ **Death Behavior:** Always restart from Level 1 with score reset
+- ✅ **Smart Level Boundaries:** Floors stop generating at door level
+- ✅ **24-tile wide floors:** Dynamic gameplay with varying platform arrangements
+- ✅ **Smart ladder placement:** Distributed across floor thirds with door floor access
 
 ### Procedural Generation Rules ✅ ACTIVE
 - ✅ Ensures all platforms are reachable via ladder placement validation
@@ -56,20 +58,21 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ## Enemies & Obstacles ✅ IMPLEMENTED
 
-### Enemy Types ✅ ACTIVE
+### Enemy Types ✅ LEVEL-BASED PROGRESSION
+- **Level-Based Unlocks:** ✅ Enemies unlock progressively by level bracket
+  - **Levels 1-2:** Blue blobs only
+  - **Levels 3-4:** Blue + Yellow blobs
+  - **Levels 5-6:** Blue + Yellow + Green blobs  
+  - **Levels 7+:** All blob types including Red
 - **Ground Blobs:** ✅ Four color variants with unique AI behaviors
   - **Blue Blobs:** Standard patrol behavior at normal speed
   - **Yellow Blobs:** Slower speed with random movement patterns  
   - **Green Blobs:** Fast bouncing movement across full floor width
   - **Red Blobs:** Floor-based AI with smart chase behavior
-- **Red Stalker Blobs:** ✅ Advanced mine behavior with warning system
-  - **Hidden State:** Invisible until player triggers within 1 tile
-  - **Warning Phase:** 2-second countdown with glowing yellow eyes  
-  - **Chase Phase:** Pop out and chase at 1.5x speed indefinitely
-  - **Floor Intelligence:** Chase on same floor, patrol on different floors
-- **Movement Patterns:** ✅ Advanced AI with collision behavior and boundary detection
-- **Combat Integration:** ✅ All blobs can be defeated via jump-to-kill mechanics with combo system
-- **Cross-Floor AI:** ✅ Smart floor-based movement preventing stuck behaviors
+- **Combat Integration:** ✅ All blobs can be defeated via jump-to-kill mechanics
+- **Multiple Kill Protection:** ✅ Prevents double-scoring from single enemy
+- **Combo Restrictions:** ✅ No combos while climbing ladders
+- **Safety Rules:** ✅ No enemies spawn on ground floor (Floor 1)
 
 ### Future Additions 🔄 PLANNED
 - **Spiders:** Crawl along platforms and down ladders (not yet implemented)
@@ -84,11 +87,11 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 5. **Flash Power-ups:** ✅ Removes darkness overlay for 5 seconds
 
 ### Enhanced Collectible System ✅ ACTIVE
-- ✅ Smart collectible placement preventing overlaps
-- ✅ Shared positioning system across all collectible types
-- ✅ Progressive rarity scaling with floor progression
-- ✅ Collection animations with scale/fade effects
-- ✅ Point popups showing earned values
+- ✅ **Level-Based Progression:** Collectibles unlock by level (coins→blue coins→diamonds→treasure chests)
+- ✅ **Smart collectible placement:** Preventing overlaps with collision detection
+- ✅ **Multiple Collection Protection:** Prevents double-scoring from single item
+- ✅ **Collection animations:** Scale/fade effects with point popups
+- ✅ **Progressive rarity scaling:** Based on level progression
 
 ### Treasure Chest Mechanics ✅ IMPLEMENTED
 - ✅ Automatic opening on player contact when grounded
@@ -128,13 +131,14 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - **Combo System:** ✅ Consecutive kills multiply score (x1, x2, x3, x4+)
 
 ### Current Implementation ✅ WORKING
-- ✅ Live score tracking with formatted display
-- ✅ Floor counter showing current height
-- ✅ Translucent white HUD background for atmospheric visibility
-- ✅ Bold styling for clear mobile visibility
-- ✅ Point popups showing earned scores at kill locations
-- ✅ Animated combo counter with visual feedback
-- ✅ 1-second combo window to maintain multiplier chains
+- ✅ **Live score tracking:** Formatted display with proper scoring logic
+- ✅ **Floor counter:** 1-based numbering (Floor 1-10, not 0-9)
+- ✅ **Level display:** Shows current level in progression
+- ✅ **Multiple Collection Protection:** Prevents double-scoring bugs
+- ✅ **Combo System:** Fixed calculation logic with ladder climbing restrictions
+- ✅ **Centered Popups:** All UI popups positioned consistently at screen center
+- ✅ **Point popups:** Show earned scores at kill/collection locations
+- ✅ **1-second combo window:** Maintains multiplier chains for ground-based kills
 
 ### Future Additions 🔄 PLANNED
 - **High Score Integration:** Remix platform leaderboards
@@ -222,6 +226,29 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ---
 
 ## 📂 COMPLETED SPRINTS
+
+### ✅ Balance & Progression Sprint - COMPLETED  
+*Focus: Discrete level system with progressive difficulty and refined game mechanics*
+
+**Level System Overhaul** ✅ COMPLETE
+- [x] Implement LevelManager system for discrete levels (1-100 then endless)
+- [x] Progressive floor counts: 10→15→20→25 floors (+5 every 5 levels)
+- [x] Door system at top floor for automatic level completion
+- [x] Level-based enemy/collectible progression unlocks
+- [x] Always restart from Level 1 on death (no progress restoration)
+
+**Game Mechanics Refinement** ✅ COMPLETE  
+- [x] Fix scoring system to prevent double-collection/kill bugs
+- [x] Add collision protection to coins and enemies (isCollected/isSquished flags)
+- [x] Fix combo calculation logic (calculate first, then increment)
+- [x] Disable combos while climbing ladders for balanced gameplay
+- [x] Implement safety rules: no enemies on ground floor, no collection during intro
+
+**UI/UX Improvements** ✅ COMPLETE
+- [x] Standardize all popup positions to center screen (level, combo, game over)
+- [x] Convert floor counter to 1-based numbering (Floor 1-10 instead of 0-9)
+- [x] Automatic door activation on player contact (no key press needed)
+- [x] Enhanced user experience with intuitive level progression
 
 ### ✅ Blob Chaos Update - COMPLETED
 *Detailed implementation plan: [SPRINT_CAT_CHAOS.md](./SPRINT_CAT_CHAOS.md)*
