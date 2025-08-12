@@ -8,6 +8,8 @@ import { Diamond } from "../objects/Diamond"
 import { TreasureChest } from "../objects/TreasureChest"
 import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
+import { LevelManager } from "../systems/LevelManager"
+import { Door } from "../objects/Door"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -37,6 +39,11 @@ export class GameScene extends Phaser.Scene {
   private visibilityRadius: number = 160 // 5 tiles * 32 pixels
   private flashPowerUpActive: boolean = false
   private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
+  private levelManager!: LevelManager
+  private levelText!: Phaser.GameObjects.Text
+  private door: Door | null = null
+  private isLevelStarting: boolean = false
+  private isLevelComplete: boolean = false
   
   constructor() {
     super({ key: "GameScene" })
@@ -51,8 +58,14 @@ export class GameScene extends Phaser.Scene {
     // Enable multi-touch support
     this.input.addPointer(2) // Allow up to 3 pointers total (default 1 + 2 more)
     
+    // Initialize level manager
+    if (!this.levelManager) {
+      this.levelManager = new LevelManager()
+    }
+    
     // Reset game state
     this.isGameOver = false
+    this.isLevelComplete = false
     this.score = 0
     this.currentFloor = 0
     this.highestFloorGenerated = 5
@@ -83,12 +96,18 @@ export class GameScene extends Phaser.Scene {
     // Create a test level with platforms and ladders
     this.createTestLevel()
     
-    // Create the player
+    // Create the player (starts off-screen for walk-in animation)
+    const spawnX = GameSettings.canvas.width / 2
+    // Place player exactly on ground floor (one tile up from bottom)
+    const spawnY = GameSettings.canvas.height - GameSettings.game.tileSize - 15
     this.player = new Player(
       this, 
-      GameSettings.canvas.width / 2, 
-      GameSettings.canvas.height - 80
+      -50,  // Start off-screen to the left
+      spawnY
     )
+    
+    // Start the level intro animation
+    this.startLevelIntro(spawnX, spawnY)
     
     // Add some cats to test (pass floor layouts)
     this.createCats()
@@ -98,6 +117,9 @@ export class GameScene extends Phaser.Scene {
     
     // Add collectibles
     this.createAllCollectibles()
+    
+    // Create door at top floor for level completion
+    this.createLevelEndDoor()
     
     // Set up collisions (with condition check for climbing)
     this.physics.add.collider(
@@ -168,10 +190,10 @@ export class GameScene extends Phaser.Scene {
     
     // Game title removed - focusing on clean HUD
     
-    // Create HUD background panel (translucent white)
+    // Create HUD background panel (translucent white) - extended for level display
     const hudBg = this.add.graphics()
     hudBg.fillStyle(0xffffff, 0.3)  // White with 30% opacity
-    hudBg.fillRoundedRect(8, 8, 200, 60, 8)
+    hudBg.fillRoundedRect(8, 8, 200, 80, 8)  // Increased height for level
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
@@ -185,8 +207,8 @@ export class GameScene extends Phaser.Scene {
     
     // Create combo text (hidden initially)
     this.comboText = this.add.text(
-      GameSettings.canvas.width / 2,
-      80,
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2,
       '',
       {
         fontSize: '13px',
@@ -208,7 +230,7 @@ export class GameScene extends Phaser.Scene {
     this.comboText.setScrollFactor(0)
     
     // Add floor counter with better styling
-    this.floorText = this.add.text(20, 40, 'FLOOR: 0', {
+    this.floorText = this.add.text(20, 40, 'FLOOR: 1', {
       fontSize: '16px',
       color: '#00ff88',
       fontFamily: 'Arial Black',
@@ -216,11 +238,27 @@ export class GameScene extends Phaser.Scene {
     }).setDepth(100)
     this.floorText.setScrollFactor(0)
     
+    // Add level counter
+    const currentLevel = this.levelManager.getCurrentLevel()
+    this.levelText = this.add.text(20, 60, `LEVEL: ${currentLevel}`, {
+      fontSize: '16px',
+      color: '#ff88ff',
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold'
+    }).setDepth(100)
+    this.levelText.setScrollFactor(0)
+    
     // Create touch controls for mobile
     this.touchControls = new TouchControls(this)
     
     // Connect touch controls to player
     this.player.setTouchControls(this.touchControls)
+    
+    // Check for level start conditions
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    if (levelConfig.isEndless) {
+      this.showEndlessModePopup()
+    }
   }
 
   private createTestLevel(): void {
@@ -228,8 +266,16 @@ export class GameScene extends Phaser.Scene {
     const floorWidth = GameSettings.game.floorWidth
     const floorSpacing = tileSize * 4 // Space between floors
     
-    // Calculate how many floors we can fit
-    const numFloors = Math.floor(GameSettings.canvas.height / floorSpacing)
+    // Get the required floor count for this level
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    const requiredFloors = levelConfig.isEndless ? 20 : levelConfig.floorCount
+    
+    // Generate exactly the required number of floors for discrete levels
+    // For Level 1: floorCount=10, so we generate floors 0,1,2,3,4,5,6,7,8,9 (10 floors total)
+    // Door goes on floor 9 (the 10th floor)
+    const numFloors = levelConfig.isEndless ? 
+      Math.max(requiredFloors, Math.floor(GameSettings.canvas.height / floorSpacing)) :
+      requiredFloors
     
     // Track ladder positions and floor layouts for cat placement
     const ladderPositions: number[] = []
@@ -325,7 +371,16 @@ export class GameScene extends Phaser.Scene {
     this.floorLayouts = floorLayouts
     
     // Create ladders ensuring solid ground above and below
+    // Allow ladders TO the door floor, but not FROM or past it
+    const doorFloor = levelConfig.isEndless ? -1 : (levelConfig.floorCount - 1)
+    
     for (let floor = 0; floor < numFloors - 1; floor++) {
+      // Skip creating ladder if it would lead PAST the door floor
+      // We WANT ladders leading TO the door floor, just not beyond it
+      if (!levelConfig.isEndless && (floor + 1) > doorFloor) {
+        continue // Don't create ladders leading past the door floor
+      }
+      
       const bottomY = GameSettings.canvas.height - tileSize - (floor * floorSpacing)
       const topY = GameSettings.canvas.height - tileSize - ((floor + 1) * floorSpacing)
       
@@ -462,8 +517,24 @@ export class GameScene extends Phaser.Scene {
     const floorSpacing = tileSize * 4
     const floorWidth = GameSettings.game.floorWidth
     
-    // Add cats on floors 1-4 (skip ground floor where player starts) 
-    for (let floor = 1; floor <= 4 && floor < this.floorLayouts.length; floor++) {
+    // Get allowed enemy types for current level
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    const allowedEnemies = levelConfig.enemyTypes
+    
+    // Map enemy types to cat colors
+    const availableColors: string[] = []
+    if (allowedEnemies.includes('blue')) availableColors.push('blue')
+    if (allowedEnemies.includes('yellow')) availableColors.push('yellow')
+    if (allowedEnemies.includes('green')) availableColors.push('green')
+    
+    // If no regular enemies are allowed yet, return
+    if (availableColors.length === 0) return
+    
+    // Add cats on floors 1 through second-to-last floor (skip ground floor and door floor)
+    const doorFloor = levelConfig.isEndless ? 999 : (levelConfig.floorCount - 1)
+    const maxEnemyFloor = levelConfig.isEndless ? Math.min(20, this.floorLayouts.length - 1) : doorFloor - 1
+    
+    for (let floor = 1; floor <= maxEnemyFloor && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       const y = GameSettings.canvas.height - (floor * floorSpacing) - 40
       
@@ -477,13 +548,17 @@ export class GameScene extends Phaser.Scene {
           const rightBound = Math.min(tileSize * (floorWidth - 1.5), (i + 1) * sectionSize * tileSize)
           
           if (rightBound - leftBound > tileSize * 3) {
+            // Pick a random color from available colors
+            const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
+            
             // Green cats get full floor bounds, others get section bounds
             const cat = new Cat(
               this,
               (leftBound + rightBound) / 2,
               y,
               leftBound,
-              rightBound
+              rightBound,
+              randomColor as any
             )
             
             // Override bounds for green cats to use full floor
@@ -511,12 +586,16 @@ export class GameScene extends Phaser.Scene {
             const rightBound = tileSize * (0.5 + (i + 1) * leftSectionTileSize - 0.5)
             
             if (rightBound - leftBound > tileSize * 2) {
+              // Pick a random color from available colors
+              const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
+              
               const cat = new Cat(
                 this,
                 (leftBound + rightBound) / 2,
                 y,
                 leftBound,
-                Math.min(rightBound, tileSize * (layout.gapStart - 0.5))
+                Math.min(rightBound, tileSize * (layout.gapStart - 0.5)),
+                randomColor as any
               )
               
               // Green cats use full left section bounds
@@ -543,12 +622,16 @@ export class GameScene extends Phaser.Scene {
             const rightBound = tileSize * (rightStart + 0.5 + (i + 1) * rightSectionTileSize - 0.5)
             
             if (rightBound - leftBound > tileSize * 2) {
+              // Pick a random color from available colors
+              const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
+              
               const cat = new Cat(
                 this,
                 (leftBound + rightBound) / 2,
                 y,
                 leftBound,
-                Math.min(rightBound, tileSize * (floorWidth - 0.5))
+                Math.min(rightBound, tileSize * (floorWidth - 0.5)),
+                randomColor as any
               )
               
               // Green cats use full right section bounds
@@ -568,12 +651,22 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createCeilingCats(): void {
+    // Check if red enemies should spawn based on current level
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    if (!levelConfig.enemyTypes.includes('red')) {
+      // Red enemies not unlocked yet
+      return
+    }
+    
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 4
     const floorWidth = GameSettings.game.floorWidth
     
-    // Add ceiling cats starting from floor 2 (0-1 per floor until level 20, then 0-2)
-    for (let floor = 2; floor <= 5 && floor < this.floorLayouts.length; floor++) {
+    // Add ceiling cats starting from floor 2, up to second-to-last floor (avoid door floor)
+    const doorFloor = levelConfig.isEndless ? 999 : (levelConfig.floorCount - 1)
+    const maxCeilingCatFloor = levelConfig.isEndless ? Math.min(25, this.floorLayouts.length - 1) : doorFloor - 1
+    
+    for (let floor = 2; floor <= maxCeilingCatFloor && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       
       // Calculate floor position for stalker cats (on the floor, not ceiling)
@@ -661,6 +754,10 @@ export class GameScene extends Phaser.Scene {
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 4
     
+    // Get allowed collectible types for current level
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    const allowedCollectibles = levelConfig.collectibleTypes
+    
     // Place collectibles on each floor based on rarity rules from sprint plan
     for (let floor = 0; floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
@@ -682,26 +779,29 @@ export class GameScene extends Phaser.Scene {
       // Track all used positions for this floor across all collectible types
       const floorUsedPositions: number[] = []
       
-      // Regular coins: 2-4 per floor (most common)
-      const numCoins = Math.floor(Math.random() * 3) + 2
-      this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
+      // Regular coins: 2-4 per floor (most common) - always allowed if coins are in the list
+      if (allowedCollectibles.includes('coin')) {
+        const numCoins = Math.floor(Math.random() * 3) + 2
+        this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
+      }
       
       // Blue coins: 1 per 1-2 floors (500 points)
-      if (floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
+      if (allowedCollectibles.includes('blueCoin') && floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
         this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor, floorUsedPositions)
       }
       
       // Diamonds: 1 per 1-3 floors (1000 points)
-      if (floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
+      if (allowedCollectibles.includes('diamond') && floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
         this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
       }
       
       // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
-      if (floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
+      if (allowedCollectibles.includes('treasureChest') && floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
         this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
       }
       
       // Flash power-ups: Rare collectible after floor 20 or from treasure chests
+      // Note: Flash power-ups mainly come from treasure chests, not placed directly
       if (floor > 20 && Math.random() < 0.1) {
         this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
       }
@@ -822,6 +922,12 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleCoinCollection(coin: Coin): void {
+    // Don't collect during intro animation
+    if (this.isLevelStarting) return
+    
+    // Check if coin is already collected to prevent multiple collections
+    if (coin.isCollected()) return
+    
     // Add points
     this.score += GameSettings.scoring.coinCollect
     
@@ -834,7 +940,7 @@ export class GameScene extends Phaser.Scene {
     // Play collection animation and remove coin
     coin.collect()
     
-    // Remove from coins array
+    // Remove from coins array immediately to prevent multiple collections
     const index = this.coins.indexOf(coin)
     if (index > -1) {
       this.coins.splice(index, 1)
@@ -842,6 +948,9 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleBlueCoinCollection(blueCoin: BlueCoin): void {
+    // Don't collect during intro animation
+    if (this.isLevelStarting) return
+    
     const points = 500
     this.score += points
     this.updateScoreDisplay()
@@ -860,6 +969,9 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleDiamondCollection(diamond: Diamond): void {
+    // Don't collect during intro animation
+    if (this.isLevelStarting) return
+    
     const points = 1000
     this.score += points
     this.updateScoreDisplay()
@@ -878,6 +990,9 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleFlashPowerUpCollection(flashPowerUp: FlashPowerUp): void {
+    // Don't collect during intro animation
+    if (this.isLevelStarting) return
+    
     // Activate flash power-up (reveals full screen for 5 seconds)
     this.activateFlashPowerUp()
     
@@ -994,17 +1109,40 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleCatKill(player: Player, cat: Cat): void {
-    // Increment combo
-    this.comboCount++
+    // Check if cat is already squished to prevent multiple kills
+    if ((cat as any).isSquished) return
     
-    // Calculate points with combo multiplier
+    // Don't allow combo while climbing ladders
+    if (player.getIsClimbing()) {
+      // Just award base points without combo
+      const basePoints = 200
+      this.score += basePoints
+      this.updateScoreDisplay()
+      
+      // Make player bounce up (slightly less than normal jump)
+      player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+      
+      // Squish the cat
+      cat.squish()
+      
+      // Show point popup at cat position
+      this.showPointPopup(cat.x, cat.y - 20, basePoints)
+      
+      console.log(`Cat squished while climbing! Score: ${this.score}, Points: ${basePoints} (no combo)`)
+      return
+    }
+    
+    // Calculate points with current combo multiplier (before incrementing)
     const basePoints = 200
-    const comboMultiplier = this.comboCount
+    const comboMultiplier = Math.max(1, this.comboCount) // Current combo count (minimum 1)
     const points = basePoints * comboMultiplier
     
     // Award points
     this.score += points
     this.updateScoreDisplay()
+    
+    // Now increment combo for next kill
+    this.comboCount++
     
     // Update combo display
     this.updateComboDisplay()
@@ -1032,17 +1170,40 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleCeilingCatKill(player: Player, ceilingCat: CeilingCat): void {
-    // Increment combo
-    this.comboCount++
+    // Check if ceiling cat is already squished to prevent multiple kills
+    if ((ceilingCat as any).isSquished) return
     
-    // Calculate points with combo multiplier
+    // Don't allow combo while climbing ladders
+    if (player.getIsClimbing()) {
+      // Just award base points without combo
+      const basePoints = 200
+      this.score += basePoints
+      this.updateScoreDisplay()
+      
+      // Make player bounce up (slightly less than normal jump)
+      player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+      
+      // Squish the ceiling cat
+      ceilingCat.squish()
+      
+      // Show point popup at cat position
+      this.showPointPopup(ceilingCat.x, ceilingCat.y - 20, basePoints)
+      
+      console.log(`Ceiling cat squished while climbing! Score: ${this.score}, Points: ${basePoints} (no combo)`)
+      return
+    }
+    
+    // Calculate points with current combo multiplier (before incrementing)
     const basePoints = 200
-    const comboMultiplier = this.comboCount
+    const comboMultiplier = Math.max(1, this.comboCount) // Current combo count (minimum 1)
     const points = basePoints * comboMultiplier
     
     // Award points
     this.score += points
     this.updateScoreDisplay()
+    
+    // Now increment combo for next kill
+    this.comboCount++
     
     // Update combo display
     this.updateComboDisplay()
@@ -1169,21 +1330,128 @@ export class GameScene extends Phaser.Scene {
     player.setTint(0xff0000) // Turn player red
     player.body!.enable = false // Disable physics to prevent further collisions
     
-    // Display game over message
-    const gameOverText = this.add.text(
+    // Create semi-transparent overlay
+    const overlay = this.add.rectangle(
       GameSettings.canvas.width / 2,
       GameSettings.canvas.height / 2,
-      'GAME OVER!\nPress R to restart',
+      GameSettings.canvas.width,
+      GameSettings.canvas.height,
+      0x000000,
+      0.7
+    ).setDepth(199)
+    
+    // Get player position for centering popup
+    const playerX = player.x
+    const playerY = player.y - 150 // Position popup above player
+    
+    // Create smaller popup background
+    const popupWidth = 250
+    const popupHeight = 200
+    
+    // Center popup on screen to match level popup positioning
+    const popupX = this.cameras.main.width / 2
+    const popupY = this.cameras.main.height / 2
+    
+    const popupBg = this.add.rectangle(
+      popupX,
+      popupY,
+      popupWidth,
+      popupHeight,
+      0x2c2c2c
+    ).setDepth(200)
+    
+    // Add border to popup
+    const popupBorder = this.add.rectangle(
+      popupX,
+      popupY,
+      popupWidth + 4,
+      popupHeight + 4,
+      0xffffff
+    ).setDepth(199.5)
+    popupBorder.setStrokeStyle(3, 0xffffff)
+    popupBorder.setFillStyle()
+    
+    // Display game over title
+    const gameOverTitle = this.add.text(
+      popupX,
+      popupY - 50,
+      'GAME OVER!',
       {
         fontSize: '32px',
+        color: '#ff4444',
+        fontFamily: 'monospace',
+        align: 'center',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4
+      }
+    ).setOrigin(0.5).setDepth(201)
+    
+    // Display score
+    const scoreText = this.add.text(
+      popupX,
+      popupY - 10,
+      `Score: ${this.score}`,
+      {
+        fontSize: '24px',
         color: '#ffffff',
         fontFamily: 'monospace',
-        align: 'center'
+        align: 'center',
+        stroke: '#000000',
+        strokeThickness: 3
       }
-    ).setOrigin(0.5).setDepth(200)
+    ).setOrigin(0.5).setDepth(201)
     
-    // Add restart key
+    // Create restart button
+    const buttonWidth = 150
+    const buttonHeight = 45
+    const buttonY = popupY + 45
+    
+    const restartButton = this.add.rectangle(
+      popupX,
+      buttonY,
+      buttonWidth,
+      buttonHeight,
+      0x44ff44
+    ).setDepth(201)
+    restartButton.setInteractive({ useHandCursor: true })
+    restartButton.setStrokeStyle(2, 0x22aa22)
+    
+    const restartText = this.add.text(
+      popupX,
+      buttonY,
+      'RESTART',
+      {
+        fontSize: '22px',
+        color: '#ffffff',
+        fontFamily: 'monospace',
+        align: 'center',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 2
+      }
+    ).setOrigin(0.5).setDepth(202)
+    
+    // Add click/tap handler for restart button
+    restartButton.on('pointerdown', () => {
+      // Reset to level 1 on death
+      this.levelManager.resetToStart()
+      this.scene.restart()
+    })
+    
+    // Add hover effect
+    restartButton.on('pointerover', () => {
+      restartButton.setFillStyle(0x66ff66)
+    })
+    
+    restartButton.on('pointerout', () => {
+      restartButton.setFillStyle(0x44ff44)
+    })
+    
+    // Keep keyboard support as fallback
     this.input.keyboard!.on('keydown-R', () => {
+      // Reset to level 1 on death
+      this.levelManager.resetToStart()
       this.scene.restart()
     })
   }
@@ -1241,6 +1509,9 @@ export class GameScene extends Phaser.Scene {
   }
   
   private openTreasureChest(chest: TreasureChest): void {
+    // Don't open chests during intro animation
+    if (this.isLevelStarting) return
+    
     const contents = chest.open()
     
     // Award base chest points (2500)
@@ -1418,7 +1689,7 @@ export class GameScene extends Phaser.Scene {
     
     if (playerFloor !== this.currentFloor) {
       this.currentFloor = playerFloor
-      this.floorText.setText(`FLOOR: ${this.currentFloor}`)
+      this.floorText.setText(`FLOOR: ${this.currentFloor + 1}`)
       
       // Award bonus points for reaching new floors
       if (playerFloor > this.currentFloor) {
@@ -1428,7 +1699,10 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Generate new floors if player is getting close to the top
-    if (this.currentFloor >= this.highestFloorGenerated - 3) {
+    // But NEVER generate floors for discrete levels - all floors are created in createTestLevel
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    
+    if (levelConfig.isEndless && this.currentFloor >= this.highestFloorGenerated - 3) {
       this.generateNextFloors()
     }
   }
@@ -1438,8 +1712,23 @@ export class GameScene extends Phaser.Scene {
     const floorWidth = GameSettings.game.floorWidth
     const floorSpacing = tileSize * 4
     
-    // Generate 5 more floors
-    for (let i = 0; i < 5; i++) {
+    // Check level limits
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    const maxFloor = levelConfig.isEndless ? 999 : levelConfig.floorCount
+    
+    // Generate up to 5 more floors, but stop BEFORE the door floor for discrete levels
+    // Door floor should be the final floor, so don't generate it here - it's generated in createTestLevel
+    let floorsToGenerate
+    if (levelConfig.isEndless) {
+      floorsToGenerate = 5 // Endless mode, keep generating
+    } else {
+      // For discrete levels, stop generating floors BEFORE the door floor
+      // The door is on the last floor (levelConfig.floorCount - 1, but floor counting starts at 0)
+      // So the door is on floor index (floorCount - 1) 
+      floorsToGenerate = Math.min(5, Math.max(0, levelConfig.floorCount - 1 - this.highestFloorGenerated))
+    }
+    
+    for (let i = 0; i < floorsToGenerate; i++) {
       const floor = this.highestFloorGenerated + i + 1
       const y = -floor * floorSpacing + GameSettings.canvas.height - tileSize/2
       
@@ -1470,7 +1759,10 @@ export class GameScene extends Phaser.Scene {
       this.floorLayouts[floor] = layout
       
       // Add ladder connecting to previous floor
-      if (floor > 0 && this.floorLayouts[floor - 1]) {
+      // But don't add ladders leading TO the top floor (where the door is)
+      const isTopFloor = !levelConfig.isEndless && floor >= levelConfig.floorCount - 1
+      
+      if (floor > 0 && this.floorLayouts[floor - 1] && !isTopFloor) {
         const prevLayout = this.floorLayouts[floor - 1]
         const validPositions: number[] = []
         
@@ -1501,25 +1793,30 @@ export class GameScene extends Phaser.Scene {
       }
       
       if (validPositions.length > 0) {
+        // Get allowed collectible types for current level (reuse the levelConfig from above)
+        const allowedCollectibles = levelConfig.collectibleTypes
+        
         // Track all used positions for this floor across all collectible types
         const floorUsedPositions: number[] = []
         
         // Regular coins: 2-4 per floor
-        const numCoins = Math.floor(Math.random() * 3) + 2
-        this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
+        if (allowedCollectibles.includes('coin')) {
+          const numCoins = Math.floor(Math.random() * 3) + 2
+          this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
+        }
         
         // Blue coins: 1 per 1-2 floors (500 points)
-        if (floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
+        if (allowedCollectibles.includes('blueCoin') && floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
           this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor, floorUsedPositions)
         }
         
         // Diamonds: 1 per 1-3 floors (1000 points)  
-        if (floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
+        if (allowedCollectibles.includes('diamond') && floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
           this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
         }
         
         // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
-        if (floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
+        if (allowedCollectibles.includes('treasureChest') && floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
           this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
         }
         
@@ -1529,8 +1826,19 @@ export class GameScene extends Phaser.Scene {
         }
       }
       
-      // Add cat on some floors
-      if (floor > 1 && Math.random() > 0.5) {
+      // Get allowed enemy types for current level (reuse the levelConfig from above)
+      const allowedEnemies = levelConfig.enemyTypes
+      
+      // Map enemy types to cat colors
+      const availableColors: string[] = []
+      if (allowedEnemies.includes('blue')) availableColors.push('blue')
+      if (allowedEnemies.includes('yellow')) availableColors.push('yellow')
+      if (allowedEnemies.includes('green')) availableColors.push('green')
+      
+      // Add regular cat on some floors (if any colors are available)
+      if (availableColors.length > 0 && floor > 1 && Math.random() > 0.5) {
+        const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
+        
         if (layout.gapStart === -1) {
           // Complete floor
           const cat = new Cat(
@@ -1538,7 +1846,8 @@ export class GameScene extends Phaser.Scene {
             (floorWidth / 2) * tileSize,
             y - 40,
             tileSize * 1.5,
-            tileSize * (floorWidth - 1.5)
+            tileSize * (floorWidth - 1.5),
+            randomColor as any
           )
           // Green cats already get full floor bounds by default
           this.cats.add(cat)
@@ -1549,7 +1858,8 @@ export class GameScene extends Phaser.Scene {
             (layout.gapStart / 2) * tileSize,
             y - 40,
             tileSize * 0.5,
-            tileSize * (layout.gapStart - 0.5)
+            tileSize * (layout.gapStart - 0.5),
+            randomColor as any
           )
           // Green cats use full left section bounds
           if (cat.getCatColor() === 'green') {
@@ -1562,8 +1872,8 @@ export class GameScene extends Phaser.Scene {
         }
       }
       
-      // Add ceiling cats to some floors
-      if (floor > 2 && Math.random() > 0.4) { // 60% chance
+      // Add ceiling cats to some floors (only if red enemies are allowed)
+      if (allowedEnemies.includes('red') && floor > 2 && Math.random() > 0.4) { // 60% chance
         const maxCeilingCats = floor < 20 ? 1 : 2
         const numCeilingCats = Math.floor(Math.random() * maxCeilingCats) + 1
         
@@ -1623,7 +1933,325 @@ export class GameScene extends Phaser.Scene {
       }
     }
     
-    this.highestFloorGenerated += 5
+    this.highestFloorGenerated += floorsToGenerate
+  }
+
+  private startLevelIntro(targetX: number, targetY: number): void {
+    this.isLevelStarting = true
+    
+    // Disable player controls during intro
+    this.player.body!.enable = false
+    
+    // Walk player from left to spawn point
+    this.tweens.add({
+      targets: this.player,
+      x: targetX,
+      duration: 1500,
+      ease: 'Linear',
+      onComplete: () => {
+        // Enable player controls
+        this.player.body!.enable = true
+        this.isLevelStarting = false
+        
+        // Show start banner
+        this.showStartBanner()
+      }
+    })
+  }
+  
+  private showStartBanner(): void {
+    const levelNum = this.levelManager.getCurrentLevel()
+    const levelConfig = this.levelManager.getLevelConfig(levelNum)
+    
+    const bannerText = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 100,
+      levelConfig.isEndless ? 'ENDLESS MODE!' : `LEVEL ${levelNum}`,
+      {
+        fontSize: '36px',
+        color: '#ffff00',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 6
+      }
+    ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+    
+    const startText = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 50,
+      'GO!',
+      {
+        fontSize: '48px',
+        color: '#00ff00',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 6
+      }
+    ).setOrigin(0.5).setDepth(300).setScrollFactor(0).setAlpha(0)
+    
+    // Animate the banner
+    this.time.delayedCall(500, () => {
+      this.tweens.add({
+        targets: startText,
+        alpha: 1,
+        duration: 300,
+        yoyo: true,
+        hold: 500,
+        onComplete: () => {
+          bannerText.destroy()
+          startText.destroy()
+        }
+      })
+    })
+  }
+  
+  private showEndlessModePopup(): void {
+    // Create popup for endless mode announcement
+    const popup = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      350,
+      200,
+      0x2c2c2c,
+      0.95
+    ).setDepth(250).setScrollFactor(0)
+    
+    const border = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      354,
+      204,
+      0xffffff
+    ).setDepth(249).setScrollFactor(0)
+    border.setStrokeStyle(3, 0xffffff)
+    border.setFillStyle()
+    
+    const title = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 50,
+      'ENDLESS MODE UNLOCKED!',
+      {
+        fontSize: '24px',
+        color: '#ff44ff',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5).setDepth(251).setScrollFactor(0)
+    
+    const desc = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 + 10,
+      'No more levels!\nClimb as high as you can!\nDifficulty has plateaued.',
+      {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial',
+        align: 'center'
+      }
+    ).setOrigin(0.5).setDepth(251).setScrollFactor(0)
+    
+    // Auto-dismiss after 3 seconds
+    this.time.delayedCall(3000, () => {
+      popup.destroy()
+      border.destroy()
+      title.destroy()
+      desc.destroy()
+    })
+  }
+  
+  private createLevelEndDoor(): void {
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    
+    // Only create door for non-endless levels
+    if (!levelConfig.isEndless && levelConfig.floorCount > 0) {
+      const tileSize = GameSettings.game.tileSize
+      const floorSpacing = tileSize * 4 // Same spacing as in createTestLevel
+      
+      // Calculate the Y position of the top floor
+      const topFloor = levelConfig.floorCount - 1
+      const topFloorY = GameSettings.canvas.height - tileSize/2 - (topFloor * floorSpacing)
+      
+      // Find a safe position for the door (not over a gap)
+      const doorFloorLayout = this.floorLayouts[topFloor]
+      let doorX = GameSettings.canvas.width / 2  // Default center position
+      
+      if (doorFloorLayout && doorFloorLayout.gapStart !== -1) {
+        // Floor has a gap, find a safe position
+        const gapStart = doorFloorLayout.gapStart * tileSize
+        const gapEnd = (doorFloorLayout.gapStart + doorFloorLayout.gapSize) * tileSize
+        const centerX = GameSettings.canvas.width / 2
+        
+        // If center is over the gap, move door to a safe position
+        if (centerX >= gapStart && centerX <= gapEnd) {
+          // Try left side first (before gap)
+          if (gapStart > 60) { // At least 2 tiles from left edge
+            doorX = Math.max(40, gapStart - 30)
+          } else {
+            // Use right side (after gap)
+            doorX = Math.min(GameSettings.canvas.width - 40, gapEnd + 30)
+          }
+        }
+      }
+      
+      // Place door on top floor - door is 50 pixels tall, position it standing on the platform
+      const doorY = topFloorY - 40 // Raise door up so it stands properly on the platform
+      
+      const isFirstLevel = this.levelManager.getCurrentLevel() === 1
+      this.door = new Door(this, doorX, doorY, isFirstLevel)
+      
+      // Add collision detection for door
+      this.physics.add.overlap(
+        this.player,
+        this.door,
+        this.handleDoorOverlap,
+        undefined,
+        this
+      )
+    }
+  }
+  
+  private handleDoorOverlap(
+    player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    door: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    const doorObj = door as Door
+    const playerObj = player as Player
+    
+    // Check if player is on the door floor (standing on ground)
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    const doorFloor = levelConfig.floorCount - 1
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const isOnGround = playerBody.blocked.down
+    
+    // Player must be on the correct floor (ground check removed since overlap already confirms proximity)
+    if (this.currentFloor === doorFloor) {
+      // Automatically activate door when player touches it
+      if (!this.isLevelComplete) {
+        this.completeLevel()
+      }
+    }
+  }
+  
+  private completeLevel(): void {
+    if (this.isLevelComplete) return
+    
+    this.isLevelComplete = true
+    
+    // Disable player controls
+    this.player.body!.enable = false
+    
+    // Show level complete screen
+    this.showLevelCompleteScreen()
+  }
+  
+  private showLevelCompleteScreen(): void {
+    const levelNum = this.levelManager.getCurrentLevel()
+    
+    // Create overlay
+    const overlay = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      GameSettings.canvas.width,
+      GameSettings.canvas.height,
+      0x000000,
+      0.7
+    ).setDepth(299).setScrollFactor(0)
+    
+    // Create popup
+    const popup = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      350,
+      250,
+      0x2c2c2c
+    ).setDepth(300).setScrollFactor(0)
+    
+    const border = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      354,
+      254,
+      0xffffff
+    ).setDepth(299.5).setScrollFactor(0)
+    border.setStrokeStyle(3, 0xffffff)
+    border.setFillStyle()
+    
+    // Title
+    const title = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 80,
+      `LEVEL ${levelNum} COMPLETE!`,
+      {
+        fontSize: '28px',
+        color: '#44ff44',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+    
+    // Stats
+    const stats = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 20,
+      `Score: ${this.score}\nFloors Climbed: ${this.currentFloor}`,
+      {
+        fontSize: '18px',
+        color: '#ffffff',
+        fontFamily: 'Arial',
+        align: 'center'
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+    
+    // Next level preview
+    const nextLevel = levelNum + 1
+    const nextConfig = this.levelManager.getLevelConfig(nextLevel)
+    const preview = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 + 40,
+      nextConfig.isEndless ? 'Next: ENDLESS MODE!' : `Next: Level ${nextLevel}`,
+      {
+        fontSize: '16px',
+        color: '#ffff00',
+        fontFamily: 'Arial',
+        align: 'center'
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+    
+    // Continue button
+    const continueBtn = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 + 85,
+      150,
+      40,
+      0x44ff44
+    ).setDepth(301).setScrollFactor(0)
+    continueBtn.setInteractive({ useHandCursor: true })
+    continueBtn.setStrokeStyle(2, 0x22aa22)
+    
+    const continueText = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 + 85,
+      'CONTINUE',
+      {
+        fontSize: '20px',
+        color: '#ffffff',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(302).setScrollFactor(0)
+    
+    // Continue button handler
+    continueBtn.on('pointerdown', () => {
+      // Advance to next level
+      this.levelManager.nextLevel()
+      
+      // Restart scene with new level
+      this.scene.restart()
+    })
   }
 
   shutdown() {}

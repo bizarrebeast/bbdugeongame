@@ -150,10 +150,16 @@
 ### Enemy Specifications (Blob Enemies)
 - **Base Size**: 20x16 pixels (current cat/beetle placeholders)
 - **Retina Size**: **40x32 pixels** (2x scaling)
-- **Physics Body**: 18x14 pixels
+- **Physics Body**: 18x14 pixels (current size, works well)
+- **Maximum Safe Dimensions Without Affecting Gameplay**:
+  - **Standard enemies**: Up to 32x32 pixels (1 tile square)
+  - **Large enemies/mini-bosses**: Up to 48x48 pixels (1.5 tiles square)
+  - **Boss enemies**: Up to 64x64 pixels (2 tiles square) - requires special platform handling
+  - **Visual sprites can be larger than collision boxes** (e.g., 64x64 visual with 32x32 collision)
 - **Animation Frames**: 2-4 frames per state
 - **File Format**: PNG with transparency
 - **Sprite Sheets**: Combine all animation frames in horizontal strips
+- **Note**: Enemies must fit on platform tiles (32px wide) for patrol behavior
 
 ### Environment Tile Specifications
 - **Base Tile Size**: 32x32 pixels

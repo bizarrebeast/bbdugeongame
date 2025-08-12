@@ -1,6 +1,7 @@
 export class Coin {
   public sprite: Phaser.GameObjects.Arc
   private scene: Phaser.Scene
+  private collected: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
@@ -34,6 +35,14 @@ export class Coin {
   }
   
   collect(): void {
+    if (this.collected) return // Already collected
+    this.collected = true
+    
+    // Immediately disable physics to prevent further collisions
+    if (this.sprite.body) {
+      this.sprite.body.enable = false
+    }
+    
     // Play collection effect
     this.scene.tweens.add({
       targets: this.sprite,
@@ -45,6 +54,10 @@ export class Coin {
         this.sprite.destroy()
       }
     })
+  }
+  
+  isCollected(): boolean {
+    return this.collected
   }
   
   destroy(): void {
