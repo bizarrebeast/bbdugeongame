@@ -482,7 +482,8 @@ export class GameScene extends Phaser.Scene {
     const tileSize = GameSettings.game.tileSize
     
     // Create one continuous ladder from bottom to top
-    const ladderHeight = bottomY - topY + tileSize
+    // Extend slightly above and below floor levels for player access, but not a full tile
+    const ladderHeight = bottomY - topY + (tileSize * 0.5) // Half tile extension for access
     const ladderY = (bottomY + topY) / 2
     
     // Create the full ladder as one piece
