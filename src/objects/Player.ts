@@ -8,24 +8,52 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private touchControls: TouchControls | null = null
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    // Create a placeholder sprite (colored rectangle for now)
-    const graphics = scene.add.graphics()
-    graphics.fillStyle(0x00ff00, 1)
-    graphics.fillRect(0, 0, 24, 32)
-    graphics.generateTexture('player', 24, 32)
-    graphics.destroy()
+    // Use the loaded player sprite or fallback to placeholder
+    const textureKey = scene.textures.exists('playerSprite') ? 'playerSprite' : 'player'
     
-    super(scene, x, y, 'player')
+    // Create fallback if sprite not loaded
+    if (!scene.textures.exists('playerSprite')) {
+      const graphics = scene.add.graphics()
+      graphics.fillStyle(0x00ff00, 1)
+      graphics.fillRect(0, 0, 24, 32)
+      graphics.generateTexture('player', 24, 32)
+      graphics.destroy()
+    }
+    
+    super(scene, x, y, textureKey)
     
     scene.add.existing(this)
     scene.physics.add.existing(this)
+    
+    // Scale the sprite if using the new player sprite
+    if (textureKey === 'playerSprite') {
+      // Scale to fit the expected player size (48x64 for retina display)
+      this.setDisplaySize(48, 64)
+    }
     
     // Set up physics properties (world bounds set in GameScene to allow full floor movement)
     this.setCollideWorldBounds(true)
     this.setBounce(0)
     this.setSize(20, 30)
-    this.setOffset(2, 2)
+    
+    // The hitbox is positioned correctly, we need to shift the visual sprite UP
+    // so that the sprite's bottom aligns with the hitbox's bottom
+    // Sprite is 64px tall, hitbox is 30px tall
+    // The difference is 34px that the sprite extends above the hitbox
+    // Offset moves the physics body relative to sprite center
+    // Positive Y offset moves the physics body DOWN relative to sprite
+    // Which effectively moves the sprite UP relative to the physics body
+    // We want the physics body at the bottom 30px of the 64px sprite
+    // So offset = 64/2 - 30/2 = 32 - 15 = 17
+    this.setOffset(14, 34)  // Move physics body down, which visually shifts sprite up
     this.setDepth(20) // Player renders on top of everything
+    
+    console.log('=== PLAYER PHYSICS SETUP ===')
+    console.log('Player sprite size:', this.displayWidth, 'x', this.displayHeight)
+    console.log('Physics body size:', this.body?.width, 'x', this.body?.height)
+    console.log('Physics body offset:', (this.body as any)?.offset)
+    console.log('Player bottom Y:', this.y + (this.displayHeight/2))
+    console.log('Physics body bottom Y:', this.body?.position.y + this.body?.height)
     
     // Create cursor keys for input
     this.cursors = scene.input.keyboard!.createCursorKeys()
@@ -59,8 +87,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.isClimbing) {
       if (leftPressed) {
         this.setVelocityX(-GameSettings.game.playerSpeed)
+        this.setFlipX(true)  // Flip sprite to face left
       } else if (rightPressed) {
         this.setVelocityX(GameSettings.game.playerSpeed)
+        this.setFlipX(false)  // Face right (original direction)
       } else {
         this.setVelocityX(0)
       }
@@ -74,7 +104,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Ladder climbing logic
     if (this.isClimbing) {
       // Disable gravity while climbing
-      this.body!.setAllowGravity(false)
+      if (this.body instanceof Phaser.Physics.Arcade.Body) {
+        this.body.setAllowGravity(false)
+      }
       this.setVelocityX(0)
       
       if (upPressed) {
@@ -98,8 +130,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       
       // Allow horizontal movement at top of ladder when standing on platform
       if (onGround && !upPressed) {
-        if (leftPressed || rightPressed) {
+        if (leftPressed) {
           this.exitClimbing()
+          this.setFlipX(true)  // Face left when exiting ladder
+        } else if (rightPressed) {
+          this.exitClimbing()
+          this.setFlipX(false)  // Face right when exiting ladder
         }
       }
       
@@ -114,7 +150,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   startClimbing(ladder: Phaser.GameObjects.GameObject): void {
     this.isClimbing = true
     this.currentLadder = ladder
-    this.body!.setAllowGravity(false)
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      this.body.setAllowGravity(false)
+    }
     // Center player on ladder
     const ladderSprite = ladder as Phaser.GameObjects.Rectangle
     this.x = ladderSprite.x
@@ -123,7 +161,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   exitClimbing(): void {
     this.isClimbing = false
     this.currentLadder = null
-    this.body!.setAllowGravity(true)
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      this.body.setAllowGravity(true)
+    }
   }
   
   checkLadderProximity(ladder: Phaser.GameObjects.GameObject): boolean {

@@ -52,6 +52,9 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     // Load the visibility overlay image
     this.load.image('visibilityOverlay', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO')
+    
+    // Load the test player sprite
+    this.load.image('playerSprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Test%20player%20piece-qjLBRdv0kjDlVHzShcVZXc0rUYC9V3.png?0M1S')
   }
 
   create(): void {
@@ -98,13 +101,28 @@ export class GameScene extends Phaser.Scene {
     
     // Create the player (starts off-screen for walk-in animation)
     const spawnX = GameSettings.canvas.width / 2
-    // Place player exactly on ground floor (one tile up from bottom)
-    const spawnY = GameSettings.canvas.height - GameSettings.game.tileSize - 15
+    // Place player on ground floor - platform center is at Y=784
+    // Platform is 32px tall, so platform top is at Y=768
+    // Player sprite center should be positioned so physics body bottom is above platform top
+    // With new offset, physics body extends from sprite center + 2 to sprite center + 32
+    // So to have physics body bottom at Y=768, sprite center should be at Y=736
+    const spawnY = 736  // Position player so physics body sits on platform
+    
+    console.log('=== PLAYER SPAWN DEBUG ===')
+    console.log('Canvas height:', GameSettings.canvas.height)
+    console.log('Tile size:', GameSettings.game.tileSize)
+    console.log('Calculated spawn Y:', spawnY)
+    console.log('Ground floor Y (platform center):', GameSettings.canvas.height - GameSettings.game.tileSize/2)
+    
     this.player = new Player(
       this, 
       -50,  // Start off-screen to the left
       spawnY
     )
+    
+    console.log('Player created at position:', this.player.x, this.player.y)
+    console.log('Player body position:', this.player.body?.position)
+    console.log('Player physics body size:', this.player.body?.width, 'x', this.player.body?.height)
     
     // Start the level intro animation
     this.startLevelIntro(spawnX, spawnY)
@@ -287,8 +305,16 @@ export class GameScene extends Phaser.Scene {
       
       if (floor === 0) {
         // Ground floor - complete platform
+        console.log('=== GROUND FLOOR CREATION ===')
+        console.log('Ground floor Y position:', y)
+        console.log('Creating ground floor tiles from x=0 to x=', floorWidth * tileSize)
+        
         for (let x = 0; x < floorWidth; x++) {
-          this.createPlatformTile(x * tileSize + tileSize/2, y)
+          const platformX = x * tileSize + tileSize/2
+          this.createPlatformTile(platformX, y)
+          if (x === 0) {
+            console.log('First ground tile at:', platformX, y)
+          }
         }
         // Ground floor can have ladders at multiple positions
         ladderPositions[floor] = -1 // Special marker for ground floor
@@ -1643,6 +1669,16 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, _deltaTime: number): void {
     if (this.isGameOver) return
+    
+    // Debug player position - log every 60 frames (about once per second)
+    if (this.time.now % 1000 < 20) {
+      console.log('=== PLAYER POSITION UPDATE ===')
+      console.log('Player Y:', this.player.y)
+      console.log('Player physics body Y:', this.player.body?.position.y)
+      console.log('Player velocity Y:', this.player.body?.velocity.y)
+      console.log('Player blocked down:', (this.player.body as any)?.blocked?.down)
+      console.log('Ground floor should be at Y:', GameSettings.canvas.height - GameSettings.game.tileSize/2)
+    }
     
     // Update touch controls
     this.touchControls.update()
