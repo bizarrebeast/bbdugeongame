@@ -6,13 +6,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isClimbing: boolean = false
   private currentLadder: Phaser.GameObjects.GameObject | null = null
   private touchControls: TouchControls | null = null
+  private walkAnimationTimer: number = 0
+  private currentFrame: 'idle' | 'leftStep' | 'rightStep' = 'idle'
+  private isMoving: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    // Use the loaded player sprite or fallback to placeholder
-    const textureKey = scene.textures.exists('playerSprite') ? 'playerSprite' : 'player'
+    // Use the loaded player idle sprite or fallback to placeholder
+    const textureKey = scene.textures.exists('playerIdle') ? 'playerIdle' : 'player'
     
     // Create fallback if sprite not loaded
-    if (!scene.textures.exists('playerSprite')) {
+    if (!scene.textures.exists('playerIdle')) {
       const graphics = scene.add.graphics()
       graphics.fillStyle(0x00ff00, 1)
       graphics.fillRect(0, 0, 24, 32)
@@ -25,8 +28,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
     scene.physics.add.existing(this)
     
-    // Scale the sprite if using the new player sprite
-    if (textureKey === 'playerSprite') {
+    // Scale the sprite if using the new player sprites
+    if (textureKey === 'playerIdle') {
       // Scale to fit the expected player size (48x64 for retina display)
       this.setDisplaySize(48, 64)
     }
@@ -82,6 +85,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.getVertical() || 0) < -0.3
     const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.getVertical() || 0) > 0.3
     const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || (this.touchControls?.isJumpJustPressed() || false)
+    
+    // Track if player is moving horizontally
+    this.isMoving = (leftPressed || rightPressed) && !this.isClimbing
     
     // Horizontal movement
     if (!this.isClimbing) {
@@ -145,6 +151,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityY(GameSettings.game.jumpVelocity)
       }
     }
+    
+    // Handle walking animation
+    this.updateWalkingAnimation()
   }
   
   startClimbing(ladder: Phaser.GameObjects.GameObject): void {
@@ -183,5 +192,41 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   getIsClimbing(): boolean {
     return this.isClimbing
+  }
+  
+  private updateWalkingAnimation(): void {
+    const animationSpeed = 200 // milliseconds per frame
+    
+    if (this.isMoving) {
+      // Update animation timer
+      this.walkAnimationTimer += this.scene.game.loop.delta
+      
+      if (this.walkAnimationTimer >= animationSpeed) {
+        // Switch between left and right step
+        if (this.currentFrame === 'idle' || this.currentFrame === 'rightStep') {
+          this.currentFrame = 'leftStep'
+          this.changePlayerTexture('playerLeftStep')
+        } else {
+          this.currentFrame = 'rightStep'
+          this.changePlayerTexture('playerRightStep')
+        }
+        this.walkAnimationTimer = 0
+      }
+    } else {
+      // Player is idle - show idle frame
+      if (this.currentFrame !== 'idle') {
+        this.currentFrame = 'idle'
+        this.changePlayerTexture('playerIdle')
+        this.walkAnimationTimer = 0
+      }
+    }
+  }
+  
+  private changePlayerTexture(textureKey: string): void {
+    if (this.scene.textures.exists(textureKey)) {
+      this.setTexture(textureKey)
+      // Maintain scale for all player textures
+      this.setDisplaySize(48, 64)
+    }
   }
 }
