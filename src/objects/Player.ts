@@ -79,11 +79,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
     const dKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
     
-    // Get input from keyboard (arrows or WASD) or touch controls
-    const leftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.getHorizontal() || 0) < -0.3
-    const rightPressed = this.cursors.right.isDown || dKey.isDown || (this.touchControls?.getHorizontal() || 0) > 0.3
-    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.getVertical() || 0) < -0.3
-    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.getVertical() || 0) > 0.3
+    // Get input from keyboard (arrows or WASD) or touch controls (now discrete D-pad)
+    const leftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.leftPressed || false)
+    const rightPressed = this.cursors.right.isDown || dKey.isDown || (this.touchControls?.rightPressed || false)
+    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.upPressed || false)
+    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.downPressed || false)
     const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || (this.touchControls?.isJumpJustPressed() || false)
     
     // Track if player is moving horizontally
@@ -179,8 +179,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Check if player is pressing up or down near a ladder
     const wKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W)
     const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
-    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.getVertical() || 0) < -0.3
-    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.getVertical() || 0) > 0.3
+    // Use discrete D-pad input for ladder climbing
+    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.upPressed || false)
+    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.downPressed || false)
     
     if (upPressed || downPressed) {
       const ladderSprite = ladder as Phaser.GameObjects.Rectangle

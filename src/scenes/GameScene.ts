@@ -1299,8 +1299,8 @@ export class GameScene extends Phaser.Scene {
   private updateVisibilitySystem(): void {
     if (!this.visibilityMask) return
     
-    // Always show and position the visibility mask
-    this.visibilityMask.setVisible(true)
+    // Hide visibility mask for now
+    this.visibilityMask.setVisible(false)
     
     // Get player world position
     const playerX = this.player.x
