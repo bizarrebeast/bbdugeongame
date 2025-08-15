@@ -2,12 +2,12 @@
 
 ## Overview
 
-A retro-style endless climbing arcade game built with Phaser.js and TypeScript for the Remix platform. Climb through procedurally generated mining caverns, defeat colorful blob enemies, collect treasures, and chase high scores in this nostalgic underground adventure.
+A retro-style endless climbing arcade game built with Phaser.js and TypeScript for the Remix platform. Climb through procedurally generated crystal caverns, defeat colorful blob enemies, collect treasures, and chase high scores in this nostalgic underground adventure.
 
 ## Game Features
 
 - 🎮 **Retro Arcade Gameplay**: Classic Donkey Kong-style climbing action with modern enhancements
-- ⛏️ **Mining Theme**: Industrial underground setting with wooden ladders, mining equipment, and treasure
+- 💎 **Crystal Cavern Theme**: Magical underground setting with crystal platforms, gem formations, and floating orbs
 - 📱 **Mobile-Optimized**: 5:9 aspect ratio with full touch controls and virtual joystick
 - 🎯 **Progressive Levels**: Discrete level system (1-100) then endless mode with increasing difficulty
 - 👾 **Smart Enemy AI**: Four blob types (blue, yellow, green, red) with unique behaviors and chase AI
@@ -186,11 +186,11 @@ bizarre-underground/
 ```
 
 ### Key Game Systems:
-- **`GameScene.ts`**: Complete gameplay logic with Mining Theme background
+- **`GameScene.ts`**: Complete gameplay logic with Crystal Cavern Theme background
 - **`Player.ts`**: Enhanced player with 28×55 pixel hitbox for forgiving collision
 - **`LevelManager.ts`**: Progressive difficulty system (levels 1-100, then endless)
 - **`Cat.ts`**: Smart enemy AI system with four behavioral patterns
-- **`Door.ts`**: Industrial mining-themed doors with wooden panels and hardware
+- **`Door.ts`**: Industrial-style doors with wooden panels and hardware
 
 ## Available Commands
 
@@ -218,7 +218,7 @@ npm run preview  # Preview the built game locally
 ### Adding New Features
 - **New Enemies**: Create in `src/objects/` following the Cat.ts pattern
 - **New Collectibles**: Add to collectible system in GameScene.ts
-- **Visual Themes**: Duplicate Mining Theme background system for new themes
+- **Visual Themes**: Modify Crystal Cavern Theme background system for new themes
 - **Game Mechanics**: Extend GameScene.ts with new systems
 
 ### Testing
@@ -271,7 +271,7 @@ This creates `dist/index.html` - a single file containing your entire game ready
 
 ### Game Features
 - **Complete Arcade Game**: Fully playable retro climbing adventure
-- **Mining Theme**: Industrial underground setting with detailed visuals
+- **Crystal Cavern Theme**: Magical underground setting with colorful crystal visuals
 - **Progressive Gameplay**: 100 discrete levels plus endless mode
 - **Smart Enemy AI**: Four blob types with unique behavioral patterns
 - **Enhanced Collision**: Forgiving hitbox system for better gameplay feel

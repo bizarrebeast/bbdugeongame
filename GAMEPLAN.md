@@ -13,10 +13,10 @@ A retro simplified Donkey Kong style game where the player climbs levels on ladd
 - **Platform:** Cross-platform (mobile and desktop)
 
 ### Setting & Theme
-- **Environment:** Underground cavern/mine setting with established **Mining Theme**
-- **Visual Elements:** Industrial mining platforms with wooden ladders and metal supports
-- **Atmosphere:** Dark mining cave with gold veins, ore deposits, and mining equipment
-- **Theme System:** Mining Theme established as foundation for future theme development
+- **Environment:** Vibrant crystal cavern with established **Crystal Cavern Theme**
+- **Visual Elements:** Purple crystal platforms with gem formations and wooden ladders
+- **Atmosphere:** Magical crystal cave with colorful gems, floating orbs, and energy streams
+- **Theme System:** Crystal Cavern Theme (BizarreBeasts-style) established as current visual style
 
 ### Target Experience
 Fast-paced arcade excitement with a nostalgic feel - players should experience the thrill of 'just one more level' as they chase high scores, combined with the satisfying challenge of mastering timing and pattern recognition.
