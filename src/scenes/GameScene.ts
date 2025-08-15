@@ -213,9 +213,9 @@ export class GameScene extends Phaser.Scene {
     
     // Game title removed - focusing on clean HUD
     
-    // Create HUD background panel (translucent white) - extended for level display
+    // Create HUD background panel (translucent black) - extended for level display
     const hudBg = this.add.graphics()
-    hudBg.fillStyle(0xffffff, 0.3)  // White with 30% opacity
+    hudBg.fillStyle(0x000000, 0.3)  // Black with 30% opacity
     hudBg.fillRoundedRect(8, 8, 200, 80, 8)  // Increased height for level
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)

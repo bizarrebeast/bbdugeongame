@@ -30,12 +30,12 @@ const config: Phaser.Types.Core.GameConfig = {
   fps: {
     target: 60,
   },
-  // Additional WebGL settings
-  pixelArt: true, // Pixel perfect for retro style
-  antialias: false,
+  // Additional WebGL settings for smooth/crisp graphics
+  pixelArt: false, // Disable pixel perfect for smooth rendering
+  antialias: true,
   render: {
-    pixelArt: true,
-    roundPixels: true,
+    pixelArt: false,
+    roundPixels: false,
   },
 }
 
