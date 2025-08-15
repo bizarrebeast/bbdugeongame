@@ -10,6 +10,7 @@ import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
 import { Door } from "../objects/Door"
+import { Cat } from "../objects/Cat"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -25,6 +26,7 @@ export class GameScene extends Phaser.Scene {
   private isGameOver: boolean = false
   private floorLayouts: { gapStart: number, gapSize: number }[] = []
   private ladderPositions: Map<number, number[]> = new Map() // floor -> ladder x positions
+  private doorPositions: Map<number, number> = new Map() // floor -> door x position
   private score: number = 0
   private scoreText!: Phaser.GameObjects.Text
   private currentFloor: number = 0
@@ -98,10 +100,10 @@ export class GameScene extends Phaser.Scene {
     this.treasureChests = []
     this.flashPowerUps = []
     
-    // Create crystal cave background
-    this.createCrystalCaveBackground()
+    // Create mining theme background
+    this.createMiningThemeBackground()
     
-    // Create a test level with platforms and ladders
+    // Create the level
     this.createTestLevel()
     
     // Create the player (starts off-screen for walk-in animation)
@@ -213,9 +215,9 @@ export class GameScene extends Phaser.Scene {
     
     // Game title removed - focusing on clean HUD
     
-    // Create HUD background panel (translucent black) - extended for level display
+    // Create HUD background panel (darker black) - extended for level display
     const hudBg = this.add.graphics()
-    hudBg.fillStyle(0x000000, 0.3)  // Black with 30% opacity
+    hudBg.fillStyle(0x000000, 0.6)  // Black with 60% opacity (much darker)
     hudBg.fillRoundedRect(8, 8, 200, 80, 8)  // Increased height for level
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
@@ -284,7 +286,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private createCrystalCaveBackground(): void {
+
+  private createMiningThemeBackground(): void {
     // Use world width instead of canvas width to cover entire game area
     const worldWidth = GameSettings.game.floorWidth * GameSettings.game.tileSize
     const width = worldWidth + 1000 // Extra width to cover sides
@@ -294,8 +297,8 @@ export class GameScene extends Phaser.Scene {
     
     const bg = this.add.graphics()
     
-    // Mining Theme Background - darker appearance with brown tones
-    // Create gradient background staying in brown color family but darker
+    // MINING THEME: Underground mining cave with industrial elements
+    // Brown gradient background with mining shaft supports, gold veins, and ore deposits
     for (let y = startY; y < height; y += 20) {
       const ratio = Math.max(0, Math.min(1, (y - startY) / (height - startY)))
       // Interpolate between very dark brown and medium brown
@@ -323,6 +326,53 @@ export class GameScene extends Phaser.Scene {
         bg.fillStyle(0x3a2818, 0.4)
         bg.fillRect(supportX - 4, beamY - 50, 8, 100)
       }
+    }
+    
+    // Add optimized gold veins (reduced density)
+    for (let i = 0; i < Math.floor(width / 200); i++) { // Reduced from /80 to /200
+      const veinX = startX + Math.random() * width
+      const veinY = startY + Math.random() * (height - startY)
+      
+      // Simplified gold vein - single pass
+      bg.fillStyle(0xffd700, 0.4) // Brighter single color
+      const veinLength = 80 + Math.random() * 120 // Shorter veins
+      const veinAngle = Math.random() * Math.PI / 4 - Math.PI / 8 // Smaller angle range
+      
+      for (let v = 0; v < veinLength; v += 8) { // Bigger steps, fewer circles
+        const x = veinX + Math.cos(veinAngle) * v
+        const y = veinY + Math.sin(veinAngle) * v
+        bg.fillCircle(x, y, 3 + Math.random() * 3) // Consistent size range
+      }
+    }
+    
+    // Add optimized ore deposits (reduced density, kept circles)
+    for (let i = 0; i < Math.floor(width / 150); i++) { // Reduced from /60 to /150
+      const oreX = startX + Math.random() * width
+      const oreY = startY + Math.random() * (height - startY)
+      const oreType = Math.random()
+      
+      if (oreType < 0.5) {
+        // Gold deposits (increased chance)
+        bg.fillStyle(0xffd700, 0.5) // Single bright gold
+        bg.fillCircle(oreX, oreY, 6 + Math.random() * 8)
+      } else if (oreType < 0.8) {
+        // Silver/iron ore
+        bg.fillStyle(0x708090, 0.4) // Single color
+        bg.fillCircle(oreX, oreY, 5 + Math.random() * 6)
+      } else {
+        // Copper ore
+        bg.fillStyle(0xcd853f, 0.4) // Single color
+        bg.fillCircle(oreX, oreY, 4 + Math.random() * 5)
+      }
+    }
+    
+    // Add coal seams (simplified)
+    for (let i = 0; i < Math.floor(width / 300); i++) { // Reduced from /100 to /300
+      const seamX = startX + Math.random() * width
+      const seamY = startY + Math.random() * (height - startY)
+      
+      bg.fillStyle(0x1a1a1a, 0.6) // Single layer
+      bg.fillRect(seamX, seamY, 30 + Math.random() * 50, 2 + Math.random() * 4)
     }
     
     // Add lantern glows (mining lights) across full width and height
@@ -1100,11 +1150,11 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
       }
       
-      // Flash power-ups: Rare collectible after floor 20 or from treasure chests
-      // Note: Flash power-ups mainly come from treasure chests, not placed directly
-      if (floor > 20 && Math.random() < 0.1) {
-        this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
-      }
+      // Flash power-ups: DISABLED
+      // Note: Flash power-ups are disabled for now
+      // if (floor > 20 && Math.random() < 0.1) {
+      //   this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+      // }
     }
   }
   
@@ -1212,9 +1262,23 @@ export class GameScene extends Phaser.Scene {
   }
   
   private isPositionOccupied(x: number, floor: number, usedPositions: number[]): boolean {
-    // Check if position has ladder
+    // Check if position has ladder (need clearance)
     if (this.hasLadderAt(x, floor)) {
       return true
+    }
+    
+    // Check if position conflicts with door (need clearance)
+    const doorX = this.doorPositions.get(floor)
+    if (doorX !== undefined && Math.abs(x - doorX) < 4) { // 4 tiles clearance from door
+      return true
+    }
+    
+    // Check for ladder conflicts on this floor (wider clearance)
+    const ladderPositions = this.ladderPositions.get(floor) || []
+    for (const ladderX of ladderPositions) {
+      if (Math.abs(x - ladderX) < 2) { // 2 tiles clearance from ladders
+        return true
+      }
     }
     
     // Check if position is already used by another item (minimum 2 tile spacing)
@@ -1913,31 +1977,31 @@ export class GameScene extends Phaser.Scene {
       })
     }
     
-    // Spawn flash power-up if present
-    if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
-      const pos = spawnPositions[positionIndex++]
-      const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
-      this.flashPowerUps.push(flashPowerUp)
-      
-      // Add physics overlap detection
-      this.physics.add.overlap(
-        this.player,
-        flashPowerUp.sprite,
-        () => this.handleFlashPowerUpCollection(flashPowerUp),
-        undefined,
-        this
-      )
-      
-      // Add electric spawn animation
-      this.tweens.add({
-        targets: flashPowerUp.sprite,
-        scaleX: 1.4,
-        scaleY: 1.4,
-        duration: 400,
-        ease: 'Back.easeOut',
-        yoyo: true
-      })
-    }
+    // Flash power-up spawning disabled
+    // if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
+    //   const pos = spawnPositions[positionIndex++]
+    //   const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
+    //   this.flashPowerUps.push(flashPowerUp)
+    //   
+    //   // Add physics overlap detection
+    //   this.physics.add.overlap(
+    //     this.player,
+    //     flashPowerUp.sprite,
+    //     () => this.handleFlashPowerUpCollection(flashPowerUp),
+    //     undefined,
+    //     this
+    //   )
+    //   
+    //   // Add electric spawn animation
+    //   this.tweens.add({
+    //     targets: flashPowerUp.sprite,
+    //     scaleX: 1.4,
+    //     scaleY: 1.4,
+    //     duration: 400,
+    //     ease: 'Back.easeOut',
+    //     yoyo: true
+    //   })
+    // }
   }
 
   update(_time: number, _deltaTime: number): void {
@@ -2130,10 +2194,10 @@ export class GameScene extends Phaser.Scene {
           this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
         }
         
-        // Flash power-ups: Rare collectible after floor 20
-        if (floor > 20 && Math.random() < 0.1) {
-          this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
-        }
+        // Flash power-ups: DISABLED
+        // if (floor > 20 && Math.random() < 0.1) {
+        //   this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+        // }
       }
       
       // Get allowed enemy types for current level (reuse the levelConfig from above)
@@ -2384,33 +2448,17 @@ export class GameScene extends Phaser.Scene {
       const topFloor = levelConfig.floorCount - 1
       const topFloorY = GameSettings.canvas.height - tileSize/2 - (topFloor * floorSpacing)
       
-      // Find a safe position for the door (not over a gap)
-      const doorFloorLayout = this.floorLayouts[topFloor]
-      let doorX = GameSettings.canvas.width / 2  // Default center position
+      // Enhanced door placement with ladder and collectible conflict avoidance
+      const doorX = this.findSafeDoorPosition(topFloor)
       
-      if (doorFloorLayout && doorFloorLayout.gapStart !== -1) {
-        // Floor has a gap, find a safe position
-        const gapStart = doorFloorLayout.gapStart * tileSize
-        const gapEnd = (doorFloorLayout.gapStart + doorFloorLayout.gapSize) * tileSize
-        const centerX = GameSettings.canvas.width / 2
-        
-        // If center is over the gap, move door to a safe position
-        if (centerX >= gapStart && centerX <= gapEnd) {
-          // Try left side first (before gap)
-          if (gapStart > 60) { // At least 2 tiles from left edge
-            doorX = Math.max(40, gapStart - 30)
-          } else {
-            // Use right side (after gap)
-            doorX = Math.min(GameSettings.canvas.width - 40, gapEnd + 30)
-          }
-        }
-      }
-      
-      // Place door on top floor - door is 50 pixels tall, position it standing on the platform
-      const doorY = topFloorY - 40 // Raise door up so it stands properly on the platform
+      // Place door on top floor - door is 100 pixels tall, bottom should align with floor
+      const doorY = topFloorY - 50 // Bottom of door aligns with floor platform
       
       const isFirstLevel = this.levelManager.getCurrentLevel() === 1
       this.door = new Door(this, doorX, doorY, isFirstLevel)
+      
+      // Store door position for future collision avoidance
+      this.storeDoorPosition(topFloor, Math.floor(doorX / tileSize))
       
       // Add collision detection for door
       this.physics.add.overlap(
@@ -2421,6 +2469,68 @@ export class GameScene extends Phaser.Scene {
         this
       )
     }
+  }
+  
+  private findSafeDoorPosition(floor: number): number {
+    const tileSize = GameSettings.game.tileSize
+    const floorWidth = GameSettings.game.floorWidth
+    const doorFloorLayout = this.floorLayouts[floor]
+    const doorWidth = 3 // Door takes up about 3 tiles width
+    
+    // Get ladder positions on this floor to avoid conflicts
+    const ladderPositions = this.ladderPositions.get(floor) || []
+    
+    // Find safe positions (not over gaps, not conflicting with ladders)
+    const safePositions: number[] = []
+    
+    for (let x = 2; x < floorWidth - 2 - doorWidth; x++) {
+      let isSafe = true
+      
+      // Check if this position and surrounding area are over solid ground
+      for (let dx = 0; dx < doorWidth; dx++) {
+        if (!this.hasPlatformAt(doorFloorLayout, x + dx)) {
+          isSafe = false
+          break
+        }
+      }
+      
+      // Check for ladder conflicts (door needs clearance from ladders)
+      if (isSafe) {
+        for (const ladderX of ladderPositions) {
+          if (Math.abs(x - ladderX) < 4) { // Need at least 4 tiles clearance from ladders
+            isSafe = false
+            break
+          }
+        }
+      }
+      
+      if (isSafe) {
+        safePositions.push(x)
+      }
+    }
+    
+    // Choose position - prefer center, but avoid conflicts
+    let doorTileX: number
+    if (safePositions.length > 0) {
+      // Find position closest to center
+      const centerTile = Math.floor(floorWidth / 2)
+      doorTileX = safePositions.reduce((closest, pos) => 
+        Math.abs(pos - centerTile) < Math.abs(closest - centerTile) ? pos : closest
+      )
+    } else {
+      // Fallback - use center and hope for the best
+      doorTileX = Math.floor(floorWidth / 2) - Math.floor(doorWidth / 2)
+    }
+    
+    return (doorTileX + doorWidth/2) * tileSize // Return center X position of door
+  }
+  
+  private storeDoorPosition(floor: number, tileX: number): void {
+    // Store door position for collision avoidance in collectible placement
+    if (!this.doorPositions) {
+      this.doorPositions = new Map()
+    }
+    this.doorPositions.set(floor, tileX)
   }
   
   private handleDoorOverlap(

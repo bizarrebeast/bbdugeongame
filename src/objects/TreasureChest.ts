@@ -145,10 +145,10 @@ export class TreasureChest {
       yoyo: true
     })
     
-    // Generate contents based on sprint requirements
+    // Generate contents - removed flash powerup
     const coins = Math.floor(Math.random() * 6) + 5 // 5-10 coins
     const diamond = Math.random() < 0.3 // 30% chance
-    const flashPowerUp = Math.random() < 1.0 // TESTING: 100% chance
+    const flashPowerUp = false // Flash powerup disabled
     
     // Calculate total points
     let totalPoints = 2500 // Base chest value

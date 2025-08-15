@@ -15,7 +15,6 @@ export interface LevelConfig {
 export class LevelManager {
   private currentLevel: number = 1
   private readonly ENDLESS_LEVEL = 101
-  
   constructor() {
     // Always start from Level 1 - we'll track furthest level reached separately
     this.currentLevel = 1
@@ -74,13 +73,16 @@ export class LevelManager {
   
   /**
    * Determine which collectibles are available at this level
-   * Level 1-2: Regular coins only
+   * Level 1: All collectibles (for testing)
+   * Level 2: Regular coins only
    * Level 3-4: Regular coins + Blue coins
    * Level 5-6: Regular coins + Blue coins + Diamonds
    * Level 7+: All collectibles (+ Treasure chests)
    */
   private getCollectibleTypes(levelNumber: number): string[] {
-    if (levelNumber <= 2) {
+    if (levelNumber === 1) {
+      return ['coin', 'blueCoin', 'diamond', 'treasureChest'] // All items for level 1
+    } else if (levelNumber <= 2) {
       return ['coin']
     } else if (levelNumber <= 4) {
       return ['coin', 'blueCoin']

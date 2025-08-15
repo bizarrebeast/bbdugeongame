@@ -4,7 +4,7 @@
  */
 
 export const GameSettings = {
-  debug: false,  // Debug mode disabled
+  debug: true,  // Debug mode enabled - shows hit boxes
 
   canvas: {
     width: 450,  // Portrait mode - 9:16 aspect ratio
