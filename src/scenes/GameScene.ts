@@ -298,115 +298,204 @@ export class GameScene extends Phaser.Scene {
     
     const bg = this.add.graphics()
     
-    // MINING THEME: Underground mining cave with industrial elements
-    // Brown gradient background with mining shaft supports, gold veins, and ore deposits
+    // VIBRANT CRYSTAL CAVERN THEME: BizarreBeasts-style colorful crystal mining cavern
+    // Dark purple gradient background to make crystal elements stand out more
     for (let y = startY; y < height; y += 20) {
       const ratio = Math.max(0, Math.min(1, (y - startY) / (height - startY)))
-      // Interpolate between very dark brown and medium brown
-      const r = Math.floor(0x2c * (1 - ratio) + 0x3c * ratio)
-      const g = Math.floor(0x1b * (1 - ratio) + 0x2b * ratio)
-      const b = Math.floor(0x1c * (1 - ratio) + 0x2c * ratio)
+      // Darker purple gradient: Very dark purple at top to dark purple at bottom
+      const r = Math.floor(0x1a * (1 - ratio) + 0x2a * ratio)
+      const g = Math.floor(0x0a * (1 - ratio) + 0x1a * ratio)
+      const b = Math.floor(0x2a * (1 - ratio) + 0x4a * ratio)
       const color = (r << 16) | (g << 8) | b
       
       bg.fillStyle(color, 1)
       bg.fillRect(startX, y, width, 20)
     }
     
-    // Add mine shaft support beams in background
+    // Add bright crystal formations in background
     for (let i = -15; i < 30; i++) {  // Extended range to cover full height
-      const beamY = i * 400 + 100
+      const formationY = i * 400 + 100
       
-      // Horizontal beam across full width
-      bg.fillStyle(0x3a2818, 0.4)
-      bg.fillRect(startX, beamY, width, 12)
+      // Crystal shelf across width with shimmer
+      bg.fillStyle(0x60a0ff, 0.15) // Much more faded blue crystal base
+      bg.fillRect(startX, formationY, width, 8)
       
-      // Vertical supports distributed across width
-      const numSupports = Math.floor(width / 150)
-      for (let j = 0; j <= numSupports; j++) {
-        const supportX = startX + (width / numSupports) * j
-        bg.fillStyle(0x3a2818, 0.4)
-        bg.fillRect(supportX - 4, beamY - 50, 8, 100)
+      // Add crystal spikes distributed across width
+      const numCrystals = Math.floor(width / 120)
+      for (let j = 0; j <= numCrystals; j++) {
+        const crystalX = startX + (width / numCrystals) * j + (Math.random() - 0.5) * 40
+        
+        // Colorful crystal spikes
+        const crystalColors = [0xff6bb3, 0x6bb3ff, 0xb3ff6b, 0xffb36b, 0xb36bff]
+        const crystalColor = crystalColors[Math.floor(Math.random() * crystalColors.length)]
+        
+        bg.fillStyle(crystalColor, 0.2) // Much more faded
+        // Draw crystal spike pointing up
+        bg.fillTriangle(
+          crystalX, formationY,
+          crystalX - 6, formationY + 30,
+          crystalX + 6, formationY + 30
+        )
+        
+        // Add crystal highlight
+        bg.fillStyle(0xffffff, 0.15) // Faded highlight
+        bg.fillTriangle(
+          crystalX, formationY,
+          crystalX - 2, formationY + 10,
+          crystalX + 2, formationY + 10
+        )
       }
     }
     
-    // Add optimized gold veins (reduced density)
-    for (let i = 0; i < Math.floor(width / 200); i++) { // Reduced from /80 to /200
+    // Add magical gem veins with rainbow colors
+    for (let i = 0; i < Math.floor(width / 150); i++) {
       const veinX = startX + Math.random() * width
       const veinY = startY + Math.random() * (height - startY)
       
-      // Simplified gold vein - single pass
-      bg.fillStyle(0xffd700, 0.4) // Brighter single color
-      const veinLength = 80 + Math.random() * 120 // Shorter veins
-      const veinAngle = Math.random() * Math.PI / 4 - Math.PI / 8 // Smaller angle range
+      // Colorful gem vein
+      const gemColors = [0xff4081, 0x40c4ff, 0x69f0ae, 0xffab40, 0xba68c8]
+      const gemColor = gemColors[Math.floor(Math.random() * gemColors.length)]
       
-      for (let v = 0; v < veinLength; v += 8) { // Bigger steps, fewer circles
+      bg.fillStyle(gemColor, 0.2) // Much more faded gem veins
+      const veinLength = 100 + Math.random() * 150
+      const veinAngle = Math.random() * Math.PI / 3 - Math.PI / 6
+      
+      for (let v = 0; v < veinLength; v += 8) {
         const x = veinX + Math.cos(veinAngle) * v
         const y = veinY + Math.sin(veinAngle) * v
-        bg.fillCircle(x, y, 3 + Math.random() * 3) // Consistent size range
+        bg.fillCircle(x, y, 3 + Math.random() * 4) // Sparkly gem dots
+        
+        // Add white sparkle highlights
+        if (Math.random() > 0.7) {
+          bg.fillStyle(0xffffff, 0.3) // Faded sparkles
+          bg.fillCircle(x + Math.random() * 4 - 2, y + Math.random() * 4 - 2, 1)
+          bg.fillStyle(gemColor, 0.2) // Reset to faded gem color
+        }
       }
     }
     
-    // Add optimized ore deposits (reduced density, kept circles)
-    for (let i = 0; i < Math.floor(width / 150); i++) { // Reduced from /60 to /150
-      const oreX = startX + Math.random() * width
-      const oreY = startY + Math.random() * (height - startY)
-      const oreType = Math.random()
+    // Add magical gem clusters throughout the cavern
+    for (let i = 0; i < Math.floor(width / 100); i++) {
+      const gemX = startX + Math.random() * width
+      const gemY = startY + Math.random() * (height - startY)
+      const gemType = Math.random()
       
-      if (oreType < 0.5) {
-        // Gold deposits (increased chance)
-        bg.fillStyle(0xffd700, 0.5) // Single bright gold
-        bg.fillCircle(oreX, oreY, 6 + Math.random() * 8)
-      } else if (oreType < 0.8) {
-        // Silver/iron ore
-        bg.fillStyle(0x708090, 0.4) // Single color
-        bg.fillCircle(oreX, oreY, 5 + Math.random() * 6)
+      if (gemType < 0.3) {
+        // Large rainbow gems
+        const rainbowColors = [0xff1744, 0xe91e63, 0x9c27b0, 0x673ab7, 0x3f51b5, 0x2196f3, 0x00bcd4, 0x009688, 0x4caf50, 0x8bc34a, 0xcddc39, 0xffeb3b, 0xffc107, 0xff9800, 0xff5722]
+        const gemColor = rainbowColors[Math.floor(Math.random() * rainbowColors.length)]
+        bg.fillStyle(gemColor, 0.25) // Much more faded
+        bg.fillCircle(gemX, gemY, 8 + Math.random() * 6)
+        
+        // Add bright white highlight
+        bg.fillStyle(0xffffff, 0.3) // Faded highlight
+        bg.fillCircle(gemX - 2, gemY - 2, 2)
+      } else if (gemType < 0.6) {
+        // Medium amethyst/crystal clusters  
+        bg.fillStyle(0xba68c8, 0.2) // Much more faded
+        bg.fillCircle(gemX, gemY, 6 + Math.random() * 4)
+        bg.fillStyle(0xffffff, 0.25) // Faded highlight
+        bg.fillCircle(gemX - 1, gemY - 1, 1.5)
       } else {
-        // Copper ore
-        bg.fillStyle(0xcd853f, 0.4) // Single color
-        bg.fillCircle(oreX, oreY, 4 + Math.random() * 5)
+        // Small emerald gems
+        bg.fillStyle(0x4caf50, 0.2) // Much more faded
+        bg.fillCircle(gemX, gemY, 4 + Math.random() * 3)
+        bg.fillStyle(0xffffff, 0.3) // Faded highlight
+        bg.fillCircle(gemX - 1, gemY - 1, 1)
       }
     }
     
-    // Add coal seams (simplified)
-    for (let i = 0; i < Math.floor(width / 300); i++) { // Reduced from /100 to /300
-      const seamX = startX + Math.random() * width
-      const seamY = startY + Math.random() * (height - startY)
+    // Add glowing crystal formations (replace coal seams)
+    for (let i = 0; i < Math.floor(width / 200); i++) {
+      const formX = startX + Math.random() * width
+      const formY = startY + Math.random() * (height - startY)
       
-      bg.fillStyle(0x1a1a1a, 0.6) // Single layer
-      bg.fillRect(seamX, seamY, 30 + Math.random() * 50, 2 + Math.random() * 4)
+      // Glowing crystal cluster
+      const glowColors = [0x40e0d0, 0xff69b4, 0x98fb98, 0xffa500]
+      const glowColor = glowColors[Math.floor(Math.random() * glowColors.length)]
+      
+      bg.fillStyle(glowColor, 0.1) // Very faded
+      bg.fillRect(formX - 20, formY - 5, 40 + Math.random() * 30, 10 + Math.random() * 8)
+      
+      // Add bright center
+      bg.fillStyle(glowColor, 0.3) // Faded center
+      bg.fillRect(formX - 10, formY - 2, 20, 4)
     }
     
-    // Add lantern glows (mining lights) across full width and height
-    for (let i = 0; i < Math.floor(width / 40); i++) {
+    // Add magical floating light orbs (replace mining lights)
+    for (let i = 0; i < Math.floor(width / 60); i++) {
       const x = startX + Math.random() * width
       const y = startY + Math.random() * (height - startY)
       
-      // Lantern post
-      bg.fillStyle(0x2a2a2a, 0.3)
-      bg.fillRect(x - 1, y, 2, 20)
+      // Floating magic orb with glow effect
+      const orbColors = [0x40e0d0, 0xff1493, 0x9370db, 0x00ff7f, 0xffd700]
+      const orbColor = orbColors[Math.floor(Math.random() * orbColors.length)]
       
-      // Light glow
-      bg.fillStyle(0xffaa00, 0.08)
-      bg.fillCircle(x, y + 10, 30)
-      bg.fillStyle(0xffcc00, 0.06)
-      bg.fillCircle(x, y + 10, 20)
+      // Outer glow
+      bg.fillStyle(orbColor, 0.08) // Very faded outer glow
+      bg.fillCircle(x, y, 15)
+      
+      // Middle glow
+      bg.fillStyle(orbColor, 0.15) // Faded middle glow
+      bg.fillCircle(x, y, 8)
+      
+      // Bright center
+      bg.fillStyle(orbColor, 0.3) // Faded center
+      bg.fillCircle(x, y, 4)
+      
+      // White sparkle center
+      bg.fillStyle(0xffffff, 0.4) // Faded sparkle
+      bg.fillCircle(x, y, 2)
     }
     
-    // Add distant mine cart tracks across full width
-    bg.lineStyle(2, 0x3a3a3a, 0.2)
-    for (let y = startY + 100; y < height; y += 300) {
-      bg.lineBetween(startX, y, startX + width, y + 20)
-      bg.lineBetween(startX, y + 10, startX + width, y + 30)
+    // Add magical energy streams across the cavern
+    bg.lineStyle(3, 0x40e0d0, 0.3)
+    for (let y = startY + 100; y < height; y += 400) {
+      // Flowing magical energy streams with gentle curves
+      const streamY = y + Math.random() * 100
+      const segments = Math.floor(width / 100)
+      
+      for (let s = 0; s < segments; s++) {
+        const x1 = startX + (width / segments) * s
+        const x2 = startX + (width / segments) * (s + 1)
+        const curve = Math.sin(s * 0.5) * 20
+        
+        bg.lineStyle(2, 0x40e0d0, 0.15) // Very faded energy streams
+        bg.lineBetween(x1, streamY + curve, x2, streamY + Math.sin((s + 1) * 0.5) * 20)
+        
+        // Add sparkles along the stream
+        if (Math.random() > 0.7) {
+          bg.fillStyle(0xffffff, 0.2) // Faded sparkles
+          bg.fillCircle(x1 + Math.random() * (x2 - x1), streamY + curve, 1)
+        }
+      }
     }
     
-    // Rock formations and shadows distributed across full width
-    for (let i = 0; i < Math.floor(width / 70); i++) {
+    // Add large crystal formations and geodes
+    for (let i = 0; i < Math.floor(width / 80); i++) {
       const x = startX + Math.random() * width
       const y = startY + Math.random() * (height - startY)
       const size = 40 + Math.random() * 60
       
-      bg.fillStyle(0x1a1510, 0.3)
+      // Large crystal geode with colorful interior
+      const geodeColors = [0x9c27b0, 0x673ab7, 0x3f51b5, 0x00bcd4, 0x4caf50]
+      const geodeColor = geodeColors[Math.floor(Math.random() * geodeColors.length)]
+      
+      // Outer geode shell
+      bg.fillStyle(0x5a4a6a, 0.15) // Very faded shell
       bg.fillCircle(x, y, size)
+      
+      // Inner crystal cavity
+      bg.fillStyle(geodeColor, 0.2) // Faded cavity
+      bg.fillCircle(x, y, size * 0.7)
+      
+      // Bright crystal center
+      bg.fillStyle(geodeColor, 0.35) // Faded center
+      bg.fillCircle(x, y, size * 0.3)
+      
+      // White highlight
+      bg.fillStyle(0xffffff, 0.3) // Faded highlight
+      bg.fillCircle(x - size * 0.2, y - size * 0.2, size * 0.15)
     }
     
     bg.setDepth(-10) // Far background
@@ -627,22 +716,22 @@ export class GameScene extends Phaser.Scene {
   private createPlatformTile(x: number, y: number, isLeftEdge: boolean = false, isRightEdge: boolean = false): void {
     const tileSize = GameSettings.game.tileSize
     
-    // Mining/Industrial Theme - back to the good looking version
+    // CRYSTAL CAVERN THEME - Magical crystal platforms
     // Create a graphics object for this tile
     const tileGraphics = this.add.graphics()
     
-    // Unified brown mining theme - subtle variations within the same color family
+    // Vibrant purple crystal theme with magical variations
     const tileVariation = Math.random()
-    let baseColor = 0x8c6b4c  // Your preferred brown tone
+    let baseColor = 0x6a4a8a  // Deep purple crystal base
     
-    // Draw base tile in brown tones
+    // Draw base crystal platform tile
     tileGraphics.fillStyle(baseColor, 1)
     tileGraphics.fillRect(x - tileSize/2, y - tileSize/2, tileSize, tileSize)
     
-    // Subtle texture variations (all staying in brown family)
+    // Crystal texture variations with magical colors
     if (tileVariation < 0.4) {
-      // Slightly darker brown patches
-      tileGraphics.fillStyle(0x7c5b3c, 0.6)
+      // Slightly brighter purple patches
+      tileGraphics.fillStyle(0x8a6aaa, 0.6)
       tileGraphics.fillRect(
         x - tileSize/2 + Math.random() * 12, 
         y - tileSize/2 + Math.random() * 12, 
@@ -650,8 +739,8 @@ export class GameScene extends Phaser.Scene {
         8 + Math.random() * 8
       )
     } else if (tileVariation < 0.6) {
-      // Slightly lighter brown patches
-      tileGraphics.fillStyle(0x9c7b5c, 0.5)
+      // Bright magenta crystal patches
+      tileGraphics.fillStyle(0xaa6a9a, 0.5)
       tileGraphics.fillRect(
         x - tileSize/2 + Math.random() * 12, 
         y - tileSize/2 + Math.random() * 12, 
@@ -660,89 +749,126 @@ export class GameScene extends Phaser.Scene {
       )
     }
     
-    // Subtle wood grain effect (20% chance)
-    if (Math.random() < 0.2) {
-      tileGraphics.lineStyle(1, 0x7c5b3c, 0.4)
-      for (let i = 0; i < 2; i++) {
-        const grainY = y - tileSize/2 + 8 + i * 12
-        tileGraphics.lineBetween(
-          x - tileSize/2 + 2, grainY, 
-          x + tileSize/2 - 2, grainY + Math.random() * 2 - 1
-        )
-      }
-    }
-    
-    // Small gold flecks occasionally
-    if (Math.random() < 0.15) {
-      tileGraphics.fillStyle(0xffcc00, 0.7)
-      for (let i = 0; i < 2; i++) {
-        tileGraphics.fillCircle(
-          x - tileSize/2 + 4 + Math.random() * (tileSize - 8),
-          y - tileSize/2 + 4 + Math.random() * (tileSize - 8),
-          1
-        )
-      }
-    }
-    
-    // Add mining rail tracks on top (30% chance)
+    // Crystal veining effect (30% chance)
     if (Math.random() < 0.3) {
-      // Metal rails (slightly brighter)
-      tileGraphics.fillStyle(0x5a5a5a, 1)
-      tileGraphics.fillRect(x - tileSize/2 + 4, y - tileSize/2, 2, tileSize)
-      tileGraphics.fillRect(x + tileSize/2 - 6, y - tileSize/2, 2, tileSize)
-      
-      // Wooden ties (warmer brown)
-      tileGraphics.fillStyle(0x6a4838, 1)
-      tileGraphics.fillRect(x - tileSize/2 + 2, y - 4, tileSize - 4, 3)
-      
-      // Rail shine
-      tileGraphics.lineStyle(1, 0x7a7a7a, 0.5)
-      tileGraphics.lineBetween(x - tileSize/2 + 4, y - tileSize/2, x - tileSize/2 + 4, y + tileSize/2)
-      tileGraphics.lineBetween(x + tileSize/2 - 6, y - tileSize/2, x + tileSize/2 - 6, y + tileSize/2)
+      const veinColors = [0xff69b4, 0x9370db, 0x40e0d0]
+      const veinColor = veinColors[Math.floor(Math.random() * veinColors.length)]
+      tileGraphics.lineStyle(2, veinColor, 0.6)
+      for (let i = 0; i < 3; i++) {
+        const veinY = y - tileSize/2 + 6 + i * 8
+        tileGraphics.lineBetween(
+          x - tileSize/2 + 2, veinY, 
+          x + tileSize/2 - 2, veinY + Math.random() * 4 - 2
+        )
+      }
     }
     
-    // Add wooden support beam (20% chance)
-    if (Math.random() < 0.2) {
-      // Vertical wooden beam (lighter wood)
-      tileGraphics.fillStyle(0x7a5338, 1)
-      tileGraphics.fillRect(x - 3, y - tileSize/2, 6, tileSize)
-      
-      // Wood grain
-      tileGraphics.lineStyle(1, 0x6a4328, 0.5)
-      tileGraphics.lineBetween(x - 1, y - tileSize/2, x - 1, y + tileSize/2)
-      tileGraphics.lineBetween(x + 1, y - tileSize/2, x + 1, y + tileSize/2)
-      
-      // Metal brackets (lighter metal)
-      tileGraphics.fillStyle(0x4a4a4a, 1)
-      tileGraphics.fillRect(x - 4, y - tileSize/2 + 2, 8, 2)
-      tileGraphics.fillRect(x - 4, y + tileSize/2 - 4, 8, 2)
+    // Sparkling gem crystals occasionally
+    if (Math.random() < 0.25) {
+      const gemColors = [0xff1493, 0x9370db, 0x40e0d0, 0xffd700, 0x00fa9a]
+      const gemColor = gemColors[Math.floor(Math.random() * gemColors.length)]
+      tileGraphics.fillStyle(gemColor, 0.8)
+      for (let i = 0; i < 3; i++) {
+        const gemX = x - tileSize/2 + 4 + Math.random() * (tileSize - 8)
+        const gemY = y - tileSize/2 + 4 + Math.random() * (tileSize - 8)
+        tileGraphics.fillCircle(gemX, gemY, 1.5)
+        
+        // Add white sparkle highlight
+        tileGraphics.fillStyle(0xffffff, 0.9)
+        tileGraphics.fillCircle(gemX - 0.5, gemY - 0.5, 0.5)
+        tileGraphics.fillStyle(gemColor, 0.8)
+      }
     }
     
-    // Add ore veins (15% chance)
+    // Add crystal spikes on top (25% chance)
+    if (Math.random() < 0.25) {
+      const spikeColors = [0xff69b4, 0x9370db, 0x40e0d0, 0x00fa9a]
+      const spikeColor = spikeColors[Math.floor(Math.random() * spikeColors.length)]
+      
+      // Crystal spikes pointing up from platform
+      tileGraphics.fillStyle(spikeColor, 0.8)
+      const numSpikes = 2 + Math.floor(Math.random() * 3)
+      for (let i = 0; i < numSpikes; i++) {
+        const spikeX = x - tileSize/2 + 6 + i * (tileSize - 12) / numSpikes
+        const spikeHeight = 8 + Math.random() * 6
+        
+        // Draw crystal spike triangle
+        tileGraphics.fillTriangle(
+          spikeX, y - tileSize/2,
+          spikeX - 3, y - tileSize/2 + spikeHeight,
+          spikeX + 3, y - tileSize/2 + spikeHeight
+        )
+        
+        // Add bright highlight
+        tileGraphics.fillStyle(0xffffff, 0.7)
+        tileGraphics.fillTriangle(
+          spikeX, y - tileSize/2,
+          spikeX - 1, y - tileSize/2 + spikeHeight/2,
+          spikeX + 1, y - tileSize/2 + spikeHeight/2
+        )
+        tileGraphics.fillStyle(spikeColor, 0.8)
+      }
+    }
+    
+    // Add crystal cluster support (15% chance)
     if (Math.random() < 0.15) {
-      const oreType = Math.random()
+      const clusterColors = [0xba68c8, 0x9c27b0, 0x673ab7]
+      const clusterColor = clusterColors[Math.floor(Math.random() * clusterColors.length)]
       
-      if (oreType < 0.33) {
-        // Gold ore
-        tileGraphics.fillStyle(0xffcc00, 0.8)
-      } else if (oreType < 0.66) {
-        // Iron ore
-        tileGraphics.fillStyle(0x8a7a6a, 0.8)
+      // Vertical crystal cluster
+      tileGraphics.fillStyle(clusterColor, 0.7)
+      tileGraphics.fillRect(x - 4, y - tileSize/2, 8, tileSize)
+      
+      // Crystal facets
+      tileGraphics.fillStyle(clusterColor, 0.9)
+      tileGraphics.fillRect(x - 3, y - tileSize/2 + 2, 2, tileSize - 4)
+      tileGraphics.fillRect(x + 1, y - tileSize/2 + 2, 2, tileSize - 4)
+      
+      // Bright crystal highlights
+      tileGraphics.fillStyle(0xffffff, 0.8)
+      tileGraphics.fillRect(x - 2, y - tileSize/2 + 4, 1, tileSize - 8)
+      tileGraphics.fillRect(x + 2, y - tileSize/2 + 4, 1, tileSize - 8)
+    }
+    
+    // Add magical crystal clusters (20% chance)
+    if (Math.random() < 0.2) {
+      const crystalType = Math.random()
+      
+      if (crystalType < 0.33) {
+        // Amethyst crystals
+        tileGraphics.fillStyle(0x9370db, 0.8)
+      } else if (crystalType < 0.66) {
+        // Aquamarine crystals
+        tileGraphics.fillStyle(0x40e0d0, 0.8)
       } else {
-        // Coal
-        tileGraphics.fillStyle(0x1a1a1a, 0.9)
+        // Rose quartz crystals
+        tileGraphics.fillStyle(0xff69b4, 0.8)
       }
       
-      // Ore chunks
-      const oreX = x - tileSize/2 + 5 + Math.random() * (tileSize - 10)
-      const oreY = y - tileSize/2 + 5 + Math.random() * (tileSize - 10)
+      // Crystal cluster formation
+      const crystalX = x - tileSize/2 + 5 + Math.random() * (tileSize - 10)
+      const crystalY = y - tileSize/2 + 5 + Math.random() * (tileSize - 10)
       
-      for (let i = 0; i < 3; i++) {
-        tileGraphics.fillCircle(
-          oreX + Math.random() * 8 - 4, 
-          oreY + Math.random() * 8 - 4, 
-          2 + Math.random() * 2
-        )
+      for (let i = 0; i < 4; i++) {
+        const cX = crystalX + Math.random() * 10 - 5
+        const cY = crystalY + Math.random() * 10 - 5
+        const size = 2 + Math.random() * 3
+        
+        // Crystal hexagon shape
+        tileGraphics.fillCircle(cX, cY, size)
+        
+        // Bright highlight
+        tileGraphics.fillStyle(0xffffff, 0.9)
+        tileGraphics.fillCircle(cX - size/2, cY - size/2, size/3)
+        
+        // Reset color for next crystal
+        if (crystalType < 0.33) {
+          tileGraphics.fillStyle(0x9370db, 0.8)
+        } else if (crystalType < 0.66) {
+          tileGraphics.fillStyle(0x40e0d0, 0.8)
+        } else {
+          tileGraphics.fillStyle(0xff69b4, 0.8)
+        }
       }
     }
     
@@ -758,6 +884,12 @@ export class GameScene extends Phaser.Scene {
         crackStartX + (Math.random() - 0.5) * 12, crackStartY + tileSize
       )
     }
+    
+    // Add drop shadow for the platform tile
+    const shadowGraphics = this.add.graphics()
+    shadowGraphics.fillStyle(0x000000, 0.3) // Black shadow with 30% opacity
+    shadowGraphics.fillRect(x - tileSize/2 + 3, y - tileSize/2 + 3, tileSize, tileSize)
+    shadowGraphics.setDepth(0) // Behind the tile
     
     tileGraphics.setDepth(1) // Platforms render behind ladders
     
@@ -799,6 +931,12 @@ export class GameScene extends Phaser.Scene {
     const ladderX = x + tileSize/2
     
     // Thicker vertical wooden rails - extend up significantly to balance with bottom extensions
+    // First draw the outline/stroke
+    ladderGraphics.lineStyle(2, 0x4a3328, 1) // Dark brown outline
+    ladderGraphics.strokeRect(ladderX - 13, topY - tileSize * 1.0 - 1, 7, ladderHeight + tileSize * 1.0 + 2) // Left rail outline
+    ladderGraphics.strokeRect(ladderX + 6, topY - tileSize * 1.0 - 1, 7, ladderHeight + tileSize * 1.0 + 2) // Right rail outline
+    
+    // Then fill the rails
     ladderGraphics.fillStyle(0x6a5338, 1) // Brighter wood color
     ladderGraphics.fillRect(ladderX - 12, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0) // Extended much further up
     ladderGraphics.fillRect(ladderX + 7, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0)
@@ -817,6 +955,10 @@ export class GameScene extends Phaser.Scene {
     const numRungs = Math.floor(ladderHeight / 22) // More frequent rungs
     for (let i = 0; i <= numRungs; i++) {
       const rungY = bottomY - (i * 22)
+      
+      // Draw rung outline first
+      ladderGraphics.lineStyle(1, 0x4a3328, 0.8) // Dark brown outline for rungs
+      ladderGraphics.strokeRect(ladderX - 13, rungY - 4, 26, 8)
       
       // Thicker wooden rung
       ladderGraphics.fillStyle(0x6a5338, 1)
