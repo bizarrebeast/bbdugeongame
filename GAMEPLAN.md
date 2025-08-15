@@ -13,9 +13,10 @@ A retro simplified Donkey Kong style game where the player climbs levels on ladd
 - **Platform:** Cross-platform (mobile and desktop)
 
 ### Setting & Theme
-- **Environment:** Underground cavern/mine setting
-- **Visual Elements:** Brick platforms reminiscent of classic Mario underground levels
-- **Atmosphere:** Dark cavern with atmospheric lighting effects
+- **Environment:** Underground cavern/mine setting with established **Mining Theme**
+- **Visual Elements:** Industrial mining platforms with wooden ladders and metal supports
+- **Atmosphere:** Dark mining cave with gold veins, ore deposits, and mining equipment
+- **Theme System:** Mining Theme established as foundation for future theme development
 
 ### Target Experience
 Fast-paced arcade excitement with a nostalgic feel - players should experience the thrill of 'just one more level' as they chase high scores, combined with the satisfying challenge of mastering timing and pattern recognition.
@@ -84,7 +85,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 2. **Blue Coins:** ✅ Enhanced coins worth 500 points with distinct blue color
 3. **Diamonds:** ✅ High-value collectibles worth 1000 points with sparkle effects
 4. **Treasure Chests:** ✅ Interactive chests (2500 points + contents) requiring ACTION button
-5. **Flash Power-ups:** ✅ Removes darkness overlay for 5 seconds
+5. **Flash Power-ups:** 🔄 DISABLED (can be re-enabled later)
 
 ### Enhanced Collectible System ✅ ACTIVE
 - ✅ **Level-Based Progression:** Collectibles unlock by level (coins→blue coins→diamonds→treasure chests)
@@ -92,19 +93,19 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ **Multiple Collection Protection:** Prevents double-scoring from single item
 - ✅ **Collection animations:** Scale/fade effects with point popups
 - ✅ **Progressive rarity scaling:** Based on level progression
+- ✅ **Level 1 Testing:** All collectible types available on Level 1 for development
 
 ### Treasure Chest Mechanics ✅ IMPLEMENTED
 - ✅ Automatic opening on player contact when grounded
 - ✅ Brief opening animation with smooth fade-out effect
-- ✅ Contains multiple coins plus chance of diamonds and flash power-ups
+- ✅ Contains multiple coins plus chance of diamonds (flash power-ups disabled)
 - ✅ Full reset on death for replay value
 
-### Flash Power-up System ✅ ENHANCED
-- ✅ Professional custom overlay image with transparent window (320×320px)
-- ✅ Instant scaling + fade effects for seamless flash experience
-- ✅ Player positioned in lower 40% of visible area for optimal forward visibility
-- ✅ 5-second duration with instant transitions (no visible mechanics)
-- ✅ Found in treasure chests and as collectible items
+### Flash Power-up System 🔄 TEMPORARILY DISABLED
+- 🔄 **Status:** System disabled for cleaner gameplay (code preserved for future re-enablement)
+- ✅ **Previous Implementation:** Professional overlay with 320×320px transparent window
+- ✅ **Architecture:** Complete system ready for re-activation when needed
+- 🔄 **Treasure Integration:** Flash power-ups removed from chest contents
 
 ## Difficulty Progression
 
@@ -156,9 +157,11 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
   - Jumping
   - Power-up activation
 
-### Abilities
+### Abilities ✅ ENHANCED
 - Standard movement and jumping
 - Ladder climbing
+- **Enhanced Collision:** 28×55 pixel hitbox for more forgiving gameplay (increased from 20×30)
+- **Debug Visualization:** Hitbox visibility enabled for development testing
 - Future: Potential for unlockable characters with slight stat variations
 
 ## Technical Implementation Notes
@@ -295,6 +298,27 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - [x] Optimize performance with single overlay image system
 - [x] Clean visual experience with debug lines disabled
 - [x] Mobile touch controls optimized for core gameplay
+
+### ✅ Mining Theme Foundation - COMPLETED
+*Focus: Establish Mining Theme branding and enhance gameplay systems*
+
+**Visual Theme Establishment** ✅ COMPLETE
+- [x] Officially establish "Mining Theme" as current design pattern for future theme development
+- [x] Rename background system from Crystal Cave to Mining Theme
+- [x] Enhanced mining-themed door with wooden panels, rivets, and industrial hardware
+- [x] Brown gradient background with mining shaft supports, gold veins, and ore deposits
+
+**Gameplay System Enhancements** ✅ COMPLETE  
+- [x] Increase player hitbox to 28×55 pixels for more forgiving collision detection (87% larger)
+- [x] Improve door positioning to align bottom with floor platform for better visual alignment
+- [x] Enable debug mode for hitbox visualization during development and testing
+- [x] Enable all collectible types on Level 1 for comprehensive testing
+
+**Codebase Cleanup & Optimization** ✅ COMPLETE
+- [x] Remove testing level system completely for cleaner architecture
+- [x] Disable flash powerup system (preserved code for future re-enablement)
+- [x] Enhanced spatial logic with improved door placement and collision avoidance
+- [x] Remove testing mode references from GameSettings and LevelManager
 
 ### 🔄 FUTURE ENHANCEMENTS (Next Sprints)
 

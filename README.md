@@ -1,19 +1,27 @@
-# Remix Game Template - Phaser.js + TypeScript
+# Bizarre Underground - Retro Endless Climber
 
 ## Overview
 
-This is a template for creating games for the Remix platform using TypeScript and Phaser.js. It provides a structured foundation with a mobile-optimized 5:9 aspect ratio, hot-reload development server, and the Remix SDK for building HTML5 games.
+A retro-style endless climbing arcade game built with Phaser.js and TypeScript for the Remix platform. Climb through procedurally generated mining caverns, defeat colorful blob enemies, collect treasures, and chase high scores in this nostalgic underground adventure.
 
-## Features
+## Game Features
 
-- 📱 Mobile-first design with **5:9 aspect ratio** (optimized for vertical mobile screens)
-- 🎮 Phaser.js game framework integration (loaded via CDN)
-- 🔧 TypeScript support for type-safe development
-- 🔄 Hot-reload development server with QR code for mobile testing
-- 📦 Optimized build process for Remix platform
-- 🏗️ Organized project structure for game development
-- 🎨 Pre-configured game scene with bouncing balls demo
-- 🛡️ Safe setup script with protection against accidental data loss
+- 🎮 **Retro Arcade Gameplay**: Classic Donkey Kong-style climbing action with modern enhancements
+- ⛏️ **Mining Theme**: Industrial underground setting with wooden ladders, mining equipment, and treasure
+- 📱 **Mobile-Optimized**: 5:9 aspect ratio with full touch controls and virtual joystick
+- 🎯 **Progressive Levels**: Discrete level system (1-100) then endless mode with increasing difficulty
+- 👾 **Smart Enemy AI**: Four blob types (blue, yellow, green, red) with unique behaviors and chase AI
+- 💎 **Rich Collectibles**: Coins, blue coins, diamonds, and treasure chests with automated opening
+- 🎪 **Combat System**: Jump-to-kill mechanics with combo multipliers and score popups
+- 🏆 **Scoring System**: Comprehensive point system with floor bonuses and achievement feedback
+
+## Technical Features
+
+- 🔧 **TypeScript**: Type-safe game development with Phaser.js integration
+- 🔄 **Hot-Reload**: Development server with QR code for instant mobile testing
+- 📦 **Optimized Build**: Single-file output ready for Remix platform deployment
+- 🎨 **Debug Mode**: Hitbox visualization and development tools
+- 🛡️ **Robust Architecture**: Clean codebase with modular systems and future theme support
 
 ## What You Need Before Starting
 
@@ -39,35 +47,19 @@ This is a template for creating games for the Remix platform using TypeScript an
 - **Mobile-First**: This template is designed for vertical mobile games with a 5:9 aspect ratio.
 - **One-Time Setup**: The setup command can only be run once per project for safety.
 
-## Quick Start (Step-by-Step)
+## Quick Start (Development)
 
-### Step 1: Get the Template
+### Step 1: Clone and Install
 ```bash
-# Option A: Clone with git (if you have git installed)
-git clone https://github.com/InsideTheSim/remix-starter-ts-phaser my-game-name
-cd my-game-name
+# Clone the repository
+git clone [repository-url] bizarre-underground
+cd bizarre-underground
 
-# Option B: Download as ZIP
-# Download the ZIP file from GitHub, extract it, and open Terminal/Command Prompt in that folder. 
-# Downnload available at:
-https://github.com/InsideTheSim/remix-starter-ts-phaser
+# Install dependencies
+npm install
 ```
 
-### Step 2: Run Setup (IMPORTANT - Only Run Once!)
-```bash
-npm run remix-setup
-```
-
-**What this does:**
-- Detects which package manager you're using (npm, yarn, pnpm, or bun)
-- Removes the template's git history safely
-- Installs all required dependencies
-- Creates a fresh git repository with your first commit
-- Removes the safety marker file
-
-**⚠️ Safety Warning:** This command includes the `.is_fresh` file check and will only run on a fresh template. If the file is missing, the command will fail to prevent accidental data loss.
-
-### Step 3: Start Development
+### Step 2: Start Development
 ```bash
 npm run dev
 ```
@@ -76,14 +68,28 @@ npm run dev
 - Development server starts at `http://localhost:3000`
 - A QR code appears in your terminal for mobile testing
 - The browser opens automatically
-- You'll see "Remix Server Test" with colorful bouncing balls
+- You'll see the full Bizarre Underground game
 - File changes trigger automatic browser refresh
 
-### Step 4: Test on Your Phone
+### Step 3: Test on Mobile
 1. Make sure your phone is on the same Wi-Fi network as your computer
 2. Scan the QR code that appears in your terminal
 3. The game opens in your phone's browser
-4. Test the touch controls and aspect ratio
+4. Test the touch controls and gameplay
+
+## Game Controls
+
+### Desktop
+- **Movement**: Arrow keys or WASD
+- **Jumping**: Spacebar
+- **Climbing**: Up/Down near ladders
+- **Debug**: Hitboxes visible when debug mode enabled
+
+### Mobile
+- **Movement**: Virtual joystick (left side)
+- **Jumping**: Jump button (right side)
+- **Climbing**: Joystick up/down near ladders
+- **Multi-touch**: Supports simultaneous movement and jumping
 
 <details>
 <summary><strong>📦 Porting an Existing Game (Click to expand)</strong></summary>
@@ -147,25 +153,29 @@ rm -rf src_prev
 
 </details>
 
-## Customizing Your Game
+## Game Architecture
 
-### Remove the Demo Content
-When you're ready to build your actual game, ask an AI assistant (like Claude Code):
-
-> "Please remove the bouncing balls demo and give me a blank game scene to start building my game."
-
-### Project Structure Explained
+### Project Structure
 ```
-your-game/
-├── .is_fresh              # Safety marker (removed after setup)
+bizarre-underground/
 ├── index.html             # Main HTML file - loads Phaser and Remix SDK
-├── package.json           # Project info and available commands
-├── src/                   # Your game code goes here
+├── package.json           # Project configuration and commands
+├── gameplan.md           # Complete game design document
+├── src/                   # Game source code
 │   ├── main.ts           # Game entry point - creates Phaser game
 │   ├── config/
 │   │   └── GameSettings.ts # Game settings (canvas size, debug mode, etc.)
 │   ├── scenes/
-│   │   └── GameScene.ts   # Main game scene (currently has demo balls)
+│   │   └── GameScene.ts   # Main game scene with all gameplay logic
+│   ├── objects/           # Game objects and entities
+│   │   ├── Player.ts     # Player character with enhanced collision
+│   │   ├── Door.ts       # Mining-themed level completion doors
+│   │   ├── Cat.ts        # Enemy blob system (4 color variants)
+│   │   ├── Coin.ts       # Collectible coin system
+│   │   ├── TreasureChest.ts # Interactive treasure chests
+│   │   └── TouchControls.ts # Mobile virtual joystick
+│   ├── systems/           # Game systems and managers
+│   │   └── LevelManager.ts # Level progression and configuration
 │   ├── utils/
 │   │   └── RemixUtils.ts  # Remix platform integration
 │   └── types.ts          # TypeScript type definitions
@@ -173,16 +183,17 @@ your-game/
 └── dist/                 # Built game files (created when you run build)
 ```
 
-### Key Files to Understand:
-- **`src/main.ts`**: Creates the Phaser game with your settings
-- **`src/scenes/GameScene.ts`**: Where your game logic lives
-- **`src/config/GameSettings.ts`**: Adjust canvas size, debug mode, etc.
-- **`index.html`**: Loads Phaser and Remix SDK, sets up the game container
+### Key Game Systems:
+- **`GameScene.ts`**: Complete gameplay logic with Mining Theme background
+- **`Player.ts`**: Enhanced player with 28×55 pixel hitbox for forgiving collision
+- **`LevelManager.ts`**: Progressive difficulty system (levels 1-100, then endless)
+- **`Cat.ts`**: Smart enemy AI system with four behavioral patterns
+- **`Door.ts`**: Industrial mining-themed doors with wooden panels and hardware
 
 ## Available Commands
 
 ```bash
-npm run remix-setup    # ⚠️ ONLY RUN ONCE - Sets up fresh project
+npm install      # Install dependencies (first time setup)
 npm run dev      # Start development server (most common)
 npm run dev:3001 # Start server on port 3001 (if 3000 is busy)
 npm run dev:any  # Start server on random available port
@@ -190,14 +201,28 @@ npm run build    # Build for production (creates dist/index.html)
 npm run preview  # Preview the built game locally
 ```
 
-## Common Development Workflow
+## Development Workflow
 
 1. **Start Development**: `npm run dev`
-2. **Edit Code**: Make changes in `src/` folder
-3. **See Changes**: Browser refreshes automatically
-4. **Test on Mobile**: Scan QR code with phone
-5. **Build for Production**: `npm run build` when ready
-6. **Deploy**: Copy contents of `dist/index.html` to Remix platform
+2. **Edit Game Logic**: Modify files in `src/` folder
+3. **Test Gameplay**: Browser refreshes automatically with changes
+4. **Mobile Testing**: Scan QR code with phone to test touch controls
+5. **Debug**: Use debug mode for hitbox visualization
+6. **Build for Production**: `npm run build` when ready
+7. **Deploy**: Copy contents of `dist/index.html` to Remix platform
+
+## Game Development Guide
+
+### Adding New Features
+- **New Enemies**: Create in `src/objects/` following the Cat.ts pattern
+- **New Collectibles**: Add to collectible system in GameScene.ts
+- **Visual Themes**: Duplicate Mining Theme background system for new themes
+- **Game Mechanics**: Extend GameScene.ts with new systems
+
+### Testing
+- **Level 1**: Has all collectible types enabled for testing
+- **Debug Mode**: Shows player and enemy hitboxes
+- **Mobile Controls**: Virtual joystick supports multi-touch gameplay
 
 ## Troubleshooting
 
@@ -242,17 +267,32 @@ This creates `dist/index.html` - a single file containing your entire game ready
 
 ## What's Included
 
-- **Phaser**: HTML game framework
-- **TypeScript**: Type-safe development
-- **Vite**: Fast build tool and dev server
-- **Remix SDK**: Platform integration
-- **Mobile optimization**: 5:9 aspect ratio with proper scaling
-- **Development tools**: QR codes, hot reload, build scripts
+### Game Features
+- **Complete Arcade Game**: Fully playable retro climbing adventure
+- **Mining Theme**: Industrial underground setting with detailed visuals
+- **Progressive Gameplay**: 100 discrete levels plus endless mode
+- **Smart Enemy AI**: Four blob types with unique behavioral patterns
+- **Enhanced Collision**: Forgiving hitbox system for better gameplay feel
+- **Mobile Optimized**: Full touch controls with virtual joystick
 
-## Getting Help:
+### Technology Stack
+- **Phaser.js**: HTML5 game framework loaded via CDN
+- **TypeScript**: Type-safe game development
+- **Vite**: Fast build tool and hot-reload dev server
+- **Remix SDK**: Platform integration for deployment
+- **Responsive Design**: 5:9 aspect ratio optimized for mobile screens
 
-- Copy and paste any error output to your LLM.
-- Join the [Remix Discord Serve](https://discord.com/invite/a3bgdr4RC6) 
+### Development Tools
+- **Debug Mode**: Hitbox visualization and development aids
+- **QR Code Testing**: Instant mobile testing via terminal QR codes
+- **Hot Reload**: Automatic browser refresh on code changes
+- **Single-File Build**: Optimized dist/index.html for easy deployment
+
+## Getting Help
+
+- **Documentation**: See `gameplan.md` for complete game design details
+- **Issues**: Copy any error output when asking for help
+- **Community**: Join the [Remix Discord Server](https://discord.com/invite/a3bgdr4RC6)
 
 ## License
 
