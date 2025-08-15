@@ -1888,12 +1888,37 @@ export class GameScene extends Phaser.Scene {
       this.door.x, this.door.y
     )
     
+    console.log('=== DOOR PROMPT UPDATE DEBUG ===')
+    console.log('Door exists:', !!this.door)
+    console.log('Player position:', this.player.x, this.player.y)
+    console.log('Door position:', this.door.x, this.door.y)
+    console.log('Distance to door:', distance)
+    console.log('Current floor:', this.currentFloor)
+    console.log('Door floor:', doorFloor)
+    console.log('Player on ground:', isOnGround)
+    
     // Show prompt if player is close to door, on correct floor, and on ground
     const isNearDoor = distance < 60 // Door activation range
     const isOnDoorFloor = this.currentFloor === doorFloor
     
+    console.log('Is near door (<60):', isNearDoor)
+    console.log('Is on door floor:', isOnDoorFloor)
+    console.log('Should show prompt:', isNearDoor && isOnDoorFloor && isOnGround)
+    
     if (isNearDoor && isOnDoorFloor && isOnGround) {
+      console.log('SHOWING DOOR PROMPT')
       this.door.showPrompt(this.player)
+      
+      // Also check for UP key press here
+      const upPressed = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP).isDown ||
+                       this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown ||
+                       (this.touchControls?.upPressed || false)
+      
+      console.log('UP PRESSED CHECK:', upPressed)
+      if (upPressed && !this.isLevelComplete) {
+        console.log('COMPLETING LEVEL FROM updateDoorPrompt!')
+        this.completeLevel()
+      }
     } else {
       this.door.hidePrompt()
     }
