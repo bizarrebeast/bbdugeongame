@@ -65,6 +65,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     this.setupBehavior()
     
+    // Phaser's built-in debug visualization will show the hitbox
+    
     this.setVelocityX(this.moveSpeed * this.direction)
   }
   
@@ -175,5 +177,35 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   getCatColor(): CatColor {
     return this.catColor
+  }
+  
+  private addRoundedHitboxVisualization(): void {
+    // Only show in debug mode
+    if (!GameSettings.debug) return
+    
+    const graphics = this.scene.add.graphics()
+    const body = this.body as Phaser.Physics.Arcade.Body
+    
+    // Draw rounded rectangle overlay on the rectangular hitbox
+    graphics.lineStyle(2, 0xff6666, 0.8) // Red with transparency for enemies
+    graphics.strokeRoundedRect(
+      body.x - this.x, 
+      body.y - this.y, 
+      body.width, 
+      body.height, 
+      4 // Smaller corner radius for smaller enemies
+    )
+    
+    // Attach graphics to follow the enemy
+    graphics.setDepth(25) // Above enemy but below UI
+    this.scene.add.existing(graphics)
+    
+    // Update graphics position in update loop
+    this.scene.events.on('postupdate', () => {
+      if (graphics && graphics.active) {
+        graphics.x = this.x
+        graphics.y = this.y
+      }
+    })
   }
 }

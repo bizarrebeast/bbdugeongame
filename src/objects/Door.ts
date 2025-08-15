@@ -22,13 +22,16 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     // Set up the door appearance - bigger size
     this.setDisplaySize(80, 100) // Much larger door size
     
-    // Set physics body - bigger collision area
+    // Set physics body to match visual size exactly
     const body = this.body as Phaser.Physics.Arcade.StaticBody
-    body.setSize(70, 90)
-    body.setOffset(5, 5)
+    body.setSize(80, 100) // Match visual door size exactly
+    body.setOffset(0, 0)  // No offset - hitbox matches visual perfectly
     
     // Create the visual door frame (mining theme)
     this.createDoorVisual()
+    
+    // Add debug visualization for door positioning
+    this.createDebugVisualization()
     
     // Set depth
     this.setDepth(10)
@@ -319,6 +322,45 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     }
   }
   
+  private createDebugVisualization(): void {
+    const debugGraphics = this.scene.add.graphics()
+    
+    // Draw door center point (red dot)
+    debugGraphics.fillStyle(0xff0000, 1)
+    debugGraphics.fillCircle(this.x, this.y, 5)
+    
+    // Draw door bounds (green rectangle - visual size)
+    debugGraphics.lineStyle(3, 0x00ff00, 1)
+    debugGraphics.strokeRect(this.x - 40, this.y - 50, 80, 100) // Visual door bounds
+    
+    // Draw physics body bounds (blue rectangle - hitbox)
+    debugGraphics.lineStyle(3, 0x0000ff, 1)
+    const body = this.body as Phaser.Physics.Arcade.StaticBody
+    debugGraphics.strokeRect(body.x, body.y, body.width, body.height)
+    
+    // Draw floor reference line (yellow horizontal line where door bottom should sit)
+    debugGraphics.lineStyle(2, 0xffff00, 1)
+    const doorBottomY = this.y + 50 // Where the bottom of the door currently is
+    debugGraphics.lineBetween(this.x - 60, doorBottomY, this.x + 60, doorBottomY)
+    
+    // Draw platform reference (orange line where platform surface should be)
+    debugGraphics.lineStyle(2, 0xff8800, 1)
+    const platformY = doorBottomY // This should align with platform surface
+    debugGraphics.lineBetween(this.x - 80, platformY, this.x + 80, platformY)
+    
+    // Add text labels
+    const labelStyle = { fontSize: '12px', color: '#ffffff', backgroundColor: '#000000' }
+    
+    this.scene.add.text(this.x + 50, this.y - 30, 'DOOR CENTER', labelStyle).setDepth(100)
+    this.scene.add.text(this.x + 50, this.y - 10, `X: ${this.x}, Y: ${this.y}`, labelStyle).setDepth(100)
+    this.scene.add.text(this.x + 50, this.y + 10, `Physics: ${body.x}, ${body.y}`, labelStyle).setDepth(100)
+    this.scene.add.text(this.x + 50, this.y + 30, `Size: ${body.width}x${body.height}`, labelStyle).setDepth(100)
+    this.scene.add.text(this.x + 50, doorBottomY, 'DOOR BOTTOM', labelStyle).setDepth(100)
+    this.scene.add.text(this.x + 50, platformY + 15, 'PLATFORM SURFACE', labelStyle).setDepth(100)
+    
+    debugGraphics.setDepth(50) // Above game elements but below UI
+  }
+
   isPlayerNearby(): boolean {
     return this.playerNearby
   }

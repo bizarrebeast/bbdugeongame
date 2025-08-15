@@ -51,6 +51,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setOffset(10, 9)  // Move physics body down, which visually shifts sprite up
     this.setDepth(20) // Player renders on top of everything
     
+    // Phaser's built-in debug visualization will show the hitbox
+    
     console.log('=== PLAYER PHYSICS SETUP ===')
     console.log('Player sprite size:', this.displayWidth, 'x', this.displayHeight)
     console.log('Physics body size:', this.body?.width, 'x', this.body?.height)
@@ -229,5 +231,35 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Maintain scale for all player textures
       this.setDisplaySize(48, 64)
     }
+  }
+  
+  private addRoundedHitboxVisualization(): void {
+    // Only show in debug mode
+    if (!GameSettings.debug) return
+    
+    const graphics = this.scene.add.graphics()
+    const body = this.body as Phaser.Physics.Arcade.Body
+    
+    // Draw rounded rectangle overlay on the rectangular hitbox
+    graphics.lineStyle(2, 0x00ff88, 0.8) // Green with transparency
+    graphics.strokeRoundedRect(
+      body.x - this.x, 
+      body.y - this.y, 
+      body.width, 
+      body.height, 
+      6 // Corner radius
+    )
+    
+    // Attach graphics to follow the player
+    graphics.setDepth(25) // Above player but below UI
+    this.scene.add.existing(graphics)
+    
+    // Update graphics position in update loop
+    this.scene.events.on('postupdate', () => {
+      if (graphics && graphics.active) {
+        graphics.x = this.x
+        graphics.y = this.y
+      }
+    })
   }
 }

@@ -65,6 +65,7 @@ export class GameScene extends Phaser.Scene {
     // Enable multi-touch support
     this.input.addPointer(2) // Allow up to 3 pointers total (default 1 + 2 more)
     
+    
     // Initialize level manager
     if (!this.levelManager) {
       this.levelManager = new LevelManager()
@@ -1872,6 +1873,32 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private updateDoorPrompt(): void {
+    if (!this.door) return
+    
+    // Check if player is near the door and on the correct floor
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    const doorFloor = levelConfig.floorCount - 1
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body
+    const isOnGround = playerBody.blocked.down
+    
+    // Calculate distance to door
+    const distance = Phaser.Math.Distance.Between(
+      this.player.x, this.player.y,
+      this.door.x, this.door.y
+    )
+    
+    // Show prompt if player is close to door, on correct floor, and on ground
+    const isNearDoor = distance < 60 // Door activation range
+    const isOnDoorFloor = this.currentFloor === doorFloor
+    
+    if (isNearDoor && isOnDoorFloor && isOnGround) {
+      this.door.showPrompt(this.player)
+    } else {
+      this.door.hidePrompt()
+    }
+  }
+  
   private openTreasureChest(chest: TreasureChest): void {
     // Don't open chests during intro animation
     if (this.isLevelStarting) return
@@ -2022,6 +2049,9 @@ export class GameScene extends Phaser.Scene {
     
     // Check for treasure chest interaction
     this.updateTreasureChestInteraction()
+    
+    // Update door prompt visibility
+    this.updateDoorPrompt()
     
     // Update player
     this.player.update()
@@ -2451,8 +2481,10 @@ export class GameScene extends Phaser.Scene {
       // Enhanced door placement with ladder and collectible conflict avoidance
       const doorX = this.findSafeDoorPosition(topFloor)
       
-      // Place door on top floor - door is 100 pixels tall, bottom should align with floor
-      const doorY = topFloorY - 50 // Bottom of door aligns with floor platform
+      // Place door on top floor - door is 100 pixels tall, position so bottom sits on platform surface
+      // topFloorY is platform center, platform is 32px tall, so platform top is topFloorY - 16
+      const platformTop = topFloorY - (tileSize / 2)
+      const doorY = platformTop - 50 // Door center positioned so bottom sits on platform surface
       
       const isFirstLevel = this.levelManager.getCurrentLevel() === 1
       this.door = new Door(this, doorX, doorY, isFirstLevel)
@@ -2546,12 +2578,34 @@ export class GameScene extends Phaser.Scene {
     const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
     const isOnGround = playerBody.blocked.down
     
-    // Player must be on the correct floor (ground check removed since overlap already confirms proximity)
-    if (this.currentFloor === doorFloor) {
-      // Automatically activate door when player touches it
-      if (!this.isLevelComplete) {
+    console.log('=== DOOR OVERLAP DEBUG ===')
+    console.log('Current floor:', this.currentFloor)
+    console.log('Door floor:', doorFloor)
+    console.log('Player on ground:', isOnGround)
+    console.log('Level complete status:', this.isLevelComplete)
+    
+    // Player must be on the correct floor and on ground
+    if (this.currentFloor === doorFloor && isOnGround) {
+      // Show prompt to enter door
+      doorObj.showPrompt(playerObj)
+      
+      // Check for UP key press to activate door
+      const upPressed = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP).isDown ||
+                       this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown ||
+                       (this.touchControls?.upPressed || false)
+      
+      console.log('UP key pressed:', upPressed)
+      console.log('Arrow UP:', this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP).isDown)
+      console.log('W key:', this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown)
+      console.log('Touch UP:', this.touchControls?.upPressed || false)
+      
+      if (upPressed && !this.isLevelComplete) {
+        console.log('COMPLETING LEVEL!')
         this.completeLevel()
       }
+    } else {
+      // Hide prompt when not in range
+      doorObj.hidePrompt()
     }
   }
   
