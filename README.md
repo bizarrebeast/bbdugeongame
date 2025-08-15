@@ -83,12 +83,14 @@ npm run dev
 - **Movement**: Arrow keys or WASD
 - **Jumping**: Spacebar
 - **Climbing**: Up/Down near ladders
+- **Door Activation**: UP key when near door to complete level
 - **Debug**: Hitboxes visible when debug mode enabled
 
 ### Mobile
 - **Movement**: Virtual joystick (left side)
 - **Jumping**: Jump button (right side)
 - **Climbing**: Joystick up/down near ladders
+- **Door Activation**: Joystick up when near door to complete level
 - **Multi-touch**: Supports simultaneous movement and jumping
 
 <details>

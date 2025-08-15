@@ -41,7 +41,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ **Level Progression:** Discrete levels (1-100) then endless mode (101+)
 - ✅ **Level Structure:** Each level starts at bottom, climb to door at top to complete
 - ✅ **Floor Scaling:** Levels 1-5 (10 floors), 6-10 (15 floors), 11-15 (20 floors), +5 floors every 5 levels
-- ✅ **Door Completion:** Automatic activation on player contact at top floor
+- ✅ **Door Completion:** UP key press required when near door at top floor
 - ✅ **Level Manager:** Complete system for level configurations and progression
 - ✅ **Progressive Content:** New enemies/collectibles unlock per level bracket
 - ✅ **Death Behavior:** Always restart from Level 1 with score reset
@@ -250,7 +250,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 **UI/UX Improvements** ✅ COMPLETE
 - [x] Standardize all popup positions to center screen (level, combo, game over)
 - [x] Convert floor counter to 1-based numbering (Floor 1-10 instead of 0-9)
-- [x] Automatic door activation on player contact (no key press needed)
+- [x] Door activation system requiring UP key press when near door for intentional level progression
 - [x] Enhanced user experience with intuitive level progression
 
 ### ✅ Blob Chaos Update - COMPLETED
