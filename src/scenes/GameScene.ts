@@ -98,6 +98,9 @@ export class GameScene extends Phaser.Scene {
     this.treasureChests = []
     this.flashPowerUps = []
     
+    // Create crystal cave background
+    this.createCrystalCaveBackground()
+    
     // Create a test level with platforms and ladders
     this.createTestLevel()
     
@@ -281,10 +284,88 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private createCrystalCaveBackground(): void {
+    // Use world width instead of canvas width to cover entire game area
+    const worldWidth = GameSettings.game.floorWidth * GameSettings.game.tileSize
+    const width = worldWidth + 1000 // Extra width to cover sides
+    const height = GameSettings.canvas.height * 10 // Much taller for vertical scrolling
+    const startX = -500 // Start from negative X to cover left side
+    const startY = -5000 // Start from negative Y to cover top when climbing high
+    
+    const bg = this.add.graphics()
+    
+    // Mining Theme Background - darker appearance with brown tones
+    // Create gradient background staying in brown color family but darker
+    for (let y = startY; y < height; y += 20) {
+      const ratio = Math.max(0, Math.min(1, (y - startY) / (height - startY)))
+      // Interpolate between very dark brown and medium brown
+      const r = Math.floor(0x2c * (1 - ratio) + 0x3c * ratio)
+      const g = Math.floor(0x1b * (1 - ratio) + 0x2b * ratio)
+      const b = Math.floor(0x1c * (1 - ratio) + 0x2c * ratio)
+      const color = (r << 16) | (g << 8) | b
+      
+      bg.fillStyle(color, 1)
+      bg.fillRect(startX, y, width, 20)
+    }
+    
+    // Add mine shaft support beams in background
+    for (let i = -15; i < 30; i++) {  // Extended range to cover full height
+      const beamY = i * 400 + 100
+      
+      // Horizontal beam across full width
+      bg.fillStyle(0x3a2818, 0.4)
+      bg.fillRect(startX, beamY, width, 12)
+      
+      // Vertical supports distributed across width
+      const numSupports = Math.floor(width / 150)
+      for (let j = 0; j <= numSupports; j++) {
+        const supportX = startX + (width / numSupports) * j
+        bg.fillStyle(0x3a2818, 0.4)
+        bg.fillRect(supportX - 4, beamY - 50, 8, 100)
+      }
+    }
+    
+    // Add lantern glows (mining lights) across full width and height
+    for (let i = 0; i < Math.floor(width / 40); i++) {
+      const x = startX + Math.random() * width
+      const y = startY + Math.random() * (height - startY)
+      
+      // Lantern post
+      bg.fillStyle(0x2a2a2a, 0.3)
+      bg.fillRect(x - 1, y, 2, 20)
+      
+      // Light glow
+      bg.fillStyle(0xffaa00, 0.08)
+      bg.fillCircle(x, y + 10, 30)
+      bg.fillStyle(0xffcc00, 0.06)
+      bg.fillCircle(x, y + 10, 20)
+    }
+    
+    // Add distant mine cart tracks across full width
+    bg.lineStyle(2, 0x3a3a3a, 0.2)
+    for (let y = startY + 100; y < height; y += 300) {
+      bg.lineBetween(startX, y, startX + width, y + 20)
+      bg.lineBetween(startX, y + 10, startX + width, y + 30)
+    }
+    
+    // Rock formations and shadows distributed across full width
+    for (let i = 0; i < Math.floor(width / 70); i++) {
+      const x = startX + Math.random() * width
+      const y = startY + Math.random() * (height - startY)
+      const size = 40 + Math.random() * 60
+      
+      bg.fillStyle(0x1a1510, 0.3)
+      bg.fillCircle(x, y, size)
+    }
+    
+    bg.setDepth(-10) // Far background
+    bg.setScrollFactor(0.5) // Parallax effect
+  }
+  
   private createTestLevel(): void {
     const tileSize = GameSettings.game.tileSize
     const floorWidth = GameSettings.game.floorWidth
-    const floorSpacing = tileSize * 4 // Space between floors
+    const floorSpacing = tileSize * 5 // Space between floors (increased for better vertical spacing)
     
     // Get the required floor count for this level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -313,7 +394,7 @@ export class GameScene extends Phaser.Scene {
         
         for (let x = 0; x < floorWidth; x++) {
           const platformX = x * tileSize + tileSize/2
-          this.createPlatformTile(platformX, y)
+          this.createPlatformTile(platformX, y, x === 0, x === floorWidth - 1)
           if (x === 0) {
             console.log('First ground tile at:', platformX, y)
           }
@@ -336,7 +417,7 @@ export class GameScene extends Phaser.Scene {
           // Create platform tiles, skipping the gap
           for (let x = 0; x < floorWidth; x++) {
             if (x < gapStart || x >= gapStart + gapSize) {
-              this.createPlatformTile(x * tileSize + tileSize/2, y)
+              this.createPlatformTile(x * tileSize + tileSize/2, y, x === 0, x === floorWidth - 1)
             }
           }
           
@@ -492,17 +573,153 @@ export class GameScene extends Phaser.Scene {
     return x < floorLayout.gapStart || x >= floorLayout.gapStart + floorLayout.gapSize
   }
   
-  private createPlatformTile(x: number, y: number): void {
+  private createPlatformTile(x: number, y: number, isLeftEdge: boolean = false, isRightEdge: boolean = false): void {
     const tileSize = GameSettings.game.tileSize
+    
+    // Mining/Industrial Theme - back to the good looking version
+    // Create a graphics object for this tile
+    const tileGraphics = this.add.graphics()
+    
+    // Unified brown mining theme - subtle variations within the same color family
+    const tileVariation = Math.random()
+    let baseColor = 0x8c6b4c  // Your preferred brown tone
+    
+    // Draw base tile in brown tones
+    tileGraphics.fillStyle(baseColor, 1)
+    tileGraphics.fillRect(x - tileSize/2, y - tileSize/2, tileSize, tileSize)
+    
+    // Subtle texture variations (all staying in brown family)
+    if (tileVariation < 0.4) {
+      // Slightly darker brown patches
+      tileGraphics.fillStyle(0x7c5b3c, 0.6)
+      tileGraphics.fillRect(
+        x - tileSize/2 + Math.random() * 12, 
+        y - tileSize/2 + Math.random() * 12, 
+        8 + Math.random() * 8, 
+        8 + Math.random() * 8
+      )
+    } else if (tileVariation < 0.6) {
+      // Slightly lighter brown patches
+      tileGraphics.fillStyle(0x9c7b5c, 0.5)
+      tileGraphics.fillRect(
+        x - tileSize/2 + Math.random() * 12, 
+        y - tileSize/2 + Math.random() * 12, 
+        6 + Math.random() * 10, 
+        6 + Math.random() * 10
+      )
+    }
+    
+    // Subtle wood grain effect (20% chance)
+    if (Math.random() < 0.2) {
+      tileGraphics.lineStyle(1, 0x7c5b3c, 0.4)
+      for (let i = 0; i < 2; i++) {
+        const grainY = y - tileSize/2 + 8 + i * 12
+        tileGraphics.lineBetween(
+          x - tileSize/2 + 2, grainY, 
+          x + tileSize/2 - 2, grainY + Math.random() * 2 - 1
+        )
+      }
+    }
+    
+    // Small gold flecks occasionally
+    if (Math.random() < 0.15) {
+      tileGraphics.fillStyle(0xffcc00, 0.7)
+      for (let i = 0; i < 2; i++) {
+        tileGraphics.fillCircle(
+          x - tileSize/2 + 4 + Math.random() * (tileSize - 8),
+          y - tileSize/2 + 4 + Math.random() * (tileSize - 8),
+          1
+        )
+      }
+    }
+    
+    // Add mining rail tracks on top (30% chance)
+    if (Math.random() < 0.3) {
+      // Metal rails (slightly brighter)
+      tileGraphics.fillStyle(0x5a5a5a, 1)
+      tileGraphics.fillRect(x - tileSize/2 + 4, y - tileSize/2, 2, tileSize)
+      tileGraphics.fillRect(x + tileSize/2 - 6, y - tileSize/2, 2, tileSize)
+      
+      // Wooden ties (warmer brown)
+      tileGraphics.fillStyle(0x6a4838, 1)
+      tileGraphics.fillRect(x - tileSize/2 + 2, y - 4, tileSize - 4, 3)
+      
+      // Rail shine
+      tileGraphics.lineStyle(1, 0x7a7a7a, 0.5)
+      tileGraphics.lineBetween(x - tileSize/2 + 4, y - tileSize/2, x - tileSize/2 + 4, y + tileSize/2)
+      tileGraphics.lineBetween(x + tileSize/2 - 6, y - tileSize/2, x + tileSize/2 - 6, y + tileSize/2)
+    }
+    
+    // Add wooden support beam (20% chance)
+    if (Math.random() < 0.2) {
+      // Vertical wooden beam (lighter wood)
+      tileGraphics.fillStyle(0x7a5338, 1)
+      tileGraphics.fillRect(x - 3, y - tileSize/2, 6, tileSize)
+      
+      // Wood grain
+      tileGraphics.lineStyle(1, 0x6a4328, 0.5)
+      tileGraphics.lineBetween(x - 1, y - tileSize/2, x - 1, y + tileSize/2)
+      tileGraphics.lineBetween(x + 1, y - tileSize/2, x + 1, y + tileSize/2)
+      
+      // Metal brackets (lighter metal)
+      tileGraphics.fillStyle(0x4a4a4a, 1)
+      tileGraphics.fillRect(x - 4, y - tileSize/2 + 2, 8, 2)
+      tileGraphics.fillRect(x - 4, y + tileSize/2 - 4, 8, 2)
+    }
+    
+    // Add ore veins (15% chance)
+    if (Math.random() < 0.15) {
+      const oreType = Math.random()
+      
+      if (oreType < 0.33) {
+        // Gold ore
+        tileGraphics.fillStyle(0xffcc00, 0.8)
+      } else if (oreType < 0.66) {
+        // Iron ore
+        tileGraphics.fillStyle(0x8a7a6a, 0.8)
+      } else {
+        // Coal
+        tileGraphics.fillStyle(0x1a1a1a, 0.9)
+      }
+      
+      // Ore chunks
+      const oreX = x - tileSize/2 + 5 + Math.random() * (tileSize - 10)
+      const oreY = y - tileSize/2 + 5 + Math.random() * (tileSize - 10)
+      
+      for (let i = 0; i < 3; i++) {
+        tileGraphics.fillCircle(
+          oreX + Math.random() * 8 - 4, 
+          oreY + Math.random() * 8 - 4, 
+          2 + Math.random() * 2
+        )
+      }
+    }
+    
+    // Remove all tile borders for seamless appearance
+    
+    // Occasional cracks and wear (lighter)
+    if (Math.random() < 0.25) {
+      tileGraphics.lineStyle(1, 0x2a2522, 0.5)
+      const crackStartX = x - tileSize/2 + Math.random() * tileSize
+      const crackStartY = y - tileSize/2
+      tileGraphics.lineBetween(
+        crackStartX, crackStartY,
+        crackStartX + (Math.random() - 0.5) * 12, crackStartY + tileSize
+      )
+    }
+    
+    tileGraphics.setDepth(1) // Platforms render behind ladders
+    
+    // Create invisible physics platform
     const platform = this.add.rectangle(
       x,
       y,
       tileSize,
       tileSize,
-      0x654321
+      0x000000,
+      0  // Fully transparent
     )
-    platform.setStrokeStyle(1, 0x432818)
-    platform.setDepth(1) // Platforms render behind ladders
+    platform.setDepth(0)
     this.platforms.add(platform)
   }
   
@@ -514,36 +731,90 @@ export class GameScene extends Phaser.Scene {
     const ladderHeight = bottomY - topY + (tileSize * 0.5) // Half tile extension for access
     const ladderY = (bottomY + topY) / 2
     
-    // Create the full ladder as one piece
+    // Create the invisible ladder hitbox
     const ladder = this.add.rectangle(
       x + tileSize/2,
       ladderY,
       tileSize * 0.8,
       ladderHeight,
-      0x8B4513
+      0xFFFFFF,
+      0  // Invisible
     )
-    ladder.setStrokeStyle(2, 0x654321)
-    ladder.setDepth(10) // Render on top of platforms
+    ladder.setDepth(10)
     this.ladders.add(ladder)
     
-    // Add visual rungs for appearance
-    const numRungs = Math.floor(ladderHeight / tileSize)
+    // Mining Theme Ladder - Chunkier, more visible wooden ladder
+    const ladderGraphics = this.add.graphics()
+    const ladderX = x + tileSize/2
+    
+    // Thicker vertical wooden rails - extend up significantly to balance with bottom extensions
+    ladderGraphics.fillStyle(0x6a5338, 1) // Brighter wood color
+    ladderGraphics.fillRect(ladderX - 12, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0) // Extended much further up
+    ladderGraphics.fillRect(ladderX + 7, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0)
+    
+    // Wood grain effect - more visible, extended to balance with bottom
+    ladderGraphics.lineStyle(2, 0x5a4328, 0.8)
+    ladderGraphics.lineBetween(ladderX - 10, topY - tileSize * 1.0, ladderX - 10, topY + ladderHeight)
+    ladderGraphics.lineBetween(ladderX + 9, topY - tileSize * 1.0, ladderX + 9, topY + ladderHeight)
+    
+    // Wood highlights for more definition - extended to balance with bottom
+    ladderGraphics.lineStyle(1, 0x7a6348, 0.6)
+    ladderGraphics.lineBetween(ladderX - 11, topY - tileSize * 1.0, ladderX - 11, topY + ladderHeight)
+    ladderGraphics.lineBetween(ladderX + 8, topY - tileSize * 1.0, ladderX + 8, topY + ladderHeight)
+    
+    // Thicker wooden rungs
+    const numRungs = Math.floor(ladderHeight / 22) // More frequent rungs
     for (let i = 0; i <= numRungs; i++) {
-      const rungY = bottomY - (i * tileSize)
-      const rung = this.add.rectangle(
-        x + tileSize/2,
-        rungY,
-        tileSize * 0.6,
-        4,
-        0x654321
-      )
-      rung.setDepth(11)
+      const rungY = bottomY - (i * 22)
+      
+      // Thicker wooden rung
+      ladderGraphics.fillStyle(0x6a5338, 1)
+      ladderGraphics.fillRect(ladderX - 12, rungY - 3, 24, 6) // Wider and taller rungs
+      
+      // Rung highlights
+      ladderGraphics.lineStyle(1, 0x7a6348, 0.7)
+      ladderGraphics.lineBetween(ladderX - 12, rungY - 2, ladderX + 12, rungY - 2)
+      
+      // Larger metal brackets at connection points
+      ladderGraphics.fillStyle(0x5a5a5a, 1) // Brighter metal
+      ladderGraphics.fillRect(ladderX - 14, rungY - 4, 6, 8)
+      ladderGraphics.fillRect(ladderX + 8, rungY - 4, 6, 8)
+      
+      // Larger bolts
+      ladderGraphics.fillStyle(0x3a3a3a, 1)
+      ladderGraphics.fillCircle(ladderX - 11, rungY, 2) // Bigger bolts
+      ladderGraphics.fillCircle(ladderX + 11, rungY, 2)
+      
+      // Bolt highlights
+      ladderGraphics.fillStyle(0x6a6a6a, 1)
+      ladderGraphics.fillCircle(ladderX - 11, rungY - 1, 1)
+      ladderGraphics.fillCircle(ladderX + 11, rungY - 1, 1)
     }
+    
+    // Add rail extensions above the ladder (like at the bottom) - no extra rung
+    const railExtensionLength = tileSize * 0.3
+    const railExtensionY = topY - tileSize * 0.4
+    
+    ladderGraphics.fillStyle(0x6a5338, 1)
+    ladderGraphics.fillRect(ladderX - 12, railExtensionY, 5, railExtensionLength)
+    ladderGraphics.fillRect(ladderX + 7, railExtensionY, 5, railExtensionLength)
+    
+    // Wood grain on rail extensions
+    ladderGraphics.lineStyle(2, 0x5a4328, 0.8)
+    ladderGraphics.lineBetween(ladderX - 10, railExtensionY, ladderX - 10, railExtensionY + railExtensionLength)
+    ladderGraphics.lineBetween(ladderX + 9, railExtensionY, ladderX + 9, railExtensionY + railExtensionLength)
+    
+    // Wood highlights on rail extensions
+    ladderGraphics.lineStyle(1, 0x7a6348, 0.6)
+    ladderGraphics.lineBetween(ladderX - 11, railExtensionY, ladderX - 11, railExtensionY + railExtensionLength)
+    ladderGraphics.lineBetween(ladderX + 8, railExtensionY, ladderX + 8, railExtensionY + railExtensionLength)
+    
+    ladderGraphics.setDepth(11)
   }
 
   private createCats(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 4
+    const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
     
     // Get allowed enemy types for current level
@@ -688,7 +959,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 4
+    const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
     
     // Add ceiling cats starting from floor 2, up to second-to-last floor (avoid door floor)
@@ -781,7 +1052,7 @@ export class GameScene extends Phaser.Scene {
   
   private createAllCollectibles(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 4
+    const floorSpacing = tileSize * 5
     
     // Get allowed collectible types for current level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -1723,7 +1994,7 @@ export class GameScene extends Phaser.Scene {
     
     // Update current floor based on player position
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 4
+    const floorSpacing = tileSize * 5
     const playerFloor = Math.max(0, Math.floor((GameSettings.canvas.height - this.player.y - tileSize/2) / floorSpacing))
     
     if (playerFloor !== this.currentFloor) {
@@ -1749,7 +2020,7 @@ export class GameScene extends Phaser.Scene {
   private generateNextFloors(): void {
     const tileSize = GameSettings.game.tileSize
     const floorWidth = GameSettings.game.floorWidth
-    const floorSpacing = tileSize * 4
+    const floorSpacing = tileSize * 5
     
     // Check level limits
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -2107,7 +2378,7 @@ export class GameScene extends Phaser.Scene {
     // Only create door for non-endless levels
     if (!levelConfig.isEndless && levelConfig.floorCount > 0) {
       const tileSize = GameSettings.game.tileSize
-      const floorSpacing = tileSize * 4 // Same spacing as in createTestLevel
+      const floorSpacing = tileSize * 5 // Same spacing as in createTestLevel
       
       // Calculate the Y position of the top floor
       const topFloor = levelConfig.floorCount - 1
