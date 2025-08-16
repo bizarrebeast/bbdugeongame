@@ -41,7 +41,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ **Level Progression:** Discrete levels (1-100) then endless mode (101+)
 - ✅ **Level Structure:** Each level starts at bottom, climb to door at top to complete
 - ✅ **Floor Scaling:** Levels 1-5 (10 floors), 6-10 (15 floors), 11-15 (20 floors), +5 floors every 5 levels
-- ✅ **Door Completion:** UP key press required when near door at top floor
+- ✅ **Door Completion:** UP key press required when near door at top floor (with instruction popup)
 - ✅ **Level Manager:** Complete system for level configurations and progression
 - ✅ **Progressive Content:** New enemies/collectibles unlock per level bracket
 - ✅ **Death Behavior:** Always restart from Level 1 with score reset
@@ -66,9 +66,9 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
   - **Levels 5-6:** Blue + Yellow + Green blobs  
   - **Levels 7+:** All blob types including Red
 - **Ground Blobs:** ✅ Four color variants with unique AI behaviors
-  - **Blue Blobs:** Standard patrol behavior at normal speed
+  - **Blue Blobs:** Standard patrol behavior at normal speed (now with custom sprite!)
   - **Yellow Blobs:** Slower speed with random movement patterns  
-  - **Green Blobs:** Fast bouncing movement across full floor width
+  - **Green Blobs:** Fast bouncing movement across full floor width (uses gravity)
   - **Red Blobs:** Floor-based AI with smart chase behavior
 - **Combat Integration:** ✅ All blobs can be defeated via jump-to-kill mechanics
 - **Multiple Kill Protection:** ✅ Prevents double-scoring from single enemy
@@ -78,12 +78,23 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ### Future Additions 🔄 PLANNED
 - **Spiders:** Crawl along platforms and down ladders (not yet implemented)
 
+## Life System ✅ IMPLEMENTED
+
+### Life Mechanics ✅ COMPLETE
+- **Starting Lives:** 3 hearts displayed in HUD
+- **Death Behavior:** Lose 1 life and restart current level
+- **Game Over:** Only when all lives exhausted
+- **Extra Lives:** Earned every 150 coins collected
+- **Maximum Lives:** 9 (to fit HUD display)
+- **Persistence:** Lives and coin progress persist across level restarts
+- **HUD Display:** Heart symbols with count (❤️ x3)
+
 ## Power-ups & Collectibles ✅ FULLY IMPLEMENTED
 
 ### Collectible Items ✅ COMPLETE SYSTEM
-1. **Regular Coins:** ✅ Basic yellow coins (50 points) with spinning animations
-2. **Blue Coins:** ✅ Enhanced coins worth 500 points with distinct blue color
-3. **Diamonds:** ✅ High-value collectibles worth 1000 points with sparkle effects
+1. **Regular Coins:** ✅ Basic yellow coins (50 points) - count as 1 toward extra life
+2. **Blue Coins:** ✅ Enhanced coins worth 500 points - count as 5 toward extra life
+3. **Diamonds:** ✅ High-value collectibles worth 1000 points - count as 10 toward extra life
 4. **Treasure Chests:** ✅ Interactive chests (2500 points + contents) requiring ACTION button
 5. **Flash Power-ups:** 🔄 DISABLED (can be re-enabled later)
 

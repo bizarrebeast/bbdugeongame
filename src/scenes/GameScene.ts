@@ -10,7 +10,6 @@ import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
 import { Door } from "../objects/Door"
-import { Cat } from "../objects/Cat"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -30,7 +29,12 @@ export class GameScene extends Phaser.Scene {
   private score: number = 0
   private scoreText!: Phaser.GameObjects.Text
   private currentFloor: number = 0
-  private floorText!: Phaser.GameObjects.Text
+  private lives: number = 3
+  private totalCoinsCollected: number = 0
+  private livesText!: Phaser.GameObjects.Text
+  private coinCounterText!: Phaser.GameObjects.Text
+  private readonly COINS_PER_EXTRA_LIFE = 150
+  private readonly MAX_LIVES = 9
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
   private touchControls!: TouchControls
   private justKilledCat: boolean = false
@@ -59,6 +63,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image('playerIdle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Test%20player%20piece-qjLBRdv0kjDlVHzShcVZXc0rUYC9V3.png?0M1S')
     this.load.image('playerLeftStep', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/test%20player%20left%20foot-B4FwOB9I5UQ0y8xcN2YlLKwjKhyTFq.png?QWYH')
     this.load.image('playerRightStep', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/test%20player%20right%20foot-sXLvP422lQJq9akyF82d7KRUCT32yF.png?a0Dn')
+    
+    // Load the blue enemy sprite
+    this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/enemy%20test%201-DFzrumkmpUN5HOwL25dNAVJzRcVxhv.png?rxbT')
   }
 
   create(): void {
@@ -77,6 +84,22 @@ export class GameScene extends Phaser.Scene {
     this.score = 0
     this.currentFloor = 0
     this.highestFloorGenerated = 5
+    
+    // Use game registry to persist lives and coins across scene restarts
+    // Check if we have stored values (level restart) or need to initialize (new game)
+    const registry = this.game.registry
+    
+    if (registry.has('playerLives') && registry.get('playerLives') > 0) {
+      // Restore from registry (level restart after losing life)
+      this.lives = registry.get('playerLives')
+      this.totalCoinsCollected = registry.get('totalCoins')
+    } else {
+      // Initialize new game
+      this.lives = 3
+      this.totalCoinsCollected = 0
+      registry.set('playerLives', this.lives)
+      registry.set('totalCoins', this.totalCoinsCollected)
+    }
     
     // Create platform and ladder groups
     this.platforms = this.physics.add.staticGroup()
@@ -116,11 +139,6 @@ export class GameScene extends Phaser.Scene {
     // So to have physics body bottom at Y=768, sprite center should be at Y=736
     const spawnY = 736  // Position player so physics body sits on platform
     
-    console.log('=== PLAYER SPAWN DEBUG ===')
-    console.log('Canvas height:', GameSettings.canvas.height)
-    console.log('Tile size:', GameSettings.game.tileSize)
-    console.log('Calculated spawn Y:', spawnY)
-    console.log('Ground floor Y (platform center):', GameSettings.canvas.height - GameSettings.game.tileSize/2)
     
     this.player = new Player(
       this, 
@@ -128,9 +146,6 @@ export class GameScene extends Phaser.Scene {
       spawnY
     )
     
-    console.log('Player created at position:', this.player.x, this.player.y)
-    console.log('Player body position:', this.player.body?.position)
-    console.log('Player physics body size:', this.player.body?.width, 'x', this.player.body?.height)
     
     // Start the level intro animation
     this.startLevelIntro(spawnX, spawnY)
@@ -219,14 +234,14 @@ export class GameScene extends Phaser.Scene {
     // Create HUD background panel (darker black) - extended for level display
     const hudBg = this.add.graphics()
     hudBg.fillStyle(0x000000, 0.6)  // Black with 60% opacity (much darker)
-    hudBg.fillRoundedRect(8, 8, 200, 80, 8)  // Increased height for level
+    hudBg.fillRoundedRect(8, 8, 200, 100, 8)  // Increased height to fit all 4 text lines
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
     // Add score display with better styling
     this.scoreText = this.add.text(20, 20, 'SCORE: 0', {
       fontSize: '16px',
-      color: '#ffd700',
+      color: '#00ff00',  // Changed from gold to green
       fontFamily: 'Arial Black',
       fontStyle: 'bold'
     }).setDepth(100)
@@ -255,24 +270,37 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Add floor counter with better styling
-    this.floorText = this.add.text(20, 40, 'FLOOR: 1', {
+    // Add lives display with heart symbols
+    this.livesText = this.add.text(20, 40, '❤️ x3', {
       fontSize: '16px',
-      color: '#00ff88',
+      color: '#ff4444',
       fontFamily: 'Arial Black',
       fontStyle: 'bold'
     }).setDepth(100)
-    this.floorText.setScrollFactor(0)
+    this.livesText.setScrollFactor(0)
+    
+    // Add coin counter display
+    this.coinCounterText = this.add.text(20, 60, 'COINS: 0/150', {
+      fontSize: '16px',
+      color: '#ffd700',
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold'
+    }).setDepth(100)
+    this.coinCounterText.setScrollFactor(0)
     
     // Add level counter
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(20, 60, `LEVEL: ${currentLevel}`, {
+    this.levelText = this.add.text(20, 80, `LEVEL: ${currentLevel}`, {
       fontSize: '16px',
       color: '#ff88ff',
       fontFamily: 'Arial Black',
       fontStyle: 'bold'
     }).setDepth(100)
     this.levelText.setScrollFactor(0)
+    
+    // Initialize displays
+    this.updateLivesDisplay()
+    this.updateCoinCounterDisplay()
     
     // Create touch controls for mobile
     this.touchControls = new TouchControls(this)
@@ -528,16 +556,10 @@ export class GameScene extends Phaser.Scene {
       
       if (floor === 0) {
         // Ground floor - complete platform
-        console.log('=== GROUND FLOOR CREATION ===')
-        console.log('Ground floor Y position:', y)
-        console.log('Creating ground floor tiles from x=0 to x=', floorWidth * tileSize)
         
         for (let x = 0; x < floorWidth; x++) {
           const platformX = x * tileSize + tileSize/2
           this.createPlatformTile(platformX, y, x === 0, x === floorWidth - 1)
-          if (x === 0) {
-            console.log('First ground tile at:', platformX, y)
-          }
         }
         // Ground floor can have ladders at multiple positions
         ladderPositions[floor] = -1 // Special marker for ground floor
@@ -1029,11 +1051,33 @@ export class GameScene extends Phaser.Scene {
     
     for (let floor = 1; floor <= maxEnemyFloor && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
-      const y = GameSettings.canvas.height - (floor * floorSpacing) - 40
+      // Calculate Y position - cats should sit ON the platform, not IN it
+      // Platform is at: GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      // We want cat's physics body bottom to be at platform top
+      // Platform is 32px tall, so platform top is 16px above platform center
+      const platformY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      const platformTop = platformY - tileSize/2 // Top of the platform
+      
+      // For enemies: position them so they fall onto the platform correctly
+      // The physics body will settle with its bottom at platform top due to gravity
+      // We spawn them slightly above and let gravity pull them down
+      // Hitbox is 16px tall, so center should be 8px above platform when settled
+      const y = platformTop - 20 // Spawn slightly above platform, gravity will settle them
+      
+      console.log(`Floor ${floor} platform debug:`, {
+        platformCenterY: platformY,
+        platformTop: platformTop,
+        catCenterY: y,
+        catBottomY: y + 8 // Half of hitbox height
+      })
       
       if (layout.gapStart === -1) {
-        // Complete floor - place 2-4 cats with full floor bounds for green cats
-        const numCats = Math.floor(Math.random() * 3) + 2 // 2-4 cats
+        // Complete floor - place cats based on level
+        // Level 1: Moderate enemies (2-3 cats), higher levels: more enemies (2-4 cats)
+        const isLevel1 = this.levelManager.getCurrentLevel() === 1
+        const numCats = isLevel1 ? 
+          Math.floor(Math.random() * 2) + 2 : // 2-3 cats for level 1
+          Math.floor(Math.random() * 3) + 2   // 2-4 cats for other levels
         const sectionSize = Math.floor(floorWidth / numCats)
         
         for (let i = 0; i < numCats; i++) {
@@ -1072,7 +1116,10 @@ export class GameScene extends Phaser.Scene {
         
         // Left section cats
         if (leftSectionSize > 4) {
-          const leftCats = leftSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1
+          const isLevel1 = this.levelManager.getCurrentLevel() === 1
+          const leftCats = isLevel1 ? 
+            1 : // Always 1 cat for level 1
+            (leftSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1)
           for (let i = 0; i < leftCats; i++) {
             const leftSectionTileSize = Math.floor(leftSectionSize / leftCats)
             const leftBound = tileSize * (0.5 + i * leftSectionTileSize)
@@ -1107,7 +1154,10 @@ export class GameScene extends Phaser.Scene {
         // Right section cats
         if (rightSectionSize > 4) {
           const rightStart = layout.gapStart + layout.gapSize
-          const rightCats = rightSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1
+          const isLevel1 = this.levelManager.getCurrentLevel() === 1
+          const rightCats = isLevel1 ?
+            1 : // Always 1 cat for level 1
+            (rightSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1)
           
           for (let i = 0; i < rightCats; i++) {
             const rightSectionTileSize = Math.floor(rightSectionSize / rightCats)
@@ -1438,8 +1488,14 @@ export class GameScene extends Phaser.Scene {
     // Add points
     this.score += GameSettings.scoring.coinCollect
     
-    // Update score display
+    // Increment coin counter and check for extra life
+    this.totalCoinsCollected++
+    this.game.registry.set('totalCoins', this.totalCoinsCollected)  // Save to registry
+    this.checkForExtraLife()
+    
+    // Update displays
     this.updateScoreDisplay()
+    this.updateCoinCounterDisplay()
     
     // Show point popup
     this.showPointPopup(coin.sprite.x, coin.sprite.y - 20, GameSettings.scoring.coinCollect)
@@ -1458,9 +1514,20 @@ export class GameScene extends Phaser.Scene {
     // Don't collect during intro animation
     if (this.isLevelStarting) return
     
+    // Check if already collected
+    if (blueCoin.isCollected()) return
+    
     const points = 500
     this.score += points
+    
+    // Blue coins count as 5 coins toward extra life
+    this.totalCoinsCollected += 5
+    this.game.registry.set('totalCoins', this.totalCoinsCollected)  // Save to registry
+    this.checkForExtraLife()
+    
+    // Update displays
     this.updateScoreDisplay()
+    this.updateCoinCounterDisplay()
     
     // Show point popup
     this.showPointPopup(blueCoin.sprite.x, blueCoin.sprite.y - 20, points)
@@ -1479,9 +1546,20 @@ export class GameScene extends Phaser.Scene {
     // Don't collect during intro animation
     if (this.isLevelStarting) return
     
+    // Check if already collected
+    if (diamond.isCollected()) return
+    
     const points = 1000
     this.score += points
+    
+    // Diamonds count as 10 coins toward extra life
+    this.totalCoinsCollected += 10
+    this.game.registry.set('totalCoins', this.totalCoinsCollected)  // Save to registry
+    this.checkForExtraLife()
+    
+    // Update displays
     this.updateScoreDisplay()
+    this.updateCoinCounterDisplay()
     
     // Show point popup
     this.showPointPopup(diamond.sprite.x, diamond.sprite.y - 20, points)
@@ -1635,7 +1713,6 @@ export class GameScene extends Phaser.Scene {
       // Show point popup at cat position
       this.showPointPopup(cat.x, cat.y - 20, basePoints)
       
-      console.log(`Cat squished while climbing! Score: ${this.score}, Points: ${basePoints} (no combo)`)
       return
     }
     
@@ -1673,7 +1750,6 @@ export class GameScene extends Phaser.Scene {
     // Show point popup at cat position
     this.showPointPopup(cat.x, cat.y - 20, points)
     
-    console.log(`Cat squished! Score: ${this.score}, Combo: x${this.comboCount}, Points: ${points}`)
   }
   
   private handleCeilingCatKill(player: Player, ceilingCat: CeilingCat): void {
@@ -1696,7 +1772,6 @@ export class GameScene extends Phaser.Scene {
       // Show point popup at cat position
       this.showPointPopup(ceilingCat.x, ceilingCat.y - 20, basePoints)
       
-      console.log(`Ceiling cat squished while climbing! Score: ${this.score}, Points: ${basePoints} (no combo)`)
       return
     }
     
@@ -1734,7 +1809,6 @@ export class GameScene extends Phaser.Scene {
     // Show point popup at cat position
     this.showPointPopup(ceilingCat.x, ceilingCat.y - 20, points)
     
-    console.log(`Ceiling cat squished! Score: ${this.score}, Combo: x${this.comboCount}, Points: ${points}`)
   }
   
   private updateScoreDisplay(): void {
@@ -1826,141 +1900,28 @@ export class GameScene extends Phaser.Scene {
   private handlePlayerDamage(player: Player, cat: any): void {
     if (this.isGameOver) return
     
-    // Reset combo on death
+    // Reset combo on hit
     this.resetCombo()
     
-    // Game over!
-    this.isGameOver = true
+    // Lose a life
+    this.lives--
+    this.game.registry.set('playerLives', this.lives)  // Save to registry
+    this.updateLivesDisplay()
     
-    // Stop the player and disable physics
+    // Stop the player and disable physics temporarily
     player.setVelocity(0, 0)
     player.setTint(0xff0000) // Turn player red
     player.body!.enable = false // Disable physics to prevent further collisions
     
-    // Create semi-transparent overlay
-    const overlay = this.add.rectangle(
-      GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2,
-      GameSettings.canvas.width,
-      GameSettings.canvas.height,
-      0x000000,
-      0.7
-    ).setDepth(199)
-    
-    // Get player position for centering popup
-    const playerX = player.x
-    const playerY = player.y - 150 // Position popup above player
-    
-    // Create smaller popup background
-    const popupWidth = 250
-    const popupHeight = 200
-    
-    // Center popup on screen to match level popup positioning
-    const popupX = this.cameras.main.width / 2
-    const popupY = this.cameras.main.height / 2
-    
-    const popupBg = this.add.rectangle(
-      popupX,
-      popupY,
-      popupWidth,
-      popupHeight,
-      0x2c2c2c
-    ).setDepth(200)
-    
-    // Add border to popup
-    const popupBorder = this.add.rectangle(
-      popupX,
-      popupY,
-      popupWidth + 4,
-      popupHeight + 4,
-      0xffffff
-    ).setDepth(199.5)
-    popupBorder.setStrokeStyle(3, 0xffffff)
-    popupBorder.setFillStyle()
-    
-    // Display game over title
-    const gameOverTitle = this.add.text(
-      popupX,
-      popupY - 50,
-      'GAME OVER!',
-      {
-        fontSize: '32px',
-        color: '#ff4444',
-        fontFamily: 'monospace',
-        align: 'center',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4
-      }
-    ).setOrigin(0.5).setDepth(201)
-    
-    // Display score
-    const scoreText = this.add.text(
-      popupX,
-      popupY - 10,
-      `Score: ${this.score}`,
-      {
-        fontSize: '24px',
-        color: '#ffffff',
-        fontFamily: 'monospace',
-        align: 'center',
-        stroke: '#000000',
-        strokeThickness: 3
-      }
-    ).setOrigin(0.5).setDepth(201)
-    
-    // Create restart button
-    const buttonWidth = 150
-    const buttonHeight = 45
-    const buttonY = popupY + 45
-    
-    const restartButton = this.add.rectangle(
-      popupX,
-      buttonY,
-      buttonWidth,
-      buttonHeight,
-      0x44ff44
-    ).setDepth(201)
-    restartButton.setInteractive({ useHandCursor: true })
-    restartButton.setStrokeStyle(2, 0x22aa22)
-    
-    const restartText = this.add.text(
-      popupX,
-      buttonY,
-      'RESTART',
-      {
-        fontSize: '22px',
-        color: '#ffffff',
-        fontFamily: 'monospace',
-        align: 'center',
-        fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 2
-      }
-    ).setOrigin(0.5).setDepth(202)
-    
-    // Add click/tap handler for restart button
-    restartButton.on('pointerdown', () => {
-      // Reset to level 1 on death
-      this.levelManager.resetToStart()
-      this.scene.restart()
-    })
-    
-    // Add hover effect
-    restartButton.on('pointerover', () => {
-      restartButton.setFillStyle(0x66ff66)
-    })
-    
-    restartButton.on('pointerout', () => {
-      restartButton.setFillStyle(0x44ff44)
-    })
-    
-    // Keep keyboard support as fallback
-    this.input.keyboard!.on('keydown-R', () => {
-      // Reset to level 1 on death
-      this.levelManager.resetToStart()
-      this.scene.restart()
-    })
+    // Check if player has lives remaining
+    if (this.lives > 0) {
+      // Still have lives - restart current level
+      this.showLostLifePopup()
+    } else {
+      // No lives left - game over
+      this.isGameOver = true
+      this.showGameOverScreen()
+    }
   }
   
   private handleLadderOverlap(
@@ -2016,7 +1977,9 @@ export class GameScene extends Phaser.Scene {
   }
   
   private updateDoorPrompt(): void {
-    if (!this.door) return
+    if (!this.door) {
+      return
+    }
     
     // Check if player is near the door and on the correct floor
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -2030,25 +1993,11 @@ export class GameScene extends Phaser.Scene {
       this.door.x, this.door.y
     )
     
-    console.log('=== DOOR PROMPT UPDATE DEBUG ===')
-    console.log('Door exists:', !!this.door)
-    console.log('Player position:', this.player.x, this.player.y)
-    console.log('Door position:', this.door.x, this.door.y)
-    console.log('Distance to door:', distance)
-    console.log('Current floor:', this.currentFloor)
-    console.log('Door floor:', doorFloor)
-    console.log('Player on ground:', isOnGround)
-    
     // Show prompt if player is close to door, on correct floor, and on ground
-    const isNearDoor = distance < 60 // Door activation range
+    const isNearDoor = distance < 80 // Door activation range (increased from 60)
     const isOnDoorFloor = this.currentFloor === doorFloor
     
-    console.log('Is near door (<60):', isNearDoor)
-    console.log('Is on door floor:', isOnDoorFloor)
-    console.log('Should show prompt:', isNearDoor && isOnDoorFloor && isOnGround)
-    
     if (isNearDoor && isOnDoorFloor && isOnGround) {
-      console.log('SHOWING DOOR PROMPT')
       this.door.showPrompt(this.player)
       
       // Also check for UP key press here
@@ -2056,9 +2005,7 @@ export class GameScene extends Phaser.Scene {
                        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown ||
                        (this.touchControls?.upPressed || false)
       
-      console.log('UP PRESSED CHECK:', upPressed)
       if (upPressed && !this.isLevelComplete) {
-        console.log('COMPLETING LEVEL FROM updateDoorPrompt!')
         this.completeLevel()
       }
     } else {
@@ -2201,15 +2148,6 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, _deltaTime: number): void {
     if (this.isGameOver) return
     
-    // Debug player position - log every 60 frames (about once per second)
-    if (this.time.now % 1000 < 20) {
-      console.log('=== PLAYER POSITION UPDATE ===')
-      console.log('Player Y:', this.player.y)
-      console.log('Player physics body Y:', this.player.body?.position.y)
-      console.log('Player velocity Y:', this.player.body?.velocity.y)
-      console.log('Player blocked down:', (this.player.body as any)?.blocked?.down)
-      console.log('Ground floor should be at Y:', GameSettings.canvas.height - GameSettings.game.tileSize/2)
-    }
     
     // Update touch controls
     this.touchControls.update()
@@ -2259,14 +2197,13 @@ export class GameScene extends Phaser.Scene {
     const playerFloor = Math.max(0, Math.floor((GameSettings.canvas.height - this.player.y - tileSize/2) / floorSpacing))
     
     if (playerFloor !== this.currentFloor) {
-      this.currentFloor = playerFloor
-      this.floorText.setText(`FLOOR: ${this.currentFloor + 1}`)
-      
       // Award bonus points for reaching new floors
       if (playerFloor > this.currentFloor) {
         this.score += GameSettings.scoring.floorBonus
-        this.scoreText.setText(`SCORE: ${this.score}`)
+        this.updateScoreDisplay()
       }
+      this.currentFloor = playerFloor
+      // No floor text to update anymore - we show coins instead
     }
     
     // Generate new floors if player is getting close to the top
@@ -2745,11 +2682,6 @@ export class GameScene extends Phaser.Scene {
     const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
     const isOnGround = playerBody.blocked.down
     
-    console.log('=== DOOR OVERLAP DEBUG ===')
-    console.log('Current floor:', this.currentFloor)
-    console.log('Door floor:', doorFloor)
-    console.log('Player on ground:', isOnGround)
-    console.log('Level complete status:', this.isLevelComplete)
     
     // Player must be on the correct floor and on ground
     if (this.currentFloor === doorFloor && isOnGround) {
@@ -2761,13 +2693,7 @@ export class GameScene extends Phaser.Scene {
                        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown ||
                        (this.touchControls?.upPressed || false)
       
-      console.log('UP key pressed:', upPressed)
-      console.log('Arrow UP:', this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP).isDown)
-      console.log('W key:', this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown)
-      console.log('Touch UP:', this.touchControls?.upPressed || false)
-      
       if (upPressed && !this.isLevelComplete) {
-        console.log('COMPLETING LEVEL!')
         this.completeLevel()
       }
     } else {
@@ -2891,6 +2817,268 @@ export class GameScene extends Phaser.Scene {
       this.levelManager.nextLevel()
       
       // Restart scene with new level
+      this.scene.restart()
+    })
+  }
+
+  private updateCoinCounterDisplay(): void {
+    const coinsTowardNext = this.totalCoinsCollected % this.COINS_PER_EXTRA_LIFE
+    this.coinCounterText.setText(`COINS: ${coinsTowardNext}/${this.COINS_PER_EXTRA_LIFE}`)
+  }
+
+  private updateLivesDisplay(): void {
+    // Show hearts for lives (max 9 to fit on screen)
+    const heartsToShow = Math.min(this.lives, 9)
+    const heartText = heartsToShow > 0 ? `❤️ x${heartsToShow}` : '💀 GAME OVER'
+    this.livesText.setText(heartText)
+  }
+
+  private checkForExtraLife(): void {
+    if (this.totalCoinsCollected > 0 && this.totalCoinsCollected % this.COINS_PER_EXTRA_LIFE === 0) {
+      if (this.lives < this.MAX_LIVES) {
+        this.lives++
+        this.game.registry.set('playerLives', this.lives)  // Save to registry
+        this.updateLivesDisplay()
+        
+        // Show extra life popup
+        this.showExtraLifePopup()
+      }
+    }
+  }
+
+  private showExtraLifePopup(): void {
+    const popup = this.add.text(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2 - 50,
+      'EXTRA LIFE!',
+      {
+        fontSize: '24px',
+        color: '#00ff00',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3
+      }
+    ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+
+    // Animate popup
+    this.tweens.add({
+      targets: popup,
+      y: popup.y - 30,
+      alpha: 0,
+      duration: 2000,
+      ease: 'Power2.easeOut',
+      onComplete: () => popup.destroy()
+    })
+  }
+
+  private showLostLifePopup(): void {
+    // Create semi-transparent overlay
+    const overlay = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      GameSettings.canvas.width,
+      GameSettings.canvas.height,
+      0x000000,
+      0.7
+    ).setDepth(199).setScrollFactor(0)
+    
+    // Create popup background
+    const popupWidth = 280
+    const popupHeight = 180
+    const popupX = this.cameras.main.width / 2
+    const popupY = this.cameras.main.height / 2
+    
+    const popupBg = this.add.rectangle(
+      popupX,
+      popupY,
+      popupWidth,
+      popupHeight,
+      0x2c2c2c
+    ).setDepth(200).setScrollFactor(0)
+    
+    popupBg.setStrokeStyle(3, 0xffffff)
+    
+    // Lost life title
+    const title = this.add.text(
+      popupX,
+      popupY - 45,
+      'LIFE LOST!',
+      {
+        fontSize: '28px',
+        color: '#ff6666',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Lives remaining
+    const livesText = this.add.text(
+      popupX,
+      popupY - 10,
+      `Lives Remaining: ${this.lives}`,
+      {
+        fontSize: '18px',
+        color: '#ffffff',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Continue button
+    const continueBtn = this.add.rectangle(
+      popupX,
+      popupY + 40,
+      140,
+      35,
+      0x44ff44
+    ).setDepth(201).setScrollFactor(0)
+    continueBtn.setInteractive({ useHandCursor: true })
+    continueBtn.setStrokeStyle(2, 0x22aa22)
+    
+    const continueText = this.add.text(
+      popupX,
+      popupY + 40,
+      'CONTINUE',
+      {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
+    
+    // Continue button handler - restart current level
+    continueBtn.on('pointerdown', () => {
+      this.scene.restart() // This will keep current level and not reset lives/coins
+    })
+    
+    // Hover effects
+    continueBtn.on('pointerover', () => {
+      continueBtn.setFillStyle(0x66ff66)
+    })
+    
+    continueBtn.on('pointerout', () => {
+      continueBtn.setFillStyle(0x44ff44)
+    })
+  }
+
+  private showGameOverScreen(): void {
+    // Create semi-transparent overlay
+    const overlay = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      GameSettings.canvas.width,
+      GameSettings.canvas.height,
+      0x000000,
+      0.7
+    ).setDepth(199).setScrollFactor(0)
+    
+    // Create popup background
+    const popupWidth = 300
+    const popupHeight = 220
+    const popupX = this.cameras.main.width / 2
+    const popupY = this.cameras.main.height / 2
+    
+    const popupBg = this.add.rectangle(
+      popupX,
+      popupY,
+      popupWidth,
+      popupHeight,
+      0x2c2c2c
+    ).setDepth(200).setScrollFactor(0)
+    
+    popupBg.setStrokeStyle(3, 0xffffff)
+    
+    // Game over title
+    const gameOverTitle = this.add.text(
+      popupX,
+      popupY - 60,
+      'GAME OVER!',
+      {
+        fontSize: '32px',
+        color: '#ff4444',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Display final score
+    const scoreText = this.add.text(
+      popupX,
+      popupY - 20,
+      `Final Score: ${this.score}`,
+      {
+        fontSize: '20px',
+        color: '#ffd700',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Display total coins collected
+    const coinsText = this.add.text(
+      popupX,
+      popupY + 5,
+      `Coins Collected: ${this.totalCoinsCollected}`,
+      {
+        fontSize: '16px',
+        color: '#ffd700',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Restart button (full game restart)
+    const restartButton = this.add.rectangle(
+      popupX,
+      popupY + 50,
+      150,
+      40,
+      0x44ff44
+    ).setDepth(201).setScrollFactor(0)
+    restartButton.setInteractive({ useHandCursor: true })
+    restartButton.setStrokeStyle(2, 0x22aa22)
+    
+    const restartText = this.add.text(
+      popupX,
+      popupY + 50,
+      'START OVER',
+      {
+        fontSize: '18px',
+        color: '#ffffff',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
+    
+    // Start over handler - reset everything
+    restartButton.on('pointerdown', () => {
+      // Reset to level 1 and reset lives/coins
+      this.levelManager.resetToStart()
+      this.game.registry.set('playerLives', 3)
+      this.game.registry.set('totalCoins', 0)
+      this.scene.restart()
+    })
+    
+    // Hover effects
+    restartButton.on('pointerover', () => {
+      restartButton.setFillStyle(0x66ff66)
+    })
+    
+    restartButton.on('pointerout', () => {
+      restartButton.setFillStyle(0x44ff44)
+    })
+    
+    // Keyboard support
+    this.input.keyboard!.on('keydown-R', () => {
+      this.levelManager.resetToStart()
+      this.game.registry.set('playerLives', 3)
+      this.game.registry.set('totalCoins', 0)
       this.scene.restart()
     })
   }

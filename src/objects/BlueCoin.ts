@@ -1,6 +1,7 @@
 export class BlueCoin {
   public sprite: Phaser.GameObjects.Arc
   private scene: Phaser.Scene
+  private collected: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
@@ -35,8 +36,14 @@ export class BlueCoin {
     
   }
   
+  isCollected(): boolean {
+    return this.collected
+  }
   
   collect(): void {
+    if (this.collected) return
+    this.collected = true
+    
     // Play more dramatic collection effect
     this.scene.tweens.add({
       targets: this.sprite,

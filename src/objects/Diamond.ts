@@ -2,6 +2,7 @@ export class Diamond {
   public sprite: Phaser.GameObjects.Rectangle
   public diamondGraphics: Phaser.GameObjects.Graphics
   private scene: Phaser.Scene
+  private collected: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
@@ -82,7 +83,14 @@ export class Diamond {
   }
   
   
+  isCollected(): boolean {
+    return this.collected
+  }
+  
   collect(): void {
+    if (this.collected) return
+    this.collected = true
+    
     // Simple diamond collection animation without flash
     this.scene.tweens.add({
       targets: [this.sprite, this.diamondGraphics],

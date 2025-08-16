@@ -31,7 +31,7 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     this.createDoorVisual()
     
     // Add debug visualization for door positioning
-    this.createDebugVisualization()
+    // this.createDebugVisualization()  // Commented out - debugging complete
     
     // Set depth
     this.setDepth(10)
@@ -237,13 +237,15 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
         // Show simple prompt for other levels
         this.promptText = this.scene.add.text(
           this.x,
-          this.y - 40,
+          this.y - 70,  // Position above door
           'Press UP to enter',
           {
-            fontSize: '14px',
+            fontSize: '16px',
             color: '#ffffff',
             backgroundColor: '#000000',
-            padding: { x: 4, y: 2 }
+            padding: { x: 6, y: 4 },
+            stroke: '#ffffff',
+            strokeThickness: 1
           }
         ).setOrigin(0.5).setDepth(100)
       }

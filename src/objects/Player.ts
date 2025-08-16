@@ -53,13 +53,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Phaser's built-in debug visualization will show the hitbox
     
-    console.log('=== PLAYER PHYSICS SETUP ===')
-    console.log('Player sprite size:', this.displayWidth, 'x', this.displayHeight)
-    console.log('Physics body size:', this.body?.width, 'x', this.body?.height)
-    console.log('Physics body offset:', (this.body as any)?.offset)
-    console.log('Player bottom Y:', this.y + (this.displayHeight/2))
-    console.log('Physics body bottom Y:', this.body?.position.y + this.body?.height)
-    
     // Create cursor keys for input
     this.cursors = scene.input.keyboard!.createCursorKeys()
     
