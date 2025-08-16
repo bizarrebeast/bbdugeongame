@@ -15,6 +15,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private bounceTimer: number = 0
   private randomMoveTimer: number = 0
   private isSquished: boolean = false
+  private debugGraphics: Phaser.GameObjects.Graphics | null = null
+  private debugUpdateHandler: (() => void) | null = null
   
   constructor(
     scene: Phaser.Scene, 
@@ -28,35 +30,48 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     const catColor = color || colors[Math.floor(Math.random() * colors.length)]
     
     // Use the new sprite for blue enemies, generate texture for others
-    if (catColor === CatColor.BLUE && scene.textures.exists('blueEnemy')) {
-      super(scene, x, y, 'blueEnemy')
-    } else {
-      // Fallback to generated texture for other colors or if sprite not loaded
-      const colorMap = {
-        [CatColor.BLUE]: 0x4169e1,
-        [CatColor.YELLOW]: 0xffd700,
-        [CatColor.GREEN]: 0x32cd32
+    let textureKey: string
+    
+    if (catColor === CatColor.BLUE) {
+      // For blue enemies, prefer the loaded sprite, fallback to generated
+      if (scene.textures.exists('blueEnemy')) {
+        textureKey = 'blueEnemy'
+        super(scene, x, y, textureKey)
+      } else {
+        // Use generated texture as fallback
+        textureKey = `cat-${catColor}`
+        this.generateFallbackTexture(scene, catColor)
+        super(scene, x, y, textureKey)
       }
-      
-      const graphics = scene.add.graphics()
-      graphics.fillStyle(colorMap[catColor], 1)
-      graphics.fillCircle(10, 8, 8)
-      graphics.fillStyle(0x000000, 1)
-      graphics.fillCircle(6, 6, 2)
-      graphics.fillCircle(14, 6, 2)
-      graphics.fillStyle(colorMap[catColor], 1)
-      graphics.fillTriangle(4, 2, 8, 0, 8, 4)
-      graphics.fillTriangle(12, 0, 16, 2, 12, 4)
-      graphics.generateTexture(`cat-${catColor}`, 20, 16)
-      graphics.destroy()
-      
-      super(scene, x, y, `cat-${catColor}`)
+    } else {
+      // For other colors, always use generated texture
+      textureKey = `cat-${catColor}`
+      this.generateFallbackTexture(scene, catColor)
+      super(scene, x, y, textureKey)
     }
     
     this.catColor = catColor
     
     scene.add.existing(this)
     scene.physics.add.existing(this)
+    
+    // === DETAILED DEBUG LOGGING START ===
+    console.log(`🚀 STEP 1: Created ${catColor} enemy at (${x}, ${y}) with texture: ${textureKey}`)
+    console.log(`🚀 STEP 2: Enemy spawn Y is ${y < 0 ? 'NEGATIVE' : 'positive'} - this ${y < 0 ? 'IS A PROBLEM' : 'looks good'}`)
+    console.log(`🚀 STEP 3: Texture exists check - blueEnemy: ${scene.textures.exists('blueEnemy')}, defaultEnemy: ${scene.textures.exists('defaultEnemy')}, scene has assetPool: ${!!(scene as any).assetPool}`)
+    
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      console.log(`🚀 STEP 4: Initial physics body size: ${this.body.width}x${this.body.height}`)
+    }
+    
+    // Apply blue enemy hitbox sizing AFTER physics body is created
+    if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
+      console.log(`🚀 STEP 5A: Setting blue enemy hitbox to 30x20...`)
+      this.body.setSize(30, 20)
+      console.log(`🚀 STEP 5B: Blue enemy (${textureKey}) hitbox SET, actual size: ${this.body.width}x${this.body.height}`)
+    } else if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      console.log(`🚀 STEP 5C: ${catColor} enemy (${textureKey}) keeping default hitbox: ${this.body.width}x${this.body.height}`)
+    }
     
     this.setCollideWorldBounds(true)
     this.setBounce(0)
@@ -70,18 +85,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Set up hitbox and visual alignment
-    if (catColor === CatColor.BLUE && scene.textures.exists('blueEnemy')) {
+    if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
       // For the new blue enemy sprite
       this.setDisplaySize(36, 36) // Reduced by 12 pixels (was 48)
-      this.setSize(20, 16) // Hitbox size
       
-      // Position hitbox with visual offset 39px up (36 + 3 more)
-      // Visual is 36px tall, hitbox is 16px tall
-      // We want the visual to appear 39px higher than default
-      // Offset moves the physics body relative to the sprite
-      // To move visual up by 39px, we move physics body down by 39px
-      // Original offset was 10, add 39 = 49
-      this.setOffset(8, 49) // Center horizontally, move hitbox down 49px to lift visual up 39px
+      // Hitbox sizing is handled after physics body creation above
+      
+      // Position hitbox with visual offset to keep sprite elevated
+      // We want the visual to appear elevated above the hitbox like before
+      // Keeping the same visual offset but adjusting for new hitbox size
+      // Visual is 36px tall, hitbox is 20px tall  
+      // Offset blue enemies up by 2 pixels from previous position (43 + 2 = 45)
+      this.setOffset(3, 45) // Center horizontally (3px), visual offset adjusted up 2px
       
       // The image shows enemy facing left, which is our default
       this.setFlipX(false)
@@ -89,19 +104,30 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Add debug visualization
       this.addDebugVisualization()
       
-      // Debug: Log position info to understand floor alignment
-      console.log('Blue Enemy Debug:', {
-        spriteY: y,
-        visualHeight: 36,
-        hitboxHeight: 16,
-        offset: 10,
-        bottomOfSprite: y + 18, // Half of visual height
-        bottomOfHitbox: y + 10 + 8 // Offset + half hitbox height
-      })
-    } else {
-      // Original settings for other colors
+      // Debug: Log basic position info
+      console.log(`🚀 STEP 6A: Blue Enemy spawned at Y: ${y}, using sprite texture`)
+      if (this.body instanceof Phaser.Physics.Arcade.Body) {
+        console.log(`🚀 STEP 6B: Blue enemy final hitbox size: ${this.body.width}x${this.body.height}`)
+      }
+    } else if (catColor !== CatColor.BLUE) {
+      // Original settings for non-blue colors only
+      console.log(`🚀 STEP 6C: Setting non-blue enemy hitbox to 18x14...`)
       this.setSize(18, 14)
       this.setOffset(1, 1)
+      if (this.body instanceof Phaser.Physics.Arcade.Body) {
+        console.log(`🚀 STEP 6D: Non-blue enemy final hitbox: ${this.body.width}x${this.body.height}`)
+      }
+    } else {
+      // Blue enemy using fallback texture - keep the 30x20 hitbox we set above
+      console.log(`🚀 STEP 6E: Blue enemy using fallback texture, keeping 30x20 hitbox`)
+      if (this.body instanceof Phaser.Physics.Arcade.Body) {
+        console.log(`🚀 STEP 6F: Blue fallback enemy final hitbox: ${this.body.width}x${this.body.height}`)
+      }
+    }
+    
+    // === FINAL VERIFICATION ===
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      console.log(`🚀 FINAL: ${catColor} enemy constructor complete - hitbox: ${this.body.width}x${this.body.height}, display: ${this.displayWidth}x${this.displayHeight}`)
     }
     
     this.setDepth(15)
@@ -139,6 +165,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   update(time: number, delta: number): void {
     if (this.isSquished) return
+    
+    // Movement logging temporarily disabled to see creation logs
     
     switch (this.catColor) {
       case CatColor.BLUE:
@@ -234,6 +262,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.body.enable = false
     }
     
+    // Clean up debug visualization immediately
+    this.cleanupDebugVisualization()
+    
     this.scene.tweens.add({
       targets: this,
       scaleY: 0.2,
@@ -258,18 +289,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Only show in debug mode
     if (!GameSettings.debug) return
     
-    const graphics = this.scene.add.graphics()
+    this.debugGraphics = this.scene.add.graphics()
     
-    // Update graphics position in update loop
-    this.scene.events.on('postupdate', () => {
-      if (graphics && graphics.active && this.active) {
-        graphics.clear()
+    // Store the update handler so we can remove it later
+    this.debugUpdateHandler = () => {
+      if (this.debugGraphics && this.debugGraphics.active && this.active) {
+        this.debugGraphics.clear()
         
         // Draw visual sprite bounds (blue rectangle)
-        graphics.lineStyle(2, 0x0000ff, 0.8) // Blue for visual bounds
+        this.debugGraphics.lineStyle(2, 0x0000ff, 0.8) // Blue for visual bounds
         const visualWidth = this.displayWidth
         const visualHeight = this.displayHeight
-        graphics.strokeRect(
+        this.debugGraphics.strokeRect(
           this.x - visualWidth/2,
           this.y - visualHeight/2,
           visualWidth,
@@ -277,45 +308,89 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         )
         
         // Draw center cross (white)
-        graphics.lineStyle(1, 0xffffff, 0.8)
-        graphics.lineBetween(this.x - 5, this.y, this.x + 5, this.y) // Horizontal
-        graphics.lineBetween(this.x, this.y - 5, this.x, this.y + 5) // Vertical
+        this.debugGraphics.lineStyle(1, 0xffffff, 0.8)
+        this.debugGraphics.lineBetween(this.x - 5, this.y, this.x + 5, this.y) // Horizontal
+        this.debugGraphics.lineBetween(this.x, this.y - 5, this.x, this.y + 5) // Vertical
         
         // Draw hitbox (red rectangle) - this is in addition to Phaser's green debug
         const body = this.body as Phaser.Physics.Arcade.Body
-        graphics.lineStyle(2, 0xff0000, 0.8) // Red for hitbox
-        graphics.strokeRect(
-          body.x,
-          body.y,
-          body.width,
-          body.height
-        )
-        
-        // Draw text labels
-        const debugText = this.scene.add.text(
-          this.x,
-          this.y - visualHeight/2 - 20,
-          `Visual: ${Math.round(visualWidth)}x${Math.round(visualHeight)}\nHitbox: ${Math.round(body.width)}x${Math.round(body.height)}`,
-          {
-            fontSize: '10px',
-            color: '#ffffff',
-            backgroundColor: '#000000',
-            padding: { x: 2, y: 2 }
-          }
-        ).setOrigin(0.5).setDepth(100)
-        
-        // Remove text after one frame
-        this.scene.time.delayedCall(16, () => {
-          debugText.destroy()
-        })
+        if (body) {
+          this.debugGraphics.lineStyle(2, 0xff0000, 0.8) // Red for hitbox
+          this.debugGraphics.strokeRect(
+            body.x,
+            body.y,
+            body.width,
+            body.height
+          )
+          
+          // Draw text labels - FORCE REFRESH hitbox dimensions
+          const currentWidth = this.body ? (this.body as Phaser.Physics.Arcade.Body).width : body.width
+          const currentHeight = this.body ? (this.body as Phaser.Physics.Arcade.Body).height : body.height
+          const debugText = this.scene.add.text(
+            this.x,
+            this.y - visualHeight/2 - 20,
+            `Visual: ${Math.round(visualWidth)}x${Math.round(visualHeight)}\nHitbox: ${Math.round(currentWidth)}x${Math.round(currentHeight)} [${this.catColor}]`,
+            {
+              fontSize: '10px',
+              color: '#ffffff',
+              backgroundColor: '#000000',
+              padding: { x: 2, y: 2 }
+            }
+          ).setOrigin(0.5).setDepth(100)
+          
+          // Remove text after one frame
+          this.scene.time.delayedCall(16, () => {
+            if (debugText) debugText.destroy()
+          })
+        }
       }
-    })
+    }
     
-    graphics.setDepth(25) // Above enemy but below UI
-    this.scene.add.existing(graphics)
+    // Update graphics position in update loop
+    this.scene.events.on('postupdate', this.debugUpdateHandler)
+    
+    this.debugGraphics.setDepth(25) // Above enemy but below UI
+    this.scene.add.existing(this.debugGraphics)
+  }
+  
+  private cleanupDebugVisualization(): void {
+    // Remove the event listener
+    if (this.debugUpdateHandler) {
+      this.scene.events.off('postupdate', this.debugUpdateHandler)
+      this.debugUpdateHandler = null
+    }
+    
+    // Destroy the graphics object
+    if (this.debugGraphics) {
+      this.debugGraphics.destroy()
+      this.debugGraphics = null
+    }
   }
   
   private addRoundedHitboxVisualization(): void {
     // Removed - replaced with addDebugVisualization
+  }
+  
+  private generateFallbackTexture(scene: Phaser.Scene, catColor: CatColor): void {
+    const colorMap = {
+      [CatColor.BLUE]: 0x4169e1,
+      [CatColor.YELLOW]: 0xffd700,
+      [CatColor.GREEN]: 0x32cd32
+    }
+    
+    const textureKey = `cat-${catColor}`
+    if (!scene.textures.exists(textureKey)) {
+      const graphics = scene.add.graphics()
+      graphics.fillStyle(colorMap[catColor], 1)
+      graphics.fillCircle(10, 8, 8)
+      graphics.fillStyle(0x000000, 1)
+      graphics.fillCircle(6, 6, 2)
+      graphics.fillCircle(14, 6, 2)
+      graphics.fillStyle(colorMap[catColor], 1)
+      graphics.fillTriangle(4, 2, 8, 0, 8, 4)
+      graphics.fillTriangle(12, 0, 16, 2, 12, 4)
+      graphics.generateTexture(textureKey, 20, 16)
+      graphics.destroy()
+    }
   }
 }

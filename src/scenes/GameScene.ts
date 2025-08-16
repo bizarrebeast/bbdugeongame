@@ -10,6 +10,7 @@ import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
 import { Door } from "../objects/Door"
+import { AssetPool, AssetConfig } from "../systems/AssetPool"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -50,22 +51,73 @@ export class GameScene extends Phaser.Scene {
   private door: Door | null = null
   private isLevelStarting: boolean = false
   private isLevelComplete: boolean = false
+  private assetPool!: AssetPool
   
   constructor() {
     super({ key: "GameScene" })
   }
 
   preload(): void {
-    // Load the visibility overlay image
-    this.load.image('visibilityOverlay', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO')
+    // Initialize asset pool
+    this.assetPool = new AssetPool(this)
     
-    // Load the player sprites
+    // Define all game assets with fallbacks
+    const gameAssets: AssetConfig[] = [
+      {
+        key: 'visibilityOverlay',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO',
+        type: 'image',
+        retries: 3
+      },
+      {
+        key: 'playerIdle',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Test%20player%20piece-qjLBRdv0kjDlVHzShcVZXc0rUYC9V3.png?0M1S',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
+      {
+        key: 'playerLeftStep',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/test%20player%20left%20foot-B4FwOB9I5UQ0y8xcN2YlLKwjKhyTFq.png?QWYH',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
+      {
+        key: 'playerRightStep',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/test%20player%20right%20foot-sXLvP422lQJq9akyF82d7KRUCT32yF.png?a0Dn',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
+      {
+        key: 'blueEnemy',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/enemy%20test%201-DFzrumkmpUN5HOwL25dNAVJzRcVxhv.png?rxbT',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultEnemy'
+      }
+    ]
+    
+    // Register assets with the pool
+    this.assetPool.registerAssets(gameAssets)
+    
+    // Create fallback textures first
+    this.assetPool.createCommonFallbacks()
+    
+    // Load critical assets via traditional method first for immediate availability
+    this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/enemy%20test%201-DFzrumkmpUN5HOwL25dNAVJzRcVxhv.png?rxbT')
+    this.load.image('visibilityOverlay', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO')
     this.load.image('playerIdle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Test%20player%20piece-qjLBRdv0kjDlVHzShcVZXc0rUYC9V3.png?0M1S')
     this.load.image('playerLeftStep', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/test%20player%20left%20foot-B4FwOB9I5UQ0y8xcN2YlLKwjKhyTFq.png?QWYH')
     this.load.image('playerRightStep', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/test%20player%20right%20foot-sXLvP422lQJq9akyF82d7KRUCT32yF.png?a0Dn')
     
-    // Load the blue enemy sprite
-    this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/enemy%20test%201-DFzrumkmpUN5HOwL25dNAVJzRcVxhv.png?rxbT')
+    // Start pooled loading for advanced error handling and retries
+    this.assetPool.loadAllAssets().then(() => {
+      console.log('All assets loaded via AssetPool - retries and fallbacks ready')
+    }).catch((error) => {
+      console.error('Asset loading failed:', error)
+    })
   }
 
   create(): void {
@@ -948,60 +1000,60 @@ export class GameScene extends Phaser.Scene {
     ladder.setDepth(10)
     this.ladders.add(ladder)
     
-    // Mining Theme Ladder - Chunkier, more visible wooden ladder
+    // Mining Theme Ladder - Chunkier, more visible teal crystal ladder
     const ladderGraphics = this.add.graphics()
     const ladderX = x + tileSize/2
     
-    // Thicker vertical wooden rails - extend up significantly to balance with bottom extensions
+    // Thicker vertical teal rails - extend up significantly to balance with bottom extensions
     // First draw the outline/stroke
-    ladderGraphics.lineStyle(2, 0x4a3328, 1) // Dark brown outline
+    ladderGraphics.lineStyle(2, 0x2a6660, 1) // Dark teal outline
     ladderGraphics.strokeRect(ladderX - 13, topY - tileSize * 1.0 - 1, 7, ladderHeight + tileSize * 1.0 + 2) // Left rail outline
     ladderGraphics.strokeRect(ladderX + 6, topY - tileSize * 1.0 - 1, 7, ladderHeight + tileSize * 1.0 + 2) // Right rail outline
     
     // Then fill the rails
-    ladderGraphics.fillStyle(0x6a5338, 1) // Brighter wood color
+    ladderGraphics.fillStyle(0x40e0d0, 1) // Bright teal gem color
     ladderGraphics.fillRect(ladderX - 12, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0) // Extended much further up
     ladderGraphics.fillRect(ladderX + 7, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0)
     
-    // Wood grain effect - more visible, extended to balance with bottom
-    ladderGraphics.lineStyle(2, 0x5a4328, 0.8)
+    // Teal grain effect - more visible, extended to balance with bottom
+    ladderGraphics.lineStyle(2, 0x35a0a0, 0.8) // Medium teal grain
     ladderGraphics.lineBetween(ladderX - 10, topY - tileSize * 1.0, ladderX - 10, topY + ladderHeight)
     ladderGraphics.lineBetween(ladderX + 9, topY - tileSize * 1.0, ladderX + 9, topY + ladderHeight)
     
-    // Wood highlights for more definition - extended to balance with bottom
-    ladderGraphics.lineStyle(1, 0x7a6348, 0.6)
+    // Teal highlights for more definition - extended to balance with bottom
+    ladderGraphics.lineStyle(1, 0x60f0e0, 0.6) // Light teal highlights
     ladderGraphics.lineBetween(ladderX - 11, topY - tileSize * 1.0, ladderX - 11, topY + ladderHeight)
     ladderGraphics.lineBetween(ladderX + 8, topY - tileSize * 1.0, ladderX + 8, topY + ladderHeight)
     
-    // Thicker wooden rungs
+    // Thicker teal rungs
     const numRungs = Math.floor(ladderHeight / 22) // More frequent rungs
     for (let i = 0; i <= numRungs; i++) {
       const rungY = bottomY - (i * 22)
       
       // Draw rung outline first
-      ladderGraphics.lineStyle(1, 0x4a3328, 0.8) // Dark brown outline for rungs
+      ladderGraphics.lineStyle(1, 0x2a6660, 0.8) // Dark teal outline for rungs
       ladderGraphics.strokeRect(ladderX - 13, rungY - 4, 26, 8)
       
-      // Thicker wooden rung
-      ladderGraphics.fillStyle(0x6a5338, 1)
+      // Thicker teal rung
+      ladderGraphics.fillStyle(0x40e0d0, 1) // Bright teal gem color for rungs
       ladderGraphics.fillRect(ladderX - 12, rungY - 3, 24, 6) // Wider and taller rungs
       
       // Rung highlights
-      ladderGraphics.lineStyle(1, 0x7a6348, 0.7)
+      ladderGraphics.lineStyle(1, 0x60f0e0, 0.7) // Light teal rung highlights
       ladderGraphics.lineBetween(ladderX - 12, rungY - 2, ladderX + 12, rungY - 2)
       
-      // Larger metal brackets at connection points
-      ladderGraphics.fillStyle(0x5a5a5a, 1) // Brighter metal
+      // Larger teal brackets at connection points
+      ladderGraphics.fillStyle(0x2a6660, 1) // Dark teal brackets
       ladderGraphics.fillRect(ladderX - 14, rungY - 4, 6, 8)
       ladderGraphics.fillRect(ladderX + 8, rungY - 4, 6, 8)
       
-      // Larger bolts
-      ladderGraphics.fillStyle(0x3a3a3a, 1)
+      // Larger teal bolts
+      ladderGraphics.fillStyle(0x1a4040, 1) // Very dark teal bolts
       ladderGraphics.fillCircle(ladderX - 11, rungY, 2) // Bigger bolts
       ladderGraphics.fillCircle(ladderX + 11, rungY, 2)
       
       // Bolt highlights
-      ladderGraphics.fillStyle(0x6a6a6a, 1)
+      ladderGraphics.fillStyle(0x35a0a0, 1) // Medium teal bolt highlights
       ladderGraphics.fillCircle(ladderX - 11, rungY - 1, 1)
       ladderGraphics.fillCircle(ladderX + 11, rungY - 1, 1)
     }
@@ -1010,17 +1062,17 @@ export class GameScene extends Phaser.Scene {
     const railExtensionLength = tileSize * 0.3
     const railExtensionY = topY - tileSize * 0.4
     
-    ladderGraphics.fillStyle(0x6a5338, 1)
+    ladderGraphics.fillStyle(0x40e0d0, 1) // Bright teal gem color for extensions
     ladderGraphics.fillRect(ladderX - 12, railExtensionY, 5, railExtensionLength)
     ladderGraphics.fillRect(ladderX + 7, railExtensionY, 5, railExtensionLength)
     
-    // Wood grain on rail extensions
-    ladderGraphics.lineStyle(2, 0x5a4328, 0.8)
+    // Teal grain on rail extensions
+    ladderGraphics.lineStyle(2, 0x35a0a0, 0.8) // Medium teal grain for extensions
     ladderGraphics.lineBetween(ladderX - 10, railExtensionY, ladderX - 10, railExtensionY + railExtensionLength)
     ladderGraphics.lineBetween(ladderX + 9, railExtensionY, ladderX + 9, railExtensionY + railExtensionLength)
     
-    // Wood highlights on rail extensions
-    ladderGraphics.lineStyle(1, 0x7a6348, 0.6)
+    // Teal highlights on rail extensions
+    ladderGraphics.lineStyle(1, 0x60f0e0, 0.6) // Light teal highlights for extensions
     ladderGraphics.lineBetween(ladderX - 11, railExtensionY, ladderX - 11, railExtensionY + railExtensionLength)
     ladderGraphics.lineBetween(ladderX + 8, railExtensionY, ladderX + 8, railExtensionY + railExtensionLength)
     
@@ -2349,10 +2401,11 @@ export class GameScene extends Phaser.Scene {
         
         if (layout.gapStart === -1) {
           // Complete floor
+          console.log(`Spawning enemy on complete floor at base Y: ${y}, final Y: ${y - 16}`)
           const cat = new Cat(
             this,
             (floorWidth / 2) * tileSize,
-            y - 40,
+            y - 16, // Spawn just above the floor platform
             tileSize * 1.5,
             tileSize * (floorWidth - 1.5),
             randomColor as any
@@ -2364,7 +2417,7 @@ export class GameScene extends Phaser.Scene {
           const cat = new Cat(
             this,
             (layout.gapStart / 2) * tileSize,
-            y - 40,
+            y - 16, // Spawn just above the floor platform
             tileSize * 0.5,
             tileSize * (layout.gapStart - 0.5),
             randomColor as any

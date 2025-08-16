@@ -57,8 +57,8 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     graphics.fillStyle(0x4a4a4a, 1) // Base steel door
     graphics.fillRect(this.x - 32, this.y - 42, 64, 84) // Main door surface
     
-    // Heavy wooden panels with mining theme (replacing steel plates)
-    graphics.fillStyle(0x6a4838, 1) // Mining wood color (matches ladders)
+    // Heavy teal crystal panels with mining theme (matching teal ladders)
+    graphics.fillStyle(0x40e0d0, 1) // Teal crystal color (matches ladders)
     graphics.fillRect(this.x - 30, this.y - 35, 25, 30) // Top left panel
     graphics.fillRect(this.x + 5, this.y - 35, 25, 30)  // Top right panel
     graphics.fillRect(this.x - 30, this.y - 5, 25, 30)  // Middle left panel
