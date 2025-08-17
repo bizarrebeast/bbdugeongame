@@ -1489,7 +1489,7 @@ export class GameScene extends Phaser.Scene {
       // Find all valid positions (where there are platforms, avoiding ladders)
       const validPositions: number[] = []
       for (let x = 1; x < GameSettings.game.floorWidth - 1; x++) {
-        if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, floor)) {
+        if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor)) {
           validPositions.push(x)
         }
       }
@@ -1538,8 +1538,10 @@ export class GameScene extends Phaser.Scene {
   ): void {
     const tileSize = GameSettings.game.tileSize
     
-    // Filter positions to avoid ladders
-    const availablePositions = validPositions.filter(x => !this.hasLadderAt(x, floor))
+    // Filter positions to avoid ladders and doors
+    const availablePositions = validPositions.filter(x => 
+      !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor)
+    )
     
     for (let i = 0; i < Math.min(count, availablePositions.length); i++) {
       // Find a position that's not occupied
@@ -1629,6 +1631,15 @@ export class GameScene extends Phaser.Scene {
     // Check if there's a ladder at this position using stored positions
     const ladders = this.ladderPositions.get(floor) || []
     return ladders.includes(x)
+  }
+  
+  private hasDoorAt(x: number, floor: number): boolean {
+    // Check if there's a door at this position (need extra clearance around doors)
+    const doorX = this.doorPositions.get(floor)
+    if (doorX === undefined) return false
+    
+    // Need 2-3 tiles clearance around door (doors are wider than ladders)
+    return Math.abs(x - doorX) <= 2
   }
   
   private isPositionOccupied(x: number, floor: number, usedPositions: number[]): boolean {
@@ -2784,6 +2795,8 @@ export class GameScene extends Phaser.Scene {
       // topFloorY is platform center, platform is 32px tall, so platform top is topFloorY - 16
       const platformTop = topFloorY - (tileSize / 2)
       const doorY = platformTop - 50 // Door center positioned so bottom sits on platform surface
+      console.log(`🚪 DOOR POSITIONING DEBUG: topFloorY=${topFloorY}, platformTop=${platformTop}, doorY=${doorY}`)
+      console.log(`🚪 DOOR POSITIONING DEBUG: Camera Y=${this.cameras.main.scrollY}, Player Y should be around ${doorY + 100}`)
       
       const isFirstLevel = this.levelManager.getCurrentLevel() === 1
       this.door = new Door(this, doorX, doorY, isFirstLevel)

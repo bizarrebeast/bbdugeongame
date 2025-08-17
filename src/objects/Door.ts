@@ -4,6 +4,10 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
   private isFirstLevel: boolean
   
   constructor(scene: Phaser.Scene, x: number, y: number, isFirstLevel: boolean = false) {
+    console.log("🚪 DOOR CONSTRUCTOR: Creating door")
+    console.log(`   Position: (${x}, ${y})`)
+    console.log(`   Is first level: ${isFirstLevel}`)
+    
     // Create a placeholder texture for the door - much bigger
     const graphics = scene.add.graphics()
     graphics.fillStyle(0x8B4513, 1) // Brown color
@@ -14,6 +18,7 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, 'door-placeholder')
     
     this.isFirstLevel = isFirstLevel
+    console.log("🚪 DOOR CONSTRUCTOR: Base sprite created")
     
     // Add to scene
     scene.add.existing(this)
@@ -28,7 +33,9 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     body.setOffset(0, 0)  // No offset - hitbox matches visual perfectly
     
     // Create the visual door frame (mining theme)
+    console.log("🚪 DOOR CONSTRUCTOR: About to call createDoorVisual()")
     this.createDoorVisual()
+    console.log("🚪 DOOR CONSTRUCTOR: createDoorVisual() completed")
     
     // Add debug visualization for door positioning
     // this.createDebugVisualization()  // Commented out - debugging complete
@@ -38,67 +45,34 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
   }
   
   private createDoorVisual(): void {
-    // Create complex mining/industrial themed door visual
+    console.log("🚪 DOOR DEBUG: Creating door visual")
+    console.log(`   Door position: (${this.x}, ${this.y})`)
+    
+    // Create a new texture for the door that replaces the brown placeholder
     const graphics = this.scene.add.graphics()
+    graphics.clear() // Clear any existing graphics
+    console.log("🚪 DOOR DEBUG: Creating NEW TEXTURE to replace brown box")
     
-    // Massive steel door frame with depth - outer frame
-    graphics.fillStyle(0x2a2a2a, 1) // Very dark steel
-    graphics.fillRect(this.x - 50, this.y - 60, 100, 120) // Massive outer frame
+    // Purple door frame extending to floor - draw relative to canvas (0,0)
+    console.log("🚪 DOOR DEBUG: Drawing purple frame on texture canvas")
+    graphics.fillStyle(0x6a1b9a, 1) // Purple frame color
+    graphics.fillRect(0, 0, 100, 15) // Top frame
+    graphics.fillRect(0, 0, 15, 120) // Left frame (full height)
+    graphics.fillRect(85, 0, 15, 120) // Right frame (full height)
+    console.log(`   Frame rects: top(0, 0, 100, 15), left(0, 0, 15, 120), right(85, 0, 15, 120)`)
     
-    // Inner frame with beveled edge effect
-    graphics.fillStyle(0x3a3a3a, 1) // Slightly lighter steel
-    graphics.fillRect(this.x - 45, this.y - 55, 90, 110) // Mid frame
+    // Inner frame with beveled edge effect (purple)
+    graphics.fillStyle(0x7b1fa2, 1) // Lighter purple
+    graphics.fillRect(this.x - 45, this.y - 55, 10, 100) // Left inner frame (extends to floor)
+    graphics.fillRect(this.x + 35, this.y - 55, 10, 100) // Right inner frame (extends to floor)
+    graphics.fillRect(this.x - 45, this.y - 55, 80, 10) // Top inner frame
     
     // Door opening (deepest part)
     graphics.fillStyle(0x0a0a0a, 1) // Almost black
     graphics.fillRect(this.x - 35, this.y - 45, 70, 90) // Inner opening
     
-    // Heavy reinforced steel door with multiple layers
-    graphics.fillStyle(0x4a4a4a, 1) // Base steel door
-    graphics.fillRect(this.x - 32, this.y - 42, 64, 84) // Main door surface
+    // Will draw the main teal door surface LAST after all other details
     
-    // Heavy teal crystal panels with mining theme (matching teal ladders)
-    graphics.fillStyle(0x40e0d0, 1) // Teal crystal color (matches ladders)
-    graphics.fillRect(this.x - 30, this.y - 35, 25, 30) // Top left panel
-    graphics.fillRect(this.x + 5, this.y - 35, 25, 30)  // Top right panel
-    graphics.fillRect(this.x - 30, this.y - 5, 25, 30)  // Middle left panel
-    graphics.fillRect(this.x + 5, this.y - 5, 25, 30)   // Middle right panel
-    graphics.fillRect(this.x - 30, this.y + 25, 25, 17) // Bottom left panel
-    graphics.fillRect(this.x + 5, this.y + 25, 25, 17)  // Bottom right panel
-    
-    // Add wood grain texture to panels
-    graphics.lineStyle(1, 0x5a3828, 0.6)
-    // Top panels grain
-    for (let i = 0; i < 4; i++) {
-      const grainY = this.y - 30 + (i * 6)
-      graphics.lineBetween(this.x - 28, grainY, this.x - 7, grainY) // Left panel
-      graphics.lineBetween(this.x + 7, grainY, this.x + 28, grainY) // Right panel
-    }
-    // Middle panels grain
-    for (let i = 0; i < 4; i++) {
-      const grainY = this.y + (i * 6)
-      graphics.lineBetween(this.x - 28, grainY, this.x - 7, grainY) // Left panel
-      graphics.lineBetween(this.x + 7, grainY, this.x + 28, grainY) // Right panel
-    }
-    // Bottom panels grain
-    for (let i = 0; i < 2; i++) {
-      const grainY = this.y + 30 + (i * 6)
-      graphics.lineBetween(this.x - 28, grainY, this.x - 7, grainY) // Left panel
-      graphics.lineBetween(this.x + 7, grainY, this.x + 28, grainY) // Right panel
-    }
-    
-    // Add wood knots for authenticity
-    const woodKnots = [
-      {x: this.x - 18, y: this.y - 20}, // Top left panel
-      {x: this.x + 15, y: this.y - 25}, // Top right panel
-      {x: this.x - 20, y: this.y + 10}, // Middle left panel
-      {x: this.x + 18, y: this.y + 8},  // Middle right panel
-    ]
-    
-    graphics.fillStyle(0x3a1808, 0.8)
-    woodKnots.forEach(knot => {
-      graphics.fillCircle(knot.x, knot.y, 2)
-    })
     
     // Rivets all around the plates (authentic mining door detail)
     graphics.fillStyle(0x6a6a6a, 1) // Bright steel rivets
@@ -125,41 +99,21 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
       graphics.fillStyle(0x6a6a6a, 1)
     })
     
-    // Massive industrial hinges with bolts
+    // Evenly spaced industrial hinges with bolts
     graphics.fillStyle(0x3a3a3a, 1) // Dark hinge metal
-    graphics.fillRect(this.x - 48, this.y - 35, 12, 20) // Top hinge
-    graphics.fillRect(this.x - 48, this.y + 0, 12, 20)  // Middle hinge  
-    graphics.fillRect(this.x - 48, this.y + 20, 12, 20) // Bottom hinge
+    graphics.fillRect(this.x - 48, this.y - 35, 12, 15) // Top hinge
+    graphics.fillRect(this.x - 48, this.y - 8, 12, 15)  // Middle hinge  
+    graphics.fillRect(this.x - 48, this.y + 19, 12, 15) // Bottom hinge
     
-    // Hinge bolts and details
+    // Hinge bolts and details (evenly spaced)
     graphics.fillStyle(0x5a5a5a, 1)
-    for (let i = 0; i < 3; i++) {
-      const hingeY = this.y - 25 + (i * 25)
+    const hingeYPositions = [this.y - 27, this.y - 1, this.y + 26] // Even spacing
+    hingeYPositions.forEach(hingeY => {
       graphics.fillCircle(this.x - 44, hingeY, 3) // Hinge pin
-      graphics.fillCircle(this.x - 40, hingeY - 6, 2) // Top bolt
-      graphics.fillCircle(this.x - 40, hingeY + 6, 2) // Bottom bolt
-    }
+      graphics.fillCircle(this.x - 40, hingeY - 5, 2) // Top bolt
+      graphics.fillCircle(this.x - 40, hingeY + 5, 2) // Bottom bolt
+    })
     
-    // Complex wheel handle (mining vault style)
-    graphics.fillStyle(0x4a4a4a, 1) // Handle base
-    graphics.fillCircle(this.x + 22, this.y + 5, 10) // Larger handle
-    graphics.fillStyle(0x6a6a6a, 1)
-    graphics.fillCircle(this.x + 22, this.y + 5, 8) // Inner ring
-    graphics.fillStyle(0x3a3a3a, 1)
-    graphics.fillCircle(this.x + 22, this.y + 5, 3) // Center hub
-    
-    // Multiple handle spokes (8-spoke mining wheel)
-    graphics.lineStyle(3, 0x5a5a5a, 1)
-    for (let i = 0; i < 8; i++) {
-      const angle = (i * Math.PI * 2) / 8
-      const spokeLength = 6
-      graphics.lineBetween(
-        this.x + 22 + Math.cos(angle) * 3,
-        this.y + 5 + Math.sin(angle) * 3,
-        this.x + 22 + Math.cos(angle) * spokeLength,
-        this.y + 5 + Math.sin(angle) * spokeLength
-      )
-    }
     
     // Pressure gauge on door
     graphics.fillStyle(0x1a1a1a, 1) // Gauge housing
@@ -223,7 +177,55 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     graphics.lineBetween(this.x - 12, this.y - 22, this.x + 12, this.y - 22) // Subtitle
     graphics.lineBetween(this.x - 10, this.y - 19, this.x + 10, this.y - 19) // Warning text
     
-    graphics.setDepth(9)
+    // NOW draw the main teal door surface AFTER all the details
+    console.log("🚪 DOOR DEBUG: Drawing MAIN TEAL DOOR SURFACE (AFTER all details)")
+    
+    // Main teal door surface (matching ladder colors)
+    console.log("🚪 DOOR DEBUG: Drawing main teal door surface")
+    graphics.fillStyle(0x40e0d0, 1) // Bright teal wood color (matches ladders)
+    graphics.fillRect(15, 15, 70, 100) // Main door surface on canvas
+    console.log(`   TEAL DOOR SURFACE: (15, 15, 70, 100) - COLOR: 0x40e0d0`)
+    
+    // NOW draw the teal door panels on top of everything else
+    console.log("🚪 DOOR DEBUG: Drawing TEAL DOOR PANELS on canvas")
+    graphics.fillStyle(0x35a0a0, 1) // Medium teal for panels
+    graphics.fillRect(20, 25, 20, 20) // Top left panel
+    graphics.fillRect(60, 25, 20, 20) // Top right panel
+    graphics.fillRect(20, 50, 20, 20) // Middle left panel
+    graphics.fillRect(60, 50, 20, 20) // Middle right panel
+    graphics.fillRect(20, 75, 20, 20) // Bottom left panel
+    graphics.fillRect(60, 75, 20, 20) // Bottom right panel
+    console.log("   PANELS: 6 medium teal rectangles drawn with color 0x35a0a0")
+    
+    // Add panel border details
+    graphics.lineStyle(2, 0x2a6660, 1) // Dark teal borders
+    graphics.strokeRect(20, 25, 20, 20) // Top left panel border
+    graphics.strokeRect(60, 25, 20, 20) // Top right panel border
+    graphics.strokeRect(20, 50, 20, 20) // Middle left panel border
+    graphics.strokeRect(60, 50, 20, 20) // Middle right panel border
+    graphics.strokeRect(20, 75, 20, 20) // Bottom left panel border
+    graphics.strokeRect(60, 75, 20, 20) // Bottom right panel border
+    
+    // Simple door knob (matching ladder style) - draw last
+    console.log("🚪 DOOR DEBUG: Drawing DOOR KNOB (final element)")
+    graphics.fillStyle(0x2a6660, 1) // Dark teal knob base
+    graphics.fillCircle(75, 60, 6) // Door knob on canvas
+    graphics.fillStyle(0x35a0a0, 1) // Medium teal highlight
+    graphics.fillCircle(75, 60, 4) // Inner knob
+    graphics.fillStyle(0x60f0e0, 1) // Light teal shine
+    graphics.fillCircle(73, 58, 2) // Highlight spot
+    console.log(`   DOOR KNOB: Teal knob at (75, 60) on canvas`)
+    
+    // Generate a new texture from our graphics and apply it to the door sprite
+    console.log("🚪 DOOR DEBUG: Generating final door texture")
+    graphics.generateTexture('door-visual-final', 100, 120)
+    graphics.destroy() // Clean up the graphics object
+    
+    // Apply the new texture to the door sprite
+    this.setTexture('door-visual-final')
+    this.setDisplaySize(100, 120) // Match the new texture size
+    
+    console.log("🚪 DOOR DEBUG: ✅ TEAL DOOR COMPLETE! Purple frame + teal wood + panels + knob")
   }
   
   showPrompt(player: Phaser.Physics.Arcade.Sprite): void {
