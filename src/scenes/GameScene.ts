@@ -48,6 +48,11 @@ export class GameScene extends Phaser.Scene {
   private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
+  
+  // Smart tile placement tracking
+  private recentTiles: number[] = [] // Track last few tiles to avoid repeats
+  private tileGrid: Map<string, number> = new Map() // Track tile variant at each position
+  private tileUsageCount: number[] = new Array(15).fill(0) // Track usage count for each variant
   private door: Door | null = null
   private isLevelStarting: boolean = false
   private isLevelComplete: boolean = false
@@ -155,6 +160,11 @@ export class GameScene extends Phaser.Scene {
     
     // Pre-generate tile textures for performance
     this.generateTileTextures()
+    
+    // Reset smart tile placement tracking for new level
+    this.recentTiles = []
+    this.tileGrid.clear()
+    this.tileUsageCount = new Array(15).fill(0)
     
     // Create platform and ladder groups
     this.platforms = this.physics.add.staticGroup()
@@ -971,12 +981,95 @@ export class GameScene extends Phaser.Scene {
     return x < floorLayout.gapStart || x >= floorLayout.gapStart + floorLayout.gapSize
   }
   
+  private selectSmartTileVariant(x: number, y: number): number {
+    const tileSize = GameSettings.game.tileSize
+    const gridX = Math.floor(x / tileSize)
+    const gridY = Math.floor(y / tileSize)
+    const posKey = `${gridX},${gridY}`
+    
+    // Check if we already have a tile at this position (for respawns)
+    if (this.tileGrid.has(posKey)) {
+      return this.tileGrid.get(posKey)!
+    }
+    
+    // Get neighbors to avoid duplicates
+    const neighbors: number[] = []
+    
+    // Check left neighbor
+    const leftKey = `${gridX - 1},${gridY}`
+    if (this.tileGrid.has(leftKey)) {
+      neighbors.push(this.tileGrid.get(leftKey)!)
+    }
+    
+    // Check right neighbor (if already placed)
+    const rightKey = `${gridX + 1},${gridY}`
+    if (this.tileGrid.has(rightKey)) {
+      neighbors.push(this.tileGrid.get(rightKey)!)
+    }
+    
+    // Check above neighbor
+    const aboveKey = `${gridX},${gridY - 1}`
+    if (this.tileGrid.has(aboveKey)) {
+      neighbors.push(this.tileGrid.get(aboveKey)!)
+    }
+    
+    // Check below neighbor
+    const belowKey = `${gridX},${gridY + 1}`
+    if (this.tileGrid.has(belowKey)) {
+      neighbors.push(this.tileGrid.get(belowKey)!)
+    }
+    
+    // Create a pool of available variants (0-14)
+    const availableVariants: number[] = []
+    for (let i = 0; i < 15; i++) {
+      availableVariants.push(i)
+    }
+    
+    // Remove neighbors and recent tiles from available pool
+    const toAvoid = [...neighbors, ...this.recentTiles.slice(-3)] // Avoid last 3 tiles and all neighbors
+    const filtered = availableVariants.filter(v => !toAvoid.includes(v))
+    
+    // If we have filtered options, use them. Otherwise use all variants but still avoid immediate neighbors
+    let pool = filtered.length > 0 ? filtered : availableVariants.filter(v => !neighbors.includes(v))
+    
+    // If still no options (very rare), use all variants
+    if (pool.length === 0) {
+      pool = availableVariants
+    }
+    
+    // Weight selection towards less-used variants for better distribution
+    const weightedPool: number[] = []
+    const maxUsage = Math.max(...this.tileUsageCount) || 1
+    
+    pool.forEach(variant => {
+      // Variants that have been used less get more weight
+      const weight = Math.max(1, maxUsage - this.tileUsageCount[variant] + 1)
+      for (let w = 0; w < weight; w++) {
+        weightedPool.push(variant)
+      }
+    })
+    
+    // Select from weighted pool
+    const selectedVariant = weightedPool[Math.floor(Math.random() * weightedPool.length)]
+    
+    // Update tracking
+    this.tileGrid.set(posKey, selectedVariant)
+    this.recentTiles.push(selectedVariant)
+    this.tileUsageCount[selectedVariant]++
+    
+    // Keep recent tiles list to a reasonable size (last 5 tiles)
+    if (this.recentTiles.length > 5) {
+      this.recentTiles.shift()
+    }
+    
+    return selectedVariant
+  }
+  
   private createPlatformTile(x: number, y: number, isLeftEdge: boolean = false, isRightEdge: boolean = false): void {
     const tileSize = GameSettings.game.tileSize
     
-    // Use pre-generated tile textures for massive performance improvement
-    // Select a random variant from our 15 pre-generated tiles
-    const variantIndex = Math.floor(Math.random() * 15)
+    // Smart tile selection to avoid duplicates
+    const variantIndex = this.selectSmartTileVariant(x, y)
     const textureKey = `platform-tile-${variantIndex}`
     
     // Create sprite from cached texture
