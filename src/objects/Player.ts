@@ -7,15 +7,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private currentLadder: Phaser.GameObjects.GameObject | null = null
   private touchControls: TouchControls | null = null
   private walkAnimationTimer: number = 0
+  private climbAnimationTimer: number = 0
+  private idleAnimationTimer: number = 0
   private currentFrame: 'idle' | 'leftStep' | 'rightStep' = 'idle'
+  private currentIdleState: 'eye1' | 'eye2' | 'blink' = 'eye1'
+  private currentClimbFoot: 'left' | 'right' = 'left'
   private isMoving: boolean = false
+  private isJumping: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    // Use the loaded player idle sprite or fallback to placeholder
-    const textureKey = scene.textures.exists('playerIdle') ? 'playerIdle' : 'player'
+    // Use the new player idle sprite or fallback to placeholder
+    const textureKey = scene.textures.exists('playerIdleEye1') ? 'playerIdleEye1' : 'player'
     
     // Create fallback if sprite not loaded
-    if (!scene.textures.exists('playerIdle')) {
+    if (!scene.textures.exists('playerIdleEye1')) {
       const graphics = scene.add.graphics()
       graphics.fillStyle(0x00ff00, 1)
       graphics.fillRect(0, 0, 24, 32)
@@ -29,7 +34,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this)
     
     // Scale the sprite if using the new player sprites
-    if (textureKey === 'playerIdle') {
+    if (textureKey === 'playerIdleEye1' || textureKey.startsWith('player')) {
       // Scale to fit the expected player size (48x64 for retina display)
       this.setDisplaySize(48, 64)
     }
@@ -84,6 +89,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Track if player is moving horizontally
     this.isMoving = (leftPressed || rightPressed) && !this.isClimbing
     
+    // Track jumping state - more responsive detection
+    const wasJumping = this.isJumping
+    this.isJumping = !onGround && Math.abs(this.body!.velocity.y) > 50 // Only show jump when significant velocity
+    
     // Horizontal movement
     if (!this.isClimbing) {
       if (leftPressed) {
@@ -112,6 +121,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       
       if (upPressed) {
         this.setVelocityY(-GameSettings.game.climbSpeed)
+        // Track climbing movement for animation
+        this.isMoving = true
       } else if (downPressed) {
         // Always allow climbing down, but with floor boundary protection
         const tileSize = GameSettings.game.tileSize
@@ -121,6 +132,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.y < groundFloorLimit) {
           // Safe to climb down
           this.setVelocityY(GameSettings.game.climbSpeed)
+          // Track climbing movement for animation
+          this.isMoving = true
         } else {
           // At ground floor limit - stop here to prevent falling through
           this.setVelocityY(0)
@@ -147,8 +160,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     
-    // Handle walking animation
-    this.updateWalkingAnimation()
+    // Handle smart animation system
+    this.updateSmartAnimations()
   }
   
   startClimbing(ladder: Phaser.GameObjects.GameObject): void {
@@ -190,32 +203,160 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.isClimbing
   }
   
-  private updateWalkingAnimation(): void {
-    const animationSpeed = 200 // milliseconds per frame
+  private updateSmartAnimations(): void {
+    const deltaTime = this.scene.game.loop.delta
     
-    if (this.isMoving) {
-      // Update animation timer
-      this.walkAnimationTimer += this.scene.game.loop.delta
-      
-      if (this.walkAnimationTimer >= animationSpeed) {
-        // Switch between left and right step
-        if (this.currentFrame === 'idle' || this.currentFrame === 'rightStep') {
-          this.currentFrame = 'leftStep'
-          this.changePlayerTexture('playerLeftStep')
-        } else {
-          this.currentFrame = 'rightStep'
-          this.changePlayerTexture('playerRightStep')
-        }
-        this.walkAnimationTimer = 0
-      }
-    } else {
-      // Player is idle - show idle frame
-      if (this.currentFrame !== 'idle') {
-        this.currentFrame = 'idle'
-        this.changePlayerTexture('playerIdle')
-        this.walkAnimationTimer = 0
+    // Priority 1: Climbing animations (climbing overrides jumping)
+    if (this.isClimbing) {
+      if (this.isMoving) {
+        this.handleClimbingAnimation(deltaTime)
+      } else {
+        // Show static climbing pose when on ladder but not moving
+        this.changePlayerTexture('playerClimbLeftFoot')
+        this.resetAnimationTimers()
       }
     }
+    // Priority 2: Jumping animations (only when NOT climbing)
+    else if (this.isJumping) {
+      this.handleJumpingAnimation()
+    }
+    // Priority 3: Running/walking animations
+    else if (this.isMoving) {
+      this.handleRunningAnimation(deltaTime)
+    }
+    // Priority 4: Idle animations (lowest priority)
+    else {
+      this.handleIdleAnimation(deltaTime)
+    }
+  }
+  
+  private handleJumpingAnimation(): void {
+    // Use direction-based jumping sprites
+    const textureKey = this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot'
+    this.changePlayerTexture(textureKey)
+    this.currentFrame = 'idle' // Reset walking frame when jumping
+  }
+  
+  private handleClimbingAnimation(deltaTime: number): void {
+    const climbAnimationSpeed = 120 // Fun, active climbing animation (20% slower than 100ms)
+    
+    // IMMEDIATE RESPONSE: Start climbing animation instantly when climbing begins
+    if (this.currentFrame !== 'idle' && !this.texture.key.includes('Climb')) {
+      this.currentClimbFoot = 'left'
+      this.changePlayerTexture('playerClimbLeftFoot')
+      this.climbAnimationTimer = 0
+      this.resetAnimationTimers()
+      return
+    }
+    
+    this.climbAnimationTimer += deltaTime
+    
+    if (this.climbAnimationTimer >= climbAnimationSpeed) {
+      // Alternate feet while climbing to match ladder movement
+      if (this.currentClimbFoot === 'left') {
+        this.currentClimbFoot = 'right'
+        this.changePlayerTexture('playerClimbRightFoot')
+      } else {
+        this.currentClimbFoot = 'left'
+        this.changePlayerTexture('playerClimbLeftFoot')
+      }
+      this.climbAnimationTimer = 0
+    }
+  }
+  
+  private handleRunningAnimation(deltaTime: number): void {
+    const runAnimationSpeed = 120 // Snappy, responsive running animation
+    
+    // IMMEDIATE RESPONSE: Start running animation instantly when movement begins
+    if (this.currentFrame === 'idle') {
+      this.currentFrame = 'leftStep'
+      this.changePlayerTexture('playerRunLeftFoot')
+      this.walkAnimationTimer = 0
+      return
+    }
+    
+    this.walkAnimationTimer += deltaTime
+    
+    if (this.walkAnimationTimer >= runAnimationSpeed) {
+      // Switch between left and right step for running
+      if (this.currentFrame === 'rightStep') {
+        this.currentFrame = 'leftStep'
+        this.changePlayerTexture('playerRunLeftFoot')
+      } else {
+        this.currentFrame = 'rightStep'
+        this.changePlayerTexture('playerRunRightFoot')
+      }
+      this.walkAnimationTimer = 0
+    }
+  }
+  
+  private handleIdleAnimation(deltaTime: number): void {
+    this.idleAnimationTimer += deltaTime
+    
+    // Reset to idle state when stopping movement
+    if (this.currentFrame !== 'idle') {
+      this.currentFrame = 'idle'
+      this.currentIdleState = 'eye1'
+      this.changePlayerTexture('playerIdleEye1')
+      this.idleAnimationTimer = 0
+      this.walkAnimationTimer = 0
+      this.climbAnimationTimer = 0
+      return
+    }
+    
+    // Random timing for more natural feel
+    const baseIdleSpeed = 600
+    const randomVariation = Math.random() * 800 + 200 // 200-1000ms variation
+    const idleAnimationSpeed = baseIdleSpeed + randomVariation
+    
+    // Handle idle eye animation with random transitions
+    if (this.idleAnimationTimer >= idleAnimationSpeed) {
+      const randomAction = Math.random()
+      
+      switch (this.currentIdleState) {
+        case 'eye1':
+          if (randomAction < 0.3) {
+            // 30% chance to blink from eye1
+            this.currentIdleState = 'blink'
+            this.changePlayerTexture('playerIdleBlink')
+          } else {
+            // 70% chance to look to eye2
+            this.currentIdleState = 'eye2'
+            this.changePlayerTexture('playerIdleEye2')
+          }
+          break
+          
+        case 'eye2':
+          if (randomAction < 0.4) {
+            // 40% chance to blink from eye2
+            this.currentIdleState = 'blink'
+            this.changePlayerTexture('playerIdleBlink')
+          } else {
+            // 60% chance to look back to eye1
+            this.currentIdleState = 'eye1'
+            this.changePlayerTexture('playerIdleEye1')
+          }
+          break
+          
+        case 'blink':
+          // After blink, randomly choose which eye position to return to
+          if (randomAction < 0.5) {
+            this.currentIdleState = 'eye1'
+            this.changePlayerTexture('playerIdleEye1')
+          } else {
+            this.currentIdleState = 'eye2'
+            this.changePlayerTexture('playerIdleEye2')
+          }
+          break
+      }
+      this.idleAnimationTimer = 0
+    }
+  }
+  
+  private resetAnimationTimers(): void {
+    this.walkAnimationTimer = 0
+    this.climbAnimationTimer = 0
+    this.idleAnimationTimer = 0
   }
   
   private changePlayerTexture(textureKey: string): void {
