@@ -14,6 +14,7 @@ A retro-style endless climbing arcade game built with Phaser.js and TypeScript f
 - 💎 **Rich Collectibles**: Coins, blue coins, diamonds, and treasure chests with automated opening
 - 🎪 **Combat System**: Jump-to-kill mechanics with combo multipliers and score popups
 - 🏆 **Scoring System**: Comprehensive point system with floor bonuses and achievement feedback
+- 🏃 **Custom Player Animations**: 9 unique sprites with smart state management and natural idle behavior
 
 ## Technical Features
 
@@ -187,7 +188,7 @@ bizarre-underground/
 
 ### Key Game Systems:
 - **`GameScene.ts`**: Complete gameplay logic with Crystal Cavern Theme background
-- **`Player.ts`**: Enhanced player with 28×55 pixel hitbox for forgiving collision
+- **`Player.ts`**: Enhanced player with 9 custom animations and smart state management
 - **`LevelManager.ts`**: Progressive difficulty system (levels 1-100, then endless)
 - **`Cat.ts`**: Smart enemy AI system with four behavioral patterns
 - **`Door.ts`**: Industrial-style doors with wooden panels and hardware

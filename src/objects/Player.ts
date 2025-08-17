@@ -89,9 +89,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Track if player is moving horizontally
     this.isMoving = (leftPressed || rightPressed) && !this.isClimbing
     
-    // Track jumping state - more responsive detection
+    // Track jumping state - immediate transition when landing
     const wasJumping = this.isJumping
-    this.isJumping = !onGround && Math.abs(this.body!.velocity.y) > 50 // Only show jump when significant velocity
+    // Jump sprite only when in air AND moving up/down significantly
+    // Immediately false when on ground
+    this.isJumping = !onGround && Math.abs(this.body!.velocity.y) > 10
     
     // Horizontal movement
     if (!this.isClimbing) {
@@ -205,6 +207,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   private updateSmartAnimations(): void {
     const deltaTime = this.scene.game.loop.delta
+    const onGround = this.body!.blocked.down
     
     // Priority 1: Climbing animations (climbing overrides jumping)
     if (this.isClimbing) {
@@ -216,15 +219,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.resetAnimationTimers()
       }
     }
-    // Priority 2: Jumping animations (only when NOT climbing)
-    else if (this.isJumping) {
+    // Priority 2: Jumping animations (only when actually in air)
+    else if (this.isJumping && !onGround) {
       this.handleJumpingAnimation()
     }
     // Priority 3: Running/walking animations
     else if (this.isMoving) {
       this.handleRunningAnimation(deltaTime)
     }
-    // Priority 4: Idle animations (lowest priority)
+    // Priority 4: Idle animations (immediate when on ground and not moving)
     else {
       this.handleIdleAnimation(deltaTime)
     }

@@ -174,8 +174,13 @@ export class GameScene extends Phaser.Scene {
     // Start pooled loading for advanced error handling and retries
     this.assetPool.loadAllAssets().then(() => {
       console.log('All assets loaded via AssetPool - retries and fallbacks ready')
+      
+      // Mark that assets are ready
+      this.registry.set('assetsReady', true)
     }).catch((error) => {
       console.error('Asset loading failed:', error)
+      // Still mark as ready so game can continue with fallbacks
+      this.registry.set('assetsReady', true)
     })
   }
 
@@ -261,12 +266,15 @@ export class GameScene extends Phaser.Scene {
     
     this.player = new Player(
       this, 
-      -50,  // Start off-screen to the left
-      spawnY
+      100,  // Start at ladder position
+      GameSettings.canvas.height + 100  // Start below screen
     )
     
+    // IMMEDIATELY disable physics to prevent falling before intro
+    this.player.body!.enable = false
+    console.log('🚫 Player physics DISABLED immediately to prevent falling')
     
-    // Start the level intro animation
+    // Start intro immediately - assets will be checked during animation
     this.startLevelIntro(spawnX, spawnY)
     
     // Add some cats to test (pass floor layouts)
@@ -2704,25 +2712,252 @@ export class GameScene extends Phaser.Scene {
     this.highestFloorGenerated += floorsToGenerate
   }
 
+  private waitForAssetsAndStartIntro(targetX: number, targetY: number): void {
+    console.log('⏳ WAITING FOR ASSETS TO LOAD')
+    
+    const checkAssets = () => {
+      const assetsReady = this.registry.get('assetsReady')
+      const hasClimbSprites = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
+      const hasRunSprites = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
+      
+      console.log(`   Assets ready flag: ${assetsReady}`)
+      console.log(`   Climb sprites: ${hasClimbSprites}`)
+      console.log(`   Run sprites: ${hasRunSprites}`)
+      
+      if (assetsReady && hasClimbSprites && hasRunSprites) {
+        console.log('✅ ALL ASSETS READY - Starting intro')
+        this.startLevelIntro(targetX, targetY)
+      } else {
+        // Check again in 100ms
+        this.time.delayedCall(100, checkAssets)
+      }
+    }
+    
+    checkAssets()
+  }
+
   private startLevelIntro(targetX: number, targetY: number): void {
     this.isLevelStarting = true
     
-    // Disable player controls during intro
-    this.player.body!.enable = false
+    console.log('🎬 LEVEL INTRO START')
+    console.log(`   Target position: (${targetX}, ${targetY})`)
+    console.log(`   Canvas size: ${GameSettings.canvas.width}x${GameSettings.canvas.height}`)
+    console.log('   Player physics already disabled - no falling!')
     
-    // Walk player from left to spawn point
-    this.tweens.add({
-      targets: this.player,
-      x: targetX,
-      duration: 1500,
-      ease: 'Linear',
-      onComplete: () => {
-        // Enable player controls
+    // Create entrance ladder extending below the floor
+    const tileSize = GameSettings.game.tileSize
+    const ladderX = 100 // Position ladder on the left side
+    const floorY = GameSettings.canvas.height - tileSize/2
+    
+    console.log('🪜 ENTRANCE LADDER SETUP')
+    console.log(`   Tile size: ${tileSize}`)
+    console.log(`   Floor Y position: ${floorY}`)
+    console.log(`   Target Y position: ${targetY}`)
+    console.log(`   Ladder X position: ${ladderX}`)
+    
+    // Create entrance ladder to match game style exactly
+    const entranceLadder = this.add.graphics()
+    
+    // Calculate ladder dimensions - extends from below screen to above floor
+    const ladderTop = targetY - 60 // Extends above player position
+    const ladderBottom = GameSettings.canvas.height + 100 // Below screen
+    const ladderHeight = ladderBottom - ladderTop
+    
+    // Draw ladder like typical platformer game - brown wooden rails
+    entranceLadder.fillStyle(0x8B4513, 1) // Brown wood color for rails
+    entranceLadder.fillRect(ladderX - 8, ladderTop, 4, ladderHeight) // Left rail
+    entranceLadder.fillRect(ladderX + 4, ladderTop, 4, ladderHeight) // Right rail
+    
+    // Add horizontal wooden rungs
+    const rungSpacing = 16 // Closer spacing for better climbing feel
+    const numRungs = Math.floor(ladderHeight / rungSpacing)
+    entranceLadder.fillStyle(0xA0522D, 1) // Lighter brown for rungs
+    
+    for (let i = 0; i < numRungs; i++) {
+      const rungY = ladderTop + (i * rungSpacing) + 8
+      entranceLadder.fillRect(ladderX - 10, rungY, 20, 2) // Horizontal rungs
+    }
+    
+    entranceLadder.setDepth(5)
+    
+    console.log(`   Ladder extends from Y:${ladderTop} (top) to Y:${ladderBottom} (bottom)`)
+    console.log(`   Ladder height: ${ladderHeight}px`)
+    
+    // Position player at bottom of ladder (off-screen)
+    const playerStartY = ladderBottom - 20
+    this.player.x = ladderX
+    this.player.y = playerStartY
+    
+    // Set initial climbing sprite (or fallback)
+    if (this.textures.exists('playerClimbLeftFoot')) {
+      this.player.setTexture('playerClimbLeftFoot')
+    } else {
+      this.player.setTexture('playerIdleEye1') // Fallback
+    }
+    this.player.setDisplaySize(48, 64)
+    
+    console.log('👤 PLAYER START POSITION')
+    console.log(`   Player starting at: (${ladderX}, ${playerStartY})`)
+    console.log(`   Player will climb to: (${ladderX}, ${targetY})`)
+    
+    // Debug markers (temporary)
+    if (GameSettings.debug) {
+      const debugGraphics = this.add.graphics()
+      debugGraphics.fillStyle(0xff0000, 0.5)
+      debugGraphics.fillCircle(ladderX, floorY, 10) // Red dot at floor level
+      debugGraphics.fillStyle(0x00ff00, 0.5)
+      debugGraphics.fillCircle(ladderX, playerStartY, 10) // Green dot at player start
+      debugGraphics.fillStyle(0x0000ff, 0.5)
+      debugGraphics.fillCircle(targetX, targetY, 10) // Blue dot at target position
+      debugGraphics.setDepth(500)
+      
+      console.log('🔴 Red = Floor level')
+      console.log('🟢 Green = Player start position')
+      console.log('🔵 Blue = Target position')
+    }
+    
+    // Phase 1: Climbing animation - climb to the actual target Y (not floor Y)
+    this.animatePlayerClimbing(ladderX, targetY, () => {
+      // Phase 2: Walking animation
+      this.animatePlayerWalking(targetX, targetY, () => {
+        // Phase 3: Complete intro
         this.player.body!.enable = true
         this.isLevelStarting = false
         
+        // Fade out entrance ladder
+        this.tweens.add({
+          targets: entranceLadder,
+          alpha: 0,
+          duration: 500,
+          onComplete: () => {
+            entranceLadder.destroy()
+          }
+        })
+        
         // Show start banner
         this.showStartBanner()
+      })
+    })
+  }
+  
+  private animatePlayerClimbing(ladderX: number, targetY: number, onComplete: () => void): void {
+    console.log('🧗 CLIMBING ANIMATION START')
+    console.log(`   Current player Y: ${this.player.y}`)
+    console.log(`   Target Y: ${targetY}`)
+    console.log(`   Distance to climb: ${this.player.y - targetY}px`)
+    
+    // Check if sprites are loaded
+    const hasClimbSprites = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
+    console.log(`   Climb sprites loaded: ${hasClimbSprites}`)
+    
+    if (!hasClimbSprites) {
+      console.warn('⚠️ Climb sprites not loaded! Using fallback animation')
+    }
+    
+    // Manual climbing animation
+    let climbFrame = 0
+    const climbSpeed = 80 // Speed of climbing
+    const frameRate = 120 // Animation frame rate in ms
+    
+    // Create a timer for animation frames
+    const climbTimer = this.time.addEvent({
+      delay: frameRate,
+      callback: () => {
+        // Check for sprites each frame (they might load during animation)
+        const spritesNowAvailable = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
+        
+        // Alternate climbing sprites if available
+        if (spritesNowAvailable) {
+          if (climbFrame % 2 === 0) {
+            this.player.setTexture('playerClimbLeftFoot')
+          } else {
+            this.player.setTexture('playerClimbRightFoot')
+          }
+          this.player.setDisplaySize(48, 64) // Maintain sprite size
+        }
+        climbFrame++
+      },
+      loop: true
+    })
+    
+    // Move player up the ladder
+    this.tweens.add({
+      targets: this.player,
+      y: targetY,
+      duration: 2000, // 2 seconds to climb
+      ease: 'Linear',
+      onUpdate: (tween) => {
+        if (climbFrame === 1) { // Log once during climb
+          console.log(`   Climbing... Current Y: ${this.player.y.toFixed(0)}`)
+        }
+      },
+      onComplete: () => {
+        console.log('🧗 CLIMBING COMPLETE')
+        console.log(`   Final climb position: (${this.player.x}, ${this.player.y})`)
+        climbTimer.destroy()
+        onComplete()
+      }
+    })
+  }
+  
+  private animatePlayerWalking(targetX: number, targetY: number, onComplete: () => void): void {
+    console.log('🚶 WALKING ANIMATION START')
+    console.log(`   Current player position: (${this.player.x}, ${this.player.y})`)
+    console.log(`   Target X: ${targetX}`)
+    console.log(`   Distance to walk: ${targetX - this.player.x}px`)
+    
+    // Check if sprites are loaded
+    const hasRunSprites = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
+    console.log(`   Run sprites loaded: ${hasRunSprites}`)
+    
+    if (!hasRunSprites) {
+      console.warn('⚠️ Run sprites not loaded! Using fallback animation')
+    }
+    
+    // Manual walking animation
+    let walkFrame = 0
+    const frameRate = 120 // Animation frame rate in ms
+    
+    // Face right for walking
+    this.player.setFlipX(false)
+    
+    // Create a timer for animation frames
+    const walkTimer = this.time.addEvent({
+      delay: frameRate,
+      callback: () => {
+        // Check for sprites each frame (they might load during animation)
+        const spritesNowAvailable = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
+        
+        // Alternate walking sprites if available
+        if (spritesNowAvailable) {
+          if (walkFrame % 2 === 0) {
+            this.player.setTexture('playerRunLeftFoot')
+          } else {
+            this.player.setTexture('playerRunRightFoot')
+          }
+          this.player.setDisplaySize(48, 64) // Maintain sprite size
+        }
+        walkFrame++
+      },
+      loop: true
+    })
+    
+    // Move player horizontally to starting position
+    this.tweens.add({
+      targets: this.player,
+      x: targetX,
+      duration: 1500, // 1.5 seconds to walk
+      ease: 'Linear',
+      onComplete: () => {
+        console.log('🚶 WALKING COMPLETE')
+        console.log(`   Final position: (${this.player.x}, ${this.player.y})`)
+        console.log('✅ INTRO SEQUENCE COMPLETE - Enabling controls')
+        
+        walkTimer.destroy()
+        // Set to idle animation
+        this.player.setTexture('playerIdleEye1')
+        this.player.setDisplaySize(48, 64)
+        onComplete()
       }
     })
   }
