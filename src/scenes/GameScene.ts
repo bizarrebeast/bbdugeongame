@@ -153,6 +153,9 @@ export class GameScene extends Phaser.Scene {
       registry.set('totalCoins', this.totalCoinsCollected)
     }
     
+    // Pre-generate tile textures for performance
+    this.generateTileTextures()
+    
     // Create platform and ladder groups
     this.platforms = this.physics.add.staticGroup()
     this.ladders = this.physics.add.staticGroup()
@@ -368,6 +371,187 @@ export class GameScene extends Phaser.Scene {
   }
 
 
+  private generateTileTextures(): void {
+    const tileSize = GameSettings.game.tileSize
+    
+    // Generate 15 different tile variants with baked-in decorations
+    for (let variant = 0; variant < 15; variant++) {
+      const textureKey = `platform-tile-${variant}`
+      
+      // Skip if already exists (for scene restart)
+      if (this.textures.exists(textureKey)) {
+        continue
+      }
+      
+      // Create a render texture for this variant
+      const graphics = this.add.graphics()
+      
+      // Base purple crystal tile
+      const baseColor = 0x6a4a8a
+      graphics.fillStyle(baseColor, 1)
+      graphics.fillRect(0, 0, tileSize, tileSize)
+      
+      // Add texture variations
+      const tileVariation = Math.random()
+      if (tileVariation < 0.4) {
+        graphics.fillStyle(0x8a6aaa, 0.6)
+        graphics.fillRect(
+          Math.random() * 12, 
+          Math.random() * 12, 
+          8 + Math.random() * 8, 
+          8 + Math.random() * 8
+        )
+      } else if (tileVariation < 0.6) {
+        graphics.fillStyle(0xaa6a9a, 0.5)
+        graphics.fillRect(
+          Math.random() * 12, 
+          Math.random() * 12, 
+          6 + Math.random() * 10, 
+          6 + Math.random() * 10
+        )
+      }
+      
+      // Add decorations based on variant number to ensure variety
+      // Each variant gets a different combination of decorations
+      
+      // Crystal veining (variants 0-6)
+      if (variant < 7) {
+        const veinColors = [0xff69b4, 0x9370db, 0x40e0d0, 0xffd700, 0x00fa9a]
+        const veinColor = veinColors[variant % veinColors.length]
+        graphics.lineStyle(2, veinColor, 0.6)
+        for (let i = 0; i < 3; i++) {
+          const veinY = 6 + i * 8
+          graphics.lineBetween(
+            2, veinY, 
+            tileSize - 2, veinY + Math.random() * 4 - 2
+          )
+        }
+      }
+      
+      // Sparkling gems (variants 3-10)
+      if (variant >= 3 && variant <= 10) {
+        const gemColors = [0xff1493, 0x9370db, 0x40e0d0, 0xffd700, 0x00fa9a]
+        const gemColor = gemColors[variant % gemColors.length]
+        graphics.fillStyle(gemColor, 0.8)
+        const gemCount = 3 + (variant % 4)
+        for (let i = 0; i < gemCount; i++) {
+          const gemX = 4 + Math.random() * (tileSize - 8)
+          const gemY = 4 + Math.random() * (tileSize - 8)
+          const gemSize = 1.5 + Math.random() * 0.5
+          graphics.fillCircle(gemX, gemY, gemSize)
+          
+          graphics.fillStyle(0xffffff, 0.9)
+          graphics.fillCircle(gemX - 0.5, gemY - 0.5, 0.5)
+          graphics.fillStyle(gemColor, 0.8)
+        }
+      }
+      
+      // Small gem clusters (variants 5-12)
+      if (variant >= 5 && variant <= 12) {
+        const clusterColors = [0x40e0d0, 0xff69b4, 0x9370db, 0xffd700]
+        const clusterColor = clusterColors[variant % clusterColors.length]
+        
+        const numClusters = 1 + (variant % 2)
+        for (let c = 0; c < numClusters; c++) {
+          const clusterX = 6 + Math.random() * (tileSize - 12)
+          const clusterY = 6 + Math.random() * (tileSize - 12)
+          
+          graphics.fillStyle(clusterColor, 0.7)
+          for (let g = 0; g < 4; g++) {
+            const offsetX = (Math.random() - 0.5) * 6
+            const offsetY = (Math.random() - 0.5) * 6
+            const size = 0.8 + Math.random() * 0.7
+            graphics.fillCircle(clusterX + offsetX, clusterY + offsetY, size)
+          }
+          
+          graphics.fillStyle(clusterColor, 0.9)
+          graphics.fillCircle(clusterX, clusterY, 1.2)
+          
+          graphics.fillStyle(0xffffff, 0.8)
+          graphics.fillCircle(clusterX - 0.3, clusterY - 0.3, 0.4)
+        }
+      }
+      
+      // Vertical crystal clusters (variants 8-14)
+      if (variant >= 8) {
+        const clusterColors = [0xba68c8, 0x9c27b0, 0x673ab7, 0x40e0d0, 0xff69b4]
+        const clusterColor = clusterColors[variant % clusterColors.length]
+        const clusterXOffset = (Math.random() - 0.5) * (tileSize - 12)
+        
+        graphics.fillStyle(clusterColor, 0.7)
+        graphics.fillRect(tileSize/2 - 4 + clusterXOffset, 0, 8, tileSize)
+        
+        graphics.fillStyle(clusterColor, 0.9)
+        graphics.fillRect(tileSize/2 - 3 + clusterXOffset, 2, 2, tileSize - 4)
+        graphics.fillRect(tileSize/2 + 1 + clusterXOffset, 2, 2, tileSize - 4)
+        
+        graphics.fillStyle(0xffffff, 0.8)
+        graphics.fillRect(tileSize/2 - 2 + clusterXOffset, 4, 1, tileSize - 8)
+        graphics.fillRect(tileSize/2 + 2 + clusterXOffset, 4, 1, tileSize - 8)
+      }
+      
+      // Magical crystal clusters (even variants)
+      if (variant % 2 === 0) {
+        const crystalType = variant % 3
+        const crystalColors = [0x9370db, 0x40e0d0, 0xff69b4]
+        graphics.fillStyle(crystalColors[crystalType], 0.8)
+        
+        const crystalX = 5 + Math.random() * (tileSize - 10)
+        const crystalY = 5 + Math.random() * (tileSize - 10)
+        
+        for (let i = 0; i < 4; i++) {
+          const cX = crystalX + Math.random() * 10 - 5
+          const cY = crystalY + Math.random() * 10 - 5
+          const size = 2 + Math.random() * 3
+          
+          graphics.fillCircle(cX, cY, size)
+          
+          graphics.fillStyle(0xffffff, 0.9)
+          graphics.fillCircle(cX - size/2, cY - size/2, size/3)
+          
+          graphics.fillStyle(crystalColors[crystalType], 0.8)
+        }
+      }
+      
+      // Diamond gems (odd variants > 7)
+      if (variant % 2 === 1 && variant > 7) {
+        const diamondColors = [0x40e0d0, 0xffd700, 0xff69b4, 0x9370db, 0x00fa9a]
+        const diamondColor = diamondColors[variant % diamondColors.length]
+        
+        const numDiamonds = 1 + (variant % 2)
+        for (let d = 0; d < numDiamonds; d++) {
+          const diamondX = 8 + Math.random() * (tileSize - 16)
+          const diamondY = 8 + Math.random() * (tileSize - 16)
+          const diamondSize = 2 + Math.random() * 2
+          
+          graphics.fillStyle(diamondColor, 0.8)
+          graphics.fillRect(diamondX - diamondSize/2, diamondY - diamondSize/4, diamondSize, diamondSize/2)
+          graphics.fillRect(diamondX - diamondSize/3, diamondY - diamondSize/2, diamondSize * 0.66, diamondSize)
+          
+          graphics.fillStyle(diamondColor, 0.95)
+          graphics.fillCircle(diamondX, diamondY, diamondSize * 0.3)
+          
+          graphics.fillStyle(0xffffff, 0.9)
+          graphics.fillCircle(diamondX - diamondSize * 0.2, diamondY - diamondSize * 0.2, diamondSize * 0.2)
+        }
+      }
+      
+      // Add occasional cracks
+      if (variant % 3 === 0) {
+        graphics.lineStyle(1, 0x2a2522, 0.5)
+        const crackStartX = Math.random() * tileSize
+        graphics.lineBetween(
+          crackStartX, 0,
+          crackStartX + (Math.random() - 0.5) * 12, tileSize
+        )
+      }
+      
+      // Generate texture from graphics
+      graphics.generateTexture(textureKey, tileSize, tileSize)
+      graphics.destroy()
+    }
+  }
+  
   private createMiningThemeBackground(): void {
     // Use world width instead of canvas width to cover entire game area
     const worldWidth = GameSettings.game.floorWidth * GameSettings.game.tileSize
@@ -790,182 +974,20 @@ export class GameScene extends Phaser.Scene {
   private createPlatformTile(x: number, y: number, isLeftEdge: boolean = false, isRightEdge: boolean = false): void {
     const tileSize = GameSettings.game.tileSize
     
-    // CRYSTAL CAVERN THEME - Magical crystal platforms
-    // Create a graphics object for this tile
-    const tileGraphics = this.add.graphics()
+    // Use pre-generated tile textures for massive performance improvement
+    // Select a random variant from our 15 pre-generated tiles
+    const variantIndex = Math.floor(Math.random() * 15)
+    const textureKey = `platform-tile-${variantIndex}`
     
-    // Vibrant purple crystal theme with magical variations
-    const tileVariation = Math.random()
-    let baseColor = 0x6a4a8a  // Deep purple crystal base
+    // Create sprite from cached texture
+    const tileSprite = this.add.sprite(x, y, textureKey)
+    tileSprite.setDepth(1)
     
-    // Draw base crystal platform tile
-    tileGraphics.fillStyle(baseColor, 1)
-    tileGraphics.fillRect(x - tileSize/2, y - tileSize/2, tileSize, tileSize)
-    
-    // Crystal texture variations with magical colors
-    if (tileVariation < 0.4) {
-      // Slightly brighter purple patches
-      tileGraphics.fillStyle(0x8a6aaa, 0.6)
-      tileGraphics.fillRect(
-        x - tileSize/2 + Math.random() * 12, 
-        y - tileSize/2 + Math.random() * 12, 
-        8 + Math.random() * 8, 
-        8 + Math.random() * 8
-      )
-    } else if (tileVariation < 0.6) {
-      // Bright magenta crystal patches
-      tileGraphics.fillStyle(0xaa6a9a, 0.5)
-      tileGraphics.fillRect(
-        x - tileSize/2 + Math.random() * 12, 
-        y - tileSize/2 + Math.random() * 12, 
-        6 + Math.random() * 10, 
-        6 + Math.random() * 10
-      )
-    }
-    
-    // Crystal veining effect (30% chance)
-    if (Math.random() < 0.3) {
-      const veinColors = [0xff69b4, 0x9370db, 0x40e0d0]
-      const veinColor = veinColors[Math.floor(Math.random() * veinColors.length)]
-      tileGraphics.lineStyle(2, veinColor, 0.6)
-      for (let i = 0; i < 3; i++) {
-        const veinY = y - tileSize/2 + 6 + i * 8
-        tileGraphics.lineBetween(
-          x - tileSize/2 + 2, veinY, 
-          x + tileSize/2 - 2, veinY + Math.random() * 4 - 2
-        )
-      }
-    }
-    
-    // Sparkling gem crystals occasionally
-    if (Math.random() < 0.25) {
-      const gemColors = [0xff1493, 0x9370db, 0x40e0d0, 0xffd700, 0x00fa9a]
-      const gemColor = gemColors[Math.floor(Math.random() * gemColors.length)]
-      tileGraphics.fillStyle(gemColor, 0.8)
-      for (let i = 0; i < 3; i++) {
-        const gemX = x - tileSize/2 + 4 + Math.random() * (tileSize - 8)
-        const gemY = y - tileSize/2 + 4 + Math.random() * (tileSize - 8)
-        tileGraphics.fillCircle(gemX, gemY, 1.5)
-        
-        // Add white sparkle highlight
-        tileGraphics.fillStyle(0xffffff, 0.9)
-        tileGraphics.fillCircle(gemX - 0.5, gemY - 0.5, 0.5)
-        tileGraphics.fillStyle(gemColor, 0.8)
-      }
-    }
-    
-    // Add crystal spikes on top (25% chance)
-    if (Math.random() < 0.25) {
-      const spikeColors = [0xff69b4, 0x9370db, 0x40e0d0, 0x00fa9a]
-      const spikeColor = spikeColors[Math.floor(Math.random() * spikeColors.length)]
-      
-      // Crystal spikes pointing up from platform
-      tileGraphics.fillStyle(spikeColor, 0.8)
-      const numSpikes = 2 + Math.floor(Math.random() * 3)
-      for (let i = 0; i < numSpikes; i++) {
-        const spikeX = x - tileSize/2 + 6 + i * (tileSize - 12) / numSpikes
-        const spikeHeight = 8 + Math.random() * 6
-        
-        // Draw crystal spike triangle
-        tileGraphics.fillTriangle(
-          spikeX, y - tileSize/2,
-          spikeX - 3, y - tileSize/2 + spikeHeight,
-          spikeX + 3, y - tileSize/2 + spikeHeight
-        )
-        
-        // Add bright highlight
-        tileGraphics.fillStyle(0xffffff, 0.7)
-        tileGraphics.fillTriangle(
-          spikeX, y - tileSize/2,
-          spikeX - 1, y - tileSize/2 + spikeHeight/2,
-          spikeX + 1, y - tileSize/2 + spikeHeight/2
-        )
-        tileGraphics.fillStyle(spikeColor, 0.8)
-      }
-    }
-    
-    // Add crystal cluster support (15% chance)
-    if (Math.random() < 0.15) {
-      const clusterColors = [0xba68c8, 0x9c27b0, 0x673ab7]
-      const clusterColor = clusterColors[Math.floor(Math.random() * clusterColors.length)]
-      
-      // Vertical crystal cluster
-      tileGraphics.fillStyle(clusterColor, 0.7)
-      tileGraphics.fillRect(x - 4, y - tileSize/2, 8, tileSize)
-      
-      // Crystal facets
-      tileGraphics.fillStyle(clusterColor, 0.9)
-      tileGraphics.fillRect(x - 3, y - tileSize/2 + 2, 2, tileSize - 4)
-      tileGraphics.fillRect(x + 1, y - tileSize/2 + 2, 2, tileSize - 4)
-      
-      // Bright crystal highlights
-      tileGraphics.fillStyle(0xffffff, 0.8)
-      tileGraphics.fillRect(x - 2, y - tileSize/2 + 4, 1, tileSize - 8)
-      tileGraphics.fillRect(x + 2, y - tileSize/2 + 4, 1, tileSize - 8)
-    }
-    
-    // Add magical crystal clusters (20% chance)
-    if (Math.random() < 0.2) {
-      const crystalType = Math.random()
-      
-      if (crystalType < 0.33) {
-        // Amethyst crystals
-        tileGraphics.fillStyle(0x9370db, 0.8)
-      } else if (crystalType < 0.66) {
-        // Aquamarine crystals
-        tileGraphics.fillStyle(0x40e0d0, 0.8)
-      } else {
-        // Rose quartz crystals
-        tileGraphics.fillStyle(0xff69b4, 0.8)
-      }
-      
-      // Crystal cluster formation
-      const crystalX = x - tileSize/2 + 5 + Math.random() * (tileSize - 10)
-      const crystalY = y - tileSize/2 + 5 + Math.random() * (tileSize - 10)
-      
-      for (let i = 0; i < 4; i++) {
-        const cX = crystalX + Math.random() * 10 - 5
-        const cY = crystalY + Math.random() * 10 - 5
-        const size = 2 + Math.random() * 3
-        
-        // Crystal hexagon shape
-        tileGraphics.fillCircle(cX, cY, size)
-        
-        // Bright highlight
-        tileGraphics.fillStyle(0xffffff, 0.9)
-        tileGraphics.fillCircle(cX - size/2, cY - size/2, size/3)
-        
-        // Reset color for next crystal
-        if (crystalType < 0.33) {
-          tileGraphics.fillStyle(0x9370db, 0.8)
-        } else if (crystalType < 0.66) {
-          tileGraphics.fillStyle(0x40e0d0, 0.8)
-        } else {
-          tileGraphics.fillStyle(0xff69b4, 0.8)
-        }
-      }
-    }
-    
-    // Remove all tile borders for seamless appearance
-    
-    // Occasional cracks and wear (lighter)
-    if (Math.random() < 0.25) {
-      tileGraphics.lineStyle(1, 0x2a2522, 0.5)
-      const crackStartX = x - tileSize/2 + Math.random() * tileSize
-      const crackStartY = y - tileSize/2
-      tileGraphics.lineBetween(
-        crackStartX, crackStartY,
-        crackStartX + (Math.random() - 0.5) * 12, crackStartY + tileSize
-      )
-    }
-    
-    // Add drop shadow for the platform tile
-    const shadowGraphics = this.add.graphics()
-    shadowGraphics.fillStyle(0x000000, 0.3) // Black shadow with 30% opacity
-    shadowGraphics.fillRect(x - tileSize/2 + 3, y - tileSize/2 + 3, tileSize, tileSize)
-    shadowGraphics.setDepth(0) // Behind the tile
-    
-    tileGraphics.setDepth(1) // Platforms render behind ladders
+    // Add drop shadow for depth
+    const shadowSprite = this.add.sprite(x + 3, y + 3, textureKey)
+    shadowSprite.setDepth(0)
+    shadowSprite.setTint(0x000000)
+    shadowSprite.setAlpha(0.3)
     
     // Create invisible physics platform
     const platform = this.add.rectangle(
