@@ -1,28 +1,77 @@
 export class Coin {
-  public sprite: Phaser.GameObjects.Arc
+  public sprite: Phaser.GameObjects.Container
   private scene: Phaser.Scene
   private collected: boolean = false
+  private sparkleTimer?: Phaser.Time.TimerEvent
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
-    // Create a simple circle for the coin
-    this.sprite = scene.add.circle(x, y, 8, 0xffd700)
-    this.sprite.setStrokeStyle(2, 0xffff00)
+    // Create container for gem cluster
+    this.sprite = scene.add.container(x, y)
+    
+    // Choose random gem color (pink, purple, yellow - no teal)
+    const gemColors = [0xff69b4, 0x9370db, 0xffd700, 0xff1493, 0xba68c8]
+    const gemColor = gemColors[Math.floor(Math.random() * gemColors.length)]
+    
+    // Create gem cluster (3-5 gems)
+    const numGems = 3 + Math.floor(Math.random() * 3)
+    const gemGraphics = scene.add.graphics()
+    
+    for (let i = 0; i < numGems; i++) {
+      // Position gems in a small cluster
+      const angle = (i / numGems) * Math.PI * 2
+      const distance = i === 0 ? 0 : 4 + Math.random() * 2
+      const gemX = Math.cos(angle) * distance
+      const gemY = Math.sin(angle) * distance
+      const gemSize = i === 0 ? 4 : 2 + Math.random() * 2
+      
+      // Draw gem with multiple layers for depth
+      gemGraphics.fillStyle(gemColor, 0.6)
+      gemGraphics.fillCircle(gemX, gemY, gemSize + 1)
+      
+      gemGraphics.fillStyle(gemColor, 0.9)
+      gemGraphics.fillCircle(gemX, gemY, gemSize)
+      
+      // Add highlight
+      gemGraphics.fillStyle(0xffffff, 0.7)
+      gemGraphics.fillCircle(gemX - gemSize * 0.3, gemY - gemSize * 0.3, gemSize * 0.3)
+    }
+    
+    this.sprite.add(gemGraphics)
     this.sprite.setDepth(12)
     
-    // Add physics to the sprite
-    scene.physics.add.existing(this.sprite, true) // Static body
-    
-    // Add animations
-    scene.tweens.add({
-      targets: this.sprite,
-      rotation: Math.PI * 2,
-      duration: 2000,
-      repeat: -1,
-      ease: 'Linear'
+    // Add sparkle effect
+    this.sparkleTimer = scene.time.addEvent({
+      delay: 800 + Math.random() * 400,
+      callback: () => this.createSparkle(),
+      loop: true
     })
     
+    // Add physics to the sprite with proper hitbox size
+    scene.physics.add.existing(this.sprite, true) // Static body
+    
+    // Set hitbox to match gem cluster size (approximately 16x16 for small clusters)
+    if (this.sprite.body) {
+      const body = this.sprite.body as Phaser.Physics.Arcade.Body
+      console.log(`🟡 COIN DEBUG - Before hitbox setup:`)
+      console.log(`   Container position: (${this.sprite.x}, ${this.sprite.y})`)
+      console.log(`   Default body size: ${body.width}x${body.height}`)
+      console.log(`   Default body position: (${body.x}, ${body.y})`)
+      
+      body.setSize(16, 16)
+      // Need to move body +32 right and +32 up to center it
+      body.setOffset(32 - 8, 32 - 8)  // +32 to center, -8 for half body size
+      
+      console.log(`🟡 COIN DEBUG - After hitbox setup:`)
+      console.log(`   Container position: (${this.sprite.x}, ${this.sprite.y})`)
+      console.log(`   Body size: ${body.width}x${body.height}`)
+      console.log(`   Body position: (${body.x}, ${body.y})`)
+      console.log(`   Body offset: (${body.offset.x}, ${body.offset.y})`)
+      console.log(`   Body center would be: (${body.x + body.width/2}, ${body.y + body.height/2})`)
+    }
+    
+    // Add pulsing animation
     scene.tweens.add({
       targets: this.sprite,
       scaleX: 1.1,
@@ -34,9 +83,53 @@ export class Coin {
     })
   }
   
+  private createSparkle(): void {
+    if (!this.sprite || !this.sprite.scene) return
+    
+    const sparkle = this.scene.add.graphics()
+    const sparkleX = (Math.random() - 0.5) * 16
+    const sparkleY = (Math.random() - 0.5) * 16
+    
+    // Create star-shaped sparkle
+    sparkle.fillStyle(0xffffff, 0.9)
+    sparkle.beginPath()
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2
+      const radius = i % 2 === 0 ? 2 : 1
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      if (i === 0) sparkle.moveTo(x, y)
+      else sparkle.lineTo(x, y)
+    }
+    sparkle.closePath()
+    sparkle.fillPath()
+    
+    const sparkleContainer = this.scene.add.container(this.sprite.x + sparkleX, this.sprite.y + sparkleY)
+    sparkleContainer.add(sparkle)
+    sparkleContainer.setDepth(13)
+    
+    this.scene.tweens.add({
+      targets: sparkleContainer,
+      scaleX: 3,
+      scaleY: 3,
+      alpha: 0,
+      rotation: Math.PI,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => {
+        sparkleContainer.destroy()
+      }
+    })
+  }
+  
   collect(): void {
     if (this.collected) return // Already collected
     this.collected = true
+    
+    // Stop sparkle timer
+    if (this.sparkleTimer) {
+      this.sparkleTimer.destroy()
+    }
     
     // Immediately disable physics to prevent further collisions
     if (this.sprite.body) {
@@ -61,6 +154,9 @@ export class Coin {
   }
   
   destroy(): void {
+    if (this.sparkleTimer) {
+      this.sparkleTimer.destroy()
+    }
     this.sprite.destroy()
   }
 }

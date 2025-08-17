@@ -957,8 +957,18 @@ export class GameScene extends Phaser.Scene {
             this.storeLadderPositions(floor, [validPositions[0]])
           }
         } else {
-          // Upper floors - place 1 ladder
-          const randomPos = validPositions[Math.floor(Math.random() * validPositions.length)]
+          // Upper floors - place 1 ladder, avoid stacking directly above previous floor's ladder
+          const prevFloorLadders = this.ladderPositions.get(floor - 1) || []
+          
+          // Prefer positions not directly above previous ladders
+          const preferredPositions = validPositions.filter(pos => 
+            !prevFloorLadders.some(prevPos => Math.abs(pos - prevPos) < 2)
+          )
+          
+          // Use preferred positions if available, otherwise use any valid position
+          const positionsToUse = preferredPositions.length > 0 ? preferredPositions : validPositions
+          const randomPos = positionsToUse[Math.floor(Math.random() * positionsToUse.length)]
+          
           this.createContinuousLadder(randomPos * tileSize, bottomY, topY)
           this.storeLadderPositions(floor, [randomPos])
         }
@@ -1486,8 +1496,8 @@ export class GameScene extends Phaser.Scene {
       
       if (validPositions.length === 0) continue
       
-      // Track all used positions for this floor across all collectible types
-      const floorUsedPositions: number[] = []
+      // Track all used positions and their types for this floor
+      const floorUsedPositions: Array<{x: number, type: string}> = []
       
       // Regular coins: 2-4 per floor (most common) - always allowed if coins are in the list
       if (allowedCollectibles.includes('coin')) {
@@ -1524,7 +1534,7 @@ export class GameScene extends Phaser.Scene {
     type: 'coin' | 'blueCoin' | 'diamond' | 'treasureChest' | 'flashPowerUp',
     y: number,
     floor: number,
-    floorUsedPositions: number[]
+    floorUsedPositions: Array<{x: number, type: string}>
   ): void {
     const tileSize = GameSettings.game.tileSize
     
@@ -1540,9 +1550,9 @@ export class GameScene extends Phaser.Scene {
         const candidateIndex = Math.floor(Math.random() * availablePositions.length)
         const candidate = availablePositions[candidateIndex]
         
-        if (!this.isPositionOccupied(candidate, floor, floorUsedPositions)) {
+        if (!this.isPositionOccupiedWithVariety(candidate, type, floorUsedPositions)) {
           tileX = candidate
-          floorUsedPositions.push(tileX)
+          floorUsedPositions.push({x: tileX, type: type})
           // Remove this position and nearby positions to prevent clustering
           for (let j = availablePositions.length - 1; j >= 0; j--) {
             if (Math.abs(availablePositions[j] - tileX) < 2) {
@@ -1643,6 +1653,23 @@ export class GameScene extends Phaser.Scene {
     
     // Check if position is already used by another item (minimum 2 tile spacing)
     return usedPositions.some(pos => Math.abs(pos - x) < 2)
+  }
+
+  private isPositionOccupiedWithVariety(
+    x: number, 
+    type: string, 
+    usedPositions: Array<{x: number, type: string}>
+  ): boolean {
+    // Check if position is already occupied (minimum 2 tile spacing)
+    const occupied = usedPositions.some(item => Math.abs(item.x - x) < 2)
+    if (occupied) return true
+    
+    // Check for same gem type clustering (prevent same type within 3 tiles)
+    const sameTypeNearby = usedPositions.some(item => 
+      item.type === type && Math.abs(item.x - x) < 3
+    )
+    
+    return sameTypeNearby
   }
   
   private handleCoinCollection(coin: Coin): void {

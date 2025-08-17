@@ -323,25 +323,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
             body.height
           )
           
-          // Draw text labels - FORCE REFRESH hitbox dimensions
-          const currentWidth = this.body ? (this.body as Phaser.Physics.Arcade.Body).width : body.width
-          const currentHeight = this.body ? (this.body as Phaser.Physics.Arcade.Body).height : body.height
-          const debugText = this.scene.add.text(
-            this.x,
-            this.y - visualHeight/2 - 20,
-            `Visual: ${Math.round(visualWidth)}x${Math.round(visualHeight)}\nHitbox: ${Math.round(currentWidth)}x${Math.round(currentHeight)} [${this.catColor}]`,
-            {
-              fontSize: '10px',
-              color: '#ffffff',
-              backgroundColor: '#000000',
-              padding: { x: 2, y: 2 }
-            }
-          ).setOrigin(0.5).setDepth(100)
-          
-          // Remove text after one frame
-          this.scene.time.delayedCall(16, () => {
-            if (debugText) debugText.destroy()
-          })
         }
       }
     }
