@@ -52,6 +52,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ### Procedural Generation Rules ✅ ACTIVE
 - ✅ Ensures all platforms are reachable via ladder placement validation
 - ✅ Smart ladder positioning with solid ground validation above/below
+- ✅ **Anti-Stacking System:** Prevents ladders from stacking directly above each other between floors
 - ✅ Balanced enemy density (2-4 beetles per complete floor, 1-2 per gap sections)
 - ✅ Guarantees upward progression with proper ladder connections
 - ✅ 70% chance of gaps per floor for variety
@@ -91,20 +92,23 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ## Power-ups & Collectibles ✅ FULLY IMPLEMENTED
 
-### Collectible Items ✅ COMPLETE SYSTEM
-1. **Regular Coins:** ✅ Basic yellow coins (50 points) - count as 1 toward extra life
-2. **Blue Coins:** ✅ Enhanced coins worth 500 points - count as 5 toward extra life
-3. **Diamonds:** ✅ High-value collectibles worth 1000 points - count as 10 toward extra life
+### Collectible Items ✅ ENHANCED VISUAL SYSTEM
+1. **Regular Coins:** ✅ Colorful gem clusters (3-5 gems in pink/purple/yellow, 50 points) - count as 1 toward extra life
+2. **Blue Coins:** ✅ Larger teal gem clusters (4-6 gems, 500 points) - count as 5 toward extra life
+3. **Diamonds:** ✅ Proper gemstone cut with facets (table/crown/pavilion, 1000 points) - count as 10 toward extra life
 4. **Treasure Chests:** ✅ Interactive chests (2500 points + contents) requiring ACTION button
 5. **Flash Power-ups:** 🔄 DISABLED (can be re-enabled later)
 
 ### Enhanced Collectible System ✅ ACTIVE
 - ✅ **Level-Based Progression:** Collectibles unlock by level (coins→blue coins→diamonds→treasure chests)
-- ✅ **Smart collectible placement:** Preventing overlaps with collision detection
+- ✅ **Smart collectible placement:** Preventing overlaps with collision detection and variety clustering
+- ✅ **Gem Variety System:** Prevents same gem types from clustering within 3 tiles for better visual variety
+- ✅ **Star-shaped Sparkle Effects:** 8-pointed rotating sparkles for all collectibles with color variations
 - ✅ **Multiple Collection Protection:** Prevents double-scoring from single item
 - ✅ **Collection animations:** Scale/fade effects with point popups
 - ✅ **Progressive rarity scaling:** Based on level progression
 - ✅ **Level 1 Testing:** All collectible types available on Level 1 for development
+- ✅ **Centered Hitboxes:** Properly aligned collision boxes for Container-based gem clusters
 
 ### Treasure Chest Mechanics ✅ IMPLEMENTED
 - ✅ Automatic opening on player contact when grounded
@@ -134,9 +138,9 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ## Scoring System ✅ IMPLEMENTED
 
 ### Point Awards ✅ COMPLETE
-- **Regular Coins:** ✅ 50 points per yellow coin
-- **Blue Coins:** ✅ 500 points per enhanced coin
-- **Diamonds:** ✅ 1000 points per diamond collectible
+- **Regular Coins:** ✅ 50 points per gem cluster (pink/purple/yellow varieties)
+- **Blue Coins:** ✅ 500 points per teal gem cluster (larger, more valuable)
+- **Diamonds:** ✅ 1000 points per cut gemstone (proper diamond faceting)
 - **Treasure Chests:** ✅ 2500 points plus contents
 - **Height Milestones:** ✅ 500 bonus points for reaching new floors
 - **Defeating Blobs:** ✅ 200 points per blob with combo multipliers
@@ -228,7 +232,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Complete combat system with jump-to-kill mechanics and combo multipliers
 - Professional custom visibility overlay system with asymmetric player positioning
 - Enhanced flash power-up with instant transitions and seamless effects
-- Enhanced collectibles: regular coins (50pts), blue coins (500pts), diamonds (1000pts), treasure chests (2500pts + contents)
+- Enhanced collectibles: gem clusters (50pts), teal clusters (500pts), cut diamonds (1000pts), treasure chests (2500pts + contents)
 - Automatic treasure chest system with contact-based opening
 - Professional UI with translucent backgrounds and depth layering
 - Multi-touch support with virtual joystick and jump button
@@ -330,6 +334,34 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - [x] Disable flash powerup system (preserved code for future re-enablement)
 - [x] Enhanced spatial logic with improved door placement and collision avoidance
 - [x] Remove testing mode references from GameSettings and LevelManager
+
+### ✅ Gem Cluster Transformation - COMPLETED
+*Focus: Transform simple coins to thematic gem clusters with enhanced visuals and smart placement*
+
+**Visual Enhancement Overhaul** ✅ COMPLETE
+- [x] Replace simple coin graphics with colorful gem clusters (3-5 gems in pink, purple, yellow)
+- [x] Upgrade BlueCoin to larger teal gem clusters (4-6 gems) with enhanced visual presence
+- [x] Redesign Diamond with proper gemstone cut featuring table, crown, and pavilion facets
+- [x] Implement star-shaped sparkle animations for all collectibles with rotation effects
+- [x] Remove spinning animations, maintain pulsing for more natural gem appearance
+
+**Placement Intelligence System** ✅ COMPLETE
+- [x] Implement smart gem placement preventing same-type clustering within 3 tiles
+- [x] Enhanced variety distribution system tracking both position and gem type
+- [x] Improve ladder placement to avoid vertical stacking between floors (2+ tile separation)
+- [x] Maintain existing ladder clearance and door conflict avoidance systems
+
+**Technical Precision Fixes** ✅ COMPLETE
+- [x] Fix hitbox alignment for Container-based gems with proper offset calculations
+- [x] Center physics bodies on visual gem clusters (16x16 for coins, 20x20 for blue coins)
+- [x] Add comprehensive debug logging for collectible positioning and collision debugging
+- [x] Remove enemy debug text labels while preserving visual hitbox outlines for development
+
+**Performance & Code Quality** ✅ COMPLETE
+- [x] Optimize sparkle effect system with efficient creation/destruction cycles
+- [x] Maintain existing texture atlas optimizations for floor tiles
+- [x] Clean separation of debug vs production visual elements
+- [x] Enhanced Container physics integration with proper body sizing
 
 ### 🔄 FUTURE ENHANCEMENTS (Next Sprints)
 
