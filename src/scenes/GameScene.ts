@@ -286,7 +286,7 @@ export class GameScene extends Phaser.Scene {
     this.startLevelIntro(spawnX, spawnY)
     
     // Create temporary floor grid for positioning reference
-    this.createTemporaryFloorGrid()
+    // this.createTemporaryFloorGrid()
     
     // Add some cats to test (pass floor layouts)
     console.log('🎮 ABOUT TO CALL createCats()...')

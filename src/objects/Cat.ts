@@ -18,6 +18,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private debugGraphics: Phaser.GameObjects.Graphics | null = null
   private debugUpdateHandler: (() => void) | null = null
   
+  // Blue enemy animation system
+  private blueEnemyAnimationState: 'idle' | 'bite_partial' | 'bite_full' | 'blinking' = 'idle'
+  private biteTimer: number = 0
+  private blinkTimer: number = 0
+  private biteAnimationTimer: number = 0
+  private blinkAnimationTimer: number = 0
+  private nextBiteTime: number = 0
+  private nextBlinkTime: number = 0
+  
   constructor(
     scene: Phaser.Scene, 
     x: number, 
@@ -33,8 +42,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     let textureKey: string
     
     if (catColor === CatColor.BLUE) {
-      // For blue enemies, prefer the loaded sprite, fallback to generated
-      if (scene.textures.exists('blueEnemy')) {
+      // For blue enemies, prefer the new animation sprite (start with mouth closed), fallback to old sprite, then generated
+      if (scene.textures.exists('blueEnemyMouthClosed')) {
+        textureKey = 'blueEnemyMouthClosed'
+        super(scene, x, y, textureKey)
+      } else if (scene.textures.exists('blueEnemy')) {
         textureKey = 'blueEnemy'
         super(scene, x, y, textureKey)
       } else {
@@ -85,30 +97,33 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Set up hitbox and visual alignment
-    if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
-      // For the new blue enemy sprite
-      this.setDisplaySize(36, 36) // Reduced by 12 pixels (was 48)
-      
-      // Hitbox sizing is handled after physics body creation above
-      
-      // Position hitbox with visual offset to keep sprite elevated
-      // We want the visual to appear elevated above the hitbox like before
-      // Keeping the same visual offset but adjusting for new hitbox size
-      // Visual is 36px tall, hitbox is 20px tall  
-      // Offset blue enemies up by 2 pixels from previous position (43 + 2 = 45)
-      this.setOffset(3, 45) // Center horizontally (3px), visual offset adjusted up 2px
+    if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
+      // For all blue enemy animation sprites - use consistent positioning
+      this.setDisplaySize(36, 36)
+      // Use the refined positioning from mouth open sprite testing
+      this.setOffset(3, 58) // Consistent positioning for all animation sprites
       
       // The image shows enemy facing left, which is our default
       this.setFlipX(false)
+      
+      // Initialize blue enemy animation system
+      this.initializeBlueEnemyAnimations()
       
       // Add debug visualization
       this.addDebugVisualization()
       
       // Debug: Log basic position info
-      console.log(`🚀 STEP 6A: Blue Enemy spawned at Y: ${y}, using sprite texture`)
+      console.log(`🚀 STEP 6A: Blue Enemy spawned at Y: ${y}, using sprite texture: ${textureKey}`)
       if (this.body instanceof Phaser.Physics.Arcade.Body) {
         console.log(`🚀 STEP 6B: Blue enemy final hitbox size: ${this.body.width}x${this.body.height}`)
       }
+    } else if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
+      // Original blue enemy sprite fallback
+      this.setDisplaySize(36, 36)
+      this.setOffset(3, 45) // Keep original positioning
+      this.setFlipX(false)
+      this.addDebugVisualization()
+      console.log(`🚀 STEP 6A: Blue Enemy (fallback) spawned at Y: ${y}, using sprite texture: ${textureKey}`)
     } else if (catColor !== CatColor.BLUE) {
       // Original settings for non-blue colors only
       console.log(`🚀 STEP 6C: Setting non-blue enemy hitbox to 18x14...`)
@@ -171,6 +186,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     switch (this.catColor) {
       case CatColor.BLUE:
         this.updateBluePatrol()
+        this.updateBlueEnemyAnimations(delta)
         break
       case CatColor.YELLOW:
         this.updateYellowPatrol(delta)
@@ -184,19 +200,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private updateBluePatrol(): void {
     if (this.x <= this.platformBounds.left + 10) {
       this.direction = 1
-      // Flip sprite when moving right (image faces left by default)
-      if (this.texture.key === 'blueEnemy') {
-        this.setFlipX(true) // Flip when moving right
-      }
     } else if (this.x >= this.platformBounds.right - 10) {
       this.direction = -1
-      // Don't flip when moving left (default orientation)
-      if (this.texture.key === 'blueEnemy') {
-        this.setFlipX(false) // No flip when moving left
-      }
     }
     
     this.setVelocityX(this.moveSpeed * this.direction)
+    
+    // Update sprite flip for all blue enemy sprites
+    if (this.catColor === CatColor.BLUE) {
+      this.setFlipX(this.direction > 0) // Flip when moving right
+    }
   }
   
   private updateYellowPatrol(delta: number): void {
@@ -242,7 +255,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(this.moveSpeed * this.direction)
     
     // Update sprite flip for blue enemy
-    if (this.catColor === CatColor.BLUE && this.texture.key === 'blueEnemy') {
+    if (this.catColor === CatColor.BLUE) {
       this.setFlipX(this.direction > 0) // Flip when moving right
     }
   }
@@ -372,6 +385,133 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       graphics.fillTriangle(12, 0, 16, 2, 12, 4)
       graphics.generateTexture(textureKey, 20, 16)
       graphics.destroy()
+    }
+  }
+  
+  private isBlueEnemyAnimationSprite(textureKey: string): boolean {
+    return [
+      'blueEnemyMouthClosed',
+      'blueEnemyMouthClosedBlinking',
+      'blueEnemyMouthPartialOpen',
+      'blueEnemyMouthPartialOpenBlinking',
+      'blueEnemyMouthOpen',
+      'blueEnemyMouthOpenBlinking'
+    ].includes(textureKey)
+  }
+  
+  private initializeBlueEnemyAnimations(): void {
+    // Set random initial timers to make enemies feel unique
+    this.nextBiteTime = Math.random() * 2000 + 2000 // 2-4 seconds
+    this.nextBlinkTime = Math.random() * 1000 + 1000 // 1-2 seconds
+    this.blueEnemyAnimationState = 'idle'
+  }
+  
+  private updateBlueEnemyAnimations(delta: number): void {
+    // Only animate if using the new animation sprites
+    if (!this.isBlueEnemyAnimationSprite(this.texture.key)) {
+      return
+    }
+    
+    // Update timers
+    this.biteTimer += delta
+    this.blinkTimer += delta
+    this.biteAnimationTimer += delta
+    this.blinkAnimationTimer += delta
+    
+    // Handle current animation state
+    switch (this.blueEnemyAnimationState) {
+      case 'idle':
+        this.handleIdleState()
+        break
+      case 'bite_partial':
+        this.handleBitePartialState()
+        break
+      case 'bite_full':
+        this.handleBiteFullState()
+        break
+      case 'blinking':
+        this.handleBlinkingState()
+        break
+    }
+    
+    // Check for new animation triggers (independent of current state)
+    this.checkForNewAnimations()
+  }
+  
+  private handleIdleState(): void {
+    // Set to mouth closed sprite
+    this.changeBlueEnemyTexture('blueEnemyMouthClosed')
+  }
+  
+  private handleBitePartialState(): void {
+    if (this.biteAnimationTimer < 150) {
+      // First part of bite - partial open
+      this.changeBlueEnemyTexture('blueEnemyMouthPartialOpen')
+    } else {
+      // Transition to full bite
+      this.blueEnemyAnimationState = 'bite_full'
+      this.biteAnimationTimer = 0
+    }
+  }
+  
+  private handleBiteFullState(): void {
+    if (this.biteAnimationTimer < 200) {
+      // Full bite - mouth wide open
+      this.changeBlueEnemyTexture('blueEnemyMouthOpen')
+    } else {
+      // Return to idle
+      this.blueEnemyAnimationState = 'idle'
+      this.biteAnimationTimer = 0
+      // Set next bite time with variation
+      this.nextBiteTime = this.biteTimer + Math.random() * 2000 + 2000 // 2-4 seconds
+    }
+  }
+  
+  private handleBlinkingState(): void {
+    if (this.blinkAnimationTimer < 150) {
+      // Show blinking version based on current mouth state
+      let blinkTexture = 'blueEnemyMouthClosedBlinking'
+      
+      if (this.blueEnemyAnimationState === 'bite_partial') {
+        blinkTexture = 'blueEnemyMouthPartialOpenBlinking'
+      } else if (this.blueEnemyAnimationState === 'bite_full') {
+        blinkTexture = 'blueEnemyMouthOpenBlinking'
+      }
+      
+      this.changeBlueEnemyTexture(blinkTexture)
+    } else {
+      // Return to previous state
+      this.blueEnemyAnimationState = 'idle'
+      this.blinkAnimationTimer = 0
+      // Set next blink time with variation
+      this.nextBlinkTime = this.blinkTimer + Math.random() * 1000 + 1000 // 1-2 seconds
+    }
+  }
+  
+  private checkForNewAnimations(): void {
+    // Check for bite trigger (not while already biting or blinking)
+    if (this.biteTimer >= this.nextBiteTime && this.blueEnemyAnimationState === 'idle') {
+      this.blueEnemyAnimationState = 'bite_partial'
+      this.biteAnimationTimer = 0
+    }
+    
+    // Check for blink trigger (can interrupt any state except ongoing blink)
+    if (this.blinkTimer >= this.nextBlinkTime && this.blueEnemyAnimationState !== 'blinking') {
+      this.blueEnemyAnimationState = 'blinking'
+      this.blinkAnimationTimer = 0
+    }
+  }
+  
+  private changeBlueEnemyTexture(textureKey: string): void {
+    if (this.scene.textures.exists(textureKey)) {
+      this.setTexture(textureKey)
+      // Maintain consistent display size and positioning
+      this.setDisplaySize(36, 36)
+      
+      // Update sprite flip based on movement direction
+      if (this.catColor === CatColor.BLUE) {
+        this.setFlipX(this.direction > 0) // Flip when moving right
+      }
     }
   }
 }
