@@ -28,6 +28,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private nextBiteTime: number = 0
   private nextBlinkTime: number = 0
   
+  // Red enemy animation system
+  private redEnemyAnimationState: 'patrol' | 'bite_starting' | 'bite_opening' | 'bite_wide' | 'bite_closing' = 'patrol'
+  private redBiteTimer: number = 0
+  private redBlinkTimer: number = 0
+  private redBiteSequenceTimer: number = 0
+  private redEyeState: 1 | 2 = 1
+  private nextRedBiteTime: number = 0
+  private nextRedBlinkTime: number = 0
+  private redBiteFrameIndex: number = 0
+  
   constructor(
     scene: Phaser.Scene, 
     x: number, 
@@ -84,9 +94,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         Cat.generateFallbackTexture(scene, catColor) // Static call
       }
     } else if (catColor === CatColor.RED) {
-      // For red enemies, look for red enemy sprite
-      if (scene.textures.exists('redEnemy')) {
-        textureKey = 'redEnemy'
+      // For red enemies, use the animated sprites (start with mouth closed eyes 1)
+      if (scene.textures.exists('redEnemyMouthClosedEyes1')) {
+        textureKey = 'redEnemyMouthClosedEyes1'
       } else {
         // Use generated texture as fallback
         textureKey = `cat-${catColor}`
@@ -108,11 +118,29 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     console.log(`🚀 ${catColor.toUpperCase()} enemy: ${textureKey} at (${x}, ${y})`)
     
-    // Apply blue enemy hitbox sizing AFTER physics body is created
+    // Extra logging for red enemies to track creation
+    if (catColor === CatColor.RED) {
+      console.log(`🔴 RED ENEMY CREATION DEBUG:`)
+      console.log(`  - Texture key: ${textureKey}`)
+      console.log(`  - Using animated sprites: ${this.isRedEnemyAnimationSprite(textureKey)}`)
+      console.log(`  - Position: (${x}, ${y})`)
+    }
+    
+    // Apply enemy hitbox sizing AFTER physics body is created
     if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
       console.log(`🚀 STEP 5A: Setting blue enemy hitbox to 30x20...`)
       this.body.setSize(30, 20)
       console.log(`🚀 STEP 5B: Blue enemy (${textureKey}) hitbox SET, actual size: ${this.body.width}x${this.body.height}`)
+    } else if (catColor === CatColor.RED && this.body instanceof Phaser.Physics.Arcade.Body) {
+      console.log(`🔴 RED ENEMY HITBOX DEBUG:`)
+      console.log(`  - Sprite size: 52x52 pixels`)
+      console.log(`  - Default body size before adjustment: ${this.body.width}x${this.body.height}`)
+      console.log(`  - Setting hitbox to 32x32 (reasonable size for collision detection)`)
+      this.body.setSize(32, 32)
+      console.log(`  - FINAL RED ENEMY HITBOX: ${this.body.width}x${this.body.height}`)
+      console.log(`  - Body position: (${this.body.x}, ${this.body.y})`)
+      console.log(`  - Sprite position: (${this.x}, ${this.y})`)
+      console.log(`  - Offset: (${this.body.offset.x}, ${this.body.offset.y})`)
     } else if (this.body instanceof Phaser.Physics.Arcade.Body) {
       console.log(`🚀 STEP 5C: ${catColor} enemy (${textureKey}) keeping default hitbox: ${this.body.width}x${this.body.height}`)
     }
@@ -124,6 +152,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
       if (catColor !== CatColor.GREEN) {
         this.body.setAllowGravity(false) // Blue, Yellow, Red patrol without gravity
+        
+        // Extra debug for red enemies
+        if (catColor === CatColor.RED) {
+          console.log(`🔴 RED ENEMY PHYSICS DEBUG:`)
+          console.log(`  - Gravity disabled: ${!this.body.allowGravity}`)
+          console.log(`  - World bounds collision: ${this.body.collideWorldBounds}`)
+          console.log(`  - Velocity: (${this.body.velocity.x}, ${this.body.velocity.y})`)
+        }
       }
       // Green enemies keep gravity for bouncing behavior
     }
@@ -141,6 +177,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.setDisplaySize(36, 36)
       this.setOffset(3, 45)
       this.setFlipX(false)
+      this.addDebugVisualization()
+    } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
+      // For red enemy animation sprites - fine-tuned positioning
+      this.setDisplaySize(52, 52) // Larger sprite size (52x52)
+      this.setOffset(3, 46) // Decreased Y offset by 6 pixels (52 - 6 = 46)
+      this.setFlipX(false)
+      this.initializeRedEnemyAnimations()
       this.addDebugVisualization()
     } else if (this.isEnemySprite(textureKey)) {
       // For sprite-based enemies (yellow, green, red), use proper sizing similar to blue enemies
@@ -230,6 +273,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
       case CatColor.RED:
         this.updateRedPatrol()
+        this.updateRedEnemyAnimations(delta)
         break
     }
   }
@@ -287,6 +331,17 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateRedPatrol(): void {
+    // Debug red patrol bounds every few seconds
+    if (Math.random() < 0.001) { // Very occasionally log bounds
+      console.log(`🔴 RED PATROL DEBUG:`)
+      console.log(`  - Current position: (${this.x}, ${this.y})`)
+      console.log(`  - Platform bounds: left=${this.platformBounds.left}, right=${this.platformBounds.right}`)
+      console.log(`  - Direction: ${this.direction}`)
+      console.log(`  - Speed: ${this.moveSpeed}`)
+      console.log(`  - Velocity: (${this.body?.velocity.x}, ${this.body?.velocity.y})`)
+      console.log(`  - On ground: ${this.body?.blocked.down}`)
+    }
+    
     // Red enemies are aggressive - they reverse direction more frequently
     // and move in shorter, erratic patterns
     if (this.x <= this.platformBounds.left + 15) {
@@ -569,6 +624,169 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       // Update sprite flip based on movement direction
       if (this.catColor === CatColor.BLUE) {
+        this.setFlipX(this.direction > 0) // Flip when moving right
+      }
+    }
+  }
+  
+  // ============== RED ENEMY ANIMATION SYSTEM ==============
+  
+  private isRedEnemyAnimationSprite(textureKey: string): boolean {
+    return [
+      'redEnemyMouthClosedEyes1',
+      'redEnemyMouthClosedEyes2',
+      'redEnemyMouthClosedBlinking',
+      'redEnemyMouthPartialOpenEyes1Wink',
+      'redEnemyMouthPartialOpenEyes2',
+      'redEnemyMouthWideOpenEyes1Wink',
+      'redEnemyMouthWideOpenEyes2',
+      'redEnemyMouthWideOpenEyes3'
+    ].includes(textureKey)
+  }
+  
+  private initializeRedEnemyAnimations(): void {
+    // Set random initial timers to make enemies feel unique
+    this.nextRedBiteTime = Math.random() * 2000 + 3000 // 3-5 seconds for bite
+    this.nextRedBlinkTime = Math.random() * 500 + 1000 // 1-1.5 seconds for blink
+    this.redEnemyAnimationState = 'patrol'
+    this.redEyeState = Math.random() < 0.5 ? 1 : 2 // Start with random eye state
+  }
+  
+  private updateRedEnemyAnimations(delta: number): void {
+    // Only animate if using the red animation sprites
+    if (!this.isRedEnemyAnimationSprite(this.texture.key)) {
+      return
+    }
+    
+    // Update timers
+    this.redBiteTimer += delta
+    this.redBlinkTimer += delta
+    this.redBiteSequenceTimer += delta
+    
+    // Handle current animation state
+    switch (this.redEnemyAnimationState) {
+      case 'patrol':
+        this.handleRedPatrolState()
+        break
+      case 'bite_starting':
+        this.handleRedBiteStartingState()
+        break
+      case 'bite_opening':
+        this.handleRedBiteOpeningState()
+        break
+      case 'bite_wide':
+        this.handleRedBiteWideState()
+        break
+      case 'bite_closing':
+        this.handleRedBiteClosingState()
+        break
+    }
+    
+    // Check for new animation triggers
+    this.checkForRedAnimationTriggers()
+  }
+  
+  private handleRedPatrolState(): void {
+    // Cycle between two eye states during patrol
+    const eyeCycleTime = 800 + Math.random() * 400 // 0.8-1.2 seconds
+    
+    if (this.redBiteSequenceTimer >= eyeCycleTime) {
+      // Switch eye state
+      this.redEyeState = this.redEyeState === 1 ? 2 : 1
+      this.redBiteSequenceTimer = 0
+    }
+    
+    // Use appropriate eye state
+    this.changeRedEnemyTexture(this.redEyeState === 1 ? 'redEnemyMouthClosedEyes1' : 'redEnemyMouthClosedEyes2')
+  }
+  
+  private handleRedBiteStartingState(): void {
+    if (this.redBiteSequenceTimer < 80) {
+      // Start bite with partial open
+      this.changeRedEnemyTexture('redEnemyMouthPartialOpenEyes2')
+    } else {
+      // Move to opening phase
+      this.redEnemyAnimationState = 'bite_opening'
+      this.redBiteSequenceTimer = 0
+      this.redBiteFrameIndex = 0
+    }
+  }
+  
+  private handleRedBiteOpeningState(): void {
+    if (this.redBiteSequenceTimer < 100) {
+      // Show partial open with wink variation
+      this.changeRedEnemyTexture('redEnemyMouthPartialOpenEyes1Wink')
+    } else {
+      // Move to wide open phase
+      this.redEnemyAnimationState = 'bite_wide'
+      this.redBiteSequenceTimer = 0
+      this.redBiteFrameIndex = 0
+    }
+  }
+  
+  private handleRedBiteWideState(): void {
+    const wideFrames = ['redEnemyMouthWideOpenEyes1Wink', 'redEnemyMouthWideOpenEyes2', 'redEnemyMouthWideOpenEyes3']
+    const frameTime = 120 // Each wide frame lasts 120ms
+    
+    const currentFrameIndex = Math.floor(this.redBiteSequenceTimer / frameTime)
+    
+    if (currentFrameIndex < wideFrames.length) {
+      this.changeRedEnemyTexture(wideFrames[currentFrameIndex])
+    } else {
+      // Move to closing phase
+      this.redEnemyAnimationState = 'bite_closing'
+      this.redBiteSequenceTimer = 0
+    }
+  }
+  
+  private handleRedBiteClosingState(): void {
+    if (this.redBiteSequenceTimer < 80) {
+      // Close through partial
+      this.changeRedEnemyTexture('redEnemyMouthPartialOpenEyes2')
+    } else {
+      // Return to patrol
+      this.redEnemyAnimationState = 'patrol'
+      this.redBiteSequenceTimer = 0
+      // Set next bite time with variation
+      this.nextRedBiteTime = this.redBiteTimer + Math.random() * 2000 + 3000 // 3-5 seconds
+    }
+  }
+  
+  private checkForRedAnimationTriggers(): void {
+    // Check for bite trigger (not while already biting)
+    if (this.redBiteTimer >= this.nextRedBiteTime && this.redEnemyAnimationState === 'patrol') {
+      this.redEnemyAnimationState = 'bite_starting'
+      this.redBiteSequenceTimer = 0
+    }
+    
+    // Check for blink trigger (independent of bite state)
+    if (this.redBlinkTimer >= this.nextRedBlinkTime) {
+      // Quick blink during any state (but don't interrupt bite sequence visually)
+      if (this.redEnemyAnimationState === 'patrol') {
+        // Only show blink during patrol state to not interfere with bite
+        this.changeRedEnemyTexture('redEnemyMouthClosedBlinking')
+        
+        // Schedule return to normal state
+        this.scene.time.delayedCall(150, () => {
+          if (this.redEnemyAnimationState === 'patrol') {
+            this.changeRedEnemyTexture(this.redEyeState === 1 ? 'redEnemyMouthClosedEyes1' : 'redEnemyMouthClosedEyes2')
+          }
+        })
+      }
+      
+      // Set next blink time
+      this.nextRedBlinkTime = this.redBlinkTimer + Math.random() * 1000 + 1000 // 1-2 seconds
+    }
+  }
+  
+  private changeRedEnemyTexture(textureKey: string): void {
+    if (this.scene.textures.exists(textureKey)) {
+      this.setTexture(textureKey)
+      // Maintain consistent display size and positioning
+      this.setDisplaySize(52, 52) // Maintain larger 52x52 size
+      
+      // Update sprite flip based on movement direction
+      if (this.catColor === CatColor.RED) {
         this.setFlipX(this.direction > 0) // Flip when moving right
       }
     }

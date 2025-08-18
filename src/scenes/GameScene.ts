@@ -197,6 +197,16 @@ export class GameScene extends Phaser.Scene {
     this.load.image('blueEnemyMouthOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open-4hO9JLZDfnWgcQWlvfqiU7SCOXaA0g.png?sh1i')
     this.load.image('blueEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open%20blinking-Nl5UA9KyScZCBwu9BrKXR0IdNk3aen.png?B9Tr')
     
+    // Load red enemy animation sprites (8 sprites for patrol, bite, and blink)
+    this.load.image('redEnemyMouthClosedEyes1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%201-RKF3p3F7fxdBSfen8UD9UGqIzf8zlv.png?xRpM')
+    this.load.image('redEnemyMouthClosedEyes2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%202-vLWsEKkj7nPhdADyj947N0FQDi3QUf.png?Z82J')
+    this.load.image('redEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%20blinking-PiVnlocHV8Fra4PC2jrZGZISgIPvsv.png?aQjM')
+    this.load.image('redEnemyMouthPartialOpenEyes1Wink', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20partially%20open%20eyes%201%20with%20one%20blinking-CuKxjBkQYU77bxH1e6KMS5tIdsz17T.png?G49S')
+    this.load.image('redEnemyMouthPartialOpenEyes2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20partially%20open%20eyes%202-A43kcb28mR0IQbtfIU0KJJqBswRrlD.png?QDz4')
+    this.load.image('redEnemyMouthWideOpenEyes1Wink', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20wide%20open%20eyes%201%20with%20one%20blinking-bYhh1tBYiobaJsDTFoTkLpbeTJY8vs.png?7MZ2')
+    this.load.image('redEnemyMouthWideOpenEyes2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20wide%20open%20eyes%202-eeVDATMEgV6VQ9mPDfyEX1CFJPPr4W.png?RQBw')
+    this.load.image('redEnemyMouthWideOpenEyes3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20wide%20open%20eyes%203-BYXzuHGU9Dd18kQEB6bztT5k8jFhJt.png?IzuG')
+    
     // Load new player sprite collection
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerIdleEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%202-oQdxdPT1VWpTLUelgIRXIHXFw5jEuu.png?nGbT')
