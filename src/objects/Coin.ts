@@ -1,3 +1,5 @@
+import { GemShapeGenerator, GemCut } from '../utils/GemShapes'
+
 export class Coin {
   public sprite: Phaser.GameObjects.Container
   private scene: Phaser.Scene
@@ -10,33 +12,30 @@ export class Coin {
     // Create container for gem cluster
     this.sprite = scene.add.container(x, y)
     
-    // Choose random gem color (pink, purple, yellow - no teal)
-    const gemColors = [0xff69b4, 0x9370db, 0xffd700, 0xff1493, 0xba68c8]
-    const gemColor = gemColors[Math.floor(Math.random() * gemColors.length)]
+    // Define gem color and cut pairings for regular coins
+    const gemTypes = [
+      { color: 0xffd700, cut: GemCut.ROUND },        // Gold - Round brilliant
+      { color: 0xff69b4, cut: GemCut.PEAR },         // Pink - Pear/teardrop
+      { color: 0x9370db, cut: GemCut.OVAL },         // Purple - Oval
+      { color: 0xff1493, cut: GemCut.MARQUISE },     // Deep pink - Marquise
+      { color: 0xba68c8, cut: GemCut.CUSHION }       // Orchid - Cushion
+    ]
     
-    // Create gem cluster (3-5 gems)
-    const numGems = 3 + Math.floor(Math.random() * 3)
+    // Randomly select a gem type
+    const selectedGem = gemTypes[Math.floor(Math.random() * gemTypes.length)]
     const gemGraphics = scene.add.graphics()
     
-    for (let i = 0; i < numGems; i++) {
-      // Position gems in a small cluster
-      const angle = (i / numGems) * Math.PI * 2
-      const distance = i === 0 ? 0 : 4 + Math.random() * 2
-      const gemX = Math.cos(angle) * distance
-      const gemY = Math.sin(angle) * distance
-      const gemSize = i === 0 ? 4 : 2 + Math.random() * 2
-      
-      // Draw gem with multiple layers for depth
-      gemGraphics.fillStyle(gemColor, 0.6)
-      gemGraphics.fillCircle(gemX, gemY, gemSize + 1)
-      
-      gemGraphics.fillStyle(gemColor, 0.9)
-      gemGraphics.fillCircle(gemX, gemY, gemSize)
-      
-      // Add highlight
-      gemGraphics.fillStyle(0xffffff, 0.7)
-      gemGraphics.fillCircle(gemX - gemSize * 0.3, gemY - gemSize * 0.3, gemSize * 0.3)
+    // Create single cut gem with assigned shape for its color
+    const gemStyle = {
+      cut: selectedGem.cut,
+      size: 8, // Consistent size for all regular coins
+      color: selectedGem.color,
+      facetColor: GemShapeGenerator.getFacetColor(selectedGem.color),
+      highlightColor: 0xffffff
     }
+    
+    // Draw single cut gem at center
+    GemShapeGenerator.drawGem(gemGraphics, 0, 0, gemStyle)
     
     this.sprite.add(gemGraphics)
     this.sprite.setDepth(12)

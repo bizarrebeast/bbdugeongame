@@ -1,3 +1,5 @@
+import { GemShapeGenerator, GemCut } from '../utils/GemShapes'
+
 export class BlueCoin {
   public sprite: Phaser.GameObjects.Container
   private scene: Phaser.Scene
@@ -10,29 +12,30 @@ export class BlueCoin {
     // Create container for larger teal gem cluster
     this.sprite = scene.add.container(x, y)
     
-    // Create larger teal gem cluster (4-6 gems)
-    const numGems = 4 + Math.floor(Math.random() * 3)
+    // Blue coins use various teal/aqua shades with emerald cut
+    const tealColors = [
+      0x008080, // Teal
+      0x20b2aa, // Light sea green
+      0x40e0d0, // Turquoise
+      0x48d1cc, // Medium turquoise
+      0x00ced1  // Dark turquoise
+    ]
+    
+    // Randomly select a teal shade
+    const gemColor = tealColors[Math.floor(Math.random() * tealColors.length)]
     const gemGraphics = scene.add.graphics()
     
-    for (let i = 0; i < numGems; i++) {
-      // Position gems in a larger cluster
-      const angle = (i / numGems) * Math.PI * 2
-      const distance = i === 0 ? 0 : 6 + Math.random() * 3
-      const gemX = Math.cos(angle) * distance
-      const gemY = Math.sin(angle) * distance
-      const gemSize = i === 0 ? 6 : 3 + Math.random() * 3
-      
-      // Draw teal gem with multiple layers for depth
-      gemGraphics.fillStyle(0x008080, 0.6)
-      gemGraphics.fillCircle(gemX, gemY, gemSize + 1)
-      
-      gemGraphics.fillStyle(0x20b2aa, 0.9)
-      gemGraphics.fillCircle(gemX, gemY, gemSize)
-      
-      // Add highlight
-      gemGraphics.fillStyle(0xffffff, 0.7)
-      gemGraphics.fillCircle(gemX - gemSize * 0.3, gemY - gemSize * 0.3, gemSize * 0.3)
+    // Create single emerald cut gem (prestigious rectangular cut for higher value)
+    const gemStyle = {
+      cut: GemCut.EMERALD,
+      size: 10, // Larger than regular coins to show higher value
+      color: gemColor,
+      facetColor: GemShapeGenerator.getFacetColor(gemColor),
+      highlightColor: 0xffffff
     }
+    
+    // Draw single cut gem at center
+    GemShapeGenerator.drawGem(gemGraphics, 0, 0, gemStyle)
     
     this.sprite.add(gemGraphics)
     this.sprite.setDepth(12)

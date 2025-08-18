@@ -96,6 +96,27 @@ export class GameScene extends Phaser.Scene {
         retries: 3,
         fallback: 'defaultPlayer'
       },
+      {
+        key: 'playerIdleEye3',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/idle%20eye%20position%203-TLisG1UJypI7PhiKszpBcC8Nx8ZyrS.png?6Tg9',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
+      {
+        key: 'playerIdleEye4',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/idle%20eye%20position%204-kvrv3THif8vcKjFB0NPzOeclqapVi6.png?PuWO',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
+      {
+        key: 'playerIdleEye5',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/idle%20eye%20position%205-1P13Nmi3xqoC5kWevrWUxutqyXfr99.png?F4D2',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
       // Climbing animations
       {
         key: 'playerClimbLeftFoot',
@@ -129,7 +150,7 @@ export class GameScene extends Phaser.Scene {
       // Running animations
       {
         key: 'playerRunLeftFoot',
-        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Running%20left%20foot%20forward-VN3o7CfzFLjRAoWpr40LOdeFNQaVff.png?lyKi',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%20new-aH3WiqHkbYLeW14yketC7EdmowlQ02.png?jLLJ',
         type: 'image',
         retries: 3,
         fallback: 'defaultPlayer'
@@ -172,11 +193,14 @@ export class GameScene extends Phaser.Scene {
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerIdleEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%202-oQdxdPT1VWpTLUelgIRXIHXFw5jEuu.png?nGbT')
     this.load.image('playerIdleBlink', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%20blinking-qmZlXgNwk3w2B610GpK1dkndEDFmEg.png?q97J')
+    this.load.image('playerIdleEye3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/idle%20eye%20position%203-TLisG1UJypI7PhiKszpBcC8Nx8ZyrS.png?6Tg9')
+    this.load.image('playerIdleEye4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/idle%20eye%20position%204-kvrv3THif8vcKjFB0NPzOeclqapVi6.png?PuWO')
+    this.load.image('playerIdleEye5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/idle%20eye%20position%205-1P13Nmi3xqoC5kWevrWUxutqyXfr99.png?F4D2')
     this.load.image('playerClimbLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20ladder%20left%20foot%20up-HkXPep0kpt9he1WtndEXsXRVHQBdlq.png?ncVM')
     this.load.image('playerClimbRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20ladder%20right%20foot%20up-hkc4X4pm3mSs1J3UpRQwRw8GhealC6.png?t8RZ')
     this.load.image('playerJumpLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20left%20foot%20forward-DVmoTTdCOBfI9FRTg9vs949sTzKoOB.png?9FM5')
     this.load.image('playerJumpRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20right%20foot%20forward-3clf2KnwfbN3O6BsrtaeHSTAviNbnF.png?xx8e')
-    this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%202-Vk4SZoterWejpwSBYhocWkLtOXQKMM.png?1BI1')
+    this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%20new-aH3WiqHkbYLeW14yketC7EdmowlQ02.png?jLLJ')
     this.load.image('playerRunRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Running%20right%20foot%20forward%202-aGnWjaFUNnYXwTfNKfSCfCLppOHzDU.png?mXmE')
     
     // Start pooled loading for advanced error handling and retries

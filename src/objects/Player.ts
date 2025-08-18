@@ -10,10 +10,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private climbAnimationTimer: number = 0
   private idleAnimationTimer: number = 0
   private currentFrame: 'idle' | 'leftStep' | 'rightStep' = 'idle'
-  private currentIdleState: 'eye1' | 'eye2' | 'blink' = 'eye1'
+  private currentIdleState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'eye5' | 'blink' = 'eye1'
   private currentClimbFoot: 'left' | 'right' = 'left'
   private isMoving: boolean = false
   private isJumping: boolean = false
+  private runningTiltTimer: number = 0
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Use the new player idle sprite or fallback to placeholder
@@ -275,10 +276,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.currentFrame = 'leftStep'
       this.changePlayerTexture('playerRunLeftFoot')
       this.walkAnimationTimer = 0
+      this.runningTiltTimer = 0
       return
     }
     
     this.walkAnimationTimer += deltaTime
+    this.runningTiltTimer += deltaTime
+    
+    // Apply subtle forward/backward tilt for motion sense
+    this.applyRunningTilt()
     
     if (this.walkAnimationTimer >= runAnimationSpeed) {
       // Switch between left and right step for running
@@ -304,51 +310,160 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.idleAnimationTimer = 0
       this.walkAnimationTimer = 0
       this.climbAnimationTimer = 0
+      
+      // Reset running tilt when stopping
+      this.resetRunningTilt()
       return
     }
     
-    // Random timing for more natural feel
-    const baseIdleSpeed = 600
-    const randomVariation = Math.random() * 800 + 200 // 200-1000ms variation
-    const idleAnimationSpeed = baseIdleSpeed + randomVariation
+    // Organic timing with different patterns for different states
+    let animationSpeed: number
     
-    // Handle idle eye animation with random transitions
-    if (this.idleAnimationTimer >= idleAnimationSpeed) {
+    if (this.currentIdleState === 'blink') {
+      // Quick natural blink - 100-180ms with slight variation
+      animationSpeed = 100 + Math.random() * 80
+    } else {
+      // Eye movement timing with organic variation patterns (slowed down)
+      // Base timing gets longer the more "extreme" the eye position
+      const baseTimings = {
+        'eye1': 1200, // Center-left, comfortable
+        'eye2': 1100, // Center-right, comfortable
+        'eye3': 1400, // More extreme position
+        'eye4': 1600, // Even more extreme
+        'eye5': 1800  // Most extreme, longest hold
+      }
+      
+      const baseTiming = baseTimings[this.currentIdleState as keyof typeof baseTimings] || 1200
+      // Add natural variation (±400ms) for organic feel
+      animationSpeed = baseTiming + (Math.random() - 0.5) * 800
+    }
+    
+    // Handle organic eye animation transitions
+    if (this.idleAnimationTimer >= animationSpeed) {
       const randomAction = Math.random()
+      const availableEyePositions = ['eye1', 'eye2', 'eye3', 'eye4', 'eye5'] as const
       
       switch (this.currentIdleState) {
         case 'eye1':
-          if (randomAction < 0.3) {
-            // 30% chance to blink from eye1
+          if (randomAction < 0.25) {
             this.currentIdleState = 'blink'
             this.changePlayerTexture('playerIdleBlink')
-          } else {
-            // 70% chance to look to eye2
+          } else if (randomAction < 0.55) {
+            // Likely to move to nearby positions
             this.currentIdleState = 'eye2'
             this.changePlayerTexture('playerIdleEye2')
+          } else if (randomAction < 0.75) {
+            this.currentIdleState = 'eye3'
+            this.changePlayerTexture('playerIdleEye3')
+          } else if (randomAction < 0.90) {
+            this.currentIdleState = 'eye4'
+            this.changePlayerTexture('playerIdleEye4')
+          } else {
+            // Rare jump to extreme position
+            this.currentIdleState = 'eye5'
+            this.changePlayerTexture('playerIdleEye5')
           }
           break
           
         case 'eye2':
-          if (randomAction < 0.4) {
-            // 40% chance to blink from eye2
+          if (randomAction < 0.3) {
+            this.currentIdleState = 'blink'
+            this.changePlayerTexture('playerIdleBlink')
+          } else if (randomAction < 0.60) {
+            this.currentIdleState = 'eye1'
+            this.changePlayerTexture('playerIdleEye1')
+          } else if (randomAction < 0.80) {
+            this.currentIdleState = 'eye3'
+            this.changePlayerTexture('playerIdleEye3')
+          } else if (randomAction < 0.95) {
+            this.currentIdleState = 'eye4'
+            this.changePlayerTexture('playerIdleEye4')
+          } else {
+            this.currentIdleState = 'eye5'
+            this.changePlayerTexture('playerIdleEye5')
+          }
+          break
+          
+        case 'eye3':
+          if (randomAction < 0.2) {
+            this.currentIdleState = 'blink'
+            this.changePlayerTexture('playerIdleBlink')
+          } else if (randomAction < 0.45) {
+            // Return to comfortable positions more often
+            this.currentIdleState = 'eye1'
+            this.changePlayerTexture('playerIdleEye1')
+          } else if (randomAction < 0.70) {
+            this.currentIdleState = 'eye2'
+            this.changePlayerTexture('playerIdleEye2')
+          } else if (randomAction < 0.90) {
+            this.currentIdleState = 'eye4'
+            this.changePlayerTexture('playerIdleEye4')
+          } else {
+            this.currentIdleState = 'eye5'
+            this.changePlayerTexture('playerIdleEye5')
+          }
+          break
+          
+        case 'eye4':
+          if (randomAction < 0.15) {
+            this.currentIdleState = 'blink'
+            this.changePlayerTexture('playerIdleBlink')
+          } else if (randomAction < 0.40) {
+            // Strong tendency to return to center
+            this.currentIdleState = 'eye1'
+            this.changePlayerTexture('playerIdleEye1')
+          } else if (randomAction < 0.65) {
+            this.currentIdleState = 'eye2'
+            this.changePlayerTexture('playerIdleEye2')
+          } else if (randomAction < 0.85) {
+            this.currentIdleState = 'eye3'
+            this.changePlayerTexture('playerIdleEye3')
+          } else {
+            this.currentIdleState = 'eye5'
+            this.changePlayerTexture('playerIdleEye5')
+          }
+          break
+          
+        case 'eye5':
+          if (randomAction < 0.1) {
             this.currentIdleState = 'blink'
             this.changePlayerTexture('playerIdleBlink')
           } else {
-            // 60% chance to look back to eye1
-            this.currentIdleState = 'eye1'
-            this.changePlayerTexture('playerIdleEye1')
+            // Very strong tendency to return to more comfortable positions
+            if (randomAction < 0.45) {
+              this.currentIdleState = 'eye1'
+              this.changePlayerTexture('playerIdleEye1')
+            } else if (randomAction < 0.75) {
+              this.currentIdleState = 'eye2'
+              this.changePlayerTexture('playerIdleEye2')
+            } else if (randomAction < 0.90) {
+              this.currentIdleState = 'eye3'
+              this.changePlayerTexture('playerIdleEye3')
+            } else {
+              this.currentIdleState = 'eye4'
+              this.changePlayerTexture('playerIdleEye4')
+            }
           }
           break
           
         case 'blink':
-          // After blink, randomly choose which eye position to return to
-          if (randomAction < 0.5) {
+          // After blink, weighted random return to eye positions
+          // Favor comfortable central positions
+          if (randomAction < 0.35) {
             this.currentIdleState = 'eye1'
             this.changePlayerTexture('playerIdleEye1')
-          } else {
+          } else if (randomAction < 0.65) {
             this.currentIdleState = 'eye2'
             this.changePlayerTexture('playerIdleEye2')
+          } else if (randomAction < 0.80) {
+            this.currentIdleState = 'eye3'
+            this.changePlayerTexture('playerIdleEye3')
+          } else if (randomAction < 0.95) {
+            this.currentIdleState = 'eye4'
+            this.changePlayerTexture('playerIdleEye4')
+          } else {
+            this.currentIdleState = 'eye5'
+            this.changePlayerTexture('playerIdleEye5')
           }
           break
       }
@@ -368,6 +483,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Maintain scale for all player textures
       this.setDisplaySize(48, 64)
     }
+  }
+  
+  private applyRunningTilt(): void {
+    // Create subtle forward/backward tilt based on running cycle
+    const tiltFrequency = 0.02 // How fast the tilt oscillates (matches foot timing roughly)
+    const tiltAmplitude = 0.08 // Maximum tilt angle in radians (~4.6 degrees)
+    
+    // Calculate tilt angle - alternates between forward and back lean
+    const tiltAngle = Math.sin(this.runningTiltTimer * tiltFrequency) * tiltAmplitude
+    
+    // Apply the rotation
+    this.setRotation(tiltAngle)
+  }
+  
+  private resetRunningTilt(): void {
+    // Smoothly return to upright position
+    this.setRotation(0)
+    this.runningTiltTimer = 0
   }
   
   private addRoundedHitboxVisualization(): void {
