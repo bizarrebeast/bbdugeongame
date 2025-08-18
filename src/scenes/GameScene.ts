@@ -160,16 +160,24 @@ export class GameScene extends Phaser.Scene {
     this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/enemy%20test%201-DFzrumkmpUN5HOwL25dNAVJzRcVxhv.png?rxbT')
     this.load.image('visibilityOverlay', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO')
     
+    // Load new blue enemy animation sprites
+    this.load.image('blueEnemyMouthClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-c7ARTamNTdFUdqxk9Xk9knaCfYs5U2.png?8vXC')
+    this.load.image('blueEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed%20blinking-F43cDOVR2cjUJ4FHSQ1qSTHC847FiR.png?EApA')
+    this.load.image('blueEnemyMouthPartialOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20partial%20open-VttzLnyR8QJAg52ss8AEIpXx78yvUh.png?u8K4')
+    this.load.image('blueEnemyMouthPartialOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20partial%20open%20blinking-29YCvY31m3Rvq2txQDqYrC5I8pri7r.png?yPc1')
+    this.load.image('blueEnemyMouthOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open-g8glq9u9hSUnRr20R3kU1VBuaHv7mG.png?IkWV')
+    this.load.image('blueEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open%20blinking-rmd7RFW8qQRKzm30bXLbQZII0jLSNj.png?XEKS')
+    
     // Load new player sprite collection
-    this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Idle%20eye%20position%201-p01pa3z9fL9AyLQolMuYyBO3DIqgvB.png?FaaG')
-    this.load.image('playerIdleEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Idle%20eye%20position%202-ngx0e1EF33iY14vRpcSvy8QOUjMKnl.png?lsFE')
-    this.load.image('playerIdleBlink', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Idle%20eye%20blink-3tJNOxFkSwSzayJLdDqCIR8QBeFE4L.png?aEfY')
-    this.load.image('playerClimbLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Climb%20left%20foot%20up-k5M7LS7klPY2qBpvYLcczE8mXs7QJU.png?Kzco')
-    this.load.image('playerClimbRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Climb%20right%20foot%20up-jKxZTjOJZ3hF1G1N7mXMCRg4hRAajI.png?PYzL')
-    this.load.image('playerJumpLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Jump%20left%20foot%20forward-LzxJe5pXkkJKQfpXmElE79dGOx2ckq.png?rAmN')
-    this.load.image('playerJumpRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Jump%20right%20foot%20forward-JI9ZQNGwQOPOJOh7sTNE4WA4V5EFQl.png?KS7T')
-    this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Running%20left%20foot%20forward-yfBzlRZjvXJT0q8xqQNGJJXh7pEkRj.png?6jgN')
-    this.load.image('playerRunRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/Running%20right%20foot%20forward-XADkAcNq0lANLq6iKCvdAzYy3jWUIq.png?EATM')
+    this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
+    this.load.image('playerIdleEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%202-oQdxdPT1VWpTLUelgIRXIHXFw5jEuu.png?nGbT')
+    this.load.image('playerIdleBlink', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%20blinking-qmZlXgNwk3w2B610GpK1dkndEDFmEg.png?q97J')
+    this.load.image('playerClimbLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20ladder%20left%20foot%20up-HkXPep0kpt9he1WtndEXsXRVHQBdlq.png?ncVM')
+    this.load.image('playerClimbRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20ladder%20right%20foot%20up-hkc4X4pm3mSs1J3UpRQwRw8GhealC6.png?t8RZ')
+    this.load.image('playerJumpLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20left%20foot%20forward-DVmoTTdCOBfI9FRTg9vs949sTzKoOB.png?9FM5')
+    this.load.image('playerJumpRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20right%20foot%20forward-3clf2KnwfbN3O6BsrtaeHSTAviNbnF.png?xx8e')
+    this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%202-Vk4SZoterWejpwSBYhocWkLtOXQKMM.png?1BI1')
+    this.load.image('playerRunRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Running%20right%20foot%20forward%202-aGnWjaFUNnYXwTfNKfSCfCLppOHzDU.png?mXmE')
     
     // Start pooled loading for advanced error handling and retries
     this.assetPool.loadAllAssets().then(() => {
@@ -277,8 +285,13 @@ export class GameScene extends Phaser.Scene {
     // Start intro immediately - assets will be checked during animation
     this.startLevelIntro(spawnX, spawnY)
     
+    // Create temporary floor grid for positioning reference
+    this.createTemporaryFloorGrid()
+    
     // Add some cats to test (pass floor layouts)
+    console.log('🎮 ABOUT TO CALL createCats()...')
     this.createCats()
+    console.log('🎮 createCats() call completed')
     
     // Add ceiling cats
     this.createCeilingCats()
@@ -1267,6 +1280,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createCats(): void {
+    console.log('🐱 CREATE CATS: Starting enemy creation...')
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
@@ -1274,20 +1288,27 @@ export class GameScene extends Phaser.Scene {
     // Get allowed enemy types for current level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     const allowedEnemies = levelConfig.enemyTypes
+    console.log(`🐱 Current level: ${this.levelManager.getCurrentLevel()}, allowed enemies:`, allowedEnemies)
     
     // Map enemy types to cat colors
     const availableColors: string[] = []
     if (allowedEnemies.includes('blue')) availableColors.push('blue')
     if (allowedEnemies.includes('yellow')) availableColors.push('yellow')
     if (allowedEnemies.includes('green')) availableColors.push('green')
+    console.log(`🐱 Available colors:`, availableColors)
     
     // If no regular enemies are allowed yet, return
-    if (availableColors.length === 0) return
+    if (availableColors.length === 0) {
+      console.log('🐱 NO ENEMIES ALLOWED - returning early')
+      return
+    }
     
     // Add cats on floors 1 through second-to-last floor (skip ground floor and door floor)
     const doorFloor = levelConfig.isEndless ? 999 : (levelConfig.floorCount - 1)
     const maxEnemyFloor = levelConfig.isEndless ? Math.min(20, this.floorLayouts.length - 1) : doorFloor - 1
+    console.log(`🐱 Floor calculation: doorFloor=${doorFloor}, maxEnemyFloor=${maxEnemyFloor}, floorLayouts.length=${this.floorLayouts.length}`)
     
+    let enemiesCreated = 0
     for (let floor = 1; floor <= maxEnemyFloor && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       // Calculate Y position - cats should sit ON the platform, not IN it
@@ -1430,6 +1451,47 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+    
+    console.log(`🐱 CREATE CATS COMPLETE: Created ${enemiesCreated} enemies total`)
+  }
+  
+  private createTemporaryFloorGrid(): void {
+    console.log('📐 CREATING TEMPORARY FLOOR GRID...')
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    const canvasWidth = GameSettings.canvas.width
+    
+    // Create graphics object for drawing grid lines
+    const gridGraphics = this.add.graphics()
+    gridGraphics.lineStyle(2, 0x00ff00, 0.7) // Green lines, 70% opacity
+    gridGraphics.setDepth(100) // On top of everything
+    
+    // Draw horizontal lines for each floor - align with TOP surface of platform tiles
+    for (let floor = 0; floor < this.floorLayouts.length; floor++) {
+      // Calculate platform center Y, then move up to top surface
+      const platformCenterY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      const topSurfaceY = platformCenterY - tileSize/2 // Move up by half tile height to get top surface
+      
+      // Draw full-width horizontal line on top surface of platform tiles
+      gridGraphics.moveTo(0, topSurfaceY)
+      gridGraphics.lineTo(canvasWidth, topSurfaceY)
+      
+      // Add floor number label with top surface Y coordinate
+      const floorText = this.add.text(10, topSurfaceY - 20, `Floor ${floor} (Top:${Math.round(topSurfaceY)})`, {
+        fontSize: '12px',
+        color: '#00ff00',
+        backgroundColor: '#000000aa',
+        padding: { x: 4, y: 2 }
+      })
+      floorText.setDepth(101)
+      
+      console.log(`📐 Floor ${floor} line drawn at Y: ${topSurfaceY} (platform top surface)`)
+    }
+    
+    // Draw the stroke to make lines visible
+    gridGraphics.strokePath()
+    
+    console.log(`📐 Grid complete - ${this.floorLayouts.length} floor lines drawn`)
   }
   
   private createCeilingCats(): void {
@@ -2616,23 +2678,31 @@ export class GameScene extends Phaser.Scene {
         
         if (layout.gapStart === -1) {
           // Complete floor
-          console.log(`Spawning enemy on complete floor at base Y: ${y}, final Y: ${y - 16}`)
+          // Position enemy ON TOP of floor tiles, like the player
+          const floorSurfaceY = y - tileSize/2  // Top surface of platform tiles
+          const enemyY = floorSurfaceY - 15     // Position enemy standing on top (hitbox bottom above surface)
+          console.log(`Spawning enemy on complete floor - floor surface Y: ${floorSurfaceY}, enemy Y: ${enemyY} (standing on tiles)`)
           const cat = new Cat(
             this,
             (floorWidth / 2) * tileSize,
-            y - 16, // Spawn just above the floor platform
+            enemyY, // Position enemy standing on top of tiles
             tileSize * 1.5,
             tileSize * (floorWidth - 1.5),
             randomColor as any
           )
           // Green cats already get full floor bounds by default
           this.cats.add(cat)
+          enemiesCreated++
         } else if (layout.gapStart > 3) {
           // Place on left section if big enough
+          // Position enemy ON TOP of floor tiles, like the player
+          const floorSurfaceY = y - tileSize/2  // Top surface of platform tiles
+          const enemyY = floorSurfaceY - 15     // Position enemy standing on top (hitbox bottom above surface)
+          console.log(`Spawning enemy on left section - floor surface Y: ${floorSurfaceY}, enemy Y: ${enemyY} (standing on tiles)`)
           const cat = new Cat(
             this,
             (layout.gapStart / 2) * tileSize,
-            y - 16, // Spawn just above the floor platform
+            enemyY, // Position enemy standing on top of tiles
             tileSize * 0.5,
             tileSize * (layout.gapStart - 0.5),
             randomColor as any
@@ -2645,6 +2715,7 @@ export class GameScene extends Phaser.Scene {
             }
           }
           this.cats.add(cat)
+          enemiesCreated++
         }
       }
       
