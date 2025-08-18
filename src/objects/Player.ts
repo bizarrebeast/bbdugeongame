@@ -239,6 +239,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const textureKey = this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot'
     this.changePlayerTexture(textureKey)
     this.currentFrame = 'idle' // Reset walking frame when jumping
+    
+    // Reset running tilt when jumping
+    this.resetRunningTilt()
   }
   
   private handleClimbingAnimation(deltaTime: number): void {
@@ -250,6 +253,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.changePlayerTexture('playerClimbLeftFoot')
       this.climbAnimationTimer = 0
       this.resetAnimationTimers()
+      
+      // Reset any running tilt when starting to climb
+      this.resetRunningTilt()
       return
     }
     
@@ -283,7 +289,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.walkAnimationTimer += deltaTime
     this.runningTiltTimer += deltaTime
     
-    // Apply subtle forward/backward tilt for motion sense
+    // Apply subtle forward/backward tilt for motion sense (ONLY during running)
     this.applyRunningTilt()
     
     if (this.walkAnimationTimer >= runAnimationSpeed) {

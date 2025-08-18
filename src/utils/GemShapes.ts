@@ -9,7 +9,8 @@ export enum GemCut {
   PEAR = 'pear',
   MARQUISE = 'marquise',
   OVAL = 'oval',
-  CUSHION = 'cushion'
+  CUSHION = 'cushion',
+  DIAMOND = 'diamond'
 }
 
 export interface GemStyle {
@@ -61,11 +62,15 @@ export class GemShapeGenerator {
       case GemCut.CUSHION:
         this.drawCushionCut(graphics, x, y, style)
         break
+      case GemCut.DIAMOND:
+        this.drawDiamondCut(graphics, x, y, style)
+        break
     }
   }
   
   private static drawRoundCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
-    const radius = style.size
+    // Standardized to 18x18 (radius = 9)
+    const radius = 9
     
     // Main gem body
     graphics.fillStyle(style.color, 0.8)
@@ -92,18 +97,21 @@ export class GemShapeGenerator {
   }
   
   private static drawEmeraldCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
-    const size = style.size
+    // Determine size based on usage - BlueCoin uses 22x22, regular gems would use 18x18
+    const isBlueGem = style.size >= 10 // BlueCoin uses size 10, regular gems use size 8
+    const width = isBlueGem ? 11 : 9   // 22x22 or 18x18
+    const height = isBlueGem ? 11 : 9
     
-    // Emerald cut - rectangular with cut corners
+    // Emerald cut - vertical rectangular with cut corners
     const points = [
-      [-size * 0.8, -size],        // Top left
-      [size * 0.8, -size],         // Top right
-      [size, -size * 0.6],         // Top right cut
-      [size, size * 0.6],          // Bottom right cut
-      [size * 0.8, size],          // Bottom right
-      [-size * 0.8, size],         // Bottom left
-      [-size, size * 0.6],         // Bottom left cut
-      [-size, -size * 0.6]         // Top left cut
+      [-width * 0.6, -height],      // Top left
+      [width * 0.6, -height],       // Top right  
+      [width, -height * 0.7],       // Top right cut
+      [width, height * 0.7],        // Bottom right cut
+      [width * 0.6, height],        // Bottom right
+      [-width * 0.6, height],       // Bottom left
+      [-width, height * 0.7],       // Bottom left cut
+      [-width, -height * 0.7]       // Top left cut
     ]
     
     // Main gem body
@@ -120,18 +128,18 @@ export class GemShapeGenerator {
     graphics.lineStyle(0.5, style.facetColor!, 0.6)
     // Horizontal facet lines
     for (let i = 1; i <= 3; i++) {
-      const yLine = -size + (i * size * 2 / 4)
-      graphics.lineBetween(x - size * 0.6, y + yLine, x + size * 0.6, y + yLine)
+      const yLine = -height * 0.7 + (i * height * 1.4 / 4)
+      graphics.lineBetween(x - width * 0.4, y + yLine, x + width * 0.4, y + yLine)
     }
     // Vertical facet lines
-    for (let i = 1; i <= 3; i++) {
-      const xLine = -size * 0.6 + (i * size * 1.2 / 4)
-      graphics.lineBetween(x + xLine, y - size * 0.6, x + xLine, y + size * 0.6)
+    for (let i = 1; i <= 2; i++) {
+      const xLine = -width * 0.3 + (i * width * 0.6 / 3)
+      graphics.lineBetween(x + xLine, y - height * 0.6, x + xLine, y + height * 0.6)
     }
     
     // Highlight
     graphics.fillStyle(style.highlightColor!, 0.7)
-    graphics.fillRect(x - size * 0.4, y - size * 0.4, size * 0.3, size * 0.3)
+    graphics.fillRect(x - width * 0.3, y - height * 0.5, width * 0.25, height * 0.3)
     
     // Outline
     graphics.lineStyle(1, 0xffffff, 0.8)
@@ -145,112 +153,127 @@ export class GemShapeGenerator {
   }
   
   private static drawPearCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
-    const size = style.size
+    // Standardized to 18x18 - vertical pear/teardrop shape
+    const width = 9
+    const height = 9
     
-    // Pear cut - teardrop shape
+    // Pear cut - vertical teardrop shape
     graphics.fillStyle(style.color, 0.8)
     graphics.beginPath()
-    graphics.moveTo(x, y - size)           // Top point
-    graphics.lineTo(x + size * 0.6, y + size * 0.4)    // Right side
-    graphics.lineTo(x, y + size * 1.2)                  // Bottom point
-    graphics.lineTo(x - size * 0.6, y + size * 0.4)     // Left side
-    graphics.lineTo(x, y - size)                        // Back to top
+    graphics.moveTo(x, y - height)                    // Top point
+    graphics.lineTo(x + width * 0.5, y - height * 0.3)  // Upper right
+    graphics.lineTo(x + width * 0.7, y + height * 0.3)  // Lower right
+    graphics.lineTo(x, y + height)                    // Bottom point
+    graphics.lineTo(x - width * 0.7, y + height * 0.3)  // Lower left
+    graphics.lineTo(x - width * 0.5, y - height * 0.3)  // Upper left
+    graphics.lineTo(x, y - height)                    // Back to top
     graphics.closePath()
     graphics.fillPath()
     
     // Facet lines
     graphics.lineStyle(0.5, style.facetColor!, 0.6)
-    // Radial lines from center
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2
-      const xEnd = x + Math.cos(angle) * size * 0.4
-      const yEnd = y + Math.sin(angle) * size * 0.4
-      graphics.lineBetween(x, y, xEnd, yEnd)
-    }
+    // Vertical center line
+    graphics.lineBetween(x, y - height * 0.7, x, y + height * 0.7)
+    // Horizontal lines
+    graphics.lineBetween(x - width * 0.3, y - height * 0.2, x + width * 0.3, y - height * 0.2)
+    graphics.lineBetween(x - width * 0.4, y + height * 0.2, x + width * 0.4, y + height * 0.2)
+    // Diagonal lines
+    graphics.lineBetween(x - width * 0.2, y - height * 0.5, x + width * 0.2, y + height * 0.5)
+    graphics.lineBetween(x + width * 0.2, y - height * 0.5, x - width * 0.2, y + height * 0.5)
     
     // Highlight
     graphics.fillStyle(style.highlightColor!, 0.7)
-    graphics.fillEllipse(x - size * 0.2, y - size * 0.4, size * 0.3, size * 0.2)
+    graphics.fillEllipse(x - width * 0.2, y - height * 0.4, width * 0.3, height * 0.2)
     
     // Outline
     graphics.lineStyle(1, 0xffffff, 0.8)
     graphics.beginPath()
-    graphics.moveTo(x, y - size)
-    graphics.lineTo(x + size * 0.6, y + size * 0.4)
-    graphics.lineTo(x, y + size * 1.2)
-    graphics.lineTo(x - size * 0.6, y + size * 0.4)
-    graphics.lineTo(x, y - size)
+    graphics.moveTo(x, y - height)
+    graphics.lineTo(x + width * 0.5, y - height * 0.3)
+    graphics.lineTo(x + width * 0.7, y + height * 0.3)
+    graphics.lineTo(x, y + height)
+    graphics.lineTo(x - width * 0.7, y + height * 0.3)
+    graphics.lineTo(x - width * 0.5, y - height * 0.3)
+    graphics.lineTo(x, y - height)
     graphics.strokePath()
   }
   
   private static drawMarquiseCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
-    const size = style.size
+    // Standardized to 18x18 - vertical marquise/eye shape
+    const width = 9
+    const height = 9
     
-    // Marquise cut - football/eye shape
+    // Marquise cut - vertical football/eye shape
     graphics.fillStyle(style.color, 0.8)
     graphics.beginPath()
-    graphics.moveTo(x - size, y)                    // Left point
-    graphics.lineTo(x + size, y)    // Right point
-    graphics.lineTo(x - size, y)    // Back to left
+    graphics.moveTo(x, y - height)                    // Top point
+    graphics.lineTo(x + width * 0.6, y)              // Right middle
+    graphics.lineTo(x, y + height)                    // Bottom point
+    graphics.lineTo(x - width * 0.6, y)              // Left middle
+    graphics.lineTo(x, y - height)                    // Back to top
     graphics.closePath()
     graphics.fillPath()
     
     // Facet lines
     graphics.lineStyle(0.5, style.facetColor!, 0.6)
-    graphics.lineBetween(x - size * 0.6, y, x + size * 0.6, y)  // Center line
-    graphics.lineBetween(x, y - size * 0.4, x, y + size * 0.4)  // Cross line
+    // Vertical center line
+    graphics.lineBetween(x, y - height * 0.7, x, y + height * 0.7)
+    // Horizontal center line
+    graphics.lineBetween(x - width * 0.4, y, x + width * 0.4, y)
     
     // Diagonal facets
-    graphics.lineBetween(x - size * 0.4, y - size * 0.2, x + size * 0.4, y + size * 0.2)
-    graphics.lineBetween(x - size * 0.4, y + size * 0.2, x + size * 0.4, y - size * 0.2)
+    graphics.lineBetween(x - width * 0.3, y - height * 0.5, x + width * 0.3, y + height * 0.5)
+    graphics.lineBetween(x + width * 0.3, y - height * 0.5, x - width * 0.3, y + height * 0.5)
     
     // Highlight
     graphics.fillStyle(style.highlightColor!, 0.7)
-    graphics.fillEllipse(x - size * 0.3, y - size * 0.2, size * 0.3, size * 0.2)
+    graphics.fillEllipse(x - width * 0.2, y - height * 0.3, width * 0.3, height * 0.2)
     
     // Outline
     graphics.lineStyle(1, 0xffffff, 0.8)
     graphics.beginPath()
-    graphics.moveTo(x - size, y)
-    graphics.lineTo(x, y - size * 0.6)    // Top point
-    graphics.lineTo(x + size, y)          // Right point
-    graphics.lineTo(x, y + size * 0.6)    // Bottom point
-    graphics.lineTo(x - size, y)          // Back to left
+    graphics.moveTo(x, y - height)
+    graphics.lineTo(x + width * 0.6, y)
+    graphics.lineTo(x, y + height)
+    graphics.lineTo(x - width * 0.6, y)
+    graphics.lineTo(x, y - height)
     graphics.strokePath()
   }
   
   private static drawOvalCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
-    const size = style.size
+    // Standardized to 18x18 - vertical oval
+    const width = 9
+    const height = 9
     
-    // Oval cut
+    // Oval cut - vertical ellipse
     graphics.fillStyle(style.color, 0.8)
-    graphics.fillEllipse(x, y, size * 1.2, size * 0.8)
+    graphics.fillEllipse(x, y, width * 1.6, height * 2.0) // Vertical orientation
     
     // Facet lines
     graphics.lineStyle(0.5, style.facetColor!, 0.6)
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2
-      const x1 = x + Math.cos(angle) * size * 0.3
-      const y1 = y + Math.sin(angle) * size * 0.2
-      const x2 = x + Math.cos(angle) * size * 0.9
-      const y2 = y + Math.sin(angle) * size * 0.6
+      const x1 = x + Math.cos(angle) * width * 0.4
+      const y1 = y + Math.sin(angle) * height * 0.6
+      const x2 = x + Math.cos(angle) * width * 0.7
+      const y2 = y + Math.sin(angle) * height * 0.9
       graphics.lineBetween(x1, y1, x2, y2)
     }
     
     // Highlight
     graphics.fillStyle(style.highlightColor!, 0.7)
-    graphics.fillEllipse(x - size * 0.3, y - size * 0.2, size * 0.3, size * 0.2)
+    graphics.fillEllipse(x - width * 0.2, y - height * 0.4, width * 0.3, height * 0.3)
     
     // Outline
     graphics.lineStyle(1, 0xffffff, 0.8)
-    graphics.strokeEllipse(x, y, size * 1.2, size * 0.8)
+    graphics.strokeEllipse(x, y, width * 1.6, height * 2.0)
   }
   
   private static drawCushionCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
-    const size = style.size
-    
-    // Cushion cut - rounded square
+    // Standardized to 18x18 - rounded square
+    const size = 9
     const radius = size * 0.3
+    
     graphics.fillStyle(style.color, 0.8)
     graphics.fillRoundedRect(x - size, y - size, size * 2, size * 2, radius)
     
@@ -270,6 +293,55 @@ export class GemShapeGenerator {
     // Outline
     graphics.lineStyle(1, 0xffffff, 0.8)
     graphics.strokeRoundedRect(x - size, y - size, size * 2, size * 2, radius)
+  }
+  
+  private static drawDiamondCut(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    // Standardized to 24x24 - classic diamond emoji shape
+    const size = 12 // Half of 24x24
+    
+    // Classic diamond shape - vertical orientation
+    graphics.fillStyle(style.color, 0.8)
+    graphics.beginPath()
+    graphics.moveTo(x, y - size)                      // Top point
+    graphics.lineTo(x + size * 0.5, y - size * 0.3)  // Upper right
+    graphics.lineTo(x + size * 0.3, y + size)        // Lower right
+    graphics.lineTo(x, y + size * 0.6)               // Bottom center
+    graphics.lineTo(x - size * 0.3, y + size)        // Lower left
+    graphics.lineTo(x - size * 0.5, y - size * 0.3)  // Upper left
+    graphics.lineTo(x, y - size)                      // Back to top
+    graphics.closePath()
+    graphics.fillPath()
+    
+    // Diamond facet lines
+    graphics.lineStyle(0.5, style.facetColor!, 0.6)
+    // Table (top flat surface)
+    graphics.lineBetween(x - size * 0.3, y - size * 0.3, x + size * 0.3, y - size * 0.3)
+    // Crown facets
+    graphics.lineBetween(x, y - size, x, y - size * 0.3)
+    graphics.lineBetween(x - size * 0.25, y - size * 0.3, x - size * 0.5, y - size * 0.3)
+    graphics.lineBetween(x + size * 0.25, y - size * 0.3, x + size * 0.5, y - size * 0.3)
+    // Girdle line
+    graphics.lineBetween(x - size * 0.5, y - size * 0.3, x + size * 0.5, y - size * 0.3)
+    // Pavilion facets
+    graphics.lineBetween(x, y - size * 0.3, x, y + size * 0.6)
+    graphics.lineBetween(x - size * 0.2, y - size * 0.1, x - size * 0.3, y + size)
+    graphics.lineBetween(x + size * 0.2, y - size * 0.1, x + size * 0.3, y + size)
+    
+    // Highlight on table
+    graphics.fillStyle(style.highlightColor!, 0.7)
+    graphics.fillRect(x - size * 0.15, y - size * 0.4, size * 0.3, size * 0.15)
+    
+    // Outline
+    graphics.lineStyle(1, 0xffffff, 0.8)
+    graphics.beginPath()
+    graphics.moveTo(x, y - size)
+    graphics.lineTo(x + size * 0.5, y - size * 0.3)
+    graphics.lineTo(x + size * 0.3, y + size)
+    graphics.lineTo(x, y + size * 0.6)
+    graphics.lineTo(x - size * 0.3, y + size)
+    graphics.lineTo(x - size * 0.5, y - size * 0.3)
+    graphics.lineTo(x, y - size)
+    graphics.strokePath()
   }
   
   static getFacetColor(baseColor: number): number {
