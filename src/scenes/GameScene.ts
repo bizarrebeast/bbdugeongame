@@ -11,10 +11,12 @@ import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
 import { Door } from "../objects/Door"
 import { AssetPool, AssetConfig } from "../systems/AssetPool"
+import { GemShapeGenerator, GemStyle, GemCut } from "../utils/GemShapes"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
   private ladders!: Phaser.Physics.Arcade.StaticGroup
+  private spikes!: Phaser.Physics.Arcade.StaticGroup
   private player!: Player
   private cats!: Phaser.Physics.Arcade.Group
   private ceilingCats!: Phaser.Physics.Arcade.Group
@@ -267,6 +269,9 @@ export class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup()
     this.ladders = this.physics.add.staticGroup()
     
+    // Create spikes group for environmental hazards
+    this.spikes = this.physics.add.staticGroup()
+    
     // Create cats group
     this.cats = this.physics.add.group({
       classType: Cat,
@@ -370,6 +375,15 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.ceilingCats,
       this.handlePlayerCeilingCatInteraction,
+      undefined,
+      this
+    )
+    
+    // Player vs spikes collision - lose life on contact
+    this.physics.add.overlap(
+      this.player,
+      this.spikes,
+      this.handlePlayerSpikeCollision,
       undefined,
       this
     )
@@ -970,6 +984,10 @@ export class GameScene extends Phaser.Scene {
             }
           }
           
+          // Add spikes to all gaps in initial floor creation too
+          console.log(`🔱 Initial floor ${floor}: Creating spikes: gapStart=${gapStart}, gapSize=${gapSize}, floorY=${y}`)
+          this.createSpikesInGap(gapStart, gapSize, y, tileSize)
+          
           // Store safe ladder positions (not in or next to gaps)
           const leftSafe = gapStart > 3 ? Math.floor(Math.random() * (gapStart - 1)) + 1 : -1
           const rightSafe = gapStart + gapSize < floorWidth - 2 ? 
@@ -1300,6 +1318,87 @@ export class GameScene extends Phaser.Scene {
       
       ladderGraphics.setDepth(11)
     }
+  }
+
+  private createSpikesInGap(gapStart: number, gapSize: number, floorY: number, tileSize: number): void {
+    console.log(`🔱 createSpikesInGap called: creating ${gapSize} spike tiles`)
+    // Create pink spikes in each tile of the gap
+    for (let x = gapStart; x < gapStart + gapSize; x++) {
+      const spikeX = x * tileSize + tileSize/2
+      const spikeY = floorY // Position at floor level
+      
+      console.log(`🔱 Creating spike at tile ${x}: position (${spikeX}, ${spikeY})`)
+      this.createSpikeGraphics(spikeX, spikeY, tileSize)
+    }
+  }
+  
+  private createSpikeGraphics(x: number, y: number, tileSize: number): void {
+    const spikeHeight = tileSize * 0.5 // 50% of tile height
+    const spikesPerTile = 3 // 3 spikes per tile, side by side
+    const spikeWidth = tileSize / spikesPerTile // Width per spike
+    
+    // Position spikes at the bottom edge of platforms (align with green line), moved up 1px
+    const spikeBaseY = y + tileSize/2 - 1 // Move to bottom of platform tiles, 1px higher
+    
+    console.log(`🔱 createSpikeGraphics: x=${x}, y=${y}, spikeBaseY=${spikeBaseY}, spikeHeight=${spikeHeight}, spikesPerTile=${spikesPerTile}`)
+    
+    // Create graphics object for spikes
+    const spikesGraphics = this.add.graphics()
+    
+    // First draw drop shadows for all spikes (like floor tiles)
+    spikesGraphics.fillStyle(0x000000, 0.3) // Black shadow with 30% opacity
+    for (let i = 0; i < spikesPerTile; i++) {
+      const offsetX = (i - (spikesPerTile - 1) / 2) * spikeWidth
+      const spikeX = x + offsetX
+      
+      // Create shadow triangle slightly offset down and right
+      const shadowOffsetX = 3
+      const shadowOffsetY = 3
+      
+      spikesGraphics.beginPath()
+      spikesGraphics.moveTo(spikeX - spikeWidth/2 + shadowOffsetX, spikeBaseY + shadowOffsetY) // Bottom left
+      spikesGraphics.lineTo(spikeX + spikeWidth/2 + shadowOffsetX, spikeBaseY + shadowOffsetY) // Bottom right  
+      spikesGraphics.lineTo(spikeX + shadowOffsetX, spikeBaseY - spikeHeight + shadowOffsetY) // Top point
+      spikesGraphics.closePath()
+      spikesGraphics.fillPath()
+    }
+    
+    // Now draw the actual spikes on top
+    spikesGraphics.fillStyle(0xff1493, 1) // Deep pink color
+    
+    // Create 3 triangular spikes per tile, side by side
+    for (let i = 0; i < spikesPerTile; i++) {
+      const offsetX = (i - (spikesPerTile - 1) / 2) * spikeWidth
+      const spikeX = x + offsetX
+      
+      console.log(`🔱 Creating triangular spike ${i}: offsetX=${offsetX}, spikeX=${spikeX}`)
+      
+      // Create triangular spike pointing upward
+      spikesGraphics.beginPath()
+      spikesGraphics.moveTo(spikeX - spikeWidth/2, spikeBaseY) // Bottom left
+      spikesGraphics.lineTo(spikeX + spikeWidth/2, spikeBaseY) // Bottom right  
+      spikesGraphics.lineTo(spikeX, spikeBaseY - spikeHeight) // Top point
+      spikesGraphics.closePath()
+      spikesGraphics.fillPath()
+      
+      // Add gem-style outline for consistency
+      spikesGraphics.lineStyle(1, 0xffffff, 0.8)
+      spikesGraphics.beginPath()
+      spikesGraphics.moveTo(spikeX - spikeWidth/2, spikeBaseY) // Bottom left
+      spikesGraphics.lineTo(spikeX + spikeWidth/2, spikeBaseY) // Bottom right  
+      spikesGraphics.lineTo(spikeX, spikeBaseY - spikeHeight) // Top point
+      spikesGraphics.closePath()
+      spikesGraphics.strokePath()
+    }
+    
+    spikesGraphics.setDepth(12) // Above platforms but below player
+    console.log(`🔱 Graphics created with depth 12, ${spikesPerTile} triangular spikes`)
+    
+    // Create physics body for collision detection - positioned at spike location
+    const spikeBody = this.add.rectangle(x, spikeBaseY - spikeHeight/2, tileSize * 0.9, spikeHeight, 0x000000, 0)
+    spikeBody.setVisible(false) // Invisible collision box
+    this.spikes.add(spikeBody)
+    console.log(`🔱 Physics body added to spikes group at correct position`)
   }
 
   private createCats(): void {
@@ -2045,6 +2144,25 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private handlePlayerSpikeCollision(
+    player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    spike: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    if (this.isGameOver) return
+    
+    const playerObj = player as Player
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    
+    // Only damage player if they're falling down onto the spikes
+    // Check if player's Y velocity is positive (falling downward)
+    if (playerBody.velocity.y > 50) { // Must be falling with some speed (not just barely touching)
+      console.log(`🔱 Player fell onto spikes! Velocity Y: ${playerBody.velocity.y}`)
+      this.handlePlayerDamage(playerObj)
+    } else {
+      console.log(`🔱 Player touched spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
+    }
+  }
+  
   private handleCatKill(player: Player, cat: Cat): void {
     // Check if cat is already squished to prevent multiple kills
     if ((cat as any).isSquished) return
@@ -2596,6 +2714,8 @@ export class GameScene extends Phaser.Scene {
       const hasGap = Math.random() > 0.3
       let layout: { gapStart: number, gapSize: number }
       
+      console.log(`🏗️ Floor ${floor}: hasGap=${hasGap}`)
+      
       if (hasGap) {
         const gapStart = Math.floor(Math.random() * (floorWidth - 5)) + 2
         const gapSize = Math.floor(Math.random() * 2) + 2
@@ -2607,6 +2727,10 @@ export class GameScene extends Phaser.Scene {
             this.createPlatformTile(x * tileSize + tileSize/2, y)
           }
         }
+        
+        // Add spikes to all gaps
+        console.log(`🔱 Creating spikes: gapStart=${gapStart}, gapSize=${gapSize}, floorY=${y}`)
+        this.createSpikesInGap(gapStart, gapSize, y, tileSize)
       } else {
         layout = { gapStart: -1, gapSize: 0 }
         
