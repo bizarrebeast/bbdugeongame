@@ -3,7 +3,8 @@ import GameSettings from "../config/GameSettings"
 export enum CatColor {
   BLUE = 'blue',
   YELLOW = 'yellow',
-  GREEN = 'green'
+  GREEN = 'green',
+  RED = 'red'
 }
 
 export class Cat extends Phaser.Physics.Arcade.Sprite {
@@ -33,48 +34,79 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     y: number, 
     platformLeft: number, 
     platformRight: number,
-    color?: CatColor
+    color?: CatColor | string
   ) {
-    const colors = [CatColor.BLUE, CatColor.YELLOW, CatColor.GREEN]
-    const catColor = color || colors[Math.floor(Math.random() * colors.length)]
+    const colors = [CatColor.BLUE, CatColor.YELLOW, CatColor.GREEN, CatColor.RED]
     
-    // Use the new sprite for blue enemies, generate texture for others
+    // Convert string color to CatColor enum if needed
+    let catColor: CatColor
+    if (color) {
+      if (typeof color === 'string') {
+        catColor = color as CatColor // Cast string to CatColor enum
+      } else {
+        catColor = color
+      }
+    } else {
+      catColor = colors[Math.floor(Math.random() * colors.length)]
+    }
+    
+    // Use sprites for all enemy types, generate texture as fallback
     let textureKey: string
     
+    // Generate fallback textures FIRST, before calling super
     if (catColor === CatColor.BLUE) {
       // For blue enemies, prefer the new animation sprite (start with mouth closed), fallback to old sprite, then generated
       if (scene.textures.exists('blueEnemyMouthClosed')) {
         textureKey = 'blueEnemyMouthClosed'
-        super(scene, x, y, textureKey)
       } else if (scene.textures.exists('blueEnemy')) {
         textureKey = 'blueEnemy'
-        super(scene, x, y, textureKey)
       } else {
         // Use generated texture as fallback
         textureKey = `cat-${catColor}`
-        this.generateFallbackTexture(scene, catColor)
-        super(scene, x, y, textureKey)
+        Cat.generateFallbackTexture(scene, catColor) // Static call
+      }
+    } else if (catColor === CatColor.YELLOW) {
+      // For yellow enemies, look for yellow enemy sprite
+      if (scene.textures.exists('yellowEnemy')) {
+        textureKey = 'yellowEnemy'
+      } else {
+        // Use generated texture as fallback
+        textureKey = `cat-${catColor}`
+        Cat.generateFallbackTexture(scene, catColor) // Static call
+      }
+    } else if (catColor === CatColor.GREEN) {
+      // For green enemies, look for green enemy sprite
+      if (scene.textures.exists('greenEnemy')) {
+        textureKey = 'greenEnemy'
+      } else {
+        // Use generated texture as fallback
+        textureKey = `cat-${catColor}`
+        Cat.generateFallbackTexture(scene, catColor) // Static call
+      }
+    } else if (catColor === CatColor.RED) {
+      // For red enemies, look for red enemy sprite
+      if (scene.textures.exists('redEnemy')) {
+        textureKey = 'redEnemy'
+      } else {
+        // Use generated texture as fallback
+        textureKey = `cat-${catColor}`
+        Cat.generateFallbackTexture(scene, catColor) // Static call
       }
     } else {
-      // For other colors, always use generated texture
+      // For any other colors, use generated texture
       textureKey = `cat-${catColor}`
-      this.generateFallbackTexture(scene, catColor)
-      super(scene, x, y, textureKey)
+      Cat.generateFallbackTexture(scene, catColor) // Static call
     }
+    
+    // Now call super with the determined texture
+    super(scene, x, y, textureKey)
     
     this.catColor = catColor
     
     scene.add.existing(this)
     scene.physics.add.existing(this)
     
-    // === DETAILED DEBUG LOGGING START ===
-    console.log(`🚀 STEP 1: Created ${catColor} enemy at (${x}, ${y}) with texture: ${textureKey}`)
-    console.log(`🚀 STEP 2: Enemy spawn Y is ${y < 0 ? 'NEGATIVE' : 'positive'} - this ${y < 0 ? 'IS A PROBLEM' : 'looks good'}`)
-    console.log(`🚀 STEP 3: Texture exists check - blueEnemy: ${scene.textures.exists('blueEnemy')}, defaultEnemy: ${scene.textures.exists('defaultEnemy')}, scene has assetPool: ${!!(scene as any).assetPool}`)
-    
-    if (this.body instanceof Phaser.Physics.Arcade.Body) {
-      console.log(`🚀 STEP 4: Initial physics body size: ${this.body.width}x${this.body.height}`)
-    }
+    console.log(`🚀 ${catColor.toUpperCase()} enemy: ${textureKey} at (${x}, ${y})`)
     
     // Apply blue enemy hitbox sizing AFTER physics body is created
     if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
@@ -100,44 +132,43 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
       // For all blue enemy animation sprites - use consistent positioning
       this.setDisplaySize(36, 36)
-      // Use the refined positioning from mouth open sprite testing
       this.setOffset(3, 58) // Consistent positioning for all animation sprites
-      
-      // The image shows enemy facing left, which is our default
       this.setFlipX(false)
-      
-      // Initialize blue enemy animation system
       this.initializeBlueEnemyAnimations()
-      
-      // Add debug visualization
       this.addDebugVisualization()
-      
-      // Debug: Log basic position info
-      console.log(`🚀 STEP 6A: Blue Enemy spawned at Y: ${y}, using sprite texture: ${textureKey}`)
-      if (this.body instanceof Phaser.Physics.Arcade.Body) {
-        console.log(`🚀 STEP 6B: Blue enemy final hitbox size: ${this.body.width}x${this.body.height}`)
-      }
     } else if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
       // Original blue enemy sprite fallback
       this.setDisplaySize(36, 36)
-      this.setOffset(3, 45) // Keep original positioning
+      this.setOffset(3, 45)
       this.setFlipX(false)
       this.addDebugVisualization()
-      console.log(`🚀 STEP 6A: Blue Enemy (fallback) spawned at Y: ${y}, using sprite texture: ${textureKey}`)
+    } else if (this.isEnemySprite(textureKey)) {
+      // For sprite-based enemies (yellow, green, red), use proper sizing similar to blue enemies
+      if (catColor === CatColor.YELLOW) {
+        // Make yellow enemies 3x wider
+        this.setDisplaySize(108, 36) // 3x width (36 * 3 = 108)
+        this.setOffset(3, 45)
+      } else {
+        // Green and red enemies keep normal sizing
+        this.setDisplaySize(36, 36)
+        this.setOffset(3, 45)
+      }
+      this.setFlipX(false)
+      this.addDebugVisualization()
     } else if (catColor !== CatColor.BLUE) {
-      // Original settings for non-blue colors only
-      console.log(`🚀 STEP 6C: Setting non-blue enemy hitbox to 18x14...`)
-      this.setSize(18, 14)
-      this.setOffset(1, 1)
-      if (this.body instanceof Phaser.Physics.Arcade.Body) {
-        console.log(`🚀 STEP 6D: Non-blue enemy final hitbox: ${this.body.width}x${this.body.height}`)
+      // Fallback generated texture settings for non-blue colors
+      if (catColor === CatColor.YELLOW) {
+        // Make yellow enemies 3x wider even with fallback texture
+        this.setDisplaySize(54, 14) // 3x width (18 * 3 = 54)
+        this.setOffset(1, 1)
+      } else {
+        this.setSize(18, 14)
+        this.setOffset(1, 1)
       }
+      this.addDebugVisualization()
     } else {
-      // Blue enemy using fallback texture - keep the 30x20 hitbox we set above
-      console.log(`🚀 STEP 6E: Blue enemy using fallback texture, keeping 30x20 hitbox`)
-      if (this.body instanceof Phaser.Physics.Arcade.Body) {
-        console.log(`🚀 STEP 6F: Blue fallback enemy final hitbox: ${this.body.width}x${this.body.height}`)
-      }
+      // Blue enemy using fallback texture
+      this.addDebugVisualization()
     }
     
     // === FINAL VERIFICATION ===
@@ -175,6 +206,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       case CatColor.GREEN:
         this.moveSpeed = this.baseSpeed * 1.5
         break
+      case CatColor.RED:
+        this.moveSpeed = this.baseSpeed * 1.2 // Fast but not as fast as green
+        break
     }
   }
   
@@ -193,6 +227,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
       case CatColor.GREEN:
         this.updateGreenBounce(delta)
+        break
+      case CatColor.RED:
+        this.updateRedPatrol()
         break
     }
   }
@@ -244,6 +281,23 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.direction = 1
     } else if (this.x >= this.platformBounds.right - 5) {
       this.direction = -1
+    }
+    
+    this.setVelocityX(this.moveSpeed * this.direction)
+  }
+  
+  private updateRedPatrol(): void {
+    // Red enemies are aggressive - they reverse direction more frequently
+    // and move in shorter, erratic patterns
+    if (this.x <= this.platformBounds.left + 15) {
+      this.direction = 1
+    } else if (this.x >= this.platformBounds.right - 15) {
+      this.direction = -1
+    }
+    
+    // Occasionally reverse direction randomly for erratic movement
+    if (Math.random() < 0.002) { // 0.2% chance per frame = frequent direction changes
+      this.direction *= -1
     }
     
     this.setVelocityX(this.moveSpeed * this.direction)
@@ -365,11 +419,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Removed - replaced with addDebugVisualization
   }
   
-  private generateFallbackTexture(scene: Phaser.Scene, catColor: CatColor): void {
+  private static generateFallbackTexture(scene: Phaser.Scene, catColor: CatColor): void {
     const colorMap = {
       [CatColor.BLUE]: 0x4169e1,
       [CatColor.YELLOW]: 0xffd700,
-      [CatColor.GREEN]: 0x32cd32
+      [CatColor.GREEN]: 0x32cd32,
+      [CatColor.RED]: 0xdc143c
     }
     
     const textureKey = `cat-${catColor}`
@@ -397,6 +452,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       'blueEnemyMouthOpen',
       'blueEnemyMouthOpenBlinking'
     ].includes(textureKey)
+  }
+  
+  private isEnemySprite(textureKey: string): boolean {
+    return ['yellowEnemy', 'greenEnemy', 'redEnemy'].includes(textureKey)
   }
   
   private initializeBlueEnemyAnimations(): void {

@@ -1,7 +1,7 @@
 import GameSettings from "../config/GameSettings"
 import { Cat, CatColor } from "./Cat"
 
-export class CeilingCat extends Cat {
+export class StalkerCat extends Cat {
   private state: 'hidden' | 'activated' | 'chasing' = 'hidden'
   private triggerDistance: number = 32 // 1 tile away to activate mine
   public playerRef: Phaser.Physics.Arcade.Sprite | null = null

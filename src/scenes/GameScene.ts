@@ -1,7 +1,7 @@
 import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
 import { Cat } from "../objects/Cat"
-import { CeilingCat } from "../objects/CeilingCat"
+import { StalkerCat } from "../objects/StalkerCat"
 import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
@@ -19,7 +19,7 @@ export class GameScene extends Phaser.Scene {
   private spikes!: Phaser.Physics.Arcade.StaticGroup
   private player!: Player
   private cats!: Phaser.Physics.Arcade.Group
-  private ceilingCats!: Phaser.Physics.Arcade.Group
+  private stalkerCats!: Phaser.Physics.Arcade.Group
   private coins: Coin[] = []
   private blueCoins: BlueCoin[] = []
   private diamonds: Diamond[] = []
@@ -190,12 +190,12 @@ export class GameScene extends Phaser.Scene {
     this.load.image('visibilityOverlay', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO')
     
     // Load new blue enemy animation sprites
-    this.load.image('blueEnemyMouthClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-c7ARTamNTdFUdqxk9Xk9knaCfYs5U2.png?8vXC')
-    this.load.image('blueEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed%20blinking-F43cDOVR2cjUJ4FHSQ1qSTHC847FiR.png?EApA')
-    this.load.image('blueEnemyMouthPartialOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20partial%20open-VttzLnyR8QJAg52ss8AEIpXx78yvUh.png?u8K4')
-    this.load.image('blueEnemyMouthPartialOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20partial%20open%20blinking-29YCvY31m3Rvq2txQDqYrC5I8pri7r.png?yPc1')
-    this.load.image('blueEnemyMouthOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open-g8glq9u9hSUnRr20R3kU1VBuaHv7mG.png?IkWV')
-    this.load.image('blueEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open%20blinking-rmd7RFW8qQRKzm30bXLbQZII0jLSNj.png?XEKS')
+    this.load.image('blueEnemyMouthClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-HUXqx9HBdotEhJE2LBgzK8Z4kA7e2H.png?AVKZ')
+    this.load.image('blueEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed%20blinking-bJ1xwYkoCZvjd4T9MdXzR45PfaZIcF.png?6LRV')
+    this.load.image('blueEnemyMouthPartialOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20partially%20open-PrzEwLEPYIPE6pJTgHBWV7SVvKYcSX.png?0RG2')
+    this.load.image('blueEnemyMouthPartialOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20partially%20open%20blinking-GfMaaIsvJGkTrtx4vIFnh11fvyTc5N.png?d3qY')
+    this.load.image('blueEnemyMouthOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open-4hO9JLZDfnWgcQWlvfqiU7SCOXaA0g.png?sh1i')
+    this.load.image('blueEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open%20blinking-Nl5UA9KyScZCBwu9BrKXR0IdNk3aen.png?B9Tr')
     
     // Load new player sprite collection
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
@@ -278,9 +278,9 @@ export class GameScene extends Phaser.Scene {
       runChildUpdate: true
     })
     
-    // Create ceiling cats group
-    this.ceilingCats = this.physics.add.group({
-      classType: CeilingCat,
+    // Create stalker cats group
+    this.stalkerCats = this.physics.add.group({
+      classType: StalkerCat,
       runChildUpdate: true
     })
     
@@ -328,8 +328,11 @@ export class GameScene extends Phaser.Scene {
     this.createCats()
     console.log('🎮 createCats() call completed')
     
-    // Add ceiling cats
-    this.createCeilingCats()
+    // Add stalker cats
+    this.createStalkerCats()
+    
+    // Add ceiling spikes
+    this.createCeilingSpikes()
     
     // Add collectibles
     this.createAllCollectibles()
@@ -350,7 +353,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.cats, this.platforms)
     
     // Ceiling cats collide with platforms (after dropping)
-    this.physics.add.collider(this.ceilingCats, this.platforms)
+    this.physics.add.collider(this.stalkerCats, this.platforms)
     
     // Cats collide with each other and reverse direction
     this.physics.add.collider(
@@ -370,11 +373,11 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
-    // Player vs ceiling cat collision - check for jump-to-kill vs damage  
+    // Player vs stalker cat collision - check for jump-to-kill vs damage  
     this.physics.add.overlap(
       this.player,
-      this.ceilingCats,
-      this.handlePlayerCeilingCatInteraction,
+      this.stalkerCats,
+      this.handlePlayerStalkerCatInteraction,
       undefined,
       this
     )
@@ -1401,8 +1404,151 @@ export class GameScene extends Phaser.Scene {
     console.log(`🔱 Physics body added to spikes group at correct position`)
   }
 
+  private createCeilingSpikes(): void {
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
+    
+    // Only spawn ceiling spikes on level 1 for testing, later only on higher levels
+    const minFloorForCeilingSpikes = 1 // Will change to higher number later
+    
+    // Iterate through floors to randomly place ceiling spikes
+    for (let floor = minFloorForCeilingSpikes; floor < this.floorLayouts.length - 1; floor++) {
+      const layout = this.floorLayouts[floor]
+      
+      // 30% chance of ceiling spikes on this floor
+      if (Math.random() > 0.3) continue
+      
+      // Calculate ceiling position (just below the floor above)
+      const ceilingY = GameSettings.canvas.height - tileSize/2 - ((floor + 1) * floorSpacing) + tileSize
+      
+      // Find valid positions (avoiding ladders, door, collectibles, and gaps)
+      const validPositions: number[] = []
+      
+      // Get ladder positions for this floor
+      const ladderPositions = this.getLadderPositionsForFloor(floor)
+      
+      // Build list of valid positions
+      for (let x = 2; x < GameSettings.game.floorWidth - 2; x++) {
+        // Skip if over a gap
+        if (layout.gapStart !== -1 && x >= layout.gapStart && x < layout.gapStart + layout.gapSize) {
+          continue
+        }
+        
+        // Skip if near a ladder (within 3 tiles for safety)
+        let nearLadder = false
+        for (const ladderX of ladderPositions) {
+          if (Math.abs(x - ladderX) < 3) {
+            nearLadder = true
+            break
+          }
+        }
+        if (nearLadder) continue
+        
+        // Skip if near door (on door floor)
+        if (floor === this.floorLayouts.length - 2) {
+          const doorX = Math.floor(GameSettings.game.floorWidth / 2)
+          if (Math.abs(x - doorX) < 3) continue
+        }
+        
+        validPositions.push(x)
+      }
+      
+      // Place 1-3 ceiling spike clusters randomly
+      const numSpikeClusters = Math.floor(Math.random() * 3) + 1
+      
+      for (let i = 0; i < Math.min(numSpikeClusters, validPositions.length / 3); i++) {
+        if (validPositions.length === 0) break
+        
+        const randomIndex = Math.floor(Math.random() * validPositions.length)
+        const spikeX = validPositions[randomIndex]
+        
+        // Create a cluster of 2-3 tiles of ceiling spikes
+        const clusterSize = Math.floor(Math.random() * 2) + 2
+        
+        for (let j = 0; j < clusterSize; j++) {
+          const tileX = spikeX + j
+          if (tileX >= GameSettings.game.floorWidth - 2) break
+          
+          // Remove used positions
+          const idx = validPositions.indexOf(tileX)
+          if (idx > -1) validPositions.splice(idx, 1)
+          
+          console.log(`🔱⬇️ Creating ceiling spike at floor ${floor}, tile X=${tileX}`)
+          this.createCeilingSpikeGraphics(tileX * tileSize + tileSize/2, ceilingY, tileSize)
+        }
+      }
+    }
+  }
+
+  private createCeilingSpikeGraphics(x: number, y: number, tileSize: number): void {
+    const spikeHeight = tileSize * 0.5 // 50% of tile height
+    const spikesPerTile = 3 // 3 spikes per tile, matching floor spikes
+    const spikeWidth = tileSize / spikesPerTile
+    
+    // Position spikes hanging from ceiling
+    const spikeBaseY = y - tileSize/2 + 1 // Attach to ceiling
+    
+    // Create graphics object for ceiling spikes (yellow color)
+    const spikesGraphics = this.add.graphics()
+    spikesGraphics.fillStyle(0xffff00, 1) // Yellow color for ceiling spikes
+    spikesGraphics.lineStyle(2, 0xffd700, 1) // Golden outline
+    
+    // Create triangular spikes pointing downward
+    for (let i = 0; i < spikesPerTile; i++) {
+      const spikeX = x - tileSize/2 + (i * spikeWidth) + spikeWidth/2
+      
+      // Draw inverted triangle (pointing down)
+      spikesGraphics.beginPath()
+      spikesGraphics.moveTo(spikeX - spikeWidth/3, spikeBaseY) // Top left
+      spikesGraphics.lineTo(spikeX + spikeWidth/3, spikeBaseY) // Top right
+      spikesGraphics.lineTo(spikeX, spikeBaseY + spikeHeight) // Bottom point
+      spikesGraphics.closePath()
+      spikesGraphics.fillPath()
+      spikesGraphics.strokePath()
+    }
+    
+    spikesGraphics.setDepth(12) // Same depth as floor spikes
+    
+    // Create physics body for collision detection
+    const spikeBody = this.add.rectangle(x, spikeBaseY + spikeHeight/2, tileSize * 0.9, spikeHeight, 0x000000, 0)
+    spikeBody.setVisible(false) // Invisible collision box
+    spikeBody.setData('isCeilingSpike', true) // Mark as ceiling spike
+    spikeBody.setData('graphics', spikesGraphics) // Store graphics reference for shaking
+    spikeBody.setData('x', x) // Store position for dropping later
+    spikeBody.setData('y', spikeBaseY)
+    
+    this.physics.add.existing(spikeBody, true) // Static body
+    this.spikes.add(spikeBody)
+  }
+
+  private getLadderPositionsForFloor(floor: number): number[] {
+    // Get ladder positions from stored ladder data
+    const positions: number[] = []
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    
+    this.ladders.children.entries.forEach(ladder => {
+      const ladderObj = ladder as Phaser.GameObjects.Rectangle
+      // Calculate which floor this ladder connects
+      // Ladder bottom Y position
+      const ladderBottomY = ladderObj.y + ladderObj.height/2
+      // Convert to floor number (0 = ground floor)
+      const ladderFloor = Math.floor((GameSettings.canvas.height - ladderBottomY) / floorSpacing)
+      
+      // Ladders connect floor to floor+1, so check both
+      if (ladderFloor === floor || ladderFloor === floor - 1 || ladderFloor === floor + 1) {
+        const ladderTileX = Math.floor(ladderObj.x / tileSize)
+        positions.push(ladderTileX)
+        console.log(`🪜 Floor ${floor}: Found ladder at tile X=${ladderTileX}, ladder Y=${ladderObj.y}`)
+      }
+    })
+    
+    console.log(`🪜 Floor ${floor}: Total ladder positions: ${positions.join(', ')}`)
+    return positions
+  }
+
   private createCats(): void {
-    console.log('🐱 CREATE CATS: Starting enemy creation...')
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
@@ -1410,25 +1556,24 @@ export class GameScene extends Phaser.Scene {
     // Get allowed enemy types for current level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     const allowedEnemies = levelConfig.enemyTypes
-    console.log(`🐱 Current level: ${this.levelManager.getCurrentLevel()}, allowed enemies:`, allowedEnemies)
+    console.log(`🐱 Level ${this.levelManager.getCurrentLevel()}: ${allowedEnemies.join(', ')}`)
     
     // Map enemy types to cat colors
     const availableColors: string[] = []
     if (allowedEnemies.includes('blue')) availableColors.push('blue')
     if (allowedEnemies.includes('yellow')) availableColors.push('yellow')
     if (allowedEnemies.includes('green')) availableColors.push('green')
-    console.log(`🐱 Available colors:`, availableColors)
+    if (allowedEnemies.includes('red')) availableColors.push('red') // ADD RED SUPPORT
+    console.log(`🐱 Available: ${availableColors.join(', ')}`)
     
     // If no regular enemies are allowed yet, return
     if (availableColors.length === 0) {
-      console.log('🐱 NO ENEMIES ALLOWED - returning early')
       return
     }
     
     // Add cats on floors 1 through second-to-last floor (skip ground floor and door floor)
     const doorFloor = levelConfig.isEndless ? 999 : (levelConfig.floorCount - 1)
     const maxEnemyFloor = levelConfig.isEndless ? Math.min(20, this.floorLayouts.length - 1) : doorFloor - 1
-    console.log(`🐱 Floor calculation: doorFloor=${doorFloor}, maxEnemyFloor=${maxEnemyFloor}, floorLayouts.length=${this.floorLayouts.length}`)
     
     let enemiesCreated = 0
     for (let floor = 1; floor <= maxEnemyFloor && floor < this.floorLayouts.length; floor++) {
@@ -1441,21 +1586,10 @@ export class GameScene extends Phaser.Scene {
       const platformTop = platformY - tileSize/2 // Top of the platform
       
       // For enemies: position them so they fall onto the platform correctly
-      // The physics body will settle with its bottom at platform top due to gravity
-      // We spawn them slightly above and let gravity pull them down
-      // Hitbox is 16px tall, so center should be 8px above platform when settled
       const y = platformTop - 20 // Spawn slightly above platform, gravity will settle them
-      
-      console.log(`Floor ${floor} platform debug:`, {
-        platformCenterY: platformY,
-        platformTop: platformTop,
-        catCenterY: y,
-        catBottomY: y + 8 // Half of hitbox height
-      })
       
       if (layout.gapStart === -1) {
         // Complete floor - place cats based on level
-        // Level 1: Moderate enemies (2-3 cats), higher levels: more enemies (2-4 cats)
         const isLevel1 = this.levelManager.getCurrentLevel() === 1
         const numCats = isLevel1 ? 
           Math.floor(Math.random() * 2) + 2 : // 2-3 cats for level 1
@@ -1469,6 +1603,7 @@ export class GameScene extends Phaser.Scene {
           if (rightBound - leftBound > tileSize * 3) {
             // Pick a random color from available colors
             const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
+            console.log(`🐱 INITIAL SPAWN: ${randomColor} enemy on floor ${floor} (complete floor)`)
             
             // Green cats get full floor bounds, others get section bounds
             const cat = new Cat(
@@ -1616,7 +1751,7 @@ export class GameScene extends Phaser.Scene {
     console.log(`📐 Grid complete - ${this.floorLayouts.length} floor lines drawn`)
   }
   
-  private createCeilingCats(): void {
+  private createStalkerCats(): void {
     // Check if red enemies should spawn based on current level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     if (!levelConfig.enemyTypes.includes('red')) {
@@ -1628,11 +1763,11 @@ export class GameScene extends Phaser.Scene {
     const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
     
-    // Add ceiling cats starting from floor 2, up to second-to-last floor (avoid door floor)
+    // Add stalker cats starting from floor 2, up to second-to-last floor (avoid door floor)
     const doorFloor = levelConfig.isEndless ? 999 : (levelConfig.floorCount - 1)
-    const maxCeilingCatFloor = levelConfig.isEndless ? Math.min(25, this.floorLayouts.length - 1) : doorFloor - 1
+    const maxStalkerCatFloor = levelConfig.isEndless ? Math.min(25, this.floorLayouts.length - 1) : doorFloor - 1
     
-    for (let floor = 2; floor <= maxCeilingCatFloor && floor < this.floorLayouts.length; floor++) {
+    for (let floor = 2; floor <= maxStalkerCatFloor && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       
       // Calculate floor position for stalker cats (on the floor, not ceiling)
@@ -1640,11 +1775,11 @@ export class GameScene extends Phaser.Scene {
       const floorY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
       const stalkerY = floorY - 16 // Just above the floor platform
       
-      // Determine number of ceiling cats (0-1 for now, will scale later)
-      const maxCeilingCats = floor < 20 ? 1 : 2
-      const numCeilingCats = Math.random() < 0.6 ? Math.floor(Math.random() * maxCeilingCats) + 1 : 0
+      // Determine number of stalker cats (0-1 for now, will scale later)
+      const maxStalkerCats = floor < 20 ? 1 : 2
+      const numStalkerCats = Math.random() < 0.6 ? Math.floor(Math.random() * maxStalkerCats) + 1 : 0
       
-      if (numCeilingCats === 0) continue
+      if (numStalkerCats === 0) continue
       
       // Find valid positions (where there are platforms below)
       const validPositions: number[] = []
@@ -1664,13 +1799,13 @@ export class GameScene extends Phaser.Scene {
         }
       }
       
-      // Place ceiling cats at random valid positions
-      for (let i = 0; i < Math.min(numCeilingCats, validPositions.length); i++) {
+      // Place stalker cats at random valid positions
+      for (let i = 0; i < Math.min(numStalkerCats, validPositions.length); i++) {
         const randomIndex = Math.floor(Math.random() * validPositions.length)
         const tileX = validPositions[randomIndex]
-        const ceilingCatX = tileX * tileSize + tileSize/2
+        const stalkerCatX = tileX * tileSize + tileSize/2
         
-        // Remove position to avoid overlapping ceiling cats
+        // Remove position to avoid overlapping stalker cats
         validPositions.splice(randomIndex, 1)
         
         // Calculate platform bounds for the section below
@@ -1687,9 +1822,9 @@ export class GameScene extends Phaser.Scene {
           }
         }
         
-        const stalkerCat = new CeilingCat(
+        const stalkerCat = new StalkerCat(
           this,
-          ceilingCatX,
+          stalkerCatX,
           stalkerY,
           leftBound,
           rightBound
@@ -1698,7 +1833,7 @@ export class GameScene extends Phaser.Scene {
         // Set player reference for detection
         stalkerCat.setPlayerReference(this.player)
         
-        this.ceilingCats.add(stalkerCat)
+        this.stalkerCats.add(stalkerCat)
       }
     }
   }
@@ -2107,32 +2242,32 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
-  private handlePlayerCeilingCatInteraction(
+  private handlePlayerStalkerCatInteraction(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     cat: Phaser.Types.Physics.Arcade.GameObjectWithBody
   ): void {
     if (this.isGameOver || this.justKilledCat) return
     
     const playerObj = player as Player
-    const ceilingCatObj = cat as CeilingCat
+    const stalkerCatObj = cat as StalkerCat
     
     // Check if this stalker cat can damage the player
-    if (!ceilingCatObj.canDamagePlayer()) {
+    if (!stalkerCatObj.canDamagePlayer()) {
       // This stalker cat can't damage player right now
       return
     }
     
     // Check if player is falling down onto the cat (jump-to-kill)
     const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
-    const catBody = ceilingCatObj.body as Phaser.Physics.Arcade.Body
+    const catBody = stalkerCatObj.body as Phaser.Physics.Arcade.Body
     
     const playerFalling = playerBody.velocity.y > 0 // Moving downward
     const playerAboveCat = playerBody.bottom <= catBody.top + 15 // Player's bottom is near cat's top (increased tolerance)
     
     if (playerFalling && playerAboveCat) {
-      // Jump-to-kill ceiling cat (only when chasing)
+      // Jump-to-kill stalker cat (only when chasing)
       this.justKilledCat = true
-      this.handleCeilingCatKill(playerObj, ceilingCatObj)
+      this.handleStalkerCatKill(playerObj, stalkerCatObj)
       
       // Reset flag after a short delay to allow for physics processing
       this.time.delayedCall(100, () => {
@@ -2140,7 +2275,7 @@ export class GameScene extends Phaser.Scene {
       })
     } else if (!this.justKilledCat) {
       // Regular collision - damage player (only if we didn't just kill)
-      this.handlePlayerDamage(playerObj, ceilingCatObj)
+      this.handlePlayerDamage(playerObj, stalkerCatObj)
     }
   }
   
@@ -2152,14 +2287,45 @@ export class GameScene extends Phaser.Scene {
     
     const playerObj = player as Player
     const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const spikeObj = spike as Phaser.GameObjects.Rectangle
     
-    // Only damage player if they're falling down onto the spikes
-    // Check if player's Y velocity is positive (falling downward)
-    if (playerBody.velocity.y > 50) { // Must be falling with some speed (not just barely touching)
-      console.log(`🔱 Player fell onto spikes! Velocity Y: ${playerBody.velocity.y}`)
-      this.handlePlayerDamage(playerObj)
+    // Check if this is a ceiling spike
+    const isCeilingSpike = spikeObj.getData('isCeilingSpike')
+    
+    if (isCeilingSpike) {
+      // Ceiling spikes damage when:
+      // 1. Player jumps up into them (negative Y velocity)
+      // 2. TODO: They drop onto player (will implement dropping later)
+      if (playerBody.velocity.y < -50) { // Jumping up into ceiling spikes
+        console.log(`🔱 Player jumped into ceiling spikes! Velocity Y: ${playerBody.velocity.y}`)
+        
+        // Add shaking animation before damage
+        const graphics = spikeObj.getData('graphics') as Phaser.GameObjects.Graphics
+        if (graphics) {
+          // Shake the spikes
+          this.tweens.add({
+            targets: graphics,
+            x: graphics.x + 2,
+            duration: 50,
+            yoyo: true,
+            repeat: 3,
+            onComplete: () => {
+              graphics.x = spikeObj.getData('x') - GameSettings.game.tileSize/2
+            }
+          })
+        }
+        
+        this.handlePlayerDamage(playerObj)
+      }
     } else {
-      console.log(`🔱 Player touched spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
+      // Floor spikes - original behavior
+      // Only damage player if they're falling down onto the spikes
+      if (playerBody.velocity.y > 50) { // Must be falling with some speed (not just barely touching)
+        console.log(`🔱 Player fell onto floor spikes! Velocity Y: ${playerBody.velocity.y}`)
+        this.handlePlayerDamage(playerObj)
+      } else {
+        console.log(`🔱 Player touched floor spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
+      }
     }
   }
   
@@ -2222,9 +2388,9 @@ export class GameScene extends Phaser.Scene {
     
   }
   
-  private handleCeilingCatKill(player: Player, ceilingCat: CeilingCat): void {
-    // Check if ceiling cat is already squished to prevent multiple kills
-    if ((ceilingCat as any).isSquished) return
+  private handleStalkerCatKill(player: Player, stalkerCat: StalkerCat): void {
+    // Check if stalker cat is already squished to prevent multiple kills
+    if ((stalkerCat as any).isSquished) return
     
     // Don't allow combo while climbing ladders
     if (player.getIsClimbing()) {
@@ -2236,11 +2402,11 @@ export class GameScene extends Phaser.Scene {
       // Make player bounce up (slightly less than normal jump)
       player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
       
-      // Squish the ceiling cat
-      ceilingCat.squish()
+      // Squish the stalker cat
+      stalkerCat.squish()
       
       // Show point popup at cat position
-      this.showPointPopup(ceilingCat.x, ceilingCat.y - 20, basePoints)
+      this.showPointPopup(stalkerCat.x, stalkerCat.y - 20, basePoints)
       
       return
     }
@@ -2273,11 +2439,11 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
-    // Squish the ceiling cat
-    ceilingCat.squish()
+    // Squish the stalker cat
+    stalkerCat.squish()
     
     // Show point popup at cat position
-    this.showPointPopup(ceilingCat.x, ceilingCat.y - 20, points)
+    this.showPointPopup(stalkerCat.x, stalkerCat.y - 20, points)
     
   }
   
@@ -2639,9 +2805,9 @@ export class GameScene extends Phaser.Scene {
       (cat as Cat).update(this.time.now, this.game.loop.delta)
     })
     
-    // Update all ceiling cats and check ladder exits
-    this.ceilingCats.children.entries.forEach(ceilingCat => {
-      const catObj = ceilingCat as CeilingCat
+    // Update all stalker cats and check ladder exits
+    this.stalkerCats.children.entries.forEach(stalkerCat => {
+      const catObj = stalkerCat as StalkerCat
       catObj.update(this.time.now, this.game.loop.delta)
       
       // Red cats no longer climb ladders
@@ -2818,10 +2984,12 @@ export class GameScene extends Phaser.Scene {
       if (allowedEnemies.includes('blue')) availableColors.push('blue')
       if (allowedEnemies.includes('yellow')) availableColors.push('yellow')
       if (allowedEnemies.includes('green')) availableColors.push('green')
+      if (allowedEnemies.includes('red')) availableColors.push('red') // ADD RED SUPPORT
       
       // Add regular cat on some floors (if any colors are available)
       if (availableColors.length > 0 && floor > 1 && Math.random() > 0.5) {
         const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
+        console.log(`🐱 SPAWNING: ${randomColor} enemy on floor ${floor} (from colors: ${availableColors.join(', ')})`)
         
         if (layout.gapStart === -1) {
           // Complete floor
@@ -2866,40 +3034,40 @@ export class GameScene extends Phaser.Scene {
         }
       }
       
-      // Add ceiling cats to some floors (only if red enemies are allowed)
+      // Add stalker cats to some floors (only if red enemies are allowed)
       if (allowedEnemies.includes('red') && floor > 2 && Math.random() > 0.4) { // 60% chance
-        const maxCeilingCats = floor < 20 ? 1 : 2
-        const numCeilingCats = Math.floor(Math.random() * maxCeilingCats) + 1
+        const maxStalkerCats = floor < 20 ? 1 : 2
+        const numStalkerCats = Math.floor(Math.random() * maxStalkerCats) + 1
         
         // Find valid ceiling positions
-        const validCeilingPositions: number[] = []
+        const validStalkerPositions: number[] = []
         
         if (layout.gapStart === -1) {
           // Complete floor
           for (let x = 2; x < floorWidth - 2; x++) {
-            validCeilingPositions.push(x)
+            validStalkerPositions.push(x)
           }
         } else {
           // Floor with gap
           for (let x = 2; x < layout.gapStart - 1; x++) {
-            validCeilingPositions.push(x)
+            validStalkerPositions.push(x)
           }
           for (let x = layout.gapStart + layout.gapSize + 1; x < floorWidth - 2; x++) {
-            validCeilingPositions.push(x)
+            validStalkerPositions.push(x)
           }
         }
         
-        // Place ceiling cats
-        for (let j = 0; j < Math.min(numCeilingCats, validCeilingPositions.length); j++) {
-          const randomIndex = Math.floor(Math.random() * validCeilingPositions.length)
-          const tileX = validCeilingPositions[randomIndex]
-          const ceilingCatX = tileX * tileSize + tileSize/2
+        // Place stalker cats
+        for (let j = 0; j < Math.min(numStalkerCats, validStalkerPositions.length); j++) {
+          const randomIndex = Math.floor(Math.random() * validStalkerPositions.length)
+          const tileX = validStalkerPositions[randomIndex]
+          const stalkerCatX = tileX * tileSize + tileSize/2
           
           // Calculate floor Y position for stalker cats (on the floor, not ceiling)
           const currentFloorY = -floor * floorSpacing + GameSettings.canvas.height - tileSize/2
           const stalkerY = currentFloorY - 16 // Just above the floor platform
           
-          validCeilingPositions.splice(randomIndex, 1)
+          validStalkerPositions.splice(randomIndex, 1)
           
           // Calculate platform bounds
           let leftBound = tileSize * 0.5
@@ -2913,16 +3081,16 @@ export class GameScene extends Phaser.Scene {
             }
           }
           
-          const stalkerCat = new CeilingCat(
+          const stalkerCat = new StalkerCat(
             this,
-            ceilingCatX,
+            stalkerCatX,
             stalkerY,
             leftBound,
             rightBound
           )
           
           stalkerCat.setPlayerReference(this.player)
-          this.ceilingCats.add(stalkerCat)
+          this.stalkerCats.add(stalkerCat)
         }
       }
     }

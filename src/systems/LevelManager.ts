@@ -54,13 +54,16 @@ export class LevelManager {
   
   /**
    * Determine which enemy types are available at this level
-   * Level 1-2: Blue only
+   * Level 1: All types (TEMPORARY for sprite testing)
+   * Level 2: Blue only  
    * Level 3-4: Blue + Yellow
    * Level 5-6: Blue + Yellow + Green  
    * Level 7+: All types (Blue, Yellow, Green, Red)
    */
   private getEnemyTypes(levelNumber: number): string[] {
-    if (levelNumber <= 2) {
+    if (levelNumber === 1) {
+      return ['blue', 'yellow', 'green', 'red'] // TEMPORARY: All enemies on level 1 for testing
+    } else if (levelNumber <= 2) {
       return ['blue']
     } else if (levelNumber <= 4) {
       return ['blue', 'yellow']
