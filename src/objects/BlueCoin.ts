@@ -53,21 +53,9 @@ export class BlueCoin {
     // Set hitbox to match larger teal gem cluster size (approximately 20x20 for larger clusters)
     if (this.sprite.body) {
       const body = this.sprite.body as Phaser.Physics.Arcade.Body
-      console.log(`🔵 BLUECOIN DEBUG - Before hitbox setup:`)
-      console.log(`   Container position: (${this.sprite.x}, ${this.sprite.y})`)
-      console.log(`   Default body size: ${body.width}x${body.height}`)
-      console.log(`   Default body position: (${body.x}, ${body.y})`)
-      
       body.setSize(20, 20)
       // Need to move body +32 right and +32 up to center it
       body.setOffset(32 - 10, 32 - 10)  // +32 to center, -10 for half body size
-      
-      console.log(`🔵 BLUECOIN DEBUG - After hitbox setup:`)
-      console.log(`   Container position: (${this.sprite.x}, ${this.sprite.y})`)
-      console.log(`   Body size: ${body.width}x${body.height}`)
-      console.log(`   Body position: (${body.x}, ${body.y})`)
-      console.log(`   Body offset: (${body.offset.x}, ${body.offset.y})`)
-      console.log(`   Body center would be: (${body.x + body.width/2}, ${body.y + body.height/2})`)
     }
     
     // Pulsing glow effect (more dramatic for blue coins)

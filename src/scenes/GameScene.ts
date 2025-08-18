@@ -207,6 +207,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image('redEnemyMouthWideOpenEyes2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20wide%20open%20eyes%202-eeVDATMEgV6VQ9mPDfyEX1CFJPPr4W.png?RQBw')
     this.load.image('redEnemyMouthWideOpenEyes3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20wide%20open%20eyes%203-BYXzuHGU9Dd18kQEB6bztT5k8jFhJt.png?IzuG')
     
+    // Load green enemy sprite
+    this.load.image('greenEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/green%20test-0I8rDwYn5lbuPQTEUiYrg8ctBccIAC.png?IBFc')
+    
     // Load new player sprite collection
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerIdleEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%202-oQdxdPT1VWpTLUelgIRXIHXFw5jEuu.png?nGbT')
@@ -1278,6 +1281,9 @@ export class GameScene extends Phaser.Scene {
       0  // Fully transparent
     )
     platform.setDepth(0)
+    
+    // Add physics body to platform and make it immovable
+    this.physics.add.existing(platform, true) // true = static body
     this.platforms.add(platform)
   }
   
@@ -1586,17 +1592,17 @@ export class GameScene extends Phaser.Scene {
     const maxEnemyFloor = levelConfig.isEndless ? Math.min(20, this.floorLayouts.length - 1) : doorFloor - 1
     
     let enemiesCreated = 0
-    for (let floor = 1; floor <= maxEnemyFloor && floor < this.floorLayouts.length; floor++) {
+    for (let floor = 2; floor <= maxEnemyFloor && floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
       // Calculate Y position - cats should sit ON the platform, not IN it
       // Platform is at: GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
-      // We want cat's physics body bottom to be at platform top
-      // Platform is 32px tall, so platform top is 16px above platform center
       const platformY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
-      const platformTop = platformY - tileSize/2 // Top of the platform
       
-      // For enemies: position them so they fall onto the platform correctly
-      const y = platformTop - 20 // Spawn slightly above platform, gravity will settle them
+      // Position enemy ON TOP of floor tiles, like the player
+      const floorSurfaceY = platformY - tileSize/2  // Top surface of platform tiles
+      const y = floorSurfaceY - 15     // Position enemy standing on top (hitbox bottom above surface)
+      
+      console.log(`🟢 FLOOR ${floor} POSITIONING: platformY=${platformY}, floorSurfaceY=${floorSurfaceY}, enemyY=${y}`)
       
       if (layout.gapStart === -1) {
         // Complete floor - place cats based on level
@@ -1855,6 +1861,18 @@ export class GameScene extends Phaser.Scene {
     // Both cats reverse direction when they bump into each other
     const catObj1 = cat1 as Cat
     const catObj2 = cat2 as Cat
+    
+    // Add small separation to prevent sticking
+    const separationForce = 10
+    if (catObj1.x < catObj2.x) {
+      // cat1 is on the left, push apart
+      catObj1.setX(catObj1.x - separationForce)
+      catObj2.setX(catObj2.x + separationForce)
+    } else {
+      // cat2 is on the left, push apart
+      catObj2.setX(catObj2.x - separationForce)
+      catObj1.setX(catObj1.x + separationForce)
+    }
     
     catObj1.reverseDirection()
     catObj2.reverseDirection()
@@ -2884,7 +2902,7 @@ export class GameScene extends Phaser.Scene {
     
     for (let i = 0; i < floorsToGenerate; i++) {
       const floor = this.highestFloorGenerated + i + 1
-      const y = -floor * floorSpacing + GameSettings.canvas.height - tileSize/2
+      const y = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
       
       // Create floor with random gap
       const hasGap = Math.random() > 0.3
@@ -2996,7 +3014,7 @@ export class GameScene extends Phaser.Scene {
       if (allowedEnemies.includes('green')) availableColors.push('green')
       if (allowedEnemies.includes('red')) availableColors.push('red') // ADD RED SUPPORT
       
-      // Add regular cat on some floors (if any colors are available)
+      // Add regular cat on some floors (if any colors are available) - NEVER on floor 0 or 1
       if (availableColors.length > 0 && floor > 1 && Math.random() > 0.5) {
         const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
         console.log(`🐱 SPAWNING: ${randomColor} enemy on floor ${floor} (from colors: ${availableColors.join(', ')})`)

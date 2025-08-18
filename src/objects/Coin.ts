@@ -53,21 +53,9 @@ export class Coin {
     // Set hitbox to match gem cluster size (approximately 16x16 for small clusters)
     if (this.sprite.body) {
       const body = this.sprite.body as Phaser.Physics.Arcade.Body
-      console.log(`🟡 COIN DEBUG - Before hitbox setup:`)
-      console.log(`   Container position: (${this.sprite.x}, ${this.sprite.y})`)
-      console.log(`   Default body size: ${body.width}x${body.height}`)
-      console.log(`   Default body position: (${body.x}, ${body.y})`)
-      
       body.setSize(16, 16)
       // Need to move body +32 right and +32 up to center it
       body.setOffset(32 - 8, 32 - 8)  // +32 to center, -8 for half body size
-      
-      console.log(`🟡 COIN DEBUG - After hitbox setup:`)
-      console.log(`   Container position: (${this.sprite.x}, ${this.sprite.y})`)
-      console.log(`   Body size: ${body.width}x${body.height}`)
-      console.log(`   Body position: (${body.x}, ${body.y})`)
-      console.log(`   Body offset: (${body.offset.x}, ${body.offset.y})`)
-      console.log(`   Body center would be: (${body.x + body.width/2}, ${body.y + body.height/2})`)
     }
     
     // Add pulsing animation

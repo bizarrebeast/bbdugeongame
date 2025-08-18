@@ -16,6 +16,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private bounceTimer: number = 0
   private randomMoveTimer: number = 0
   private isSquished: boolean = false
+  private gapDetectionCooldown: number = 0
+  private collisionCooldown: number = 0
   private debugGraphics: Phaser.GameObjects.Graphics | null = null
   private debugUpdateHandler: (() => void) | null = null
   
@@ -118,11 +120,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     console.log(`🚀 ${catColor.toUpperCase()} enemy: ${textureKey} at (${x}, ${y})`)
     
-    // Extra logging for red enemies to track creation
-    if (catColor === CatColor.RED) {
-      console.log(`🔴 RED ENEMY CREATION DEBUG:`)
+    // Extra logging for green enemies to track creation and physics
+    if (catColor === CatColor.GREEN) {
+      console.log(`🟢 GREEN ENEMY CREATION DEBUG:`)
       console.log(`  - Texture key: ${textureKey}`)
-      console.log(`  - Using animated sprites: ${this.isRedEnemyAnimationSprite(textureKey)}`)
+      console.log(`  - Using sprite: ${this.isEnemySprite(textureKey)}`)
       console.log(`  - Position: (${x}, ${y})`)
     }
     
@@ -132,15 +134,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.body.setSize(30, 20)
       console.log(`🚀 STEP 5B: Blue enemy (${textureKey}) hitbox SET, actual size: ${this.body.width}x${this.body.height}`)
     } else if (catColor === CatColor.RED && this.body instanceof Phaser.Physics.Arcade.Body) {
-      console.log(`🔴 RED ENEMY HITBOX DEBUG:`)
-      console.log(`  - Sprite size: 52x52 pixels`)
-      console.log(`  - Default body size before adjustment: ${this.body.width}x${this.body.height}`)
-      console.log(`  - Setting hitbox to 32x32 (reasonable size for collision detection)`)
       this.body.setSize(32, 32)
-      console.log(`  - FINAL RED ENEMY HITBOX: ${this.body.width}x${this.body.height}`)
+    } else if (catColor === CatColor.GREEN && this.body instanceof Phaser.Physics.Arcade.Body) {
+      console.log(`🟢 GREEN ENEMY HITBOX DEBUG:`)
+      console.log(`  - Sprite size: 36x36 pixels`)
+      console.log(`  - Default body size before adjustment: ${this.body.width}x${this.body.height}`)
+      console.log(`  - Keeping default hitbox for bouncing mechanics`)
+      console.log(`  - FINAL GREEN ENEMY HITBOX: ${this.body.width}x${this.body.height}`)
       console.log(`  - Body position: (${this.body.x}, ${this.body.y})`)
       console.log(`  - Sprite position: (${this.x}, ${this.y})`)
       console.log(`  - Offset: (${this.body.offset.x}, ${this.body.offset.y})`)
+      console.log(`  - Gravity enabled: ${this.body.allowGravity}`)
+      console.log(`  - World bounds collision: ${this.body.collideWorldBounds}`)
     } else if (this.body instanceof Phaser.Physics.Arcade.Body) {
       console.log(`🚀 STEP 5C: ${catColor} enemy (${textureKey}) keeping default hitbox: ${this.body.width}x${this.body.height}`)
     }
@@ -152,16 +157,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
       if (catColor !== CatColor.GREEN) {
         this.body.setAllowGravity(false) // Blue, Yellow, Red patrol without gravity
-        
-        // Extra debug for red enemies
-        if (catColor === CatColor.RED) {
-          console.log(`🔴 RED ENEMY PHYSICS DEBUG:`)
-          console.log(`  - Gravity disabled: ${!this.body.allowGravity}`)
-          console.log(`  - World bounds collision: ${this.body.collideWorldBounds}`)
-          console.log(`  - Velocity: (${this.body.velocity.x}, ${this.body.velocity.y})`)
-        }
+      } else {
+        // Green enemies keep gravity for bouncing behavior
+        console.log(`🟢 GREEN ENEMY PHYSICS SETUP:`)
+        console.log(`  - Gravity enabled: ${this.body.allowGravity}`)
+        console.log(`  - World bounds collision: ${this.body.collideWorldBounds}`)
+        console.log(`  - Initial velocity: (${this.body.velocity.x}, ${this.body.velocity.y})`)
       }
-      // Green enemies keep gravity for bouncing behavior
     }
     
     // Set up hitbox and visual alignment
@@ -191,8 +193,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         // Make yellow enemies 3x wider
         this.setDisplaySize(108, 36) // 3x width (36 * 3 = 108)
         this.setOffset(3, 45)
+      } else if (catColor === CatColor.GREEN) {
+        // Green enemies with adjusted positioning
+        this.setDisplaySize(36, 36)
+        this.setOffset(3, -3) // Decreased by 48 pixels total (45 - 24 - 16 - 8 = -3)
       } else {
-        // Green and red enemies keep normal sizing
+        // Red enemies keep normal sizing
         this.setDisplaySize(36, 36)
         this.setOffset(3, 45)
       }
@@ -258,6 +264,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   update(time: number, delta: number): void {
     if (this.isSquished) return
     
+    // Update collision cooldown for all enemy types
+    this.collisionCooldown -= delta
+    
     // Movement logging temporarily disabled to see creation logs
     
     switch (this.catColor) {
@@ -313,14 +322,31 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateGreenBounce(delta: number): void {
+    // Debug green enemy physics periodically
+    if (Math.random() < 0.005) { // Occasional logging
+      console.log(`🟢 GREEN ENEMY MOVEMENT DEBUG:`)
+      console.log(`  - Current position: (${this.x}, ${this.y})`)
+      console.log(`  - Platform bounds: left=${this.platformBounds.left}, right=${this.platformBounds.right}`)
+      console.log(`  - Direction: ${this.direction}`)
+      console.log(`  - Speed: ${this.moveSpeed}`)
+      console.log(`  - Velocity: (${this.body?.velocity.x}, ${this.body?.velocity.y})`)
+      console.log(`  - On ground: ${this.body?.blocked.down || this.body?.touching.down}`)
+      console.log(`  - Body bounds: (${this.body?.x}, ${this.body?.y}) ${this.body?.width}x${this.body?.height}`)
+      console.log(`  - Bounce timer: ${this.bounceTimer}`)
+    }
+    
     this.bounceTimer -= delta
     
     if (this.bounceTimer <= 0 && this.body?.touching.down) {
       this.setVelocityY(-200)
       this.bounceTimer = 800 + Math.random() * 400
+      console.log(`🟢 GREEN ENEMY BOUNCE: Jumping at (${this.x}, ${this.y})`)
     }
     
-    // Green cats travel the full width of their platform section
+    // Simplified movement - just use platform bounds for now
+    // Green enemies travel the full width of their platform section
+    
+    // Green cats travel the full width of their platform section (like original logic)
     if (this.x <= this.platformBounds.left + 5) {
       this.direction = 1
     } else if (this.x >= this.platformBounds.right - 5) {
@@ -331,17 +357,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateRedPatrol(): void {
-    // Debug red patrol bounds every few seconds
-    if (Math.random() < 0.001) { // Very occasionally log bounds
-      console.log(`🔴 RED PATROL DEBUG:`)
-      console.log(`  - Current position: (${this.x}, ${this.y})`)
-      console.log(`  - Platform bounds: left=${this.platformBounds.left}, right=${this.platformBounds.right}`)
-      console.log(`  - Direction: ${this.direction}`)
-      console.log(`  - Speed: ${this.moveSpeed}`)
-      console.log(`  - Velocity: (${this.body?.velocity.x}, ${this.body?.velocity.y})`)
-      console.log(`  - On ground: ${this.body?.blocked.down}`)
-    }
-    
     // Red enemies are aggressive - they reverse direction more frequently
     // and move in shorter, erratic patterns
     if (this.x <= this.platformBounds.left + 15) {
@@ -360,12 +375,19 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   reverseDirection(): void {
     if (this.isSquished) return
-    this.direction *= -1
-    this.setVelocityX(this.moveSpeed * this.direction)
     
-    // Update sprite flip for blue enemy
-    if (this.catColor === CatColor.BLUE) {
-      this.setFlipX(this.direction > 0) // Flip when moving right
+    // Only reverse if not in collision cooldown (prevents rapid bouncing)
+    if (this.collisionCooldown <= 0) {
+      this.direction *= -1
+      this.setVelocityX(this.moveSpeed * this.direction)
+      
+      // Set collision cooldown to prevent immediate re-collision
+      this.collisionCooldown = 200 // 200ms cooldown
+      
+      // Update sprite flip for blue enemy
+      if (this.catColor === CatColor.BLUE) {
+        this.setFlipX(this.direction > 0) // Flip when moving right
+      }
     }
   }
   
