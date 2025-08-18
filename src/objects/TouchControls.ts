@@ -3,12 +3,11 @@ import GameSettings from "../config/GameSettings"
 export class TouchControls {
   private scene: Phaser.Scene
   
-  // D-pad buttons
-  private dpadContainer: Phaser.GameObjects.Container
-  private upButton: Phaser.GameObjects.Container
-  private downButton: Phaser.GameObjects.Container
-  private leftButton: Phaser.GameObjects.Container
-  private rightButton: Phaser.GameObjects.Container
+  // Touchpad system (replaces D-pad buttons)
+  private touchpadContainer: Phaser.GameObjects.Container
+  private touchpadBackground: Phaser.GameObjects.Arc
+  private touchpadIndicator: Phaser.GameObjects.Arc
+  private touchPosition: { x: number, y: number } | null = null
   
   // Jump button
   private jumpButton: Phaser.GameObjects.Container
@@ -20,7 +19,10 @@ export class TouchControls {
   private actionButtonCircle: Phaser.GameObjects.Arc
   private actionButtonText: Phaser.GameObjects.Text
   
-  // D-pad button states
+  // Touchpad states (continuous values)
+  public horizontalInput: number = 0 // -1 to 1
+  public verticalInput: number = 0   // -1 to 1
+  // D-pad button states (for compatibility)
   public upPressed: boolean = false
   public downPressed: boolean = false
   public leftPressed: boolean = false
@@ -34,83 +36,63 @@ export class TouchControls {
   private lastActionState: boolean = false
   
   // Track individual touches for multi-touch
-  private upPointerId: number = -1
-  private downPointerId: number = -1
-  private leftPointerId: number = -1
-  private rightPointerId: number = -1
+  private touchpadPointerId: number = -1
   private jumpPointerId: number = -1
   private actionPointerId: number = -1
   
-  // D-pad layout
-  private dpadCenter: { x: number, y: number }
-  private buttonSize: number = 40
-  private dpadBackground: Phaser.GameObjects.Arc
+  // Touchpad layout
+  private touchpadCenter: { x: number, y: number }
+  private touchpadRadius: number = 60
+  private deadZone: number = 8 // Minimum distance before registering input
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
-    this.dpadCenter = { x: 80, y: GameSettings.canvas.height - 80 }
+    this.touchpadCenter = { x: 80, y: GameSettings.canvas.height - 80 }
     
-    this.createDpad()
+    this.createTouchpad()
     this.createJumpButton()
     this.createActionButton()
     this.setupInputHandlers()
   }
 
-  private createDpad(): void {
-    // Create D-pad container
-    this.dpadContainer = this.scene.add.container(this.dpadCenter.x, this.dpadCenter.y)
-    this.dpadContainer.setDepth(1000)
-    this.dpadContainer.setScrollFactor(0)
+  private createTouchpad(): void {
+    // Create touchpad container
+    this.touchpadContainer = this.scene.add.container(this.touchpadCenter.x, this.touchpadCenter.y)
+    this.touchpadContainer.setDepth(1000)
+    this.touchpadContainer.setScrollFactor(0)
 
-    // Create circular background to show diagonal press area
-    this.dpadBackground = this.scene.add.circle(0, 0, this.buttonSize * 1.5, 0x222222, 0.4)
-    this.dpadBackground.setStrokeStyle(2, 0x444444, 0.6)
-    this.dpadContainer.add(this.dpadBackground)
+    // Create circular touchpad background (pink theme)
+    this.touchpadBackground = this.scene.add.circle(0, 0, this.touchpadRadius, 0xff1493, 0.2) // Deep pink background
+    this.touchpadBackground.setStrokeStyle(3, 0xff69b4, 0.6) // Hot pink border
+    this.touchpadContainer.add(this.touchpadBackground)
 
-    // Create individual directional buttons
-    this.createDirectionalButton('up', 0, -this.buttonSize)
-    this.createDirectionalButton('down', 0, this.buttonSize)
-    this.createDirectionalButton('left', -this.buttonSize, 0)
-    this.createDirectionalButton('right', this.buttonSize, 0)
+    // Create touch position indicator (initially hidden) - bright pink
+    this.touchpadIndicator = this.scene.add.circle(0, 0, 8, 0xff1493, 0.9)
+    this.touchpadIndicator.setStrokeStyle(2, 0xffffff, 0.9)
+    this.touchpadIndicator.setVisible(false)
+    this.touchpadContainer.add(this.touchpadIndicator)
+
+    // Add subtle directional hints
+    this.addDirectionalHints()
   }
 
-  private createDirectionalButton(direction: 'up' | 'down' | 'left' | 'right', x: number, y: number): void {
-    const button = this.scene.add.container(x, y)
+  private addDirectionalHints(): void {
+    // Add subtle arrows to show directional areas (pink theme)
+    const hintDistance = this.touchpadRadius * 0.7
+    const arrowSize = 6
+    const hints = this.scene.add.graphics()
+    hints.fillStyle(0xff69b4, 0.5) // Hot pink arrows
     
-    // Button background
-    const buttonBg = this.scene.add.rectangle(0, 0, this.buttonSize, this.buttonSize, 0x444444, 0.7)
-    buttonBg.setStrokeStyle(2, 0x666666)
+    // Up arrow
+    hints.fillTriangle(0, -hintDistance - arrowSize/2, -arrowSize/2, -hintDistance + arrowSize/2, arrowSize/2, -hintDistance + arrowSize/2)
+    // Down arrow  
+    hints.fillTriangle(0, hintDistance + arrowSize/2, -arrowSize/2, hintDistance - arrowSize/2, arrowSize/2, hintDistance - arrowSize/2)
+    // Left arrow
+    hints.fillTriangle(-hintDistance - arrowSize/2, 0, -hintDistance + arrowSize/2, -arrowSize/2, -hintDistance + arrowSize/2, arrowSize/2)
+    // Right arrow
+    hints.fillTriangle(hintDistance + arrowSize/2, 0, hintDistance - arrowSize/2, -arrowSize/2, hintDistance - arrowSize/2, arrowSize/2)
     
-    // Arrow indicator
-    const arrowSize = 8
-    const arrow = this.scene.add.graphics()
-    arrow.fillStyle(0xffffff, 0.9)
-    
-    switch (direction) {
-      case 'up':
-        arrow.fillTriangle(0, -arrowSize/2, -arrowSize/2, arrowSize/2, arrowSize/2, arrowSize/2)
-        break
-      case 'down':
-        arrow.fillTriangle(0, arrowSize/2, -arrowSize/2, -arrowSize/2, arrowSize/2, -arrowSize/2)
-        break
-      case 'left':
-        arrow.fillTriangle(-arrowSize/2, 0, arrowSize/2, -arrowSize/2, arrowSize/2, arrowSize/2)
-        break
-      case 'right':
-        arrow.fillTriangle(arrowSize/2, 0, -arrowSize/2, -arrowSize/2, -arrowSize/2, arrowSize/2)
-        break
-    }
-    
-    button.add([buttonBg, arrow])
-    this.dpadContainer.add(button)
-    
-    // Store button references
-    switch (direction) {
-      case 'up': this.upButton = button; break
-      case 'down': this.downButton = button; break
-      case 'left': this.leftButton = button; break
-      case 'right': this.rightButton = button; break
-    }
+    this.touchpadContainer.add(hints)
   }
 
   private createJumpButton(): void {
@@ -122,19 +104,12 @@ export class TouchControls {
     this.jumpButton.setDepth(1000)
     this.jumpButton.setScrollFactor(0)
 
-    // Button circle
-    this.jumpButtonCircle = this.scene.add.circle(0, 0, 35, 0x4444aa, 0.7)
-    this.jumpButtonCircle.setStrokeStyle(3, 0x6666cc)
+    // Button circle (pink theme to match touchpad)
+    this.jumpButtonCircle = this.scene.add.circle(0, 0, 35, 0xff1493, 0.8) // Deep pink
+    this.jumpButtonCircle.setStrokeStyle(3, 0xff69b4, 0.9) // Hot pink border
     
-    // Button text
-    this.jumpButtonText = this.scene.add.text(0, 0, 'JUMP', {
-      fontSize: '12px',
-      color: '#ffffff',
-      fontFamily: 'Arial Black',
-      fontStyle: 'bold'
-    }).setOrigin(0.5)
-    
-    this.jumpButton.add([this.jumpButtonCircle, this.jumpButtonText])
+    // No text - clean minimal design
+    this.jumpButton.add([this.jumpButtonCircle])
   }
 
   private createActionButton(): void {
@@ -187,11 +162,18 @@ export class TouchControls {
     const touchX = pointer.x
     const touchY = pointer.y
     
-    // Check D-pad buttons
-    this.checkDpadButton(pointer, touchX, touchY, 'up')
-    this.checkDpadButton(pointer, touchX, touchY, 'down')
-    this.checkDpadButton(pointer, touchX, touchY, 'left')
-    this.checkDpadButton(pointer, touchX, touchY, 'right')
+    // Check if touch is on touchpad area
+    const touchpadDist = Math.sqrt(
+      Math.pow(touchX - this.touchpadCenter.x, 2) + 
+      Math.pow(touchY - this.touchpadCenter.y, 2)
+    )
+    
+    if (touchpadDist <= this.touchpadRadius && this.touchpadPointerId === -1) {
+      this.touchpadPointerId = pointer.id
+      this.updateTouchpadFromPosition(touchX, touchY)
+      this.touchpadIndicator.setVisible(true)
+      return
+    }
     
     // Check if touch is on jump button area
     const jumpButtonX = GameSettings.canvas.width - 60
@@ -205,7 +187,7 @@ export class TouchControls {
       if (this.jumpPointerId === -1) {
         this.jumpPointerId = pointer.id
         this.jumpPressed = true
-        this.jumpButtonCircle.setFillStyle(0x6666ff, 0.9)
+        this.jumpButtonCircle.setFillStyle(0xff69b4, 1.0) // Hot pink when pressed
       }
       return
     }
@@ -229,79 +211,77 @@ export class TouchControls {
     }
   }
 
-  private checkDpadButton(pointer: Phaser.Input.Pointer, touchX: number, touchY: number, direction: 'up' | 'down' | 'left' | 'right'): void {
-    let buttonX = this.dpadCenter.x
-    let buttonY = this.dpadCenter.y
+  private updateTouchpadFromPosition(touchX: number, touchY: number): void {
+    // Calculate relative position from touchpad center
+    const relativeX = touchX - this.touchpadCenter.x
+    const relativeY = touchY - this.touchpadCenter.y
+    const distance = Math.sqrt(relativeX * relativeX + relativeY * relativeY)
     
-    switch (direction) {
-      case 'up': buttonY -= this.buttonSize; break
-      case 'down': buttonY += this.buttonSize; break
-      case 'left': buttonX -= this.buttonSize; break
-      case 'right': buttonX += this.buttonSize; break
+    // Apply dead zone
+    if (distance < this.deadZone) {
+      this.horizontalInput = 0
+      this.verticalInput = 0
+      this.leftPressed = false
+      this.rightPressed = false
+      this.upPressed = false
+      this.downPressed = false
+      this.touchpadIndicator.setPosition(0, 0)
+      return
     }
     
-    const distance = Math.sqrt(
-      Math.pow(touchX - buttonX, 2) + 
-      Math.pow(touchY - buttonY, 2)
-    )
+    // Normalize to -1 to 1 range, clamped to touchpad radius
+    const normalizedDistance = Math.min(distance, this.touchpadRadius)
+    const normalizedX = (relativeX / normalizedDistance) * (normalizedDistance / this.touchpadRadius)
+    const normalizedY = (relativeY / normalizedDistance) * (normalizedDistance / this.touchpadRadius)
     
-    if (distance <= this.buttonSize) {
-      const pointerIdField = `${direction}PointerId` as keyof this
-      const pressedField = `${direction}Pressed` as keyof this
-      
-      if ((this as any)[pointerIdField] === -1) {
-        (this as any)[pointerIdField] = pointer.id
-        ;(this as any)[pressedField] = true
-        this.highlightButton(direction, true)
-      }
-    }
+    // Set continuous input values
+    this.horizontalInput = normalizedX
+    this.verticalInput = normalizedY
+    
+    // Set discrete button states for compatibility (with threshold)
+    const threshold = 0.3
+    this.leftPressed = normalizedX < -threshold
+    this.rightPressed = normalizedX > threshold
+    this.upPressed = normalizedY < -threshold
+    this.downPressed = normalizedY > threshold
+    
+    // Update visual indicator position (clamped to touchpad radius)
+    const indicatorDistance = Math.min(distance, this.touchpadRadius - 8)
+    const indicatorX = (relativeX / distance) * indicatorDistance
+    const indicatorY = (relativeY / distance) * indicatorDistance
+    this.touchpadIndicator.setPosition(indicatorX, indicatorY)
+    
+    // Store current touch position for reference
+    this.touchPosition = { x: relativeX, y: relativeY }
   }
 
-  private highlightButton(direction: 'up' | 'down' | 'left' | 'right', highlight: boolean): void {
-    let button: Phaser.GameObjects.Container
-    
-    switch (direction) {
-      case 'up': button = this.upButton; break
-      case 'down': button = this.downButton; break
-      case 'left': button = this.leftButton; break
-      case 'right': button = this.rightButton; break
-    }
-    
-    const buttonBg = button.list[0] as Phaser.GameObjects.Rectangle
-    if (highlight) {
-      buttonBg.setFillStyle(0x666666, 0.9)
-    } else {
-      buttonBg.setFillStyle(0x444444, 0.7)
-    }
-  }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
-    // Check if this pointer is already controlling a D-pad button
-    const isDpadPointer = pointer.id === this.upPointerId || 
-                         pointer.id === this.downPointerId || 
-                         pointer.id === this.leftPointerId || 
-                         pointer.id === this.rightPointerId
-    
-    if (isDpadPointer) {
-      // Update D-pad button states based on current finger position
-      this.updateDpadFromPointer(pointer)
-    } else {
-      // Check if finger is sliding back onto D-pad area from outside
-      this.checkDpadReentry(pointer)
+    // Check if this pointer is controlling the touchpad
+    if (pointer.id === this.touchpadPointerId) {
+      this.updateTouchpadFromPosition(pointer.x, pointer.y)
     }
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
-    // Check D-pad button releases
-    this.releaseDpadButton(pointer, 'up')
-    this.releaseDpadButton(pointer, 'down')
-    this.releaseDpadButton(pointer, 'left')
-    this.releaseDpadButton(pointer, 'right')
+    // Check touchpad release
+    if (pointer.id === this.touchpadPointerId) {
+      this.touchpadPointerId = -1
+      this.horizontalInput = 0
+      this.verticalInput = 0
+      this.leftPressed = false
+      this.rightPressed = false
+      this.upPressed = false
+      this.downPressed = false
+      this.touchpadIndicator.setVisible(false)
+      this.touchpadIndicator.setPosition(0, 0)
+      this.touchPosition = null
+    }
     
     if (pointer.id === this.jumpPointerId) {
       this.jumpPointerId = -1
       this.jumpPressed = false
-      this.jumpButtonCircle.setFillStyle(0x4444aa, 0.7)
+      this.jumpButtonCircle.setFillStyle(0xff1493, 0.8) // Return to deep pink when released
     }
     
     if (pointer.id === this.actionPointerId) {
@@ -311,115 +291,6 @@ export class TouchControls {
     }
   }
 
-  private updateDpadFromPointer(pointer: Phaser.Input.Pointer): void {
-    const touchX = pointer.x
-    const touchY = pointer.y
-    
-    // Calculate which buttons should be active based on current finger position
-    const upActive = this.isPointInButton(touchX, touchY, 'up')
-    const downActive = this.isPointInButton(touchX, touchY, 'down')
-    const leftActive = this.isPointInButton(touchX, touchY, 'left')
-    const rightActive = this.isPointInButton(touchX, touchY, 'right')
-    
-    // Update button states for this pointer
-    if (pointer.id === this.upPointerId || pointer.id === this.downPointerId || 
-        pointer.id === this.leftPointerId || pointer.id === this.rightPointerId) {
-      
-      // Clear states that are no longer active for this pointer
-      if (pointer.id === this.upPointerId && !upActive) {
-        this.upPressed = false
-        this.highlightButton('up', false)
-        // Don't clear upPointerId - keep tracking the pointer
-      }
-      if (pointer.id === this.downPointerId && !downActive) {
-        this.downPressed = false
-        this.highlightButton('down', false)
-        // Don't clear downPointerId - keep tracking the pointer
-      }
-      if (pointer.id === this.leftPointerId && !leftActive) {
-        this.leftPressed = false
-        this.highlightButton('left', false)
-        // Don't clear leftPointerId - keep tracking the pointer
-      }
-      if (pointer.id === this.rightPointerId && !rightActive) {
-        this.rightPressed = false
-        this.highlightButton('right', false)
-        // Don't clear rightPointerId - keep tracking the pointer
-      }
-      
-      // Activate states when finger slides back onto buttons
-      if (upActive && !this.upPressed && (this.upPointerId === -1 || this.upPointerId === pointer.id)) {
-        this.upPointerId = pointer.id
-        this.upPressed = true
-        this.highlightButton('up', true)
-      }
-      if (downActive && !this.downPressed && (this.downPointerId === -1 || this.downPointerId === pointer.id)) {
-        this.downPointerId = pointer.id
-        this.downPressed = true
-        this.highlightButton('down', true)
-      }
-      if (leftActive && !this.leftPressed && (this.leftPointerId === -1 || this.leftPointerId === pointer.id)) {
-        this.leftPointerId = pointer.id
-        this.leftPressed = true
-        this.highlightButton('left', true)
-      }
-      if (rightActive && !this.rightPressed && (this.rightPointerId === -1 || this.rightPointerId === pointer.id)) {
-        this.rightPointerId = pointer.id
-        this.rightPressed = true
-        this.highlightButton('right', true)
-      }
-    }
-  }
-  
-  private checkDpadReentry(pointer: Phaser.Input.Pointer): void {
-    const touchX = pointer.x
-    const touchY = pointer.y
-    
-    // Check if finger is in D-pad general area (larger radius for re-entry)
-    const dpadDistance = Math.sqrt(
-      Math.pow(touchX - this.dpadCenter.x, 2) + 
-      Math.pow(touchY - this.dpadCenter.y, 2)
-    )
-    
-    // Allow re-entry if within expanded D-pad area (2x button size radius)
-    if (dpadDistance <= this.buttonSize * 2.5) {
-      // Check individual buttons for this pointer
-      this.checkDpadButton(pointer, touchX, touchY, 'up')
-      this.checkDpadButton(pointer, touchX, touchY, 'down') 
-      this.checkDpadButton(pointer, touchX, touchY, 'left')
-      this.checkDpadButton(pointer, touchX, touchY, 'right')
-    }
-  }
-  
-  private isPointInButton(touchX: number, touchY: number, direction: 'up' | 'down' | 'left' | 'right'): boolean {
-    let buttonX = this.dpadCenter.x
-    let buttonY = this.dpadCenter.y
-    
-    switch (direction) {
-      case 'up': buttonY -= this.buttonSize; break
-      case 'down': buttonY += this.buttonSize; break
-      case 'left': buttonX -= this.buttonSize; break
-      case 'right': buttonX += this.buttonSize; break
-    }
-    
-    const distance = Math.sqrt(
-      Math.pow(touchX - buttonX, 2) + 
-      Math.pow(touchY - buttonY, 2)
-    )
-    
-    return distance <= this.buttonSize
-  }
-
-  private releaseDpadButton(pointer: Phaser.Input.Pointer, direction: 'up' | 'down' | 'left' | 'right'): void {
-    const pointerIdField = `${direction}PointerId` as keyof this
-    const pressedField = `${direction}Pressed` as keyof this
-    
-    if ((this as any)[pointerIdField] === pointer.id) {
-      (this as any)[pointerIdField] = -1
-      ;(this as any)[pressedField] = false
-      this.highlightButton(direction, false)
-    }
-  }
 
 
   public update(): void {
@@ -433,17 +304,23 @@ export class TouchControls {
   }
 
   public getHorizontal(): number {
-    let horizontal = 0
-    if (this.leftPressed) horizontal -= 1
-    if (this.rightPressed) horizontal += 1
-    return horizontal
+    // Return continuous input value (-1 to 1) or fall back to discrete
+    return this.horizontalInput || (this.leftPressed ? -1 : this.rightPressed ? 1 : 0)
   }
 
   public getVertical(): number {
-    let vertical = 0
-    if (this.upPressed) vertical -= 1
-    if (this.downPressed) vertical += 1
-    return vertical
+    // Return continuous input value (-1 to 1) or fall back to discrete
+    return this.verticalInput || (this.upPressed ? -1 : this.downPressed ? 1 : 0)
+  }
+
+  public getHorizontalInput(): number {
+    // Get the raw continuous horizontal input (-1 to 1)
+    return this.horizontalInput
+  }
+
+  public getVerticalInput(): number {
+    // Get the raw continuous vertical input (-1 to 1)
+    return this.verticalInput
   }
 
   public isJumpPressed(): boolean {
@@ -467,7 +344,7 @@ export class TouchControls {
   }
 
   public destroy(): void {
-    this.dpadContainer.destroy()
+    this.touchpadContainer.destroy()
     this.jumpButton.destroy()
     this.actionButton.destroy()
   }
