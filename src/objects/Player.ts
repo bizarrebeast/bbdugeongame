@@ -9,12 +9,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private walkAnimationTimer: number = 0
   private climbAnimationTimer: number = 0
   private idleAnimationTimer: number = 0
-  private currentFrame: 'idle' | 'leftStep' | 'rightStep' = 'idle'
+  private currentFrame: 'idle' | 'leftStep' | 'rightStep' | 'jumpLeftFoot' | 'jumpRightFoot' = 'idle'
   private currentIdleState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'eye5' | 'blink' = 'eye1'
   private currentClimbFoot: 'left' | 'right' = 'left'
   private isMoving: boolean = false
   private isJumping: boolean = false
   private runningTiltTimer: number = 0
+  private lastFrameWasJump: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Use the new player idle sprite or fallback to placeholder
@@ -93,8 +94,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Track jumping state - immediate transition when landing
     const wasJumping = this.isJumping
     // Jump sprite only when in air AND moving up/down significantly
-    // Immediately false when on ground
+    // Immediately false when on ground (prioritize ground detection)
     this.isJumping = !onGround && Math.abs(this.body!.velocity.y) > 10
+    
+    // Force immediate sprite change when landing
+    if (wasJumping && onGround) {
+      // Player just landed - force immediate transition away from jump sprite
+      this.isJumping = false
+    }
     
     // Horizontal movement
     if (!this.isClimbing) {
@@ -176,6 +183,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Center player on ladder
     const ladderSprite = ladder as Phaser.GameObjects.Rectangle
     this.x = ladderSprite.x
+    
+    // IMMEDIATELY set climbing sprite to prevent idle sprite from showing
+    this.currentClimbFoot = 'left'
+    this.changePlayerTexture('playerClimbLeftFoot')
+    this.climbAnimationTimer = 0
+    this.resetAnimationTimers()
+    this.resetRunningTilt() // Reset any running tilt when starting to climb
   }
   
   exitClimbing(): void {
@@ -184,6 +198,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
       this.body.setAllowGravity(true)
     }
+    
+    // Reset to idle sprite immediately when exiting climbing
+    // The smart animation system will handle transitioning to running if moving
+    this.currentFrame = 'idle'
+    this.changePlayerTexture('playerIdleEye1')
+    this.resetAnimationTimers()
   }
   
   checkLadderProximity(ladder: Phaser.GameObjects.GameObject): boolean {
@@ -221,15 +241,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     // Priority 2: Jumping animations (only when actually in air)
-    else if (this.isJumping && !onGround) {
+    else if (!onGround && this.isJumping) {
       this.handleJumpingAnimation()
     }
-    // Priority 3: Running/walking animations
-    else if (this.isMoving) {
+    // Priority 3: Running/walking animations (immediate when moving on ground)
+    else if (this.isMoving && onGround) {
       this.handleRunningAnimation(deltaTime)
     }
     // Priority 4: Idle animations (immediate when on ground and not moving)
-    else {
+    else if (onGround) {
       this.handleIdleAnimation(deltaTime)
     }
   }
@@ -238,7 +258,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Use direction-based jumping sprites
     const textureKey = this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot'
     this.changePlayerTexture(textureKey)
-    this.currentFrame = 'idle' // Reset walking frame when jumping
+    this.currentFrame = 'idle' // Reset frame when jumping
     
     // Reset running tilt when jumping
     this.resetRunningTilt()
@@ -247,21 +267,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private handleClimbingAnimation(deltaTime: number): void {
     const climbAnimationSpeed = 120 // Fun, active climbing animation (20% slower than 100ms)
     
-    // IMMEDIATE RESPONSE: Start climbing animation instantly when climbing begins
-    if (this.currentFrame !== 'idle' && !this.texture.key.includes('Climb')) {
-      this.currentClimbFoot = 'left'
-      this.changePlayerTexture('playerClimbLeftFoot')
-      this.climbAnimationTimer = 0
-      this.resetAnimationTimers()
-      
-      // Reset any running tilt when starting to climb
-      this.resetRunningTilt()
-      return
-    }
-    
+    // Animation timer for climbing movement
     this.climbAnimationTimer += deltaTime
     
-    if (this.climbAnimationTimer >= climbAnimationSpeed) {
+    if (this.climbAnimationTimer >= climbAnimationSpeed && this.isMoving) {
+      // Only animate when actually moving on the ladder
       // Alternate feet while climbing to match ladder movement
       if (this.currentClimbFoot === 'left') {
         this.currentClimbFoot = 'right'
@@ -271,6 +281,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.changePlayerTexture('playerClimbLeftFoot')
       }
       this.climbAnimationTimer = 0
+    } else if (!this.isMoving) {
+      // Show static climbing pose when on ladder but not moving
+      this.changePlayerTexture('playerClimbLeftFoot')
+      this.resetAnimationTimers()
     }
   }
   
@@ -283,6 +297,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.changePlayerTexture('playerRunLeftFoot')
       this.walkAnimationTimer = 0
       this.runningTiltTimer = 0
+      this.lastFrameWasJump = false // Reset jump flag when starting to run
       return
     }
     
@@ -293,13 +308,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.applyRunningTilt()
     
     if (this.walkAnimationTimer >= runAnimationSpeed) {
-      // Switch between left and right step for running
-      if (this.currentFrame === 'rightStep') {
-        this.currentFrame = 'leftStep'
-        this.changePlayerTexture('playerRunLeftFoot')
+      // Add natural variation with occasional jumping sprites during running
+      // Reduce chance if last frame was a jump to avoid too much bouncing
+      const jumpChance = this.lastFrameWasJump ? 0.15 : 0.30 // 15% or 30% chance
+      const shouldUseJumpingSprite = Math.random() < jumpChance
+      
+      if (shouldUseJumpingSprite) {
+        // Use jumping sprites occasionally for natural bounding motion
+        if (this.currentFrame === 'rightStep' || this.currentFrame === 'jumpRightFoot') {
+          this.currentFrame = 'jumpLeftFoot'
+          this.changePlayerTexture(this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot')
+        } else {
+          this.currentFrame = 'jumpRightFoot' 
+          this.changePlayerTexture(this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot')
+        }
+        this.lastFrameWasJump = true
       } else {
-        this.currentFrame = 'rightStep'
-        this.changePlayerTexture('playerRunRightFoot')
+        // Normal running animation - switch between left and right step
+        if (this.currentFrame === 'rightStep' || this.currentFrame === 'jumpRightFoot') {
+          this.currentFrame = 'leftStep'
+          this.changePlayerTexture('playerRunLeftFoot')
+        } else {
+          this.currentFrame = 'rightStep'
+          this.changePlayerTexture('playerRunRightFoot')
+        }
+        this.lastFrameWasJump = false
       }
       this.walkAnimationTimer = 0
     }

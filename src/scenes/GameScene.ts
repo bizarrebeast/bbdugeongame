@@ -1003,14 +1003,18 @@ export class GameScene extends Phaser.Scene {
       const currentFloor = floorLayouts[floor]
       const nextFloor = floorLayouts[floor + 1]
       
-      // Find valid ladder positions that have solid ground on both floors
+      // Find valid ladder positions that have solid ground on both floors and avoid door conflicts
       const validPositions: number[] = []
       
       for (let x = 1; x < floorWidth - 1; x++) {
         const hasBottomPlatform = this.hasPlatformAt(currentFloor, x)
         const hasTopPlatform = this.hasPlatformAt(nextFloor, x)
         
-        if (hasBottomPlatform && hasTopPlatform) {
+        // Check for door conflicts on both floors (ladders need clearance from doors)
+        const hasBottomDoorConflict = this.hasDoorAt(x, floor)
+        const hasTopDoorConflict = this.hasDoorAt(x, floor + 1)
+        
+        if (hasBottomPlatform && hasTopPlatform && !hasBottomDoorConflict && !hasTopDoorConflict) {
           validPositions.push(x)
         }
       }
