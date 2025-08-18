@@ -40,9 +40,39 @@ export class GemShapeGenerator {
   }
   
   /**
-   * Draw a cut gem shape on graphics object
+   * Draw a cut gem shape on graphics object with drop shadow
    */
   static drawGem(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    // First draw the drop shadow (offset down and right)
+    const shadowOffsetX = 3
+    const shadowOffsetY = 3
+    
+    // Draw shadow version of the gem shape
+    switch (style.cut) {
+      case GemCut.ROUND:
+        this.drawRoundCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+      case GemCut.EMERALD:
+        this.drawEmeraldCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+      case GemCut.PEAR:
+        this.drawPearCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+      case GemCut.MARQUISE:
+        this.drawMarquiseCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+      case GemCut.OVAL:
+        this.drawOvalCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+      case GemCut.CUSHION:
+        this.drawCushionCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+      case GemCut.DIAMOND:
+        this.drawDiamondCutShadow(graphics, x + shadowOffsetX, y + shadowOffsetY, style)
+        break
+    }
+    
+    // Then draw the actual gem on top
     switch (style.cut) {
       case GemCut.ROUND:
         this.drawRoundCut(graphics, x, y, style)
@@ -356,5 +386,94 @@ export class GemShapeGenerator {
     const newB = Math.min(255, b + 40)
     
     return (newR << 16) | (newG << 8) | newB
+  }
+  
+  // Shadow drawing functions - simplified versions without details
+  private static drawRoundCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const radius = 9
+    graphics.fillStyle(0x000000, 0.3) // Black shadow with 30% opacity
+    graphics.fillCircle(x, y, radius)
+  }
+  
+  private static drawEmeraldCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const isBlueGem = style.size >= 10
+    const width = isBlueGem ? 11 : 9
+    const height = isBlueGem ? 11 : 9
+    
+    const points = [
+      [-width * 0.6, -height], [width * 0.6, -height], [width, -height * 0.7],
+      [width, height * 0.7], [width * 0.6, height], [-width * 0.6, height],
+      [-width, height * 0.7], [-width, -height * 0.7]
+    ]
+    
+    graphics.fillStyle(0x000000, 0.3)
+    graphics.beginPath()
+    graphics.moveTo(x + points[0][0], y + points[0][1])
+    for (let i = 1; i < points.length; i++) {
+      graphics.lineTo(x + points[i][0], y + points[i][1])
+    }
+    graphics.closePath()
+    graphics.fillPath()
+  }
+  
+  private static drawPearCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const width = 9
+    const height = 9
+    
+    graphics.fillStyle(0x000000, 0.3)
+    graphics.beginPath()
+    graphics.moveTo(x, y - height)
+    graphics.lineTo(x + width * 0.5, y - height * 0.3)
+    graphics.lineTo(x + width * 0.7, y + height * 0.3)
+    graphics.lineTo(x, y + height)
+    graphics.lineTo(x - width * 0.7, y + height * 0.3)
+    graphics.lineTo(x - width * 0.5, y - height * 0.3)
+    graphics.closePath()
+    graphics.fillPath()
+  }
+  
+  private static drawMarquiseCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const width = 9
+    const height = 9
+    
+    graphics.fillStyle(0x000000, 0.3)
+    graphics.beginPath()
+    graphics.moveTo(x, y - height)
+    graphics.lineTo(x + width * 0.6, y)
+    graphics.lineTo(x, y + height)
+    graphics.lineTo(x - width * 0.6, y)
+    graphics.closePath()
+    graphics.fillPath()
+  }
+  
+  private static drawOvalCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const width = 9
+    const height = 9
+    
+    graphics.fillStyle(0x000000, 0.3)
+    graphics.fillEllipse(x, y, width * 1.6, height * 2.0)
+  }
+  
+  private static drawCushionCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const size = 9
+    const radius = size * 0.3
+    
+    graphics.fillStyle(0x000000, 0.3)
+    graphics.fillRoundedRect(x - size, y - size, size * 2, size * 2, radius)
+  }
+  
+  private static drawDiamondCutShadow(graphics: Phaser.GameObjects.Graphics, x: number, y: number, style: GemStyle): void {
+    const size = 12
+    
+    graphics.fillStyle(0x000000, 0.3)
+    graphics.beginPath()
+    graphics.moveTo(x, y - size)
+    graphics.lineTo(x + size * 0.5, y - size * 0.3)
+    graphics.lineTo(x + size * 0.3, y + size)
+    graphics.lineTo(x, y + size * 0.6)
+    graphics.lineTo(x - size * 0.3, y + size)
+    graphics.lineTo(x - size * 0.5, y - size * 0.3)
+    graphics.closePath()
+    graphics.fillPath()
   }
 }
