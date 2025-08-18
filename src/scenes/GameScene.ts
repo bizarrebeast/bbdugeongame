@@ -31,10 +31,10 @@ export class GameScene extends Phaser.Scene {
   private scoreText!: Phaser.GameObjects.Text
   private currentFloor: number = 0
   private lives: number = 3
-  private totalCoinsCollected: number = 0
+  private totalCoinsCollected: number = 0 // Still using coins internally for backwards compatibility
   private livesText!: Phaser.GameObjects.Text
-  private coinCounterText!: Phaser.GameObjects.Text
-  private readonly COINS_PER_EXTRA_LIFE = 150
+  private coinCounterText!: Phaser.GameObjects.Text // Display shows crystals, but variable kept for compatibility
+  private readonly COINS_PER_EXTRA_LIFE = 150 // Crystals needed for extra life
   private readonly MAX_LIVES = 9
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
   private touchControls!: TouchControls
@@ -168,6 +168,12 @@ export class GameScene extends Phaser.Scene {
         type: 'image',
         retries: 3,
         fallback: 'defaultEnemy'
+      },
+      {
+        key: 'tealLadder',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/new%20ladder-ULDbdT9I4h8apxhpJI6WT1PzmaMzLo.png?okOd',
+        type: 'image',
+        retries: 3
       }
     ]
     
@@ -395,38 +401,49 @@ export class GameScene extends Phaser.Scene {
     
     // Game title removed - focusing on clean HUD
     
-    // Create HUD background panel (darker black) - extended for level display
+    // Create dark purple HUD background panel
     const hudBg = this.add.graphics()
-    hudBg.fillStyle(0x000000, 0.6)  // Black with 60% opacity (much darker)
-    hudBg.fillRoundedRect(8, 8, 200, 100, 8)  // Increased height to fit all 4 text lines
+    hudBg.fillStyle(0x4a148c, 0.9)  // Dark purple color
+    hudBg.lineStyle(2, 0x7b1fa2, 0.8) // Slightly lighter purple border
+    hudBg.fillRoundedRect(8, 8, 200, 100, 12)  // Rounded corners
+    hudBg.strokeRoundedRect(8, 8, 200, 100, 12) // Add border stroke
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
-    // Add score display with better styling
+    // Add score display with purple theme styling
     this.scoreText = this.add.text(20, 20, 'SCORE: 0', {
       fontSize: '16px',
-      color: '#00ff00',  // Changed from gold to green
+      color: '#ffd700',  // Gold color
       fontFamily: 'Arial Black',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
     }).setDepth(100)
     
-    // Create combo text (hidden initially)
+    // Create combo text with purple theme (hidden initially)
     this.comboText = this.add.text(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2,
       '',
       {
         fontSize: '13px',
-        color: '#ffff00',
+        color: '#ffd700',  // Gold color
         fontFamily: 'Arial Black',
         fontStyle: 'bold',
-        stroke: '#ff0000',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD theme
         strokeThickness: 2,
         shadow: {
-          offsetX: 1,
-          offsetY: 1,
-          color: '#000000',
-          blur: 2,
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
           fill: true
         }
       }
@@ -434,21 +451,39 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Add lives display with heart symbols
+    // Add lives display with hearts
     this.livesText = this.add.text(20, 40, '❤️ x3', {
       fontSize: '16px',
-      color: '#ff4444',
+      color: '#ff4444',  // Red color for hearts
       fontFamily: 'Arial Black',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
     }).setDepth(100)
     this.livesText.setScrollFactor(0)
     
-    // Add coin counter display
-    this.coinCounterText = this.add.text(20, 60, 'COINS: 0/150', {
+    // Add crystal counter display  
+    this.coinCounterText = this.add.text(20, 60, 'CRYSTALS: 0/150', {
       fontSize: '16px',
-      color: '#ffd700',
+      color: '#40e0d0',  // Teal color for crystals
       fontFamily: 'Arial Black',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
     }).setDepth(100)
     this.coinCounterText.setScrollFactor(0)
     
@@ -458,7 +493,14 @@ export class GameScene extends Phaser.Scene {
       fontSize: '16px',
       color: '#ff88ff',
       fontFamily: 'Arial Black',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
     }).setDepth(100)
     this.levelText.setScrollFactor(0)
     
@@ -1228,83 +1270,36 @@ export class GameScene extends Phaser.Scene {
     ladder.setDepth(10)
     this.ladders.add(ladder)
     
-    // Mining Theme Ladder - Chunkier, more visible teal crystal ladder
-    const ladderGraphics = this.add.graphics()
-    const ladderX = x + tileSize/2
-    
-    // Thicker vertical teal rails - extend up significantly to balance with bottom extensions
-    // First draw the outline/stroke
-    ladderGraphics.lineStyle(2, 0x2a6660, 1) // Dark teal outline
-    ladderGraphics.strokeRect(ladderX - 13, topY - tileSize * 1.0 - 1, 7, ladderHeight + tileSize * 1.0 + 2) // Left rail outline
-    ladderGraphics.strokeRect(ladderX + 6, topY - tileSize * 1.0 - 1, 7, ladderHeight + tileSize * 1.0 + 2) // Right rail outline
-    
-    // Then fill the rails
-    ladderGraphics.fillStyle(0x40e0d0, 1) // Bright teal gem color
-    ladderGraphics.fillRect(ladderX - 12, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0) // Extended much further up
-    ladderGraphics.fillRect(ladderX + 7, topY - tileSize * 1.0, 5, ladderHeight + tileSize * 1.0)
-    
-    // Teal grain effect - more visible, extended to balance with bottom
-    ladderGraphics.lineStyle(2, 0x35a0a0, 0.8) // Medium teal grain
-    ladderGraphics.lineBetween(ladderX - 10, topY - tileSize * 1.0, ladderX - 10, topY + ladderHeight)
-    ladderGraphics.lineBetween(ladderX + 9, topY - tileSize * 1.0, ladderX + 9, topY + ladderHeight)
-    
-    // Teal highlights for more definition - extended to balance with bottom
-    ladderGraphics.lineStyle(1, 0x60f0e0, 0.6) // Light teal highlights
-    ladderGraphics.lineBetween(ladderX - 11, topY - tileSize * 1.0, ladderX - 11, topY + ladderHeight)
-    ladderGraphics.lineBetween(ladderX + 8, topY - tileSize * 1.0, ladderX + 8, topY + ladderHeight)
-    
-    // Thicker teal rungs
-    const numRungs = Math.floor(ladderHeight / 22) // More frequent rungs
-    for (let i = 0; i <= numRungs; i++) {
-      const rungY = bottomY - (i * 22)
+    // Use new teal ladder sprite
+    if (this.textures.exists('tealLadder')) {
+      const ladderX = x + tileSize/2
+      const totalHeight = ladderHeight + tileSize * 1.0 // Include extension height
+      const centerY = (topY + bottomY) / 2 - tileSize * 0.5 + 3 // Adjust center for extension, move down 3px
       
-      // Draw rung outline first
-      ladderGraphics.lineStyle(1, 0x2a6660, 0.8) // Dark teal outline for rungs
-      ladderGraphics.strokeRect(ladderX - 13, rungY - 4, 26, 8)
+      // Create ladder sprite
+      const ladderSprite = this.add.image(ladderX, centerY, 'tealLadder')
+      // Scale to proper height while maintaining aspect ratio
+      ladderSprite.setDisplaySize(ladderSprite.width * (totalHeight / ladderSprite.height), totalHeight)
+      ladderSprite.setDepth(11)
+    } else {
+      // Fallback to simple graphics ladder
+      const ladderGraphics = this.add.graphics()
+      const ladderX = x + tileSize/2
       
-      // Thicker teal rung
-      ladderGraphics.fillStyle(0x40e0d0, 1) // Bright teal gem color for rungs
-      ladderGraphics.fillRect(ladderX - 12, rungY - 3, 24, 6) // Wider and taller rungs
+      ladderGraphics.fillStyle(0x40e0d0, 1) // Teal color
+      ladderGraphics.fillRect(ladderX - 2, topY - tileSize * 0.5, 4, ladderHeight + tileSize * 1.0)
+      ladderGraphics.fillRect(ladderX - 13, topY, 26, 4) // Top rung
+      ladderGraphics.fillRect(ladderX - 13, bottomY - 4, 26, 4) // Bottom rung
       
-      // Rung highlights
-      ladderGraphics.lineStyle(1, 0x60f0e0, 0.7) // Light teal rung highlights
-      ladderGraphics.lineBetween(ladderX - 12, rungY - 2, ladderX + 12, rungY - 2)
+      // Middle rungs
+      const numRungs = Math.floor(ladderHeight / 32)
+      for (let i = 1; i < numRungs; i++) {
+        const rungY = topY + (i * (ladderHeight / (numRungs + 1)))
+        ladderGraphics.fillRect(ladderX - 13, rungY, 26, 3)
+      }
       
-      // Larger teal brackets at connection points
-      ladderGraphics.fillStyle(0x2a6660, 1) // Dark teal brackets
-      ladderGraphics.fillRect(ladderX - 14, rungY - 4, 6, 8)
-      ladderGraphics.fillRect(ladderX + 8, rungY - 4, 6, 8)
-      
-      // Larger teal bolts
-      ladderGraphics.fillStyle(0x1a4040, 1) // Very dark teal bolts
-      ladderGraphics.fillCircle(ladderX - 11, rungY, 2) // Bigger bolts
-      ladderGraphics.fillCircle(ladderX + 11, rungY, 2)
-      
-      // Bolt highlights
-      ladderGraphics.fillStyle(0x35a0a0, 1) // Medium teal bolt highlights
-      ladderGraphics.fillCircle(ladderX - 11, rungY - 1, 1)
-      ladderGraphics.fillCircle(ladderX + 11, rungY - 1, 1)
+      ladderGraphics.setDepth(11)
     }
-    
-    // Add rail extensions above the ladder (like at the bottom) - no extra rung
-    const railExtensionLength = tileSize * 0.3
-    const railExtensionY = topY - tileSize * 0.4
-    
-    ladderGraphics.fillStyle(0x40e0d0, 1) // Bright teal gem color for extensions
-    ladderGraphics.fillRect(ladderX - 12, railExtensionY, 5, railExtensionLength)
-    ladderGraphics.fillRect(ladderX + 7, railExtensionY, 5, railExtensionLength)
-    
-    // Teal grain on rail extensions
-    ladderGraphics.lineStyle(2, 0x35a0a0, 0.8) // Medium teal grain for extensions
-    ladderGraphics.lineBetween(ladderX - 10, railExtensionY, ladderX - 10, railExtensionY + railExtensionLength)
-    ladderGraphics.lineBetween(ladderX + 9, railExtensionY, ladderX + 9, railExtensionY + railExtensionLength)
-    
-    // Teal highlights on rail extensions
-    ladderGraphics.lineStyle(1, 0x60f0e0, 0.6) // Light teal highlights for extensions
-    ladderGraphics.lineBetween(ladderX - 11, railExtensionY, ladderX - 11, railExtensionY + railExtensionLength)
-    ladderGraphics.lineBetween(ladderX + 8, railExtensionY, ladderX + 8, railExtensionY + railExtensionLength)
-    
-    ladderGraphics.setDepth(11)
   }
 
   private createCats(): void {
@@ -2845,7 +2840,7 @@ export class GameScene extends Phaser.Scene {
     
     // Create entrance ladder extending below the floor
     const tileSize = GameSettings.game.tileSize
-    const ladderX = 100 // Position ladder on the left side
+    const ladderX = tileSize/2 // Position ladder on the farthest left tile (tile 0)
     const floorY = GameSettings.canvas.height - tileSize/2
     
     console.log('🪜 ENTRANCE LADDER SETUP')
@@ -2854,30 +2849,36 @@ export class GameScene extends Phaser.Scene {
     console.log(`   Target Y position: ${targetY}`)
     console.log(`   Ladder X position: ${ladderX}`)
     
-    // Create entrance ladder to match game style exactly
-    const entranceLadder = this.add.graphics()
-    
-    // Calculate ladder dimensions - extends from below screen to above floor
+    // Create entrance ladder using new teal ladder sprite
     const ladderTop = targetY - 60 // Extends above player position
     const ladderBottom = GameSettings.canvas.height + 100 // Below screen
     const ladderHeight = ladderBottom - ladderTop
+    const ladderCenterY = (ladderTop + ladderBottom) / 2 + 52
     
-    // Draw ladder like typical platformer game - brown wooden rails
-    entranceLadder.fillStyle(0x8B4513, 1) // Brown wood color for rails
-    entranceLadder.fillRect(ladderX - 8, ladderTop, 4, ladderHeight) // Left rail
-    entranceLadder.fillRect(ladderX + 4, ladderTop, 4, ladderHeight) // Right rail
+    let entranceLadder: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics
     
-    // Add horizontal wooden rungs
-    const rungSpacing = 16 // Closer spacing for better climbing feel
-    const numRungs = Math.floor(ladderHeight / rungSpacing)
-    entranceLadder.fillStyle(0xA0522D, 1) // Lighter brown for rungs
-    
-    for (let i = 0; i < numRungs; i++) {
-      const rungY = ladderTop + (i * rungSpacing) + 8
-      entranceLadder.fillRect(ladderX - 10, rungY, 20, 2) // Horizontal rungs
+    if (this.textures.exists('tealLadder')) {
+      // Use new teal ladder sprite
+      entranceLadder = this.add.image(ladderX, ladderCenterY, 'tealLadder')
+      entranceLadder.setDisplaySize(entranceLadder.width * (ladderHeight / entranceLadder.height), ladderHeight)
+      entranceLadder.setDepth(5)
+    } else {
+      // Fallback to graphics ladder
+      entranceLadder = this.add.graphics()
+      entranceLadder.fillStyle(0x40e0d0, 1) // Teal color to match game theme
+      entranceLadder.fillRect(ladderX - 2, ladderTop, 4, ladderHeight) // Center rail
+      entranceLadder.fillRect(ladderX - 13, ladderTop, 26, 4) // Top rung
+      entranceLadder.fillRect(ladderX - 13, ladderBottom - 4, 26, 4) // Bottom rung
+      
+      // Middle rungs
+      const numRungs = Math.floor(ladderHeight / 32)
+      for (let i = 1; i < numRungs; i++) {
+        const rungY = ladderTop + (i * (ladderHeight / (numRungs + 1)))
+        entranceLadder.fillRect(ladderX - 13, rungY, 26, 3)
+      }
+      
+      entranceLadder.setDepth(5)
     }
-    
-    entranceLadder.setDepth(5)
     
     console.log(`   Ladder extends from Y:${ladderTop} (top) to Y:${ladderBottom} (bottom)`)
     console.log(`   Ladder height: ${ladderHeight}px`)
@@ -3418,15 +3419,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateCoinCounterDisplay(): void {
-    const coinsTowardNext = this.totalCoinsCollected % this.COINS_PER_EXTRA_LIFE
-    this.coinCounterText.setText(`COINS: ${coinsTowardNext}/${this.COINS_PER_EXTRA_LIFE}`)
+    const crystalsTowardNext = this.totalCoinsCollected % this.COINS_PER_EXTRA_LIFE
+    this.coinCounterText.setText(`CRYSTALS: ${crystalsTowardNext}/${this.COINS_PER_EXTRA_LIFE}`)
   }
 
   private updateLivesDisplay(): void {
-    // Show hearts for lives (max 9 to fit on screen)
-    const heartsToShow = Math.min(this.lives, 9)
-    const heartText = heartsToShow > 0 ? `❤️ x${heartsToShow}` : '💀 GAME OVER'
-    this.livesText.setText(heartText)
+    // Show hearts for lives (max 9 to fit on screen)  
+    const livesToShow = Math.min(this.lives, 9)
+    const livesText = livesToShow > 0 ? `❤️ x${livesToShow}` : 'GAME OVER'
+    this.livesText.setText(livesText)
   }
 
   private checkForExtraLife(): void {
