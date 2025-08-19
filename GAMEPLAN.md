@@ -241,7 +241,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Enhanced flash power-up with instant transitions and seamless effects
 - Enhanced collectibles: gem clusters (50pts), teal clusters (500pts), cut diamonds (1000pts), treasure chests (2500pts + contents)
 - Automatic treasure chest system with contact-based opening
-- Professional UI with translucent backgrounds and depth layering
+- Professional HUD system with unified top bar layout (score/crystals left, hearts/level right)
 - Multi-touch support with virtual joystick and jump button
 - Complete scoring system with point popups and combo feedback
 - Progressive difficulty with speed increases
@@ -251,7 +251,10 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Smart animation priority system with immediate response
 - Natural idle animations with randomized eye movement and blinking
 - Instant landing detection for responsive jump-to-idle transitions
-- **IN PROGRESS:** Level intro animation with climbing entrance (needs refinement)
+- Level intro animation with climbing entrance from below screen
+- Enhanced red enemy platform bounds checking to prevent falling through gaps
+- No enemy spawning on ground floor (floor 0) for safer gameplay
+- Improved enemy collision system with cooldown to prevent sticking
 
 ---
 

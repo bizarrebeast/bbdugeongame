@@ -431,12 +431,16 @@ export class GameScene extends Phaser.Scene {
     
     // Game title removed - focusing on clean HUD
     
-    // Create dark purple HUD background panel
+    // Create dark purple HUD background bar across top
+    const screenWidth = this.cameras.main.width
     const hudBg = this.add.graphics()
     hudBg.fillStyle(0x4a148c, 0.9)  // Dark purple color
     hudBg.lineStyle(2, 0x7b1fa2, 0.8) // Slightly lighter purple border
-    hudBg.fillRoundedRect(8, 8, 200, 100, 12)  // Rounded corners
-    hudBg.strokeRoundedRect(8, 8, 200, 100, 12) // Add border stroke
+    
+    // Single connected rectangle across the top
+    hudBg.fillRoundedRect(8, 8, screenWidth - 16, 56, 12)  // Full width minus margins
+    hudBg.strokeRoundedRect(8, 8, screenWidth - 16, 56, 12) // Add border stroke
+    
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
@@ -481,26 +485,8 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Add lives display with hearts
-    this.livesText = this.add.text(20, 40, '❤️ x3', {
-      fontSize: '16px',
-      color: '#ff4444',  // Red color for hearts
-      fontFamily: 'Arial Black',
-      fontStyle: 'bold',
-      stroke: '#4a148c',  // Dark purple stroke to match HUD
-      strokeThickness: 1,
-      shadow: {
-        offsetX: 2,
-        offsetY: 2,
-        color: '#000000',  // Black drop shadow
-        blur: 3,
-        fill: true
-      }
-    }).setDepth(100)
-    this.livesText.setScrollFactor(0)
-    
-    // Add crystal counter display  
-    this.coinCounterText = this.add.text(20, 60, 'CRYSTALS: 0/150', {
+    // Add crystal counter display (left side, bottom)
+    this.coinCounterText = this.add.text(20, 40, 'CRYSTALS: 0/150', {
       fontSize: '16px',
       color: '#40e0d0',  // Teal color for crystals
       fontFamily: 'Arial Black',
@@ -517,9 +503,27 @@ export class GameScene extends Phaser.Scene {
     }).setDepth(100)
     this.coinCounterText.setScrollFactor(0)
     
-    // Add level counter
+    // Add lives display with hearts (right side, top, right-aligned)
+    this.livesText = this.add.text(screenWidth - 20, 20, '❤️ x3', {
+      fontSize: '16px',
+      color: '#ff4444',  // Red color for hearts
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
+    }).setOrigin(1, 0).setDepth(100)  // Right-aligned with setOrigin(1, 0)
+    this.livesText.setScrollFactor(0)
+    
+    // Add level counter (right side, bottom, right-aligned)
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(20, 80, `LEVEL: ${currentLevel}`, {
+    this.levelText = this.add.text(screenWidth - 20, 40, `LEVEL: ${currentLevel}`, {
       fontSize: '16px',
       color: '#ff88ff',
       fontFamily: 'Arial Black',
@@ -531,7 +535,7 @@ export class GameScene extends Phaser.Scene {
         blur: 3,
         fill: true
       }
-    }).setDepth(100)
+    }).setOrigin(1, 0).setDepth(100)  // Right-aligned with setOrigin(1, 0)
     this.levelText.setScrollFactor(0)
     
     // Initialize displays
