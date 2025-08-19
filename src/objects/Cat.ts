@@ -322,25 +322,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateGreenBounce(delta: number): void {
-    // Debug green enemy physics periodically
-    if (Math.random() < 0.005) { // Occasional logging
-      console.log(`🟢 GREEN ENEMY MOVEMENT DEBUG:`)
-      console.log(`  - Current position: (${this.x}, ${this.y})`)
-      console.log(`  - Platform bounds: left=${this.platformBounds.left}, right=${this.platformBounds.right}`)
-      console.log(`  - Direction: ${this.direction}`)
-      console.log(`  - Speed: ${this.moveSpeed}`)
-      console.log(`  - Velocity: (${this.body?.velocity.x}, ${this.body?.velocity.y})`)
-      console.log(`  - On ground: ${this.body?.blocked.down || this.body?.touching.down}`)
-      console.log(`  - Body bounds: (${this.body?.x}, ${this.body?.y}) ${this.body?.width}x${this.body?.height}`)
-      console.log(`  - Bounce timer: ${this.bounceTimer}`)
-    }
     
     this.bounceTimer -= delta
     
     if (this.bounceTimer <= 0 && this.body?.touching.down) {
       this.setVelocityY(-200)
       this.bounceTimer = 800 + Math.random() * 400
-      console.log(`🟢 GREEN ENEMY BOUNCE: Jumping at (${this.x}, ${this.y})`)
     }
     
     // Simplified movement - just use platform bounds for now
@@ -357,17 +344,37 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateRedPatrol(): void {
-    // Red enemies are aggressive - they reverse direction more frequently
-    // and move in shorter, erratic patterns
-    if (this.x <= this.platformBounds.left + 15) {
+    // Red enemies use strict platform bounds to prevent falling through gaps
+    const edgeBuffer = 25 // Larger buffer to prevent getting too close to edges
+    
+    // Strong platform bounds checking similar to green enemies
+    if (this.x <= this.platformBounds.left + edgeBuffer) {
       this.direction = 1
-    } else if (this.x >= this.platformBounds.right - 15) {
+      // Force position if too close to edge
+      if (this.x <= this.platformBounds.left + 5) {
+        this.setX(this.platformBounds.left + 5)
+      }
+    } else if (this.x >= this.platformBounds.right - edgeBuffer) {
       this.direction = -1
+      // Force position if too close to edge
+      if (this.x >= this.platformBounds.right - 5) {
+        this.setX(this.platformBounds.right - 5)
+      }
     }
     
-    // Occasionally reverse direction randomly for erratic movement
-    if (Math.random() < 0.002) { // 0.2% chance per frame = frequent direction changes
-      this.direction *= -1
+    // Reduced random direction changes to prevent erratic movement near edges
+    if (Math.random() < 0.0005) { // 0.05% chance per frame = less frequent direction changes
+      // Only reverse if not near edges
+      if (this.x > this.platformBounds.left + edgeBuffer && this.x < this.platformBounds.right - edgeBuffer) {
+        this.direction *= -1
+      }
+    }
+    
+    // Strict safety check: if red enemy is outside safe bounds, immediately constrain
+    if (this.x < this.platformBounds.left + 5 || this.x > this.platformBounds.right - 5) {
+      const constrainedX = Math.max(this.platformBounds.left + 5, Math.min(this.platformBounds.right - 5, this.x))
+      this.setX(constrainedX)
+      this.direction *= -1 // Reverse direction when constrained
     }
     
     this.setVelocityX(this.moveSpeed * this.direction)

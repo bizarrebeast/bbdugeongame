@@ -21,6 +21,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Use the new player idle sprite or fallback to placeholder
     const textureKey = scene.textures.exists('playerIdleEye1') ? 'playerIdleEye1' : 'player'
     
+    console.log(`🎮 PLAYER SPAWN DEBUG:`)
+    console.log(`  - Initial position: (${x}, ${y})`)
+    console.log(`  - Texture key: ${textureKey}`)
+    
     // Create fallback if sprite not loaded
     if (!scene.textures.exists('playerIdleEye1')) {
       const graphics = scene.add.graphics()
@@ -37,7 +41,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Scale the sprite if using the new player sprites
     if (textureKey === 'playerIdleEye1' || textureKey.startsWith('player')) {
-      // Scale to fit the expected player size (48x64 for retina display)
+      // Scale to fit the expected player size
       this.setDisplaySize(48, 64)
     }
     
@@ -45,6 +49,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true)
     this.setBounce(0)
     this.setSize(28, 55)
+    
+    console.log(`🎮 PLAYER PHYSICS DEBUG:`)
+    console.log(`  - Physics body size: 28x55`)
+    console.log(`  - Display size: 48x64`)
+    console.log(`  - World bounds collision: ${this.body!.collideWorldBounds}`)
+    console.log(`  - Gravity enabled: ${(this.body as Phaser.Physics.Arcade.Body).allowGravity}`)
     
     // The hitbox is positioned correctly, we need to shift the visual sprite UP
     // so that the sprite's bottom aligns with the hitbox's bottom
