@@ -362,11 +362,37 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
-    // Cats collide with platforms
+    // Cats collide with platforms and FLOOR spikes only (floor spikes act like platforms for enemies)
     this.physics.add.collider(this.cats, this.platforms)
+    // Custom collision for spikes - only collide with floor spikes, not ceiling spikes
+    this.physics.add.collider(
+      this.cats, 
+      this.spikes,
+      undefined, // No callback needed
+      (cat, spike) => {
+        // Process callback - return true to collide, false to pass through
+        const spikeObj = spike as Phaser.GameObjects.Rectangle
+        const isFloorSpike = spikeObj.getData('isFloorSpike')
+        // Only collide with floor spikes, pass through ceiling spikes
+        return isFloorSpike === true
+      },
+      this
+    )
     
-    // Ceiling cats collide with platforms (after dropping)
+    // Stalker cats collide with platforms and floor spikes (after dropping)
     this.physics.add.collider(this.stalkerCats, this.platforms)
+    // Stalker cats also only collide with floor spikes, not ceiling spikes
+    this.physics.add.collider(
+      this.stalkerCats, 
+      this.spikes,
+      undefined,
+      (cat, spike) => {
+        const spikeObj = spike as Phaser.GameObjects.Rectangle
+        const isFloorSpike = spikeObj.getData('isFloorSpike')
+        return isFloorSpike === true
+      },
+      this
+    )
     
     // Cats collide with each other and reverse direction
     this.physics.add.collider(
@@ -1356,7 +1382,7 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createSpikeGraphics(x: number, y: number, tileSize: number): void {
-    const spikeHeight = tileSize * 0.5 // 50% of tile height
+    const spikeHeight = tileSize // Full tile height (32px)
     const spikesPerTile = 3 // 3 spikes per tile, side by side
     const spikeWidth = tileSize / spikesPerTile // Width per spike
     
@@ -1417,11 +1443,21 @@ export class GameScene extends Phaser.Scene {
     spikesGraphics.setDepth(12) // Above platforms but below player
     console.log(`🔱 Graphics created with depth 12, ${spikesPerTile} triangular spikes`)
     
-    // Create physics body for collision detection - positioned at spike location
-    const spikeBody = this.add.rectangle(x, spikeBaseY - spikeHeight/2, tileSize * 0.9, spikeHeight, 0x000000, 0)
+    // Create physics body for collision detection - same height as floor tiles for enemy movement
+    // Visual spikes still look the same, but collision body extends to floor level
+    const fullTileHeight = tileSize
+    const spikeCollisionY = y // Same Y as platform tiles
+    const spikeBody = this.add.rectangle(x, spikeCollisionY, tileSize * 0.9, fullTileHeight, 0x000000, 0)
     spikeBody.setVisible(false) // Invisible collision box
+    
+    // Store spike data for different collision behaviors
+    spikeBody.setData('isFloorSpike', true)
+    spikeBody.setData('visualSpikeHeight', spikeHeight) // Store visual spike height for player damage
+    spikeBody.setData('visualSpikeBaseY', spikeBaseY) // Store visual spike base Y
+    
     this.spikes.add(spikeBody)
-    console.log(`🔱 Physics body added to spikes group at correct position`)
+    console.log(`🔱 Physics body added: full tile height (${fullTileHeight}px) at platform level for enemy collision`)
+    console.log(`🔱 Visual spikes: height ${spikeHeight}px at ${spikeBaseY} for player damage`)
   }
 
   private createCeilingSpikes(): void {
@@ -1670,18 +1706,13 @@ export class GameScene extends Phaser.Scene {
                 this,
                 (leftBound + rightBound) / 2,
                 y,
-                leftBound,
-                Math.min(rightBound, tileSize * (layout.gapStart - 0.5)),
+                tileSize * 0.5,  // Full floor left bound
+                tileSize * (floorWidth - 0.5),  // Full floor right bound
                 randomColor as any
               )
               
-              // Green cats use full left section bounds
-              if (cat.getCatColor() === 'green') {
-                cat.platformBounds = {
-                  left: tileSize * 0.5,
-                  right: tileSize * (layout.gapStart - 0.5)
-                }
-              }
+              // All enemies now use full floor bounds since spikes act as platforms
+              // No need to override for green cats anymore
               
               this.cats.add(cat)
             }
@@ -1709,18 +1740,13 @@ export class GameScene extends Phaser.Scene {
                 this,
                 (leftBound + rightBound) / 2,
                 y,
-                leftBound,
-                Math.min(rightBound, tileSize * (floorWidth - 0.5)),
+                tileSize * 0.5,  // Full floor left bound
+                tileSize * (floorWidth - 0.5),  // Full floor right bound
                 randomColor as any
               )
               
-              // Green cats use full right section bounds
-              if (cat.getCatColor() === 'green') {
-                cat.platformBounds = {
-                  left: tileSize * (rightStart + 0.5),
-                  right: tileSize * (floorWidth - 0.5)
-                }
-              }
+              // All enemies now use full floor bounds since spikes act as platforms
+              // No need to override for green cats anymore
               
               this.cats.add(cat)
             }
@@ -1793,7 +1819,8 @@ export class GameScene extends Phaser.Scene {
       // Calculate floor position for stalker cats (on the floor, not ceiling)
       // Place stalker cats directly on the current floor
       const floorY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
-      const stalkerY = floorY - 16 // Just above the floor platform
+      const floorSurfaceY = floorY - tileSize/2  // Top surface of platform tiles
+      const stalkerY = floorSurfaceY - 15        // Same as regular cats - standing on floor
       
       // Determine number of stalker cats (0-1 for now, will scale later)
       const maxStalkerCats = floor < 20 ? 1 : 2
@@ -2350,13 +2377,29 @@ export class GameScene extends Phaser.Scene {
         this.handlePlayerDamage(playerObj)
       }
     } else {
-      // Floor spikes - original behavior
-      // Only damage player if they're falling down onto the spikes
-      if (playerBody.velocity.y > 50) { // Must be falling with some speed (not just barely touching)
-        console.log(`🔱 Player fell onto floor spikes! Velocity Y: ${playerBody.velocity.y}`)
-        this.handlePlayerDamage(playerObj)
+      // Floor spikes - check if player is in the dangerous visual spike area
+      const isFloorSpike = spikeObj.getData('isFloorSpike')
+      
+      if (isFloorSpike) {
+        const visualSpikeHeight = spikeObj.getData('visualSpikeHeight')
+        const visualSpikeBaseY = spikeObj.getData('visualSpikeBaseY')
+        
+        // With full-height spikes, damage when player lands on them while falling
+        // Since spikes are now full tile height, we can use simpler collision detection
+        if (playerBody.velocity.y > 50) { // Falling down onto spikes
+          console.log(`🔱 Player fell onto floor spikes! Velocity Y: ${playerBody.velocity.y}`)
+          this.handlePlayerDamage(playerObj)
+        } else {
+          console.log(`🔱 Player touched floor spikes but not falling fast enough (Y velocity: ${playerBody.velocity.y}) - no damage`)
+        }
       } else {
-        console.log(`🔱 Player touched floor spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
+        // Legacy floor spike behavior (if any old spikes don't have the new data)
+        if (playerBody.velocity.y > 50) { // Must be falling with some speed
+          console.log(`🔱 Player fell onto legacy floor spikes! Velocity Y: ${playerBody.velocity.y}`)
+          this.handlePlayerDamage(playerObj)
+        } else {
+          console.log(`🔱 Player touched legacy floor spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
+        }
       }
     }
   }

@@ -12,6 +12,7 @@ export class StalkerCat extends Cat {
   private mineDelayDuration: number = 2000 // 2 second delay before chasing
   private currentSpeed: number = 80 * 1.5 // Starting chase speed
   private speedIncrement: number = 5 // Speed increase per update cycle
+  private originalScale: number = 1 // Track original scale
   
   constructor(
     scene: Phaser.Scene, 
@@ -20,7 +21,18 @@ export class StalkerCat extends Cat {
     platformLeft: number, 
     platformRight: number
   ) {
-    super(scene, x, y, platformLeft, platformRight, CatColor.BLUE)
+    console.log(`🔴 STALKER CAT CREATION START:`)
+    console.log(`  - Position: (${x}, ${y})`)
+    console.log(`  - Platform bounds: ${platformLeft} to ${platformRight}`)
+    
+    super(scene, x, y, platformLeft, platformRight, CatColor.RED)
+    
+    console.log(`🔴 STALKER CAT AFTER SUPER:`)
+    console.log(`  - Current position: (${this.x}, ${this.y})`)
+    console.log(`  - Body size: ${this.body?.width}x${this.body?.height}`)
+    console.log(`  - Display size: ${this.displayWidth}x${this.displayHeight}`)
+    console.log(`  - Scale: ${this.scaleX}x${this.scaleY}`)
+    console.log(`  - Gravity Y: ${(this.body as Phaser.Physics.Arcade.Body)?.gravity.y}`)
     
     this.originalY = y
     
@@ -41,12 +53,32 @@ export class StalkerCat extends Cat {
     
     this.setTexture('red-stalker-cat')
     
+    // Override the parent's red enemy sizing - we want stalker to be smaller
+    this.setDisplaySize(30, 24)  // Smaller than normal red enemy
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      this.body.setSize(28, 20)  // Custom hitbox for stalker
+      this.body.setOffset(1, 2)  // Adjust offset for proper positioning
+    }
+    
+    console.log(`🔴 STALKER CAT AFTER TEXTURE CHANGE:`)
+    console.log(`  - Texture: red-stalker-cat`)
+    console.log(`  - Display size: ${this.displayWidth}x${this.displayHeight}`)
+    console.log(`  - Body size: ${this.body?.width}x${this.body?.height}`)
+    console.log(`  - Scale: ${this.scaleX}x${this.scaleY}`)
+    
     // Start completely hidden
     this.setVisible(false)
     this.setVelocity(0, 0)
     this.body!.setGravityY(0) // Disable gravity while hidden
     this.body!.setImmovable(true) // Don't move while hidden
     this.setDepth(15) // Same level as other cats
+    
+    console.log(`🔴 STALKER CAT FINAL SETUP:`)
+    console.log(`  - Visible: ${this.visible}`)
+    console.log(`  - Gravity: ${(this.body as Phaser.Physics.Arcade.Body).gravity.y}`)
+    console.log(`  - Immovable: ${this.body?.immovable}`)
+    console.log(`  - Position: (${this.x}, ${this.y})`)
+    console.log(`  - Body bounds: L=${this.body?.left} R=${this.body?.right} T=${this.body?.top} B=${this.body?.bottom}`)
     
     // Create eyes-only sprite for activated state
     this.createEyesSprite()
@@ -102,6 +134,12 @@ export class StalkerCat extends Cat {
     
     // Check if player has passed the cat (walked past it within trigger distance)
     if (onSameFloor && distanceToPlayer <= this.triggerDistance && !this.hasPlayerPassed) {
+      console.log(`🔴👁️ STALKER CAT ACTIVATED!`)
+      console.log(`  - Player distance: ${distanceToPlayer}`)
+      console.log(`  - Trigger distance: ${this.triggerDistance}`)
+      console.log(`  - Cat position: (${this.x}, ${this.y})`)
+      console.log(`  - Player position: (${playerX}, ${playerY})`)
+      
       // Player walked past - activate mine timer
       this.state = 'activated'
       this.mineTimer = this.mineDelayDuration
@@ -111,6 +149,7 @@ export class StalkerCat extends Cat {
       if (this.eyesSprite) {
         this.eyesSprite.setPosition(this.x - 10, this.y - 8)
         this.eyesSprite.setVisible(true)
+        console.log(`  - Eyes shown at: (${this.eyesSprite.x}, ${this.eyesSprite.y})`)
       }
     }
   }
@@ -134,6 +173,12 @@ export class StalkerCat extends Cat {
   }
   
   private popOut(): void {
+    console.log(`🔴💥 STALKER CAT POPPING OUT!`)
+    console.log(`  - Current position: (${this.x}, ${this.y})`)
+    console.log(`  - Current scale: ${this.scaleX}x${this.scaleY}`)
+    console.log(`  - Display size BEFORE: ${this.displayWidth}x${this.displayHeight}`)
+    console.log(`  - Body size BEFORE: ${this.body?.width}x${this.body?.height}`)
+    
     this.state = 'chasing'
     this.setVisible(true) // Show the full cat
     
@@ -142,21 +187,40 @@ export class StalkerCat extends Cat {
       this.eyesSprite.setVisible(false)
     }
     
-    // Enable physics for chasing
-    this.body!.setGravityY(800) // Enable gravity for movement
-    this.body!.setImmovable(false)
+    // Enable movement but no gravity - stalker cats just run along the floor
+    this.body!.setGravityY(0) // No gravity needed - they stay on their floor
+    this.body!.setImmovable(false) // Allow movement
+    
+    console.log(`🔴💥 AFTER ENABLING PHYSICS:`)
+    console.log(`  - Gravity: ${(this.body as Phaser.Physics.Arcade.Body).gravity.y}`)
+    console.log(`  - Immovable: ${this.body?.immovable}`)
+    console.log(`  - Body bounds: L=${this.body?.left} R=${this.body?.right} T=${this.body?.top} B=${this.body?.bottom}`)
     
     // Reset speed to starting value
     this.currentSpeed = 80 * 1.5
     
-    // Pop out animation
+    // Store original size before animation
+    const origScaleX = this.scaleX
+    const origScaleY = this.scaleY
+    
+    // Pop out animation - scale up then return to original
+    console.log(`🔴💥 STARTING POP ANIMATION (scale to 1.5x original, then back)`)
     this.scene.tweens.add({
       targets: this,
-      scaleX: 1.2,
-      scaleY: 1.2,
+      scaleX: origScaleX * 1.5,
+      scaleY: origScaleY * 1.5,
       duration: 100,
       ease: 'Power2',
-      yoyo: true
+      yoyo: true,
+      onComplete: () => {
+        // Ensure we return to exactly the original scale
+        this.setScale(origScaleX, origScaleY)
+        console.log(`🔴💥 POP ANIMATION COMPLETE:`)
+        console.log(`  - Final scale: ${this.scaleX}x${this.scaleY}`)
+        console.log(`  - Final display size: ${this.displayWidth}x${this.displayHeight}`)
+        console.log(`  - Final body size: ${this.body?.width}x${this.body?.height}`)
+        console.log(`  - Final position: (${this.x}, ${this.y})`)
+      }
     })
   }
   
@@ -164,8 +228,8 @@ export class StalkerCat extends Cat {
     const playerX = this.playerRef!.x
     const playerY = this.playerRef!.y
     
-    // Normal gravity always
-    this.body!.setGravityY(800)
+    // No gravity - stalker cats stay on their floor
+    // this.body!.setGravityY(0) // Already set to 0, no need to keep setting it
     
     const floorDifference = Math.abs(playerY - this.y)
     
