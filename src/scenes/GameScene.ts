@@ -250,7 +250,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
     
     // Load crystal cavern background
-    this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20cavern%20background-P4DN7DvBxPB537dt2KyrMVA26AFNb9.png?uRh2')
+    this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
     // Load yellow enemy animation sprites
     this.load.image('yellowEnemyMouthOpenEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20eye%20open-4dEmp2gPrn80UE2QOE1uSSovKJjcCe.png?SLUI')
@@ -290,7 +290,7 @@ export class GameScene extends Phaser.Scene {
     const background = this.add.image(0, 0, 'crystal-cavern-bg')
     background.setOrigin(0, 0) // Position from top-left corner
     background.setDepth(-100) // Behind everything
-    background.setScrollFactor(0.3) // More obvious parallax effect - moves more noticeably with world
+    background.setScrollFactor(0.05) // Subtle parallax effect for 2000x2000 background
     
     // Scale background to fill entire game area, ensuring full coverage
     const gameWidth = this.cameras.main.width
@@ -301,10 +301,10 @@ export class GameScene extends Phaser.Scene {
     const scale = Math.max(scaleX, scaleY) * 1.1 // 10% larger to ensure full coverage
     background.setScale(scale)
     
-    // Position background to cover entire area including bottom
+    // Position background centered for optimal coverage with 2000x2000 image
     background.setPosition(
       (gameWidth - background.width * scale) / 2,
-      (gameHeight - background.height * scale) / 2 + 50 // Shift down by 100px from original (-50 + 100 = +50)
+      (gameHeight - background.height * scale) / 2 // Reset to center position
     )
     
     // Enable multi-touch support
@@ -3425,9 +3425,10 @@ export class GameScene extends Phaser.Scene {
     let entranceLadder: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics
     
     if (this.textures.exists('tealLadder')) {
-      // Use new teal ladder sprite
+      // Use new teal ladder sprite with same scaling method as gameplay ladders
+      const totalHeight = ladderHeight + tileSize * 1.0 // Include extension height like gameplay ladders
       entranceLadder = this.add.image(ladderX, ladderCenterY, 'tealLadder')
-      entranceLadder.setDisplaySize(entranceLadder.width * (ladderHeight / entranceLadder.height), ladderHeight)
+      entranceLadder.setDisplaySize(entranceLadder.width * (totalHeight / entranceLadder.height), totalHeight)
       entranceLadder.setDepth(5)
     } else {
       // Fallback to graphics ladder
