@@ -9,10 +9,21 @@ export class StalkerCat extends Cat {
   private hasPlayerPassed: boolean = false
   // Remove separate eye sprite - use main sprite with eye-only texture instead
   private mineTimer: number = 0
-  private mineDelayDuration: number = 2000 // 2 second delay before chasing
+  private mineDelayDuration: number = 3000 // 3 second delay before chasing
   private currentSpeed: number = 80 * 1.5 // Starting chase speed
   private speedIncrement: number = 5 // Speed increase per update cycle
   private originalScale: number = 1 // Track original scale
+  
+  // Chase persistence system
+  private chasePersistenceTimer: number = 0
+  private chasePersistenceDuration: number = 4000 // 4 seconds minimum chase time
+  private isInPersistentChase: boolean = false
+  
+  // Enhanced chase tolerance for running + jumping
+  private lastPlayerX: number = 0
+  private lastPlayerY: number = 0
+  private playerMovementSpeed: number = 0
+  
   
   // Animation system like other enemies
   private currentEyeState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'blink' = 'eye1'
@@ -46,10 +57,10 @@ export class StalkerCat extends Cat {
     this.currentEyeState = 'eye1'
     
     // Set consistent size for stalker sprites using only displaySize
-    this.setDisplaySize(30, 30)  // Square stalker size
+    this.setDisplaySize(40, 40)  // Larger square stalker size
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
-      this.body.setSize(28, 26)  // Custom hitbox for stalker
-      this.body.setOffset(1, 48)  // Move visual sprite up 48 pixels
+      this.body.setSize(38, 36)  // Custom hitbox for stalker
+      this.body.setOffset(1, 35)  // Move visual sprite up 35 pixels
     }
     
     console.log(`🔴 STALKER CAT AFTER TEXTURE CHANGE:`)
@@ -125,8 +136,9 @@ export class StalkerCat extends Cat {
       
       // Show eyes by making main sprite visible with eye-only texture
       this.setTexture('stalkerEnemyEyeOnly')
-      this.setDisplaySize(30, 30) // Same size as full stalker sprite
+      this.setDisplaySize(40, 40) // Same size as full stalker sprite
       this.setVisible(true)
+      
       console.log(`👁️ EYES ACTIVATED:`)
       console.log(`  - Main sprite now showing eye-only texture`)
       console.log(`  - Stalker sprite at: (${this.x}, ${this.y})`)
@@ -162,7 +174,7 @@ export class StalkerCat extends Cat {
     // Switch to full stalker sprite and ensure proper scale and size
     this.setTexture('stalkerEnemyEye1') // Start with eye1 texture for chasing
     this.setScale(1, 1)
-    this.setDisplaySize(30, 30)
+    this.setDisplaySize(40, 40)
     this.currentEyeState = 'eye1' // Reset eye animation state
     
     // Update originalY to current position to prevent teleporting
@@ -182,6 +194,11 @@ export class StalkerCat extends Cat {
     
     // Reset speed to starting value
     this.currentSpeed = 80 * 1.5
+    
+    // Start chase persistence timer
+    this.chasePersistenceTimer = this.chasePersistenceDuration
+    this.isInPersistentChase = true
+    console.log(`🔴💥 STARTING PERSISTENT CHASE (${this.chasePersistenceDuration}ms minimum)`)
   }
   
   private updateChasing(): void {
@@ -191,11 +208,35 @@ export class StalkerCat extends Cat {
     // Lock Y position to spawn floor to prevent any drift or falling
     this.y = this.originalY
     
+    // Track player movement speed for enhanced chase logic
+    const playerSpeedX = Math.abs(playerX - this.lastPlayerX)
+    const playerSpeedY = Math.abs(playerY - this.lastPlayerY)
+    this.playerMovementSpeed = playerSpeedX + playerSpeedY
+    this.lastPlayerX = playerX
+    this.lastPlayerY = playerY
+    
     const floorDifference = Math.abs(playerY - this.y)
     
-    // Check if player is on same floor (within 50 pixels vertically)
-    if (floorDifference < 50) {
-      // Same floor - chase the player with increasing speed
+    // Update chase persistence timer
+    if (this.isInPersistentChase) {
+      this.chasePersistenceTimer -= this.scene.game.loop.delta
+      if (this.chasePersistenceTimer <= 0) {
+        this.isInPersistentChase = false
+        console.log(`🔴⏰ CHASE PERSISTENCE EXPIRED - normal behavior resumed`)
+      }
+    }
+    
+    // Determine vertical tolerance based on chase state and player movement
+    let verticalTolerance = this.isInPersistentChase ? 120 : 120  // Always 120px during chase
+    
+    // Log tolerance occasionally for debugging
+    if (Math.random() < 0.005) { // 0.5% chance per frame
+      console.log(`🔴📏 CHASE TOLERANCE: ${verticalTolerance}px vertical range, player ${floorDifference}px away`)
+    }
+    
+    // Check if player is within vertical tolerance
+    if (floorDifference < verticalTolerance) {
+      // Within range - chase the player with increasing speed
       this.currentSpeed += this.speedIncrement * 0.01 // Slow increase per frame
       const maxSpeed = 80 * 2.25 // Cap the speed at 2.25x base speed (180)
       if (this.currentSpeed > maxSpeed) {
@@ -215,9 +256,23 @@ export class StalkerCat extends Cat {
       // Chase aggressively
       this.direction = direction
       this.setVelocityX(this.currentSpeed * direction)
+      
+      // Log persistence status occasionally
+      if (this.isInPersistentChase && Math.random() < 0.005) { // 0.5% chance per frame
+        console.log(`🔴💪 PERSISTENT CHASE: ${Math.ceil(this.chasePersistenceTimer)}ms remaining, vertical tolerance: ${verticalTolerance}px`)
+      }
     } else {
-      // Different floor - patrol back and forth
-      this.updatePatrolling(16) // Pass delta as patrol uses it
+      // Outside vertical tolerance
+      if (this.isInPersistentChase) {
+        // During persistent chase, continue moving toward player horizontally even if they're above/below
+        const direction = playerX > this.x ? 1 : -1
+        this.direction = direction
+        this.setVelocityX(this.currentSpeed * direction * 0.7) // Slower but still moving
+        console.log(`🔴🔍 PERSISTENT CHASE: Player ${floorDifference}px away vertically, continuing horizontal pursuit`)
+      } else {
+        // Normal behavior - switch to patrolling
+        this.updatePatrolling(16) // Pass delta as patrol uses it
+      }
     }
   }
   
@@ -380,7 +435,8 @@ export class StalkerCat extends Cat {
   private changeEyeTexture(textureKey: string): void {
     if (this.scene.textures.exists(textureKey)) {
       this.setTexture(textureKey)
-      this.setDisplaySize(30, 30) // Maintain square stalker size
+      this.setDisplaySize(40, 40) // Maintain larger square stalker size
     }
   }
+
 }
