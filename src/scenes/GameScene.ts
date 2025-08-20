@@ -55,7 +55,7 @@ export class GameScene extends Phaser.Scene {
   
   // Smart tile placement tracking
   private recentTiles: number[] = [] // Track last few tiles to avoid repeats
-  private tileGrid: Map<string, number> = new Map() // Track tile variant at each position
+  private tileGrid: Map<string, {variant: number, flipX: boolean}> = new Map() // Track tile variant and horizontal flip at each position
   private tileUsageCount: number[] = new Array(12).fill(0) // Track usage count for each variant (12 tiles now)
   private door: Door | null = null
   private isLevelStarting: boolean = false
@@ -1307,7 +1307,7 @@ export class GameScene extends Phaser.Scene {
     return x < floorLayout.gapStart || x >= floorLayout.gapStart + floorLayout.gapSize
   }
   
-  private selectSmartTileVariant(x: number, y: number): number {
+  private selectSmartTileVariant(x: number, y: number): {variant: number, flipX: boolean} {
     const tileSize = GameSettings.game.tileSize
     const gridX = Math.floor(x / tileSize)
     const gridY = Math.floor(y / tileSize)
@@ -1318,97 +1318,95 @@ export class GameScene extends Phaser.Scene {
       return this.tileGrid.get(posKey)!
     }
     
-    // Get neighbors to avoid duplicates
-    const neighbors: number[] = []
+    // Get neighbor tile combinations to avoid duplicates
+    const neighborCombinations: string[] = []
+    const checkPositions = [
+      `${gridX - 1},${gridY}`, // left
+      `${gridX + 1},${gridY}`, // right
+      `${gridX},${gridY - 1}`, // above
+      `${gridX},${gridY + 1}`  // below
+    ]
     
-    // Check left neighbor
-    const leftKey = `${gridX - 1},${gridY}`
-    if (this.tileGrid.has(leftKey)) {
-      neighbors.push(this.tileGrid.get(leftKey)!)
-    }
-    
-    // Check right neighbor (if already placed)
-    const rightKey = `${gridX + 1},${gridY}`
-    if (this.tileGrid.has(rightKey)) {
-      neighbors.push(this.tileGrid.get(rightKey)!)
-    }
-    
-    // Check above neighbor
-    const aboveKey = `${gridX},${gridY - 1}`
-    if (this.tileGrid.has(aboveKey)) {
-      neighbors.push(this.tileGrid.get(aboveKey)!)
-    }
-    
-    // Check below neighbor
-    const belowKey = `${gridX},${gridY + 1}`
-    if (this.tileGrid.has(belowKey)) {
-      neighbors.push(this.tileGrid.get(belowKey)!)
-    }
-    
-    // Create a pool of available variants (0-11 for 12 tiles)
-    const availableVariants: number[] = []
-    for (let i = 0; i < 12; i++) {
-      availableVariants.push(i)
-    }
-    
-    // Remove neighbors and recent tiles from available pool
-    const toAvoid = [...neighbors, ...this.recentTiles.slice(-3)] // Avoid last 3 tiles and all neighbors
-    const filtered = availableVariants.filter(v => !toAvoid.includes(v))
-    
-    // If we have filtered options, use them. Otherwise use all variants but still avoid immediate neighbors
-    let pool = filtered.length > 0 ? filtered : availableVariants.filter(v => !neighbors.includes(v))
-    
-    // If still no options (very rare), use all variants
-    if (pool.length === 0) {
-      pool = availableVariants
-    }
-    
-    // Weight selection towards less-used variants for better distribution
-    const weightedPool: number[] = []
-    const maxUsage = Math.max(...this.tileUsageCount) || 1
-    
-    pool.forEach(variant => {
-      // Variants that have been used less get more weight
-      const weight = Math.max(1, maxUsage - this.tileUsageCount[variant] + 1)
-      for (let w = 0; w < weight; w++) {
-        weightedPool.push(variant)
+    checkPositions.forEach(key => {
+      if (this.tileGrid.has(key)) {
+        const neighbor = this.tileGrid.get(key)!
+        neighborCombinations.push(`${neighbor.variant}-${neighbor.flipX}`)
       }
     })
     
-    // Select from weighted pool
-    const selectedVariant = weightedPool[Math.floor(Math.random() * weightedPool.length)]
+    // Generate all possible tile combinations (only horizontal flipping)
+    const allCombinations: {variant: number, flipX: boolean, key: string}[] = []
+    for (let variant = 0; variant < 12; variant++) {
+      const combinations = [
+        {variant, flipX: false, key: `${variant}-false`},
+        {variant, flipX: true, key: `${variant}-true`}
+      ]
+      allCombinations.push(...combinations)
+    }
+    
+    // Filter out neighbor combinations to avoid identical adjacent tiles
+    let availableCombinations = allCombinations.filter(combo => 
+      !neighborCombinations.includes(combo.key)
+    )
+    
+    // If we filtered out everything, allow any combination (fallback)
+    if (availableCombinations.length === 0) {
+      availableCombinations = allCombinations
+    }
+    
+    // Weight selection towards less-used base variants
+    const weightedCombinations: typeof availableCombinations = []
+    const maxUsage = Math.max(...this.tileUsageCount) || 1
+    
+    availableCombinations.forEach(combo => {
+      // Base variants that have been used less get more weight
+      const weight = Math.max(1, maxUsage - this.tileUsageCount[combo.variant] + 1)
+      for (let w = 0; w < weight; w++) {
+        weightedCombinations.push(combo)
+      }
+    })
+    
+    // Select random combination from weighted pool
+    const selected = weightedCombinations[Math.floor(Math.random() * weightedCombinations.length)]
     
     // Update tracking
-    this.tileGrid.set(posKey, selectedVariant)
-    this.recentTiles.push(selectedVariant)
-    this.tileUsageCount[selectedVariant]++
+    const tileInfo = {variant: selected.variant, flipX: selected.flipX}
+    this.tileGrid.set(posKey, tileInfo)
+    this.recentTiles.push(selected.variant)
+    this.tileUsageCount[selected.variant]++
     
     // Keep recent tiles list to a reasonable size (last 5 tiles)
     if (this.recentTiles.length > 5) {
       this.recentTiles.shift()
     }
     
-    return selectedVariant
+    return tileInfo
   }
   
   private createPlatformTile(x: number, y: number, isLeftEdge: boolean = false, isRightEdge: boolean = false): void {
     const tileSize = GameSettings.game.tileSize
     
-    // Smart tile selection to avoid duplicates (now using 1-12 instead of 0-14)
-    const variantIndex = this.selectSmartTileVariant(x, y)
-    const textureKey = `floor-tile-${variantIndex + 1}` // +1 because tiles are numbered 1-12
+    // Smart tile selection with flipping variations
+    const tileInfo = this.selectSmartTileVariant(x, y)
+    const textureKey = `floor-tile-${tileInfo.variant + 1}` // +1 because tiles are numbered 1-12
     
     // Create sprite from preloaded texture and set to exact 32x32 size
     const tileSprite = this.add.sprite(x, y, textureKey)
     tileSprite.setDisplaySize(32, 32) // Force exact 32x32 pixel size
     tileSprite.setDepth(1)
     
-    // Add drop shadow for depth (also sized to 32x32)
+    // Apply horizontal flipping only (no vertical flipping to avoid upside-down tiles)
+    tileSprite.setFlipX(tileInfo.flipX)
+    
+    // Add drop shadow for depth (also sized to 32x32 and flipped to match)
     const shadowSprite = this.add.sprite(x + 3, y + 3, textureKey)
     shadowSprite.setDisplaySize(32, 32) // Force exact 32x32 pixel size for shadow too
     shadowSprite.setDepth(0)
     shadowSprite.setTint(0x000000)
     shadowSprite.setAlpha(0.3)
+    
+    // Apply same horizontal flipping to shadow for consistency
+    shadowSprite.setFlipX(tileInfo.flipX)
     
     // Create invisible physics platform
     const platform = this.add.rectangle(
