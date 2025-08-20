@@ -22,6 +22,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private readonly IDLE_THRESHOLD: number = 5000 // 5 seconds in milliseconds
   private bubbleActive: boolean = false
   private onBubbleTrigger: (() => void) | null = null
+  private onMovementStart: (() => void) | null = null
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Use the new player idle sprite or fallback to placeholder
@@ -89,6 +90,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   setBubbleTriggerCallback(callback: () => void): void {
     this.onBubbleTrigger = callback
+  }
+
+  setMovementStartCallback(callback: () => void): void {
+    this.onMovementStart = callback
   }
   
   notifyBubbleActive(isActive: boolean): void {
@@ -276,6 +281,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     } else {
       // Player is moving or bubble is active - reset timer
+      if ((this.isMoving || this.isClimbing || this.isJumping) && this.bubbleActive && this.onMovementStart) {
+        // Player started moving while bubble was active - hide bubble immediately
+        this.onMovementStart()
+      }
       this.idleTimer = 0
     }
   }

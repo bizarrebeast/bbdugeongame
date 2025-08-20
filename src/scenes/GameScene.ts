@@ -246,6 +246,15 @@ export class GameScene extends Phaser.Scene {
     // Load door sprite
     this.load.image('door-sprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door-MwIAeC2xN9Q3T5FyfJ7U2tOLsM9Aom.png?7q9L')
     
+    // Load talking bubble sprite
+    this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
+    
+    // Load yellow enemy animation sprites
+    this.load.image('yellowEnemyMouthOpenEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20eye%20open-4dEmp2gPrn80UE2QOE1uSSovKJjcCe.png?SLUI')
+    this.load.image('yellowEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20blinking-P7cSu0iZ5zBpKeOKavnHVjoGU2bDOb.png?0gaY')
+    this.load.image('yellowEnemyMouthClosedEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20closed%20eye%20open-SR2cCNicBFEj13QRyTyxMqjKZoYU81.png?entK')
+    this.load.image('yellowEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20clsoed%20blinking-eb9OM0fEGjDh4iRuoUCVztOGLLSBSV.png?eDZv')
+    
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
     this.load.image('floor-tile-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%202-EuITFMsdSDebMUmfcikeKCDLqDupml.png?C2mi')
@@ -4210,72 +4219,84 @@ export class GameScene extends Phaser.Scene {
     this.player.setBubbleTriggerCallback(() => {
       this.showRandomBubble()
     })
+    
+    // Connect player movement callback to hide bubble immediately
+    this.player.setMovementStartCallback(() => {
+      this.hideBubble()
+    })
+  }
+  
+  private createDebugGrid(): void {
+    // Clear any existing debug grid
+    this.children.list.forEach(child => {
+      if (child.getData && child.getData('debugGrid')) {
+        child.destroy()
+      }
+    })
+    
+    const graphics = this.add.graphics()
+    graphics.setDepth(200) // Above everything
+    graphics.setScrollFactor(1) // Follow the world
+    graphics.setData('debugGrid', true)
+    
+    // Grid centered on player with 20px spacing
+    const centerX = this.player.x
+    const centerY = this.player.y
+    const gridSize = 20
+    const gridExtent = 200 // 200px in each direction
+    
+    // Set grid color
+    graphics.lineStyle(1, 0xff0000, 0.5) // Red, semi-transparent
+    
+    // Draw vertical lines
+    for (let x = centerX - gridExtent; x <= centerX + gridExtent; x += gridSize) {
+      graphics.lineBetween(x, centerY - gridExtent, x, centerY + gridExtent)
+    }
+    
+    // Draw horizontal lines
+    for (let y = centerY - gridExtent; y <= centerY + gridExtent; y += gridSize) {
+      graphics.lineBetween(centerX - gridExtent, y, centerX + gridExtent, y)
+    }
+    
+    // Draw thicker center lines
+    graphics.lineStyle(2, 0x00ff00, 0.8) // Green, more opaque
+    graphics.lineBetween(centerX, centerY - gridExtent, centerX, centerY + gridExtent) // Vertical center
+    graphics.lineBetween(centerX - gridExtent, centerY, centerX + gridExtent, centerY) // Horizontal center
+    
+    // Add coordinate labels at intersections (every 40px)
+    const labelSize = 40
+    for (let x = centerX - gridExtent; x <= centerX + gridExtent; x += labelSize) {
+      for (let y = centerY - gridExtent; y <= centerY + gridExtent; y += labelSize) {
+        const relativeX = x - centerX
+        const relativeY = y - centerY
+        
+        const label = this.add.text(x, y, `${relativeX},${relativeY}`, {
+          fontSize: '8px',
+          color: '#ffffff',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          padding: { x: 1, y: 1 }
+        }).setOrigin(0.5).setDepth(201).setScrollFactor(1)
+        label.setData('debugGrid', true)
+      }
+    }
+    
+    // Mark player center with a red dot
+    const playerDot = this.add.circle(centerX, centerY, 3, 0xff0000)
+    playerDot.setDepth(202).setScrollFactor(1)
+    playerDot.setData('debugGrid', true)
+    
+    // Auto-remove grid after 10 seconds
+    this.time.delayedCall(10000, () => {
+      this.children.list.forEach(child => {
+        if (child.getData && child.getData('debugGrid')) {
+          child.destroy()
+        }
+      })
+    })
   }
   
   private createPlaceholderBubbles(): void {
-    // Create placeholder speech bubble if not exists
-    if (!this.textures.exists('speechBubblePlaceholder')) {
-      const graphics = this.add.graphics()
-      
-      // White speech bubble with tail
-      graphics.fillStyle(0xffffff, 1)
-      graphics.lineStyle(3, 0x333333, 1)
-      
-      // Main bubble body (rounded rectangle)
-      graphics.fillRoundedRect(0, 0, 120, 60, 12)
-      graphics.strokeRoundedRect(0, 0, 120, 60, 12)
-      
-      // Speech bubble tail (triangle pointing down-left toward 8 o'clock)
-      graphics.fillTriangle(
-        20, 60,    // Top of tail (on bubble edge)
-        10, 75,    // Bottom-left of tail 
-        35, 70     // Bottom-right of tail
-      )
-      graphics.strokeTriangle(20, 60, 10, 75, 35, 70)
-      
-      // Add placeholder text
-      const tempText = this.add.text(60, 30, '💬', {
-        fontSize: '24px'
-      }).setOrigin(0.5)
-      
-      graphics.generateTexture('speechBubblePlaceholder', 120, 80)
-      graphics.destroy()
-      tempText.destroy()
-    }
-    
-    // Create placeholder thought bubble if not exists  
-    if (!this.textures.exists('thoughtBubblePlaceholder')) {
-      const graphics = this.add.graphics()
-      
-      // Light gray thought bubble
-      graphics.fillStyle(0xf0f0f0, 1)
-      graphics.lineStyle(2, 0x999999, 1)
-      
-      // Main cloud-like bubble
-      graphics.fillCircle(60, 30, 25)
-      graphics.strokeCircle(60, 30, 25)
-      graphics.fillCircle(45, 20, 18)  
-      graphics.strokeCircle(45, 20, 18)
-      graphics.fillCircle(75, 25, 20)
-      graphics.strokeCircle(75, 25, 20)
-      graphics.fillCircle(55, 45, 16)
-      graphics.strokeCircle(55, 45, 16)
-      
-      // Small thought bubbles trailing toward 11 o'clock
-      graphics.fillCircle(25, 15, 4)
-      graphics.strokeCircle(25, 15, 4)
-      graphics.fillCircle(15, 8, 2)
-      graphics.strokeCircle(15, 8, 2)
-      
-      // Add placeholder text
-      const tempText = this.add.text(60, 30, '💭', {
-        fontSize: '20px'
-      }).setOrigin(0.5)
-      
-      graphics.generateTexture('thoughtBubblePlaceholder', 120, 60)
-      graphics.destroy()
-      tempText.destroy()
-    }
+    // No longer need placeholder bubbles - using custom sprite
   }
   
   private showRandomBubble(): void {
@@ -4284,31 +4305,19 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
-    // Randomly choose between speech (70%) and thought (30%) bubble
-    const showSpeechBubble = Math.random() < 0.7
-    
-    if (showSpeechBubble) {
-      this.showSpeechBubble()
-    } else {
-      this.showThoughtBubble()
-    }
+    // Only show speech bubble (thought bubble disabled)
+    this.showSpeechBubble()
   }
   
   private showSpeechBubble(): void {
-    const bubble = this.add.image(0, 0, 'speechBubblePlaceholder')
+    const bubble = this.add.image(0, 0, 'talking-bubble')
     bubble.setDepth(150) // Above most game elements but below HUD
     bubble.setScrollFactor(1) // Follow the world/player
     
-    // Position at 2 o'clock relative to player (about 60 degrees)
-    const angle = -60 * (Math.PI / 180) // Convert to radians, negative for clockwise
-    const distance = 50 // Distance from player center
-    
-    // Add slight random offset for natural feel
-    const offsetX = (Math.random() - 0.5) * 10
-    const offsetY = (Math.random() - 0.5) * 10
-    
-    bubble.x = this.player.x + Math.cos(angle) * distance + offsetX
-    bubble.y = this.player.y + Math.sin(angle) * distance + offsetY
+    // Position bubble with bottom-left corner at 20,20 relative to player
+    // Assuming bubble is roughly 120x80 pixels, center would be at 20+60, 20+40 from bottom-left
+    bubble.x = this.player.x + 20 + (bubble.width * 0.5) // 20 + half width for center positioning
+    bubble.y = this.player.y + 20 - (bubble.height * 0.5) // 20 - half height for center positioning
     
     this.speechBubble = bubble
     this.player.notifyBubbleActive(true)

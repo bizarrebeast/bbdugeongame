@@ -22,11 +22,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private debugUpdateHandler: (() => void) | null = null
   
   // Blue enemy animation system
+  private yellowEnemyAnimationState: 'mouthClosed' | 'mouthOpen' | 'blinking' = 'mouthClosed'
   private blueEnemyAnimationState: 'idle' | 'bite_partial' | 'bite_full' | 'blinking' = 'idle'
   private biteTimer: number = 0
   private blinkTimer: number = 0
   private biteAnimationTimer: number = 0
   private blinkAnimationTimer: number = 0
+  private nextExpressionTime: number = 0
   private nextBiteTime: number = 0
   private nextBlinkTime: number = 0
   
@@ -78,8 +80,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         Cat.generateFallbackTexture(scene, catColor) // Static call
       }
     } else if (catColor === CatColor.YELLOW) {
-      // For yellow enemies, look for yellow enemy sprite
-      if (scene.textures.exists('yellowEnemy')) {
+      // For yellow enemies, prioritize animation sprites
+      if (scene.textures.exists('yellowEnemyMouthClosedEyeOpen')) {
+        textureKey = 'yellowEnemyMouthClosedEyeOpen' // Start with mouth closed
+      } else if (scene.textures.exists('yellowEnemy')) {
         textureKey = 'yellowEnemy'
       } else {
         // Use generated texture as fallback
@@ -167,7 +171,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Set up hitbox and visual alignment
-    if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
+    if (catColor === CatColor.YELLOW && this.isYellowEnemyAnimationSprite(textureKey)) {
+      // For all yellow enemy animation sprites - use 60x24 size
+      this.setDisplaySize(60, 24)
+      this.setOffset(3, -5) // Increased by 1 pixel (-6 + 1 = -5)
+      this.setFlipX(false)
+      this.initializeYellowEnemyAnimations()
+      this.addDebugVisualization()
+    } else if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
       // For all blue enemy animation sprites - use consistent positioning
       this.setDisplaySize(36, 36)
       this.setOffset(3, 58) // Consistent positioning for all animation sprites
@@ -183,7 +194,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
       this.setDisplaySize(52, 52) // Larger sprite size (52x52)
-      this.setOffset(3, 46) // Decreased Y offset by 6 pixels (52 - 6 = 46)
+      this.setOffset(3, 44) // Decreased Y offset by 2 pixels (46 - 2 = 44)
       this.setFlipX(false)
       this.initializeRedEnemyAnimations()
       this.addDebugVisualization()
@@ -276,6 +287,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
       case CatColor.YELLOW:
         this.updateYellowPatrol(delta)
+        this.updateYellowEnemyAnimations(delta)
         break
       case CatColor.GREEN:
         this.updateGreenBounce(delta)
@@ -319,6 +331,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     this.setVelocityX(this.moveSpeed * this.direction)
+    
+    // Flip sprite based on direction for yellow enemies with animation sprites
+    if (this.isYellowEnemyAnimationSprite(this.texture.key)) {
+      this.setFlipX(this.direction === 1) // Flip when going right (direction = 1)
+    }
   }
   
   private updateGreenBounce(delta: number): void {
@@ -527,6 +544,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
   }
   
+  private isYellowEnemyAnimationSprite(textureKey: string): boolean {
+    return [
+      'yellowEnemyMouthOpenEyeOpen',
+      'yellowEnemyMouthOpenBlinking',
+      'yellowEnemyMouthClosedEyeOpen',
+      'yellowEnemyMouthClosedBlinking'
+    ].includes(textureKey)
+  }
+
   private isBlueEnemyAnimationSprite(textureKey: string): boolean {
     return [
       'blueEnemyMouthClosed',
@@ -542,6 +568,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     return ['yellowEnemy', 'greenEnemy', 'redEnemy'].includes(textureKey)
   }
   
+  private initializeYellowEnemyAnimations(): void {
+    // Set random initial timers to make enemies feel unique
+    this.nextBlinkTime = Math.random() * 1000 + 1000 // 1-2 seconds
+    this.nextExpressionTime = Math.random() * 3000 + 3000 // 3-6 seconds
+    this.yellowEnemyAnimationState = 'mouthClosed'
+  }
+
   private initializeBlueEnemyAnimations(): void {
     // Set random initial timers to make enemies feel unique
     this.nextBiteTime = Math.random() * 2000 + 2000 // 2-4 seconds
@@ -679,6 +712,52 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.nextRedBlinkTime = Math.random() * 500 + 1000 // 1-1.5 seconds for blink
     this.redEnemyAnimationState = 'patrol'
     this.redEyeState = Math.random() < 0.5 ? 1 : 2 // Start with random eye state
+  }
+  
+  private updateYellowEnemyAnimations(delta: number): void {
+    // Only animate if using the new animation sprites
+    if (!this.isYellowEnemyAnimationSprite(this.texture.key)) {
+      return
+    }
+    
+    // Update timers
+    this.blinkTimer += delta
+    this.biteTimer += delta // Reusing for expression changes
+    this.blinkAnimationTimer += delta
+    
+    // Handle blinking animation
+    if (this.yellowEnemyAnimationState === 'blinking') {
+      if (this.blinkAnimationTimer >= 200) { // 200ms blink
+        // Return to previous state (mouth open or closed)
+        this.yellowEnemyAnimationState = this.biteTimer >= this.nextExpressionTime ? 'mouthOpen' : 'mouthClosed'
+        this.blinkAnimationTimer = 0
+        this.nextBlinkTime = this.blinkTimer + Math.random() * 1000 + 1000 // 1-2 seconds
+      }
+    }
+    
+    // Handle expression changes (mouth open/closed)
+    if (this.biteTimer >= this.nextExpressionTime && this.yellowEnemyAnimationState !== 'blinking') {
+      this.yellowEnemyAnimationState = this.yellowEnemyAnimationState === 'mouthClosed' ? 'mouthOpen' : 'mouthClosed'
+      this.nextExpressionTime = this.biteTimer + Math.random() * 3000 + 3000 // 3-6 seconds
+    }
+    
+    // Handle random blinking
+    if (this.blinkTimer >= this.nextBlinkTime && this.yellowEnemyAnimationState !== 'blinking') {
+      this.yellowEnemyAnimationState = 'blinking'
+      this.blinkAnimationTimer = 0
+    }
+    
+    // Set appropriate texture based on current state
+    let newTexture = 'yellowEnemyMouthClosedEyeOpen'
+    if (this.yellowEnemyAnimationState === 'blinking') {
+      newTexture = this.biteTimer >= this.nextExpressionTime ? 'yellowEnemyMouthOpenBlinking' : 'yellowEnemyMouthClosedBlinking'
+    } else if (this.yellowEnemyAnimationState === 'mouthOpen') {
+      newTexture = 'yellowEnemyMouthOpenEyeOpen'
+    }
+    
+    if (this.texture.key !== newTexture) {
+      this.setTexture(newTexture)
+    }
   }
   
   private updateRedEnemyAnimations(delta: number): void {
