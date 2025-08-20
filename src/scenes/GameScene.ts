@@ -337,7 +337,9 @@ export class GameScene extends Phaser.Scene {
     this.createTestLevel()
     
     // Create the player (starts off-screen for walk-in animation)
-    const spawnX = GameSettings.canvas.width / 2
+    // Position spawn at fourth floor tile from the left (tile 3, 0-indexed)
+    const tileSize = GameSettings.game.tileSize
+    const spawnX = (3.5 * tileSize) // Fourth tile center (tile 3)
     // Place player on ground floor - platform center is at Y=784
     // Platform is 32px tall, so platform top is at Y=768
     // Player sprite center should be positioned so physics body bottom is above platform top
@@ -352,12 +354,33 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height + 100  // Start below screen
     )
     
-    // IMMEDIATELY disable physics to prevent falling before intro
-    this.player.body!.enable = false
-    console.log('🚫 Player physics DISABLED immediately to prevent falling')
+    // Check if this is a death/retry or a new level
+    const gameRegistry = this.game.registry
+    const hasStoredLives = gameRegistry.has('playerLives')
+    const levelProgression = gameRegistry.get('levelProgression')
+    const isPageRefresh = !hasStoredLives || gameRegistry.get('playerLives') === 3 // Fresh start or full lives
     
-    // Start intro immediately - assets will be checked during animation
-    this.startLevelIntro(spawnX, spawnY)
+    // Show animation for: new game (page refresh) OR level progression  
+    const shouldShowAnimation = isPageRefresh || levelProgression
+    
+    if (!shouldShowAnimation) {
+      // Death/retry - skip intro animation, spawn directly
+      console.log('💀 DEATH/RETRY DETECTED - Skipping intro animation')
+      this.player.setPosition(spawnX, spawnY)
+      this.player.body!.enable = true
+      this.isLevelStarting = false
+      this.changePlayerTexture('playerIdleEye1')
+      this.showStartBanner()
+    } else {
+      // New level - show intro animation
+      console.log('🎬 NEW LEVEL - Showing intro animation')
+      // IMMEDIATELY disable physics to prevent falling before intro
+      this.player.body!.enable = false
+      console.log('🚫 Player physics DISABLED immediately to prevent falling')
+      
+      // Start intro immediately - assets will be checked during animation
+      this.startLevelIntro(spawnX, spawnY)
+    }
     
     // Create temporary floor grid for positioning reference
     // this.createTemporaryFloorGrid()
@@ -3410,30 +3433,62 @@ export class GameScene extends Phaser.Scene {
       console.warn('⚠️ Run sprites not loaded! Using fallback animation')
     }
     
-    // Manual walking animation
-    let walkFrame = 0
-    const frameRate = 120 // Animation frame rate in ms
+    // Use Player's natural animation system but faster for intro
+    let currentFrame = 'leftStep'
+    let walkAnimationTimer = 0
+    let runningTiltTimer = 0
+    let lastFrameWasJump = false
+    const runAnimationSpeed = 80 // Faster than Player class (was 120) for more lively intro
     
     // Face right for walking
     this.player.setFlipX(false)
     
-    // Create a timer for animation frames
+    // Start with first step immediately
+    this.changePlayerTexture('playerRunLeftFoot')
+    
+    // Create animation timer that matches Player's natural system
     const walkTimer = this.time.addEvent({
-      delay: frameRate,
+      delay: 16, // ~60fps for smooth animation
       callback: () => {
-        // Check for sprites each frame (they might load during animation)
-        const spritesNowAvailable = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
+        const deltaTime = 16
+        walkAnimationTimer += deltaTime
+        runningTiltTimer += deltaTime
         
-        // Alternate walking sprites if available
-        if (spritesNowAvailable) {
-          if (walkFrame % 2 === 0) {
-            this.player.setTexture('playerRunLeftFoot')
+        // Apply the same running tilt as Player class
+        const tiltFrequency = 0.02
+        const tiltAmplitude = 0.08
+        const tiltAngle = Math.sin(runningTiltTimer * tiltFrequency) * tiltAmplitude
+        this.player.setRotation(tiltAngle)
+        
+        // Use Player's exact animation logic
+        if (walkAnimationTimer >= runAnimationSpeed) {
+          // Same natural variation logic as Player class
+          const jumpChance = lastFrameWasJump ? 0.15 : 0.30
+          const shouldUseJumpingSprite = Math.random() < jumpChance
+          
+          if (shouldUseJumpingSprite) {
+            // Use jumping sprites occasionally for natural bounding motion
+            if (currentFrame === 'rightStep' || currentFrame === 'jumpRightFoot') {
+              currentFrame = 'jumpLeftFoot'
+              this.changePlayerTexture('playerJumpRightFoot') // Not flipped since flipX is false
+            } else {
+              currentFrame = 'jumpRightFoot' 
+              this.changePlayerTexture('playerJumpRightFoot')
+            }
+            lastFrameWasJump = true
           } else {
-            this.player.setTexture('playerRunRightFoot')
+            // Normal running animation - switch between left and right step
+            if (currentFrame === 'rightStep' || currentFrame === 'jumpRightFoot') {
+              currentFrame = 'leftStep'
+              this.changePlayerTexture('playerRunLeftFoot')
+            } else {
+              currentFrame = 'rightStep'
+              this.changePlayerTexture('playerRunRightFoot')
+            }
+            lastFrameWasJump = false
           }
-          this.player.setDisplaySize(48, 64) // Maintain sprite size
+          walkAnimationTimer = 0
         }
-        walkFrame++
       },
       loop: true
     })
@@ -3450,9 +3505,9 @@ export class GameScene extends Phaser.Scene {
         console.log('✅ INTRO SEQUENCE COMPLETE - Enabling controls')
         
         walkTimer.destroy()
-        // Set to idle animation
-        this.player.setTexture('playerIdleEye1')
-        this.player.setDisplaySize(48, 64)
+        // Reset rotation and set idle animation
+        this.player.setRotation(0)
+        this.changePlayerTexture('playerIdleEye1')
         onComplete()
       }
     })
@@ -4081,6 +4136,13 @@ export class GameScene extends Phaser.Scene {
       this.game.registry.set('totalCoins', 0)
       this.scene.restart()
     })
+  }
+
+  private changePlayerTexture(textureKey: string): void {
+    if (this.textures.exists(textureKey)) {
+      this.player.setTexture(textureKey)
+      this.player.setDisplaySize(48, 64)
+    }
   }
 
   shutdown() {}
