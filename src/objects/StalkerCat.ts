@@ -7,12 +7,16 @@ export class StalkerCat extends Cat {
   public playerRef: Phaser.Physics.Arcade.Sprite | null = null
   private originalY: number
   private hasPlayerPassed: boolean = false
-  private eyesSprite: Phaser.GameObjects.Graphics | null = null
+  // Remove separate eye sprite - use main sprite with eye-only texture instead
   private mineTimer: number = 0
   private mineDelayDuration: number = 2000 // 2 second delay before chasing
   private currentSpeed: number = 80 * 1.5 // Starting chase speed
   private speedIncrement: number = 5 // Speed increase per update cycle
   private originalScale: number = 1 // Track original scale
+  
+  // Animation system like other enemies
+  private currentEyeState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'blink' = 'eye1'
+  private eyeAnimationTimer: number = 0
   
   constructor(
     scene: Phaser.Scene, 
@@ -36,28 +40,16 @@ export class StalkerCat extends Cat {
     
     this.originalY = y
     
-    // Create a hidden red stalker cat on the floor
-    const graphics = scene.add.graphics()
-    graphics.fillStyle(0xff0000, 1) // Red for stalker cat
-    graphics.fillCircle(10, 8, 8)
-    // Eyes (normal black eyes when hidden)
-    graphics.fillStyle(0x000000, 1)
-    graphics.fillCircle(6, 6, 2)
-    graphics.fillCircle(14, 6, 2)
-    // Normal ears
-    graphics.fillStyle(0xff0000, 1)
-    graphics.fillTriangle(4, 2, 8, 0, 8, 4)
-    graphics.fillTriangle(12, 0, 16, 2, 12, 4)
-    graphics.generateTexture('red-stalker-cat', 20, 16)
-    graphics.destroy()
+    // Use actual stalker enemy sprite (start with eye1 sprite)
+    const initialTexture = scene.textures.exists('stalkerEnemyEye1') ? 'stalkerEnemyEye1' : 'stalkerEnemyEye1'
+    this.setTexture(initialTexture)
+    this.currentEyeState = 'eye1'
     
-    this.setTexture('red-stalker-cat')
-    
-    // Override the parent's red enemy sizing - we want stalker to be smaller
-    this.setDisplaySize(30, 24)  // Smaller than normal red enemy
+    // Set consistent size for stalker sprites using only displaySize
+    this.setDisplaySize(30, 30)  // Square stalker size
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
-      this.body.setSize(28, 20)  // Custom hitbox for stalker
-      this.body.setOffset(1, 2)  // Adjust offset for proper positioning
+      this.body.setSize(28, 26)  // Custom hitbox for stalker
+      this.body.setOffset(1, 48)  // Move visual sprite up 48 pixels
     }
     
     console.log(`🔴 STALKER CAT AFTER TEXTURE CHANGE:`)
@@ -77,34 +69,19 @@ export class StalkerCat extends Cat {
     console.log(`  - Visible: ${this.visible}`)
     console.log(`  - Gravity: ${(this.body as Phaser.Physics.Arcade.Body).gravity.y}`)
     console.log(`  - Immovable: ${this.body?.immovable}`)
-    console.log(`  - Position: (${this.x}, ${this.y})`)
+    console.log(`  - Sprite position: (${this.x}, ${this.y})`)
     console.log(`  - Body bounds: L=${this.body?.left} R=${this.body?.right} T=${this.body?.top} B=${this.body?.bottom}`)
+    console.log(`  - Body offset: (${this.body?.offset.x}, ${this.body?.offset.y})`)
+    console.log(`  - Visual sprite appears at: (${this.x}, ${this.y - 48}) [48px up from body due to offset]`)
     
-    // Create eyes-only sprite for activated state
-    this.createEyesSprite()
+    // No separate eye sprite needed - will use main sprite with eye texture
   }
   
   setPlayerReference(player: Phaser.Physics.Arcade.Sprite): void {
     this.playerRef = player
   }
   
-  private createEyesSprite(): void {
-    // Create glowing eyes sprite for the activated state
-    const eyesGraphics = this.scene.add.graphics()
-    eyesGraphics.fillStyle(0xffff00, 1) // Yellow glowing eyes
-    eyesGraphics.fillCircle(6, 6, 3) // Slightly larger than normal eyes
-    eyesGraphics.fillCircle(14, 6, 3)
-    // Add glow effect
-    eyesGraphics.fillStyle(0xffff00, 0.3)
-    eyesGraphics.fillCircle(6, 6, 5)
-    eyesGraphics.fillCircle(14, 6, 5)
-    
-    this.eyesSprite = eyesGraphics
-    // Position eyes exactly at the cat's position
-    this.eyesSprite.setPosition(this.x - 10, this.y - 8)
-    this.eyesSprite.setVisible(false)
-    this.eyesSprite.setDepth(16)
-  }
+  // No longer needed - using main sprite for eye display
   
   update(time: number, delta: number): void {
     if (this.isSquished || !this.playerRef) return
@@ -118,6 +95,7 @@ export class StalkerCat extends Cat {
         break
       case 'chasing':
         this.updateChasing()
+        this.updateEyeAnimations(delta) // Add eye animations when visible and chasing
         break
     }
   }
@@ -145,23 +123,24 @@ export class StalkerCat extends Cat {
       this.mineTimer = this.mineDelayDuration
       this.hasPlayerPassed = true
       
-      // Show eyes immediately when activated
-      if (this.eyesSprite) {
-        this.eyesSprite.setPosition(this.x - 10, this.y - 8)
-        this.eyesSprite.setVisible(true)
-        console.log(`  - Eyes shown at: (${this.eyesSprite.x}, ${this.eyesSprite.y})`)
-      }
+      // Show eyes by making main sprite visible with eye-only texture
+      this.setTexture('stalkerEnemyEyeOnly')
+      this.setDisplaySize(30, 30) // Same size as full stalker sprite
+      this.setVisible(true)
+      console.log(`👁️ EYES ACTIVATED:`)
+      console.log(`  - Main sprite now showing eye-only texture`)
+      console.log(`  - Stalker sprite at: (${this.x}, ${this.y})`)
+      console.log(`  - Visual appears at: (${this.x}, ${this.y - 48}) due to offset`)
+      console.log(`  - Display size: ${this.displayWidth}x${this.displayHeight}`)
     }
   }
   
   private updateActivated(delta: number): void {
     if (!this.playerRef) return
     
-    // Keep eyes positioned correctly and visible
-    if (this.eyesSprite) {
-      this.eyesSprite.setPosition(this.x - 10, this.y - 8)
-      this.eyesSprite.setVisible(true)
-    }
+    // Eyes are now the main sprite itself - no separate positioning needed
+    // Just ensure it stays visible with eye texture during activation
+    this.setVisible(true)
     
     // Count down the mine timer
     this.mineTimer -= delta
@@ -180,49 +159,29 @@ export class StalkerCat extends Cat {
     this.state = 'chasing'
     this.setVisible(true) // Show the full cat
     
-    // Hide the eyes-only sprite
-    if (this.eyesSprite) {
-      this.eyesSprite.setVisible(false)
-    }
+    // Switch to full stalker sprite and ensure proper scale and size
+    this.setTexture('stalkerEnemyEye1') // Start with eye1 texture for chasing
+    this.setScale(1, 1)
+    this.setDisplaySize(30, 30)
+    this.currentEyeState = 'eye1' // Reset eye animation state
     
     // Update originalY to current position to prevent teleporting
     this.originalY = this.y
-    console.log(`  - Updated floor lock to current Y: ${this.originalY}`)
+    console.log(`  - Updated floor lock to current position: (${this.x}, ${this.originalY})`)
     
     // Enable movement but no gravity - stalker cats just run along the floor
     this.body!.setGravityY(0) // No gravity needed - they stay on their floor
     this.body!.setImmovable(false) // Allow movement
     
-    console.log(`🔴💥 AFTER ENABLING PHYSICS AND FLOOR LOCK:`)
+    console.log(`🔴💥 AFTER ENABLING PHYSICS:`)
     console.log(`  - Position locked to: (${this.x}, ${this.y})`)
     console.log(`  - Gravity: ${(this.body as Phaser.Physics.Arcade.Body).gravity.y}`)
     console.log(`  - Immovable: ${this.body?.immovable}`)
+    console.log(`  - Display size: ${this.displayWidth}x${this.displayHeight}`)
+    console.log(`  - Scale: ${this.scaleX}x${this.scaleY}`)
     
     // Reset speed to starting value
     this.currentSpeed = 80 * 1.5
-    
-    // Store original size before animation
-    const origScaleX = this.scaleX
-    const origScaleY = this.scaleY
-    
-    // Pop out animation - scale up then return to original
-    console.log(`🔴💥 STARTING POP ANIMATION (scale to 1.5x original, then back)`)
-    this.scene.tweens.add({
-      targets: this,
-      scaleX: origScaleX * 1.5,
-      scaleY: origScaleY * 1.5,
-      duration: 100,
-      ease: 'Power2',
-      yoyo: true,
-      onComplete: () => {
-        // Ensure we return to exactly the original scale and position
-        this.setScale(origScaleX, origScaleY)
-        this.y = this.originalY // Lock back to current floor
-        console.log(`🔴💥 POP ANIMATION COMPLETE:`)
-        console.log(`  - Final scale: ${this.scaleX}x${this.scaleY}`)
-        console.log(`  - Final position locked to: (${this.x}, ${this.y})`)
-      }
-    })
   }
   
   private updateChasing(): void {
@@ -301,5 +260,127 @@ export class StalkerCat extends Cat {
   // Override squish - red cats can always be squished
   squish(): void {
     super.squish()
+  }
+
+  private updateEyeAnimations(delta: number): void {
+    // Natural eye animation system similar to other enemies
+    this.eyeAnimationTimer += delta
+    
+    // Organic timing with different patterns for different states
+    let animationSpeed: number
+    
+    if (this.currentEyeState === 'blink') {
+      // Quick natural blink
+      animationSpeed = 100 + Math.random() * 80
+    } else {
+      // Eye movement timing with organic variation
+      const baseTimings = {
+        'eye1': 1200, // Up left - comfortable
+        'eye2': 1100, // Up right - comfortable  
+        'eye3': 1400, // Down left - more extreme
+        'eye4': 1600, // Down right - most extreme
+      }
+      
+      const baseTiming = baseTimings[this.currentEyeState as keyof typeof baseTimings] || 1200
+      // Add natural variation for organic feel
+      animationSpeed = baseTiming + (Math.random() - 0.5) * 800
+    }
+    
+    // Handle eye animation transitions
+    if (this.eyeAnimationTimer >= animationSpeed) {
+      const randomAction = Math.random()
+      
+      switch (this.currentEyeState) {
+        case 'eye1': // Up left
+          if (randomAction < 0.25) {
+            this.currentEyeState = 'blink'
+            this.changeEyeTexture('stalkerEnemyBlinking')
+          } else if (randomAction < 0.55) {
+            this.currentEyeState = 'eye2'
+            this.changeEyeTexture('stalkerEnemyEye2')
+          } else if (randomAction < 0.75) {
+            this.currentEyeState = 'eye3'
+            this.changeEyeTexture('stalkerEnemyEye3')
+          } else {
+            this.currentEyeState = 'eye4'
+            this.changeEyeTexture('stalkerEnemyEye4')
+          }
+          break
+          
+        case 'eye2': // Up right
+          if (randomAction < 0.3) {
+            this.currentEyeState = 'blink'
+            this.changeEyeTexture('stalkerEnemyBlinking')
+          } else if (randomAction < 0.60) {
+            this.currentEyeState = 'eye1'
+            this.changeEyeTexture('stalkerEnemyEye1')
+          } else if (randomAction < 0.80) {
+            this.currentEyeState = 'eye3'
+            this.changeEyeTexture('stalkerEnemyEye3')
+          } else {
+            this.currentEyeState = 'eye4'
+            this.changeEyeTexture('stalkerEnemyEye4')
+          }
+          break
+          
+        case 'eye3': // Down left
+          if (randomAction < 0.2) {
+            this.currentEyeState = 'blink'
+            this.changeEyeTexture('stalkerEnemyBlinking')
+          } else if (randomAction < 0.45) {
+            this.currentEyeState = 'eye1'
+            this.changeEyeTexture('stalkerEnemyEye1')
+          } else if (randomAction < 0.70) {
+            this.currentEyeState = 'eye2'
+            this.changeEyeTexture('stalkerEnemyEye2')
+          } else {
+            this.currentEyeState = 'eye4'
+            this.changeEyeTexture('stalkerEnemyEye4')
+          }
+          break
+          
+        case 'eye4': // Down right
+          if (randomAction < 0.15) {
+            this.currentEyeState = 'blink'
+            this.changeEyeTexture('stalkerEnemyBlinking')
+          } else if (randomAction < 0.40) {
+            // Strong tendency to return to comfortable positions
+            this.currentEyeState = 'eye1'
+            this.changeEyeTexture('stalkerEnemyEye1')
+          } else if (randomAction < 0.65) {
+            this.currentEyeState = 'eye2'
+            this.changeEyeTexture('stalkerEnemyEye2')
+          } else {
+            this.currentEyeState = 'eye3'
+            this.changeEyeTexture('stalkerEnemyEye3')
+          }
+          break
+          
+        case 'blink':
+          // After blink, return to eye positions with bias toward comfortable ones
+          if (randomAction < 0.35) {
+            this.currentEyeState = 'eye1'
+            this.changeEyeTexture('stalkerEnemyEye1')
+          } else if (randomAction < 0.65) {
+            this.currentEyeState = 'eye2'
+            this.changeEyeTexture('stalkerEnemyEye2')
+          } else if (randomAction < 0.80) {
+            this.currentEyeState = 'eye3'
+            this.changeEyeTexture('stalkerEnemyEye3')
+          } else {
+            this.currentEyeState = 'eye4'
+            this.changeEyeTexture('stalkerEnemyEye4')
+          }
+          break
+      }
+      this.eyeAnimationTimer = 0
+    }
+  }
+
+  private changeEyeTexture(textureKey: string): void {
+    if (this.scene.textures.exists(textureKey)) {
+      this.setTexture(textureKey)
+      this.setDisplaySize(30, 30) // Maintain square stalker size
+    }
   }
 }

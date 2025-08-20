@@ -211,6 +211,14 @@ export class GameScene extends Phaser.Scene {
     // Load green enemy sprite
     this.load.image('greenEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/green%20test-0I8rDwYn5lbuPQTEUiYrg8ctBccIAC.png?IBFc')
     
+    // Load stalker enemy animation sprites (6 sprites for natural eye movement and blinking)
+    this.load.image('stalkerEnemyEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%201-Xt3Vtu2FiWWLT9l2wfeakBAqVSZet8.png?gS6O')
+    this.load.image('stalkerEnemyEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%202-n2c58R6bdpzzPAVlVRgMZoKmngtTUo.png?nTFi')
+    this.load.image('stalkerEnemyEye3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%203-K1hEnZ0oXDlCbLGCuJz1GD1YbYATZ6.png?safa')
+    this.load.image('stalkerEnemyEye4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%204-Y0pnlUUMFdmHY7HxQk2gGe9Nr41glQ.png?cgFm')
+    this.load.image('stalkerEnemyBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%205%20blinking-CPlBOBjLFGic1DKAwXNjnMpyRwBVgr.png?vYe6')
+    this.load.image('stalkerEnemyEyeOnly', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%20only-3BuhEI2UePG6So3jAYE5NPnoQTsnc0.png?6wB1')
+    
     // Load new player sprite collection
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerIdleEye2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%202-oQdxdPT1VWpTLUelgIRXIHXFw5jEuu.png?nGbT')
@@ -478,8 +486,8 @@ export class GameScene extends Phaser.Scene {
     // Create dark purple HUD background bar across top
     const screenWidth = this.cameras.main.width
     const hudBg = this.add.graphics()
-    hudBg.fillStyle(0x4a148c, 0.9)  // Dark purple color
-    hudBg.lineStyle(2, 0x7b1fa2, 0.8) // Slightly lighter purple border
+    hudBg.fillStyle(0x4a148c, 1.0)  // Dark purple color with full opacity
+    hudBg.lineStyle(2, 0x7b1fa2, 1.0) // Slightly lighter purple border with full opacity
     
     // Single connected rectangle across the top
     hudBg.fillRoundedRect(8, 8, screenWidth - 16, 56, 12)  // Full width minus margins
