@@ -39,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   private coinCounterText!: Phaser.GameObjects.Text // Display shows crystals, but variable kept for compatibility
   private readonly COINS_PER_EXTRA_LIFE = 150 // Crystals needed for extra life
   private readonly MAX_LIVES = 9
+  private hamburgerMenuButton!: Phaser.GameObjects.Text // Hamburger menu button
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
   private touchControls!: TouchControls
   private justKilledCat: boolean = false
@@ -519,10 +520,10 @@ export class GameScene extends Phaser.Scene {
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
-    // Add score display with purple theme styling
-    this.scoreText = this.add.text(20, 20, 'SCORE: 0', {
+    // Add lives display with hearts (left side, top)
+    this.livesText = this.add.text(20, 20, '❤️ x3', {
       fontSize: '16px',
-      color: '#ffd700',  // Gold color
+      color: '#ff4444',  // Red color for hearts
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
@@ -557,11 +558,48 @@ export class GameScene extends Phaser.Scene {
         }
       }
     ).setOrigin(0.5).setDepth(200).setVisible(false)
+    this.livesText.setScrollFactor(0)
+    
+    // Add level counter (left side, bottom)
+    const currentLevel = this.levelManager.getCurrentLevel()
+    this.levelText = this.add.text(20, 40, `LEVEL: ${currentLevel}`, {
+      fontSize: '16px',
+      color: '#ff88ff',
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
+    }).setDepth(100)
+    this.levelText.setScrollFactor(0)
+    
+    // Add score display in center (top)
+    this.scoreText = this.add.text(screenWidth / 2, 20, 'SCORE: 0', {
+      fontSize: '16px',
+      color: '#ffd700',  // Gold color
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
+    }).setOrigin(0.5, 0).setDepth(100)  // Center-aligned
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Add crystal counter display (left side, bottom)
-    this.coinCounterText = this.add.text(20, 40, 'CRYSTALS: 0/150', {
+    // Add crystal counter display (center, bottom)
+    this.coinCounterText = this.add.text(screenWidth / 2, 40, 'CRYSTALS: 0/150', {
       fontSize: '16px',
       color: '#40e0d0',  // Teal color for crystals
       fontFamily: 'Arial Black',
@@ -575,17 +613,17 @@ export class GameScene extends Phaser.Scene {
         blur: 3,
         fill: true
       }
-    }).setDepth(100)
+    }).setOrigin(0.5, 0).setDepth(100)  // Center-aligned
     this.coinCounterText.setScrollFactor(0)
     
-    // Add lives display with hearts (right side, top, right-aligned)
-    this.livesText = this.add.text(screenWidth - 20, 20, '❤️ x3', {
-      fontSize: '16px',
-      color: '#ff4444',  // Red color for hearts
+    // Add hamburger menu button (right side)
+    this.hamburgerMenuButton = this.add.text(screenWidth - 20, 32, '☰', {
+      fontSize: '32px',
+      color: '#9acf07',  // Bright green color
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
-      strokeThickness: 1,
+      strokeThickness: 2,
       shadow: {
         offsetX: 2,
         offsetY: 2,
@@ -593,25 +631,15 @@ export class GameScene extends Phaser.Scene {
         blur: 3,
         fill: true
       }
-    }).setOrigin(1, 0).setDepth(100)  // Right-aligned with setOrigin(1, 0)
-    this.livesText.setScrollFactor(0)
+    }).setOrigin(1, 0.5).setDepth(100)  // Right-aligned and vertically centered
+    this.hamburgerMenuButton.setScrollFactor(0)
     
-    // Add level counter (right side, bottom, right-aligned)
-    const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(screenWidth - 20, 40, `LEVEL: ${currentLevel}`, {
-      fontSize: '16px',
-      color: '#ff88ff',
-      fontFamily: 'Arial Black',
-      fontStyle: 'bold',
-      shadow: {
-        offsetX: 2,
-        offsetY: 2,
-        color: '#000000',  // Black drop shadow
-        blur: 3,
-        fill: true
-      }
-    }).setOrigin(1, 0).setDepth(100)  // Right-aligned with setOrigin(1, 0)
-    this.levelText.setScrollFactor(0)
+    // Make hamburger menu interactive (for future use)
+    this.hamburgerMenuButton.setInteractive({ useHandCursor: true })
+    this.hamburgerMenuButton.on('pointerdown', () => {
+      // Future: Open settings/menu
+      console.log('Hamburger menu clicked - feature coming soon!')
+    })
     
     // Initialize displays
     this.updateLivesDisplay()
