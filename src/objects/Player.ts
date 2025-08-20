@@ -72,7 +72,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Which effectively moves the sprite UP relative to the physics body
     // We want the physics body at the bottom 45px of the 64px sprite
     // So offset = 64/2 - 45/2 = 32 - 22.5 = 9.5
-    this.setOffset(15, 16.5)  // Move physics body down, which visually shifts sprite up (decreased by 1px)
+    this.setOffset(15, 15.5)  // Move physics body down, which visually shifts sprite up (decreased by 1px)
     this.setDepth(20) // Player renders on top of everything
     
     // Phaser's built-in debug visualization will show the hitbox

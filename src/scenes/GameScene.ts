@@ -249,6 +249,9 @@ export class GameScene extends Phaser.Scene {
     // Load talking bubble sprite
     this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
     
+    // Load crystal cavern background
+    this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20cavern%20background-P4DN7DvBxPB537dt2KyrMVA26AFNb9.png?uRh2')
+    
     // Load yellow enemy animation sprites
     this.load.image('yellowEnemyMouthOpenEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20eye%20open-4dEmp2gPrn80UE2QOE1uSSovKJjcCe.png?SLUI')
     this.load.image('yellowEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20blinking-P7cSu0iZ5zBpKeOKavnHVjoGU2bDOb.png?0gaY')
@@ -283,6 +286,27 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Add crystal cavern background (first, so it appears behind everything)
+    const background = this.add.image(0, 0, 'crystal-cavern-bg')
+    background.setOrigin(0, 0) // Position from top-left corner
+    background.setDepth(-100) // Behind everything
+    background.setScrollFactor(0.3) // More obvious parallax effect - moves more noticeably with world
+    
+    // Scale background to fill entire game area, ensuring full coverage
+    const gameWidth = this.cameras.main.width
+    const gameHeight = this.cameras.main.height
+    const scaleX = gameWidth / background.width
+    const scaleY = gameHeight / background.height
+    // Use larger scale and add extra coverage to ensure no gaps
+    const scale = Math.max(scaleX, scaleY) * 1.1 // 10% larger to ensure full coverage
+    background.setScale(scale)
+    
+    // Position background to cover entire area including bottom
+    background.setPosition(
+      (gameWidth - background.width * scale) / 2,
+      (gameHeight - background.height * scale) / 2 + 50 // Shift down by 100px from original (-50 + 100 = +50)
+    )
+    
     // Enable multi-touch support
     this.input.addPointer(2) // Allow up to 3 pointers total (default 1 + 2 more)
     
@@ -366,8 +390,8 @@ export class GameScene extends Phaser.Scene {
     this.treasureChests = []
     this.flashPowerUps = []
     
-    // Create mining theme background
-    this.createMiningThemeBackground()
+    // Create mining theme background - DISABLED (using custom background image instead)
+    // this.createMiningThemeBackground()
     
     // Create the level
     this.createTestLevel()
@@ -1327,56 +1351,114 @@ export class GameScene extends Phaser.Scene {
       return this.tileGrid.get(posKey)!
     }
     
-    // Get neighbor tile combinations to avoid duplicates
-    const neighborCombinations: string[] = []
+    // Get neighbor tile info for enhanced duplicate prevention
+    const neighborVariants: number[] = []
+    const neighborFlips: boolean[] = []
     const checkPositions = [
       `${gridX - 1},${gridY}`, // left
       `${gridX + 1},${gridY}`, // right
       `${gridX},${gridY - 1}`, // above
-      `${gridX},${gridY + 1}`  // below
+      `${gridX},${gridY + 1}`, // below
+      `${gridX - 1},${gridY - 1}`, // diagonal top-left
+      `${gridX + 1},${gridY - 1}`, // diagonal top-right
+      `${gridX - 1},${gridY + 1}`, // diagonal bottom-left  
+      `${gridX + 1},${gridY + 1}`  // diagonal bottom-right
     ]
     
     checkPositions.forEach(key => {
       if (this.tileGrid.has(key)) {
         const neighbor = this.tileGrid.get(key)!
-        neighborCombinations.push(`${neighbor.variant}-${neighbor.flipX}`)
+        neighborVariants.push(neighbor.variant)
+        neighborFlips.push(neighbor.flipX)
       }
     })
     
-    // Generate all possible tile combinations (only horizontal flipping)
-    const allCombinations: {variant: number, flipX: boolean, key: string}[] = []
+    // Define tile art groups (0-indexed, so subtract 1 from your numbers)
+    const tileGroups = [
+      [0, 4, 8],     // Group 1: tiles 1, 5, 9 (same base art)
+      [1, 5, 9],     // Group 2: tiles 2, 6, 10 (same base art)  
+      [2, 3, 6, 7, 10, 11]  // Group 3: tiles 3, 4, 7, 8, 11, 12 (same base art)
+    ]
+    
+    // Helper function to get tile group
+    const getTileGroup = (variant: number): number[] | null => {
+      for (const group of tileGroups) {
+        if (group.includes(variant)) {
+          return group
+        }
+      }
+      return null
+    }
+    
+    // Generate all possible tile combinations
+    const allCombinations: {variant: number, flipX: boolean, score: number}[] = []
     for (let variant = 0; variant < 12; variant++) {
-      const combinations = [
-        {variant, flipX: false, key: `${variant}-false`},
-        {variant, flipX: true, key: `${variant}-true`}
-      ]
-      allCombinations.push(...combinations)
-    }
-    
-    // Filter out neighbor combinations to avoid identical adjacent tiles
-    let availableCombinations = allCombinations.filter(combo => 
-      !neighborCombinations.includes(combo.key)
-    )
-    
-    // If we filtered out everything, allow any combination (fallback)
-    if (availableCombinations.length === 0) {
-      availableCombinations = allCombinations
-    }
-    
-    // Weight selection towards less-used base variants
-    const weightedCombinations: typeof availableCombinations = []
-    const maxUsage = Math.max(...this.tileUsageCount) || 1
-    
-    availableCombinations.forEach(combo => {
-      // Base variants that have been used less get more weight
-      const weight = Math.max(1, maxUsage - this.tileUsageCount[combo.variant] + 1)
-      for (let w = 0; w < weight; w++) {
-        weightedCombinations.push(combo)
+      for (const flipX of [false, true]) {
+        let score = 100 // Base score
+        
+        // Heavily penalize exact matches with immediate neighbors (left/right/up/down)
+        const immediateNeighbors = checkPositions.slice(0, 4)
+        immediateNeighbors.forEach(key => {
+          if (this.tileGrid.has(key)) {
+            const neighbor = this.tileGrid.get(key)!
+            if (neighbor.variant === variant && neighbor.flipX === flipX) {
+              score -= 80 // Heavy penalty for exact match
+            } else if (neighbor.variant === variant) {
+              score -= 40 // Medium penalty for same variant, different flip
+            }
+            
+            // Heavy penalty for same art group (similar looking tiles)
+            const currentGroup = getTileGroup(variant)
+            const neighborGroup = getTileGroup(neighbor.variant)
+            if (currentGroup && neighborGroup && currentGroup === neighborGroup) {
+              score -= 60 // Heavy penalty for same art family
+            }
+          }
+        })
+        
+        // Moderate penalty for diagonal neighbors  
+        const diagonalNeighbors = checkPositions.slice(4)
+        diagonalNeighbors.forEach(key => {
+          if (this.tileGrid.has(key)) {
+            const neighbor = this.tileGrid.get(key)!
+            if (neighbor.variant === variant && neighbor.flipX === flipX) {
+              score -= 30 // Moderate penalty for exact diagonal match
+            } else if (neighbor.variant === variant) {
+              score -= 15 // Light penalty for same variant diagonal
+            }
+            
+            // Moderate penalty for same art group diagonally
+            const currentGroup = getTileGroup(variant)
+            const neighborGroup = getTileGroup(neighbor.variant)
+            if (currentGroup && neighborGroup && currentGroup === neighborGroup) {
+              score -= 25 // Moderate penalty for same art family diagonally
+            }
+          }
+        })
+        
+        // Bonus for less-used variants (usage balancing)
+        const maxUsage = Math.max(...this.tileUsageCount) || 1
+        const usageBonus = Math.max(0, maxUsage - this.tileUsageCount[variant]) * 5
+        score += usageBonus
+        
+        // Bonus for variants not recently used
+        if (!this.recentTiles.includes(variant)) {
+          score += 20
+        }
+        
+        // Small random factor to prevent too much predictability
+        score += Math.random() * 10
+        
+        allCombinations.push({variant, flipX, score})
       }
-    })
+    }
     
-    // Select random combination from weighted pool
-    const selected = weightedCombinations[Math.floor(Math.random() * weightedCombinations.length)]
+    // Sort by score (highest first) and select from top candidates
+    allCombinations.sort((a, b) => b.score - a.score)
+    
+    // Select from top 25% of candidates to maintain some randomness while avoiding bad choices
+    const topCandidates = allCombinations.slice(0, Math.max(6, Math.floor(allCombinations.length * 0.25)))
+    const selected = topCandidates[Math.floor(Math.random() * topCandidates.length)]
     
     // Update tracking
     const tileInfo = {variant: selected.variant, flipX: selected.flipX}
@@ -1384,8 +1466,8 @@ export class GameScene extends Phaser.Scene {
     this.recentTiles.push(selected.variant)
     this.tileUsageCount[selected.variant]++
     
-    // Keep recent tiles list to a reasonable size (last 5 tiles)
-    if (this.recentTiles.length > 5) {
+    // Keep recent tiles list to a reasonable size (last 8 tiles for better tracking)
+    if (this.recentTiles.length > 8) {
       this.recentTiles.shift()
     }
     
