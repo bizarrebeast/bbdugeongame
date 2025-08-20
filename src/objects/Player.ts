@@ -17,6 +17,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private runningTiltTimer: number = 0
   private lastFrameWasJump: boolean = false
   
+  // Speech/Thought bubble system
+  private idleTimer: number = 0
+  private readonly IDLE_THRESHOLD: number = 5000 // 5 seconds in milliseconds
+  private bubbleActive: boolean = false
+  private onBubbleTrigger: (() => void) | null = null
+  
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Use the new player idle sprite or fallback to placeholder
     const textureKey = scene.textures.exists('playerIdleEye1') ? 'playerIdleEye1' : 'player'
@@ -79,6 +85,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   setTouchControls(touchControls: TouchControls): void {
     this.touchControls = touchControls
+  }
+  
+  setBubbleTriggerCallback(callback: () => void): void {
+    this.onBubbleTrigger = callback
+  }
+  
+  notifyBubbleActive(isActive: boolean): void {
+    this.bubbleActive = isActive
+    if (isActive) {
+      this.idleTimer = 0 // Reset timer when bubble appears
+    }
   }
 
   update(): void {
@@ -180,6 +197,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
     
+    // Handle bubble system timing
+    this.updateBubbleSystem()
+    
     // Handle smart animation system
     this.updateSmartAnimations()
   }
@@ -234,6 +254,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   getIsClimbing(): boolean {
     return this.isClimbing
+  }
+  
+  private updateBubbleSystem(): void {
+    const deltaTime = this.scene.game.loop.delta
+    const onGround = this.body!.blocked.down
+    
+    // Check if player is truly idle (not moving, not climbing, not jumping, on ground)
+    const playerIsIdle = !this.isMoving && !this.isClimbing && !this.isJumping && onGround
+    
+    if (playerIsIdle && !this.bubbleActive) {
+      // Player is idle and no bubble is active - increment timer
+      this.idleTimer += deltaTime
+      
+      if (this.idleTimer >= this.IDLE_THRESHOLD) {
+        // Trigger bubble after 5 seconds of idle
+        if (this.onBubbleTrigger) {
+          this.onBubbleTrigger()
+        }
+        this.idleTimer = 0 // Reset timer
+      }
+    } else {
+      // Player is moving or bubble is active - reset timer
+      this.idleTimer = 0
+    }
   }
   
   private updateSmartAnimations(): void {

@@ -62,6 +62,12 @@ export class GameScene extends Phaser.Scene {
   private isLevelComplete: boolean = false
   private assetPool!: AssetPool
   
+  // Speech/Thought bubble system
+  private speechBubble: Phaser.GameObjects.Image | null = null
+  private thoughtBubble: Phaser.GameObjects.Image | null = null
+  private bubbleTimer: Phaser.Time.TimerEvent | null = null
+  private readonly BUBBLE_DISPLAY_TIME = 3000 // 3 seconds
+  
   constructor() {
     super({ key: "GameScene" })
   }
@@ -651,6 +657,9 @@ export class GameScene extends Phaser.Scene {
     
     // Connect touch controls to player
     this.player.setTouchControls(this.touchControls)
+    
+    // Initialize bubble system
+    this.initializeBubbleSystem()
     
     // Check for level start conditions
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -4171,6 +4180,170 @@ export class GameScene extends Phaser.Scene {
       this.player.setTexture(textureKey)
       this.player.setDisplaySize(48, 64)
     }
+  }
+
+  private initializeBubbleSystem(): void {
+    // Create placeholder bubble sprites if they don't exist
+    this.createPlaceholderBubbles()
+    
+    // Connect player bubble trigger callback
+    this.player.setBubbleTriggerCallback(() => {
+      this.showRandomBubble()
+    })
+  }
+  
+  private createPlaceholderBubbles(): void {
+    // Create placeholder speech bubble if not exists
+    if (!this.textures.exists('speechBubblePlaceholder')) {
+      const graphics = this.add.graphics()
+      
+      // White speech bubble with tail
+      graphics.fillStyle(0xffffff, 1)
+      graphics.lineStyle(3, 0x333333, 1)
+      
+      // Main bubble body (rounded rectangle)
+      graphics.fillRoundedRect(0, 0, 120, 60, 12)
+      graphics.strokeRoundedRect(0, 0, 120, 60, 12)
+      
+      // Speech bubble tail (triangle pointing down-left toward 8 o'clock)
+      graphics.fillTriangle(
+        20, 60,    // Top of tail (on bubble edge)
+        10, 75,    // Bottom-left of tail 
+        35, 70     // Bottom-right of tail
+      )
+      graphics.strokeTriangle(20, 60, 10, 75, 35, 70)
+      
+      // Add placeholder text
+      const tempText = this.add.text(60, 30, '💬', {
+        fontSize: '24px'
+      }).setOrigin(0.5)
+      
+      graphics.generateTexture('speechBubblePlaceholder', 120, 80)
+      graphics.destroy()
+      tempText.destroy()
+    }
+    
+    // Create placeholder thought bubble if not exists  
+    if (!this.textures.exists('thoughtBubblePlaceholder')) {
+      const graphics = this.add.graphics()
+      
+      // Light gray thought bubble
+      graphics.fillStyle(0xf0f0f0, 1)
+      graphics.lineStyle(2, 0x999999, 1)
+      
+      // Main cloud-like bubble
+      graphics.fillCircle(60, 30, 25)
+      graphics.strokeCircle(60, 30, 25)
+      graphics.fillCircle(45, 20, 18)  
+      graphics.strokeCircle(45, 20, 18)
+      graphics.fillCircle(75, 25, 20)
+      graphics.strokeCircle(75, 25, 20)
+      graphics.fillCircle(55, 45, 16)
+      graphics.strokeCircle(55, 45, 16)
+      
+      // Small thought bubbles trailing toward 11 o'clock
+      graphics.fillCircle(25, 15, 4)
+      graphics.strokeCircle(25, 15, 4)
+      graphics.fillCircle(15, 8, 2)
+      graphics.strokeCircle(15, 8, 2)
+      
+      // Add placeholder text
+      const tempText = this.add.text(60, 30, '💭', {
+        fontSize: '20px'
+      }).setOrigin(0.5)
+      
+      graphics.generateTexture('thoughtBubblePlaceholder', 120, 60)
+      graphics.destroy()
+      tempText.destroy()
+    }
+  }
+  
+  private showRandomBubble(): void {
+    // Don't show bubble if one is already active
+    if (this.speechBubble || this.thoughtBubble) {
+      return
+    }
+    
+    // Randomly choose between speech (70%) and thought (30%) bubble
+    const showSpeechBubble = Math.random() < 0.7
+    
+    if (showSpeechBubble) {
+      this.showSpeechBubble()
+    } else {
+      this.showThoughtBubble()
+    }
+  }
+  
+  private showSpeechBubble(): void {
+    const bubble = this.add.image(0, 0, 'speechBubblePlaceholder')
+    bubble.setDepth(150) // Above most game elements but below HUD
+    bubble.setScrollFactor(1) // Follow the world/player
+    
+    // Position at 2 o'clock relative to player (about 60 degrees)
+    const angle = -60 * (Math.PI / 180) // Convert to radians, negative for clockwise
+    const distance = 50 // Distance from player center
+    
+    // Add slight random offset for natural feel
+    const offsetX = (Math.random() - 0.5) * 10
+    const offsetY = (Math.random() - 0.5) * 10
+    
+    bubble.x = this.player.x + Math.cos(angle) * distance + offsetX
+    bubble.y = this.player.y + Math.sin(angle) * distance + offsetY
+    
+    this.speechBubble = bubble
+    this.player.notifyBubbleActive(true)
+    
+    // Set timer to hide bubble after 3 seconds or when player moves
+    this.bubbleTimer = this.time.delayedCall(this.BUBBLE_DISPLAY_TIME, () => {
+      this.hideBubble()
+    })
+  }
+  
+  private showThoughtBubble(): void {
+    const bubble = this.add.image(0, 0, 'thoughtBubblePlaceholder')  
+    bubble.setDepth(150) // Above most game elements but below HUD
+    bubble.setScrollFactor(1) // Follow the world/player
+    
+    // Position at 12:30 relative to player (about -75 degrees from 12 o'clock)
+    const angle = (-90 - 15) * (Math.PI / 180) // 12:30 position
+    const distance = 45 // Distance from player center
+    
+    // Add slight random offset for natural feel
+    const offsetX = (Math.random() - 0.5) * 8
+    const offsetY = (Math.random() - 0.5) * 8
+    
+    bubble.x = this.player.x + Math.cos(angle) * distance + offsetX
+    bubble.y = this.player.y + Math.sin(angle) * distance + offsetY
+    
+    this.thoughtBubble = bubble
+    this.player.notifyBubbleActive(true)
+    
+    // Set timer to hide bubble after 3 seconds or when player moves
+    this.bubbleTimer = this.time.delayedCall(this.BUBBLE_DISPLAY_TIME, () => {
+      this.hideBubble()
+    })
+  }
+  
+  private hideBubble(): void {
+    // Clean up active bubble
+    if (this.speechBubble) {
+      this.speechBubble.destroy()
+      this.speechBubble = null
+    }
+    
+    if (this.thoughtBubble) {
+      this.thoughtBubble.destroy() 
+      this.thoughtBubble = null
+    }
+    
+    // Clean up timer
+    if (this.bubbleTimer) {
+      this.bubbleTimer.destroy()
+      this.bubbleTimer = null
+    }
+    
+    // Notify player that bubble is no longer active
+    this.player.notifyBubbleActive(false)
   }
 
   shutdown() {}
