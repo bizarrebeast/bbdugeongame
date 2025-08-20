@@ -56,7 +56,7 @@ export class GameScene extends Phaser.Scene {
   // Smart tile placement tracking
   private recentTiles: number[] = [] // Track last few tiles to avoid repeats
   private tileGrid: Map<string, number> = new Map() // Track tile variant at each position
-  private tileUsageCount: number[] = new Array(15).fill(0) // Track usage count for each variant
+  private tileUsageCount: number[] = new Array(12).fill(0) // Track usage count for each variant (12 tiles now)
   private door: Door | null = null
   private isLevelStarting: boolean = false
   private isLevelComplete: boolean = false
@@ -240,6 +240,26 @@ export class GameScene extends Phaser.Scene {
     this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%20new-aH3WiqHkbYLeW14yketC7EdmowlQ02.png?jLLJ')
     this.load.image('playerRunRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Running%20right%20foot%20forward%202-aGnWjaFUNnYXwTfNKfSCfCLppOHzDU.png?mXmE')
     
+    // Load treasure chest sprite
+    this.load.image('treasure-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20chest-Lbz3SXcQLBiaVQPtyPcGBghVjEFPaA.png?oDXs')
+    
+    // Load door sprite
+    this.load.image('door-sprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door-MwIAeC2xN9Q3T5FyfJ7U2tOLsM9Aom.png?7q9L')
+    
+    // Load new custom floor tiles
+    this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
+    this.load.image('floor-tile-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%202-EuITFMsdSDebMUmfcikeKCDLqDupml.png?C2mi')
+    this.load.image('floor-tile-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%203-EBjnmTXXufdUFEuzmfnGnaZX4zdI2C.png?69bT')
+    this.load.image('floor-tile-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%204-ecTwalLp4rzl9hegwIwVMuDBeN1YVJ.png?nxJJ')
+    this.load.image('floor-tile-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%205-mkUa3smxguUC6BG0k4RBp1L7YemLPJ.png?8kU2')
+    this.load.image('floor-tile-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%206-P5Eo0dOoipZmfiQ31gzPPNV178XDQz.png?K1oC')
+    this.load.image('floor-tile-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%207-nTcRVMkcmKM9dgxMMr6Fzs7Enekla1.png?cfe2')
+    this.load.image('floor-tile-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%208-ImcB9SO68kMOGAn6qXP0aioPKPbNxx.png?znlI')
+    this.load.image('floor-tile-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%209-VmOFC6UshXy3GJTAyKE5zi7p1oIyAJ.png?oTOf')
+    this.load.image('floor-tile-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%2010-SX5i2rG63ddgysEAxLTRNQvfngiFaS.png?2Bsf')
+    this.load.image('floor-tile-11', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%2011-JwdJf9Mmt0lEbFBGGwurBaYJL3uykp.png?w4JY')
+    this.load.image('floor-tile-12', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%2012-yBmCpaIQiiV7MeRoxI54ACeE3W2f27.png?9jIm')
+    
     // Start pooled loading for advanced error handling and retries
     this.assetPool.loadAllAssets().then(() => {
       console.log('All assets loaded via AssetPool - retries and fallbacks ready')
@@ -303,13 +323,13 @@ export class GameScene extends Phaser.Scene {
       registry.set('accumulatedScore', 0)
     }
     
-    // Pre-generate tile textures for performance
-    this.generateTileTextures()
+    // No longer generating textures - using preloaded images instead
+    // this.generateTileTextures()
     
     // Reset smart tile placement tracking for new level
     this.recentTiles = []
     this.tileGrid.clear()
-    this.tileUsageCount = new Array(15).fill(0)
+    this.tileUsageCount = new Array(12).fill(0) // Now we have 12 tiles instead of 15
     
     // Create platform and ladder groups
     this.platforms = this.physics.add.staticGroup()
@@ -1325,9 +1345,9 @@ export class GameScene extends Phaser.Scene {
       neighbors.push(this.tileGrid.get(belowKey)!)
     }
     
-    // Create a pool of available variants (0-14)
+    // Create a pool of available variants (0-11 for 12 tiles)
     const availableVariants: number[] = []
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
       availableVariants.push(i)
     }
     
@@ -1374,16 +1394,18 @@ export class GameScene extends Phaser.Scene {
   private createPlatformTile(x: number, y: number, isLeftEdge: boolean = false, isRightEdge: boolean = false): void {
     const tileSize = GameSettings.game.tileSize
     
-    // Smart tile selection to avoid duplicates
+    // Smart tile selection to avoid duplicates (now using 1-12 instead of 0-14)
     const variantIndex = this.selectSmartTileVariant(x, y)
-    const textureKey = `platform-tile-${variantIndex}`
+    const textureKey = `floor-tile-${variantIndex + 1}` // +1 because tiles are numbered 1-12
     
-    // Create sprite from cached texture
+    // Create sprite from preloaded texture and set to exact 32x32 size
     const tileSprite = this.add.sprite(x, y, textureKey)
+    tileSprite.setDisplaySize(32, 32) // Force exact 32x32 pixel size
     tileSprite.setDepth(1)
     
-    // Add drop shadow for depth
+    // Add drop shadow for depth (also sized to 32x32)
     const shadowSprite = this.add.sprite(x + 3, y + 3, textureKey)
+    shadowSprite.setDisplaySize(32, 32) // Force exact 32x32 pixel size for shadow too
     shadowSprite.setDepth(0)
     shadowSprite.setTint(0x000000)
     shadowSprite.setAlpha(0.3)

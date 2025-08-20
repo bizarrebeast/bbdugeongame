@@ -1,111 +1,50 @@
+import GameSettings from "../config/GameSettings"
+
 export class TreasureChest {
-  public sprite: Phaser.GameObjects.Graphics
+  public sprite: Phaser.GameObjects.Sprite
   private scene: Phaser.Scene
   private isOpened: boolean = false
   private glowEffect: Phaser.GameObjects.Arc | null = null
+  private debugHitbox: Phaser.GameObjects.Graphics | null = null
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
-    // Create treasure chest using Graphics
-    this.sprite = scene.add.graphics()
-    this.createChestShape(x, y, false) // Start closed
+    // Create treasure chest using sprite image
+    this.sprite = scene.add.sprite(x, y, 'treasure-chest')
+    this.sprite.setDisplaySize(60, 60) // Set to 60x60 pixels as requested
     this.sprite.setDepth(13)
     
     // Add physics to the sprite
     scene.physics.add.existing(this.sprite, true) // Static body
     
-    // Set collision bounds
+    // Set collision bounds (40x30 hitbox for 60x60 sprite)
     const body = this.sprite.body as Phaser.Physics.Arcade.StaticBody
-    body.setSize(32, 24)
-    body.setOffset(-16, -12)
+    body.setSize(40, 30)
+    body.setOffset(-20, -15)
+    
+    // Add debug hitbox visualization
+    if (GameSettings.debug) {
+      this.createDebugHitbox(x, y)
+    }
     
     // Add glow effect
     this.createGlowEffect(x, y)
     
-    // Add subtle breathing animation
-    scene.tweens.add({
-      targets: this.sprite,
-      scaleX: 1.05,
-      scaleY: 1.05,
-      duration: 2000,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    })
+    // Chest pulsing animation disabled
   }
   
-  private createChestShape(x: number, y: number, opened: boolean): void {
-    this.sprite.clear()
-    this.sprite.setPosition(x, y)
-    
-    if (opened) {
-      // Draw opened chest
-      // Chest base
-      this.sprite.fillStyle(0x8B4513, 1) // Brown
-      this.sprite.fillRect(-16, 0, 32, 12)
-      
-      // Chest lid (open)
-      this.sprite.fillStyle(0x654321, 1) // Darker brown
-      this.sprite.fillRect(-16, -20, 32, 8)
-      
-      // Gold interior
-      this.sprite.fillStyle(0xffd700, 1)
-      this.sprite.fillRect(-14, -2, 28, 8)
-      
-      // Treasure sparkles inside
-      for (let i = 0; i < 5; i++) {
-        const sparkleX = -12 + Math.random() * 24
-        const sparkleY = -2 + Math.random() * 6
-        this.sprite.fillStyle(0xffff00, 1)
-        this.sprite.fillCircle(sparkleX, sparkleY, 2)
-      }
-      
-      // Hinges
-      this.sprite.fillStyle(0x444444, 1)
-      this.sprite.fillCircle(-12, -12, 2)
-      this.sprite.fillCircle(12, -12, 2)
-    } else {
-      // Draw closed chest
-      // Chest base
-      this.sprite.fillStyle(0x8B4513, 1) // Brown
-      this.sprite.fillRect(-16, -4, 32, 16)
-      
-      // Chest lid (closed)
-      this.sprite.fillStyle(0x654321, 1) // Darker brown
-      this.sprite.fillRoundedRect(-16, -12, 32, 8, 4)
-      
-      // Lock
-      this.sprite.fillStyle(0xffd700, 1) // Gold lock
-      this.sprite.fillRect(-2, -8, 4, 6)
-      this.sprite.fillStyle(0x000000, 1) // Keyhole
-      this.sprite.fillCircle(0, -5, 1)
-      
-      // Metal bands
-      this.sprite.lineStyle(2, 0x444444, 1)
-      this.sprite.strokeRect(-16, -8, 32, 2)
-      this.sprite.strokeRect(-16, 4, 32, 2)
-    }
-    
-    // Outline
-    this.sprite.lineStyle(2, 0x000000, 1)
-    if (opened) {
-      this.sprite.strokeRect(-16, 0, 32, 12) // Base
-      this.sprite.strokeRect(-16, -20, 32, 8) // Open lid
-    } else {
-      this.sprite.strokeRect(-16, -12, 32, 20) // Closed chest
-    }
-  }
   
   private createGlowEffect(x: number, y: number): void {
-    this.glowEffect = this.scene.add.circle(x, y, 25, 0xffd700)
-    this.glowEffect.setAlpha(0.3)
+    // Simple single circle with 15% opacity
+    this.glowEffect = this.scene.add.circle(x, y, 18, 0xffd700)
+    this.glowEffect.setAlpha(0.15)
     this.glowEffect.setDepth(12)
     
     // Pulsing glow
     this.scene.tweens.add({
       targets: this.glowEffect,
-      alpha: 0.1,
+      alpha: 0.05,
       scaleX: 1.2,
       scaleY: 1.2,
       duration: 1500,
@@ -126,8 +65,9 @@ export class TreasureChest {
     
     this.isOpened = true
     
-    // Update chest appearance to opened
-    this.createChestShape(this.sprite.x, this.sprite.y, true)
+    // Update chest appearance to opened (could change sprite frame if we had multiple frames)
+    // For now, just apply a tint to indicate it's been opened
+    this.sprite.setTint(0x808080) // Gray tint to show it's opened
     
     // Remove glow effect
     if (this.glowEffect) {
@@ -204,10 +144,43 @@ export class TreasureChest {
     })
   }
   
+  private createDebugHitbox(x: number, y: number): void {
+    this.debugHitbox = this.scene.add.graphics()
+    this.debugHitbox.setDepth(999) // On top of everything
+    
+    // Draw hitbox outline (same dimensions as physics body - now 40x30)
+    this.debugHitbox.lineStyle(2, 0x00ff00, 0.8) // Bright green, semi-transparent
+    this.debugHitbox.strokeRect(x - 20, y - 15, 40, 30)
+    
+    // Add a small center dot to show exact position
+    this.debugHitbox.fillStyle(0xff0000, 1.0) // Red dot
+    this.debugHitbox.fillCircle(x, y, 2)
+    
+    // Add text label
+    const debugText = this.scene.add.text(x, y - 35, 'CHEST\n40x30', {
+      fontSize: '8px',
+      color: '#00ff00',
+      fontFamily: 'monospace',
+      align: 'center',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      padding: { x: 2, y: 1 }
+    }).setOrigin(0.5).setDepth(1000)
+    
+    // Store text reference for cleanup
+    this.debugHitbox.setData('debugText', debugText)
+  }
+  
   destroy(): void {
     this.sprite.destroy()
     if (this.glowEffect) {
       this.glowEffect.destroy()
+    }
+    if (this.debugHitbox) {
+      const debugText = this.debugHitbox.getData('debugText')
+      if (debugText) {
+        debugText.destroy()
+      }
+      this.debugHitbox.destroy()
     }
   }
 }
