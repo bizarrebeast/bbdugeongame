@@ -8,8 +8,11 @@ export class Diamond {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
+    // Move up by 5 pixels for better eye level positioning
+    const adjustedY = y - 5
+    
     // Create invisible rectangle for physics
-    this.sprite = scene.add.rectangle(x, y, 24, 24, 0x000000, 0)
+    this.sprite = scene.add.rectangle(x, adjustedY, 24, 24, 0x000000, 0)
     this.sprite.setDepth(13)
     
     // Add physics to the invisible sprite
@@ -27,15 +30,26 @@ export class Diamond {
     
     // Create visible diamond graphics
     this.diamondGraphics = scene.add.graphics()
-    this.createDiamondShape(x, y)
+    this.createDiamondShape(x, adjustedY)
     this.diamondGraphics.setDepth(13)
     
     
     // Add gentle floating motion to both sprites
     scene.tweens.add({
       targets: [this.sprite, this.diamondGraphics],
-      y: y - 5,
+      y: adjustedY - 5,
       duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+    
+    // Add pulsing animation (like crystals)
+    scene.tweens.add({
+      targets: [this.sprite, this.diamondGraphics],
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 1000,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'

@@ -9,8 +9,11 @@ export class Coin {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
+    // Move up by 5 pixels for better eye level positioning
+    const adjustedY = y - 5
+    
     // Create container for gem cluster
-    this.sprite = scene.add.container(x, y)
+    this.sprite = scene.add.container(x, adjustedY)
     
     // Define gem color and cut pairings for regular coins
     const gemTypes = [
@@ -64,6 +67,16 @@ export class Coin {
       scaleX: 1.1,
       scaleY: 1.1,
       duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+    
+    // Add gentle floating motion (like diamonds)
+    scene.tweens.add({
+      targets: this.sprite,
+      y: adjustedY - 5,
+      duration: 1500,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'

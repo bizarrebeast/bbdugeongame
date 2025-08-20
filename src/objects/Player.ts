@@ -48,24 +48,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Set up physics properties (world bounds set in GameScene to allow full floor movement)
     this.setCollideWorldBounds(true)
     this.setBounce(0)
-    this.setSize(28, 55)
+    this.setSize(18, 45)  // Reduced by 10px each for more forgiving hitbox
     
     console.log(`🎮 PLAYER PHYSICS DEBUG:`)
-    console.log(`  - Physics body size: 28x55`)
+    console.log(`  - Physics body size: 18x45 (more forgiving)`)
     console.log(`  - Display size: 48x64`)
     console.log(`  - World bounds collision: ${this.body!.collideWorldBounds}`)
     console.log(`  - Gravity enabled: ${(this.body as Phaser.Physics.Arcade.Body).allowGravity}`)
     
     // The hitbox is positioned correctly, we need to shift the visual sprite UP
     // so that the sprite's bottom aligns with the hitbox's bottom
-    // Sprite is 64px tall, hitbox is 55px tall
-    // The difference is 9px that the sprite extends above the hitbox
+    // Sprite is 64px tall, hitbox is 45px tall
+    // The difference is 19px that the sprite extends above the hitbox
     // Offset moves the physics body relative to sprite center
     // Positive Y offset moves the physics body DOWN relative to sprite
     // Which effectively moves the sprite UP relative to the physics body
-    // We want the physics body at the bottom 55px of the 64px sprite
-    // So offset = 64/2 - 55/2 = 32 - 27.5 = 4.5
-    this.setOffset(10, 6)  // Move physics body down, which visually shifts sprite up (decreased by 2px)
+    // We want the physics body at the bottom 45px of the 64px sprite
+    // So offset = 64/2 - 45/2 = 32 - 22.5 = 9.5
+    this.setOffset(15, 16.5)  // Move physics body down, which visually shifts sprite up (decreased by 1px)
     this.setDepth(20) // Player renders on top of everything
     
     // Phaser's built-in debug visualization will show the hitbox

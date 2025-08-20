@@ -29,7 +29,8 @@ export class GameScene extends Phaser.Scene {
   private floorLayouts: { gapStart: number, gapSize: number }[] = []
   private ladderPositions: Map<number, number[]> = new Map() // floor -> ladder x positions
   private doorPositions: Map<number, number> = new Map() // floor -> door x position
-  private score: number = 0
+  private score: number = 0 // Current level score only
+  private accumulatedScore: number = 0 // Score from completed levels
   private scoreText!: Phaser.GameObjects.Text
   private currentFloor: number = 0
   private lives: number = 3
@@ -250,7 +251,6 @@ export class GameScene extends Phaser.Scene {
     // Reset game state
     this.isGameOver = false
     this.isLevelComplete = false
-    this.score = 0
     this.currentFloor = 0
     this.highestFloorGenerated = 5
     
@@ -258,16 +258,34 @@ export class GameScene extends Phaser.Scene {
     // Check if we have stored values (level restart) or need to initialize (new game)
     const registry = this.game.registry
     
-    if (registry.has('playerLives') && registry.get('playerLives') > 0) {
-      // Restore from registry (level restart after losing life)
+    // Check if this is a level progression (not a death/restart)
+    const isLevelProgression = registry.has('levelProgression') && registry.get('levelProgression') === true
+    
+    if (isLevelProgression) {
+      // Level progression - move current score to accumulated, start new level fresh
+      this.accumulatedScore = registry.get('accumulatedScore') || 0
+      this.score = 0 // Start new level with 0 current score
       this.lives = registry.get('playerLives')
       this.totalCoinsCollected = registry.get('totalCoins')
+      // Clear the progression flag
+      registry.set('levelProgression', false)
+    } else if (registry.has('playerLives') && registry.get('playerLives') > 0) {
+      // Restore from registry (level restart after losing life)
+      this.lives = registry.get('playerLives')
+      // Keep accumulated score from completed levels, reset only current level
+      this.accumulatedScore = registry.get('accumulatedScore') || 0
+      this.score = 0 // Reset current level score on death
+      this.totalCoinsCollected = 0 // Reset crystals on death
+      registry.set('totalCoins', 0)
     } else {
       // Initialize new game
       this.lives = 3
+      this.score = 0
+      this.accumulatedScore = 0
       this.totalCoinsCollected = 0
       registry.set('playerLives', this.lives)
       registry.set('totalCoins', this.totalCoinsCollected)
+      registry.set('accumulatedScore', 0)
     }
     
     // Pre-generate tile textures for performance
@@ -567,6 +585,7 @@ export class GameScene extends Phaser.Scene {
     // Initialize displays
     this.updateLivesDisplay()
     this.updateCoinCounterDisplay()
+    this.updateScoreDisplay() // Show correct total score from the start
     
     // Create touch controls for mobile
     this.touchControls = new TouchControls(this)
@@ -2523,7 +2542,9 @@ export class GameScene extends Phaser.Scene {
   }
   
   private updateScoreDisplay(): void {
-    this.scoreText.setText(`SCORE: ${this.score}`)
+    // Show total score = accumulated from completed levels + current level score
+    const totalScore = this.accumulatedScore + this.score
+    this.scoreText.setText(`SCORE: ${totalScore}`)
   }
   
   private updateComboDisplay(): void {
@@ -3728,7 +3749,7 @@ export class GameScene extends Phaser.Scene {
     const stats = this.add.text(
       GameSettings.canvas.width / 2,
       GameSettings.canvas.height / 2 - 20,
-      `Score: ${this.score}\nFloors Climbed: ${this.currentFloor}`,
+      `Score: ${this.accumulatedScore + this.score}\nFloors Climbed: ${this.currentFloor}`,
       {
         fontSize: '18px',
         color: '#ffffff',
@@ -3777,6 +3798,13 @@ export class GameScene extends Phaser.Scene {
     
     // Continue button handler
     continueBtn.on('pointerdown', () => {
+      // Save accumulated score and crystals before progressing
+      const registry = this.game.registry
+      registry.set('levelProgression', true)
+      // Add current level score to accumulated score
+      registry.set('accumulatedScore', this.accumulatedScore + this.score)
+      registry.set('totalCoins', this.totalCoinsCollected)
+      
       // Advance to next level
       this.levelManager.nextLevel()
       
@@ -3975,7 +4003,7 @@ export class GameScene extends Phaser.Scene {
     const scoreText = this.add.text(
       popupX,
       popupY - 20,
-      `Final Score: ${this.score}`,
+      `Final Score: ${this.accumulatedScore + this.score}`,
       {
         fontSize: '20px',
         color: '#ffd700',

@@ -9,8 +9,11 @@ export class BlueCoin {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
+    // Move up by 5 pixels for better eye level positioning
+    const adjustedY = y - 5
+    
     // Create container for larger teal gem cluster
-    this.sprite = scene.add.container(x, y)
+    this.sprite = scene.add.container(x, adjustedY)
     
     // Blue coins use various teal/aqua shades with emerald cut
     const tealColors = [
@@ -64,6 +67,16 @@ export class BlueCoin {
       scaleX: 1.3,
       scaleY: 1.3,
       duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+    
+    // Add gentle floating motion (like diamonds)
+    scene.tweens.add({
+      targets: this.sprite,
+      y: adjustedY - 5,
+      duration: 1500,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
