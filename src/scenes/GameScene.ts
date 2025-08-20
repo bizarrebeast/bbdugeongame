@@ -1505,8 +1505,8 @@ export class GameScene extends Phaser.Scene {
       
       // Build list of valid positions
       for (let x = 2; x < GameSettings.game.floorWidth - 2; x++) {
-        // Skip if over a gap
-        if (layout.gapStart !== -1 && x >= layout.gapStart && x < layout.gapStart + layout.gapSize) {
+        // Skip if over a gap or within 1-tile buffer zone
+        if (layout.gapStart !== -1 && x >= layout.gapStart - 1 && x < layout.gapStart + layout.gapSize + 1) {
           continue
         }
         

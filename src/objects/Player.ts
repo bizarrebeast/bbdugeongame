@@ -162,15 +162,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityY(0)
       }
       
-      // Allow horizontal movement at top of ladder when standing on platform
-      if (onGround && !upPressed) {
-        if (leftPressed) {
-          this.exitClimbing()
-          this.setFlipX(true)  // Face left when exiting ladder
-        } else if (rightPressed) {
-          this.exitClimbing()
-          this.setFlipX(false)  // Face right when exiting ladder
-        }
+      // Allow horizontal movement to exit ladder at any time
+      if (leftPressed) {
+        this.exitClimbing()
+        this.setFlipX(true)  // Face left when exiting ladder
+        this.setVelocityX(-GameSettings.game.playerSpeed) // Start moving immediately
+      } else if (rightPressed) {
+        this.exitClimbing()
+        this.setFlipX(false)  // Face right when exiting ladder
+        this.setVelocityX(GameSettings.game.playerSpeed) // Start moving immediately
       }
       
       // Exit climbing with jump
