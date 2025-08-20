@@ -175,9 +175,7 @@ export class StalkerCat extends Cat {
   private popOut(): void {
     console.log(`🔴💥 STALKER CAT POPPING OUT!`)
     console.log(`  - Current position: (${this.x}, ${this.y})`)
-    console.log(`  - Current scale: ${this.scaleX}x${this.scaleY}`)
-    console.log(`  - Display size BEFORE: ${this.displayWidth}x${this.displayHeight}`)
-    console.log(`  - Body size BEFORE: ${this.body?.width}x${this.body?.height}`)
+    console.log(`  - Original spawn Y: ${this.originalY}`)
     
     this.state = 'chasing'
     this.setVisible(true) // Show the full cat
@@ -187,14 +185,18 @@ export class StalkerCat extends Cat {
       this.eyesSprite.setVisible(false)
     }
     
+    // Update originalY to current position to prevent teleporting
+    this.originalY = this.y
+    console.log(`  - Updated floor lock to current Y: ${this.originalY}`)
+    
     // Enable movement but no gravity - stalker cats just run along the floor
     this.body!.setGravityY(0) // No gravity needed - they stay on their floor
     this.body!.setImmovable(false) // Allow movement
     
-    console.log(`🔴💥 AFTER ENABLING PHYSICS:`)
+    console.log(`🔴💥 AFTER ENABLING PHYSICS AND FLOOR LOCK:`)
+    console.log(`  - Position locked to: (${this.x}, ${this.y})`)
     console.log(`  - Gravity: ${(this.body as Phaser.Physics.Arcade.Body).gravity.y}`)
     console.log(`  - Immovable: ${this.body?.immovable}`)
-    console.log(`  - Body bounds: L=${this.body?.left} R=${this.body?.right} T=${this.body?.top} B=${this.body?.bottom}`)
     
     // Reset speed to starting value
     this.currentSpeed = 80 * 1.5
@@ -213,13 +215,12 @@ export class StalkerCat extends Cat {
       ease: 'Power2',
       yoyo: true,
       onComplete: () => {
-        // Ensure we return to exactly the original scale
+        // Ensure we return to exactly the original scale and position
         this.setScale(origScaleX, origScaleY)
+        this.y = this.originalY // Lock back to current floor
         console.log(`🔴💥 POP ANIMATION COMPLETE:`)
         console.log(`  - Final scale: ${this.scaleX}x${this.scaleY}`)
-        console.log(`  - Final display size: ${this.displayWidth}x${this.displayHeight}`)
-        console.log(`  - Final body size: ${this.body?.width}x${this.body?.height}`)
-        console.log(`  - Final position: (${this.x}, ${this.y})`)
+        console.log(`  - Final position locked to: (${this.x}, ${this.y})`)
       }
     })
   }
@@ -228,8 +229,8 @@ export class StalkerCat extends Cat {
     const playerX = this.playerRef!.x
     const playerY = this.playerRef!.y
     
-    // No gravity - stalker cats stay on their floor
-    // this.body!.setGravityY(0) // Already set to 0, no need to keep setting it
+    // Lock Y position to spawn floor to prevent any drift or falling
+    this.y = this.originalY
     
     const floorDifference = Math.abs(playerY - this.y)
     
@@ -263,6 +264,9 @@ export class StalkerCat extends Cat {
   
   
   private updatePatrolling(delta: number): void {
+    // Lock Y position to spawn floor during patrolling too
+    this.y = this.originalY
+    
     // Patrol like a yellow cat - slow speed with random movement
     this.randomMoveTimer -= delta
     
