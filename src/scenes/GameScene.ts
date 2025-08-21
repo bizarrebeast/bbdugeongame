@@ -609,21 +609,21 @@ export class GameScene extends Phaser.Scene {
     hudBg.fillStyle(0x4a148c, 1.0)  // Dark purple color with full opacity
     hudBg.lineStyle(2, 0x7b1fa2, 1.0) // Slightly lighter purple border with full opacity
     
-    // Single connected rectangle across the top (increased padding by 150% for production)
-    hudBg.fillRoundedRect(8, 40, screenWidth - 16, 56, 12)  // Full width minus margins, moved down 32px total
-    hudBg.strokeRoundedRect(8, 40, screenWidth - 16, 56, 12) // Add border stroke
+    // Single connected rectangle across the top (increased height for 3 rows)
+    hudBg.fillRoundedRect(8, 40, screenWidth - 16, 80, 12)  // Increased height from 56 to 80
+    hudBg.strokeRoundedRect(8, 40, screenWidth - 16, 80, 12) // Add border stroke
     
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
     // LEFT SIDE: Lives, Crystals, Level
     // Lives display with heart crystal icon (left side, row 1)
-    this.livesIcon = this.add.image(25, 52, 'heart-crystal')
+    this.livesIcon = this.add.image(30, 56, 'heart-crystal')
     this.livesIcon.setDisplaySize(16, 16)
     this.livesIcon.setDepth(100)
     this.livesIcon.setScrollFactor(0)
     
-    this.livesText = this.add.text(40, 52, 'x3', {
+    this.livesText = this.add.text(45, 56, 'x3', {
       fontSize: '14px',
       color: '#ff69b4',  // Pink color to match heart crystal theme
       fontFamily: 'Arial Black',
@@ -663,10 +663,15 @@ export class GameScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(200).setVisible(false)
     this.comboText.setScrollFactor(0)
     
-    // Crystal counter (left side, row 2)
-    this.coinCounterText = this.add.text(20, 62, 'CRYSTALS: 0/150', {
+    // Crystal counter with yellow emerald icon (left side, row 2)
+    const crystalIcon = this.add.image(30, 76, 'gem-yellow-emerald')
+    crystalIcon.setDisplaySize(16, 16)
+    crystalIcon.setDepth(100)
+    crystalIcon.setScrollFactor(0)
+    
+    this.coinCounterText = this.add.text(45, 76, '0/150', {
       fontSize: '14px',
-      color: '#40e0d0',  // Teal color for crystals
+      color: '#ffd700',  // Gold color for crystals
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
@@ -678,13 +683,13 @@ export class GameScene extends Phaser.Scene {
         blur: 3,
         fill: true
       }
-    }).setOrigin(0, 0).setDepth(100)
+    }).setOrigin(0, 0.5).setDepth(100)
     this.coinCounterText.setScrollFactor(0)
     
     // Level counter (left side, row 3)
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(20, 72, `LEVEL: ${currentLevel}`, {
-      fontSize: '16px',
+    this.levelText = this.add.text(30, 96, `LEVEL: ${currentLevel}`, {
+      fontSize: '14px',
       color: '#9acf07',  // Same green as hamburger menu
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
@@ -697,13 +702,13 @@ export class GameScene extends Phaser.Scene {
         blur: 3,
         fill: true
       }
-    }).setDepth(100)
+    }).setOrigin(0, 0.5).setDepth(100)
     this.levelText.setScrollFactor(0)
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
-    this.scoreText = this.add.text(screenWidth / 2, 52, 'SCORE: 0', {
-      fontSize: '16px',
+    this.scoreText = this.add.text(screenWidth / 2, 60, 'SCORE: 0', {
+      fontSize: '18px',
       color: '#ffd700',  // Gold color
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
@@ -722,14 +727,14 @@ export class GameScene extends Phaser.Scene {
     
     // Invincibility Timer (center, bottom)
     // Create grey version (always visible)
-    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 72, 'invincibility-timer')
+    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 88, 'invincibility-timer')
     this.invincibilityTimerGreyImage.setDisplaySize(24, 24)
     this.invincibilityTimerGreyImage.setTint(0x808080) // Grey tint for inactive state
     this.invincibilityTimerGreyImage.setDepth(100)
     this.invincibilityTimerGreyImage.setScrollFactor(0)
     
     // Create colored version (shown during invincibility)
-    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 72, 'invincibility-timer')
+    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 88, 'invincibility-timer')
     this.invincibilityTimerImage.setDisplaySize(24, 24)
     this.invincibilityTimerImage.setDepth(101)
     this.invincibilityTimerImage.setScrollFactor(0)
@@ -740,8 +745,8 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.setDepth(102)
     this.invincibilityTimerMask.setScrollFactor(0)
     
-    // Add hamburger menu button (right side)
-    this.hamburgerMenuButton = this.add.text(screenWidth - 20, 64, '☰', {
+    // RIGHT SIDE: Hamburger menu
+    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 72, '☰', {
       fontSize: '32px',
       color: '#9acf07',  // Bright green color
       fontFamily: 'Arial Black',
@@ -2670,7 +2675,7 @@ export class GameScene extends Phaser.Scene {
   
   private updateInvincibilityMask(): void {
     const centerX = this.cameras.main.width / 2
-    const centerY = 72
+    const centerY = 88  // Updated to match new timer position
     const radius = 12 // Half of 24px timer size
     
     // Calculate angle for clockwise countdown (starts at top, goes clockwise)
@@ -4272,7 +4277,7 @@ export class GameScene extends Phaser.Scene {
 
   private updateCoinCounterDisplay(): void {
     const crystalsTowardNext = this.totalCoinsCollected % this.COINS_PER_EXTRA_LIFE
-    this.coinCounterText.setText(`CRYSTALS: ${crystalsTowardNext}/${this.COINS_PER_EXTRA_LIFE}`)
+    this.coinCounterText.setText(`${crystalsTowardNext}/${this.COINS_PER_EXTRA_LIFE}`)
   }
 
   private updateLivesDisplay(): void {
