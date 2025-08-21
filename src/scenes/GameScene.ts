@@ -1707,8 +1707,8 @@ export class GameScene extends Phaser.Scene {
     for (let floor = minFloorForCeilingSpikes; floor < this.floorLayouts.length - 1; floor++) {
       const layout = this.floorLayouts[floor]
       
-      // 30% chance of ceiling spikes on this floor
-      if (Math.random() > 0.3) continue
+      // 80% chance of ceiling spikes on this floor for better visibility during testing
+      if (Math.random() > 0.8) continue
       
       // Calculate ceiling position (just below the floor above)
       const ceilingY = GameSettings.canvas.height - tileSize/2 - ((floor + 1) * floorSpacing) + tileSize
@@ -1726,10 +1726,10 @@ export class GameScene extends Phaser.Scene {
           continue
         }
         
-        // Skip if near a ladder (within 3 tiles for safety)
+        // Skip if near a ladder (within 2 tiles for safety)
         let nearLadder = false
         for (const ladderX of ladderPositions) {
-          if (Math.abs(x - ladderX) < 3) {
+          if (Math.abs(x - ladderX) < 2) {
             nearLadder = true
             break
           }
@@ -1739,7 +1739,7 @@ export class GameScene extends Phaser.Scene {
         // Skip if near door (on door floor)
         if (floor === this.floorLayouts.length - 2) {
           const doorX = Math.floor(GameSettings.game.floorWidth / 2)
-          if (Math.abs(x - doorX) < 3) continue
+          if (Math.abs(x - doorX) < 2) continue
         }
         
         validPositions.push(x)
@@ -1754,18 +1754,32 @@ export class GameScene extends Phaser.Scene {
         const randomIndex = Math.floor(Math.random() * validPositions.length)
         const spikeX = validPositions[randomIndex]
         
-        // Create a cluster of 2-3 tiles of ceiling spikes
-        const clusterSize = Math.floor(Math.random() * 2) + 2
+        // Create a cluster of 1-3 tiles of ceiling spikes
+        const clusterSize = Math.floor(Math.random() * 3) + 1
         
         for (let j = 0; j < clusterSize; j++) {
           const tileX = spikeX + j
           if (tileX >= GameSettings.game.floorWidth - 2) break
           
+          // Double-check this tile doesn't conflict with ladders
+          let conflictsWithLadder = false
+          for (const ladderX of ladderPositions) {
+            if (Math.abs(tileX - ladderX) < 2) {
+              conflictsWithLadder = true
+              break
+            }
+          }
+          
+          if (conflictsWithLadder) {
+            console.log(`⚠️ Skipping ceiling spike at tile ${tileX} - too close to ladder`)
+            continue
+          }
+          
           // Remove used positions
           const idx = validPositions.indexOf(tileX)
           if (idx > -1) validPositions.splice(idx, 1)
           
-          // console.log(`🔱⬇️ Creating ceiling spike at floor ${floor}, tile X=${tileX}`)
+          console.log(`⬇️ Creating yellow ceiling spike at floor ${floor}, tile X=${tileX}, Y=${ceilingY}`)
           this.createCeilingSpikeGraphics(tileX * tileSize + tileSize/2, ceilingY, tileSize)
         }
       }
@@ -1777,6 +1791,8 @@ export class GameScene extends Phaser.Scene {
     
     // Position spikes hanging from ceiling
     const spikeBaseY = y - tileSize/2 + 1 // Attach to ceiling
+    
+    console.log(`🟡 Creating yellow ceiling spike sprite at (${x}, ${spikeBaseY})`)
     
     // Create yellow ceiling spike sprite (width matches tile size, contains 3 spikes pointing down)
     const spikeSprite = this.add.image(x, spikeBaseY, 'yellow-ceiling-spike-tile')
