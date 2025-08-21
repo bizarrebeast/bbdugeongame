@@ -1,5 +1,3 @@
-import { GemShapeGenerator, GemCut } from '../utils/GemShapes'
-
 export class BlueCoin {
   public sprite: Phaser.GameObjects.Container
   private scene: Phaser.Scene
@@ -12,35 +10,19 @@ export class BlueCoin {
     // Move up by 5 pixels for better eye level positioning
     const adjustedY = y - 5
     
-    // Create container for larger teal gem cluster
+    // Create container for larger gem sprite
     this.sprite = scene.add.container(x, adjustedY)
     
-    // Blue coins use various teal/aqua shades with emerald cut
-    const tealColors = [
-      0x008080, // Teal
-      0x20b2aa, // Light sea green
-      0x40e0d0, // Turquoise
-      0x48d1cc, // Medium turquoise
-      0x00ced1  // Dark turquoise
-    ]
+    // Blue coins (500 points) use ONLY the big blue gem sprite
+    const selectedGemKey = 'gem-big-blue'
     
-    // Randomly select a teal shade
-    const gemColor = tealColors[Math.floor(Math.random() * tealColors.length)]
-    const gemGraphics = scene.add.graphics()
+    // Create sprite image from loaded texture
+    const gemSprite = scene.add.image(0, 0, selectedGemKey)
     
-    // Create single emerald cut gem (prestigious rectangular cut for higher value)
-    const gemStyle = {
-      cut: GemCut.EMERALD,
-      size: 10, // Larger than regular coins to show higher value
-      color: gemColor,
-      facetColor: GemShapeGenerator.getFacetColor(gemColor),
-      highlightColor: 0xffffff
-    }
+    // Set larger size than regular coins to show higher value (22x22 vs 16x16)
+    gemSprite.setDisplaySize(22, 22)
     
-    // Draw single cut gem at center
-    GemShapeGenerator.drawGem(gemGraphics, 0, 0, gemStyle)
-    
-    this.sprite.add(gemGraphics)
+    this.sprite.add(gemSprite)
     this.sprite.setDepth(12)
     
     // Add sparkle effect
@@ -61,12 +43,12 @@ export class BlueCoin {
       body.setOffset(32 - 10, 32 - 10)  // +32 to center, -10 for half body size
     }
     
-    // Pulsing glow effect (more dramatic for blue coins)
+    // Pulsing glow effect (slower like diamond for premium feel)
     scene.tweens.add({
       targets: this.sprite,
       scaleX: 1.3,
       scaleY: 1.3,
-      duration: 800,
+      duration: 1000,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'

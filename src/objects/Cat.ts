@@ -7,6 +7,25 @@ export enum CatColor {
   RED = 'red'
 }
 
+/**
+ * IMPORTANT: Phaser setOffset() Coordinate System Reference
+ * ======================================================
+ * setOffset(x, y) positions the sprite's TOP-LEFT corner relative to the physics body
+ * 
+ * Y-AXIS BEHAVIOR:
+ * - SMALLER Y offset = sprite moves DOWN (towards bottom of screen)
+ * - LARGER Y offset = sprite moves UP (towards top of screen)
+ * 
+ * X-AXIS BEHAVIOR:
+ * - SMALLER X offset = sprite moves LEFT
+ * - LARGER X offset = sprite moves RIGHT
+ * 
+ * VISUAL DIRECTION HELPERS:
+ * - To move sprite DOWN: SUBTRACT from Y offset
+ * - To move sprite UP: ADD to Y offset
+ * - To move sprite LEFT: SUBTRACT from X offset  
+ * - To move sprite RIGHT: ADD to X offset
+ */
 export class Cat extends Phaser.Physics.Arcade.Sprite {
   private baseSpeed: number = 80
   private moveSpeed: number
@@ -84,54 +103,21 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       catColor = colors[Math.floor(Math.random() * colors.length)]
     }
     
-    // Use sprites for all enemy types, generate texture as fallback
+    // Use proper animation sprites for all enemy types
     let textureKey: string
     
-    // Generate fallback textures FIRST, before calling super
     if (catColor === CatColor.BLUE) {
-      // For blue enemies, prefer the new animation sprite (start with mouth closed), fallback to old sprite, then generated
-      if (scene.textures.exists('blueEnemyMouthClosed')) {
-        textureKey = 'blueEnemyMouthClosed'
-      } else if (scene.textures.exists('blueEnemy')) {
-        textureKey = 'blueEnemy'
-      } else {
-        // Use generated texture as fallback
-        textureKey = `cat-${catColor}`
-        Cat.generateFallbackTexture(scene, catColor) // Static call
-      }
+      textureKey = 'blueEnemyMouthClosed'
     } else if (catColor === CatColor.YELLOW) {
-      // For yellow enemies, prioritize animation sprites
-      if (scene.textures.exists('yellowEnemyMouthClosedEyeOpen')) {
-        textureKey = 'yellowEnemyMouthClosedEyeOpen' // Start with mouth closed
-      } else if (scene.textures.exists('yellowEnemy')) {
-        textureKey = 'yellowEnemy'
-      } else {
-        // Use generated texture as fallback
-        textureKey = `cat-${catColor}`
-        Cat.generateFallbackTexture(scene, catColor) // Static call
-      }
+      textureKey = 'yellowEnemyMouthClosedEyeOpen'
     } else if (catColor === CatColor.GREEN) {
-      // For green enemies, look for green enemy sprite
-      if (scene.textures.exists('greenEnemy')) {
-        textureKey = 'greenEnemy'
-      } else {
-        // Use generated texture as fallback
-        textureKey = `cat-${catColor}`
-        Cat.generateFallbackTexture(scene, catColor) // Static call
-      }
+      textureKey = 'greenEnemy'
     } else if (catColor === CatColor.RED) {
-      // For red enemies, use the animated sprites (start with mouth closed eyes 1)
-      if (scene.textures.exists('redEnemyMouthClosedEyes1')) {
-        textureKey = 'redEnemyMouthClosedEyes1'
-      } else {
-        // Use generated texture as fallback
-        textureKey = `cat-${catColor}`
-        Cat.generateFallbackTexture(scene, catColor) // Static call
-      }
+      textureKey = 'redEnemyMouthClosedEyes1'
     } else {
-      // For any other colors, use generated texture
-      textureKey = `cat-${catColor}`
-      Cat.generateFallbackTexture(scene, catColor) // Static call
+      // This shouldn't happen with proper enemy spawning
+      console.warn(`⚠️ Unexpected cat color: ${catColor}`)
+      textureKey = 'blueEnemyMouthClosed' // Default fallback
     }
     
     // Now call super with the determined texture
@@ -244,19 +230,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.setFlipX(false)
       this.initializeBlueEnemyAnimations()
       this.addDebugVisualization()
-    } else if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
-      // Original blue enemy sprite fallback
-      this.setDisplaySize(36, 36)
-      this.setOffset(3 - 2 + 4, 45 - 18 - 8) // Move left 6px total (2px + 4px) and down 26 pixels
-      this.setFlipX(false)
-      this.addDebugVisualization()
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
       const displaySize = this.isStalker ? 42 : 52 // Stalkers: 20% smaller (42x42), regular red: (52x52)
       this.setDisplaySize(displaySize, displaySize)
-      // Adjust offset for stalkers vs regular red enemies
-      const yOffset = this.isStalker ? (44 - 12 - 2 - 6) : (44 - 12 - 2) // Stalkers: move up 6 pixels
-      this.setOffset(18, yOffset) // Moved 15 pixels left (3 + 15 = 18), stalkers up 6 pixels from regular red
+      // Adjust offset for stalkers vs regular red enemies  
+      // Calculate Y offset: stalkers=24 (UP 6px), snails=26 (DOWN 4px from original 30)
+      const yOffset = this.isStalker ? (44 - 12 - 2 - 6) : ((44 - 12 - 2) - 4) 
+      this.setOffset(18, yOffset) // X=18 (moved LEFT 15px), Y=24/26 (stalkers UP, snails DOWN)
       this.setFlipX(false)
       this.initializeRedEnemyAnimations()
       this.addDebugVisualization()
@@ -264,37 +245,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       if (this.isStalker) {
         console.log(`🔴 STALKER SPRITE POSITIONING: size ${displaySize}x${displaySize} (20% smaller), offset (18, ${yOffset}) - moved up 6 pixels from regular red enemy`)
       }
-    } else if (this.isEnemySprite(textureKey)) {
-      // For sprite-based enemies (yellow, green, red), use proper sizing similar to blue enemies
-      if (catColor === CatColor.YELLOW) {
-        // Make yellow enemies 3x wider
-        this.setDisplaySize(108, 36) // 3x width (36 * 3 = 108)
-        this.setOffset(3, 45)
-      } else if (catColor === CatColor.GREEN) {
-        // Green enemies with adjusted positioning
-        this.setDisplaySize(36, 36)
-        this.setOffset(3, -3) // Decreased by 48 pixels total (45 - 24 - 16 - 8 = -3)
-      } else {
-        // Red enemies keep normal sizing
-        const displaySize = this.isStalker ? 29 : 36 // Stalkers: 20% smaller (29x29), regular red: (36x36)
-        this.setDisplaySize(displaySize, displaySize)
-        // Adjust offset for stalkers vs regular red enemies
-        const yOffset = this.isStalker ? (45 - 12 - 2 - 6) : (45 - 12 - 2) // Stalkers: move up 6 pixels
-        this.setOffset(18, yOffset) // Moved 15 pixels left (3 + 15 = 18), stalkers up 6 pixels from regular red
-        
-        if (this.isStalker) {
-          console.log(`🔴 STALKER FALLBACK SPRITE POSITIONING: size ${displaySize}x${displaySize} (20% smaller), offset (18, ${yOffset}) - moved up 6 pixels from regular red enemy`)
-        }
-      }
+    } else if (catColor === CatColor.GREEN && textureKey === 'greenEnemy') {
+      // Green enemy uses single sprite (not animation sprites yet)
+      this.setDisplaySize(36, 36)
+      this.setOffset(3, -3) // Positioning for green enemy
       this.setFlipX(false)
       this.addDebugVisualization()
-    } else if (catColor !== CatColor.BLUE && catColor !== CatColor.YELLOW) {
-      // Fallback generated texture settings for non-blue, non-yellow colors only
-      this.setSize(18, 14)
-      this.setOffset(1, 1)
-      this.addDebugVisualization()
     } else {
-      // Blue enemy using fallback texture
+      // No fallback needed - all enemies should use proper animation sprites
+      console.warn(`⚠️ UNKNOWN SPRITE: ${textureKey} for color ${catColor} - this should not happen`)
       this.addDebugVisualization()
     }
     
@@ -603,29 +562,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Removed - replaced with addDebugVisualization
   }
   
-  private static generateFallbackTexture(scene: Phaser.Scene, catColor: CatColor): void {
-    const colorMap = {
-      [CatColor.BLUE]: 0x4169e1,
-      [CatColor.YELLOW]: 0xffd700,
-      [CatColor.GREEN]: 0x32cd32,
-      [CatColor.RED]: 0xdc143c
-    }
-    
-    const textureKey = `cat-${catColor}`
-    if (!scene.textures.exists(textureKey)) {
-      const graphics = scene.add.graphics()
-      graphics.fillStyle(colorMap[catColor], 1)
-      graphics.fillCircle(10, 8, 8)
-      graphics.fillStyle(0x000000, 1)
-      graphics.fillCircle(6, 6, 2)
-      graphics.fillCircle(14, 6, 2)
-      graphics.fillStyle(colorMap[catColor], 1)
-      graphics.fillTriangle(4, 2, 8, 0, 8, 4)
-      graphics.fillTriangle(12, 0, 16, 2, 12, 4)
-      graphics.generateTexture(textureKey, 20, 16)
-      graphics.destroy()
-    }
-  }
   
   private isYellowEnemyAnimationSprite(textureKey: string): boolean {
     return [
@@ -647,9 +583,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     ].includes(textureKey)
   }
   
-  private isEnemySprite(textureKey: string): boolean {
-    return ['yellowEnemy', 'greenEnemy', 'redEnemy'].includes(textureKey)
-  }
   
   private initializeYellowEnemyAnimations(): void {
     // Set random initial timers to make enemies feel unique

@@ -1,5 +1,3 @@
-import { GemShapeGenerator, GemCut } from '../utils/GemShapes'
-
 export class Coin {
   public sprite: Phaser.GameObjects.Container
   private scene: Phaser.Scene
@@ -12,35 +10,27 @@ export class Coin {
     // Move up by 5 pixels for better eye level positioning
     const adjustedY = y - 5
     
-    // Create container for gem cluster
+    // Create container for gem sprite
     this.sprite = scene.add.container(x, adjustedY)
     
-    // Define gem color and cut pairings for regular coins
-    const gemTypes = [
-      { color: 0xffd700, cut: GemCut.ROUND },        // Gold - Round brilliant
-      { color: 0xff69b4, cut: GemCut.PEAR },         // Pink - Pear/teardrop
-      { color: 0x9370db, cut: GemCut.OVAL },         // Purple - Oval
-      { color: 0xff1493, cut: GemCut.MARQUISE },     // Deep pink - Marquise
-      { color: 0xba68c8, cut: GemCut.CUSHION }       // Orchid - Cushion
+    // Define available gem sprite keys for regular coins (exclude big blue and diamond - those are for higher value collectibles)
+    const gemSprites = [
+      'gem-pink-round', 
+      'gem-yellow-emerald',
+      'gem-purple-opal',
+      'gem-teal-triangle'
     ]
     
-    // Randomly select a gem type
-    const selectedGem = gemTypes[Math.floor(Math.random() * gemTypes.length)]
-    const gemGraphics = scene.add.graphics()
+    // Randomly select a gem sprite
+    const selectedGemKey = gemSprites[Math.floor(Math.random() * gemSprites.length)]
     
-    // Create single cut gem with assigned shape for its color
-    const gemStyle = {
-      cut: selectedGem.cut,
-      size: 8, // Consistent size for all regular coins
-      color: selectedGem.color,
-      facetColor: GemShapeGenerator.getFacetColor(selectedGem.color),
-      highlightColor: 0xffffff
-    }
+    // Create sprite image from loaded texture
+    const gemSprite = scene.add.image(0, 0, selectedGemKey)
     
-    // Draw single cut gem at center
-    GemShapeGenerator.drawGem(gemGraphics, 0, 0, gemStyle)
+    // Set consistent size - match the current gem size (16x16 based on the hitbox)
+    gemSprite.setDisplaySize(16, 16)
     
-    this.sprite.add(gemGraphics)
+    this.sprite.add(gemSprite)
     this.sprite.setDepth(12)
     
     // Add sparkle effect

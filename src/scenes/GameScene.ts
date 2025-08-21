@@ -258,6 +258,14 @@ export class GameScene extends Phaser.Scene {
     this.load.image('yellowEnemyMouthClosedEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20closed%20eye%20open-SR2cCNicBFEj13QRyTyxMqjKZoYU81.png?entK')
     this.load.image('yellowEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20clsoed%20blinking-eb9OM0fEGjDh4iRuoUCVztOGLLSBSV.png?eDZv')
     
+    // Load new gem collectible sprites
+    this.load.image('gem-big-blue', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/big%20blue%20gem-GzKKZKUsDMh3CXMEIV4OmMl4ksrqqm.png?sill')
+    this.load.image('gem-pink-round', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20round-E2EKGSTZHnnCdW0QkFmTDRKY7ERfw7.png?izQh')
+    this.load.image('gem-yellow-emerald', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20emerald-Z65ogfvE2NUX0AtxfwqgUKTooKPL1M.png?NJLZ')
+    this.load.image('gem-purple-opal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/purple%20opal-vq4CL7MxiGQDenIU0ZvqVQJJbWAvt5.png?GjQL')
+    this.load.image('gem-teal-triangle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20triangle-HVpi82a0c01MbkO92zYvH4tIN3CdMw.png?N700')
+    this.load.image('gem-diamond', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond-LB22Ijoji8erIrMFMvtSwd5Y9rDDwS.png?LlEv')
+
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
     this.load.image('floor-tile-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%202-EuITFMsdSDebMUmfcikeKCDLqDupml.png?C2mi')
@@ -2161,10 +2169,10 @@ export class GameScene extends Phaser.Scene {
   ): void {
     const tileSize = GameSettings.game.tileSize
     
-    // Filter positions to avoid ladders and doors
-    const availablePositions = validPositions.filter(x => 
-      !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor)
-    )
+    // Filter positions - treasure chests need special buffer zone, others use standard filtering
+    const availablePositions = type === 'treasureChest' 
+      ? validPositions.filter(x => this.isSafeForTreasureChest(x, floor))
+      : validPositions.filter(x => !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor))
     
     for (let i = 0; i < Math.min(count, availablePositions.length); i++) {
       // Find a position that's not occupied
@@ -2263,6 +2271,43 @@ export class GameScene extends Phaser.Scene {
     
     // Need 2-3 tiles clearance around door (doors are wider than ladders)
     return Math.abs(x - doorX) <= 2
+  }
+
+  private isSafeForTreasureChest(x: number, floor: number): boolean {
+    // Treasure chests need a 2-tile buffer zone from all hazards and edges
+    const floorWidth = GameSettings.game.floorWidth
+    const bufferSize = 2
+    
+    // Check floor edges (need 2 tiles from left/right edges)
+    if (x < bufferSize || x >= floorWidth - bufferSize) {
+      return false
+    }
+    
+    // Check for gaps/spikes (need 2-tile buffer from any gap)
+    const layout = this.floorLayouts[floor]
+    if (layout && layout.gapStart !== -1) {
+      const gapEnd = layout.gapStart + layout.gapSize
+      // Check if position is within buffer zone of the gap
+      if (x >= layout.gapStart - bufferSize && x <= gapEnd + bufferSize - 1) {
+        return false
+      }
+    }
+    
+    // Check for ladders (need 2-tile buffer from any ladder)
+    const ladders = this.ladderPositions.get(floor) || []
+    for (const ladderX of ladders) {
+      if (Math.abs(x - ladderX) <= bufferSize) {
+        return false
+      }
+    }
+    
+    // Check for doors (need 2-tile buffer from doors)
+    const doorX = this.doorPositions.get(floor)
+    if (doorX !== undefined && Math.abs(x - doorX) <= bufferSize + 2) { // Extra buffer on top of door's existing clearance
+      return false
+    }
+    
+    return true
   }
   
   private isPositionOccupied(x: number, floor: number, usedPositions: number[]): boolean {

@@ -10,26 +10,27 @@ export class TreasureChest {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
-    // Create treasure chest using sprite image
-    this.sprite = scene.add.sprite(x, y, 'treasure-chest')
+    // Create treasure chest using sprite image (shifted up 4 pixels visually)
+    this.sprite = scene.add.sprite(x, y - 4, 'treasure-chest')
     this.sprite.setDisplaySize(60, 60) // Set to 60x60 pixels as requested
     this.sprite.setDepth(13)
     
     // Add physics to the sprite
     scene.physics.add.existing(this.sprite, true) // Static body
     
-    // Set collision bounds (40x30 hitbox for 60x60 sprite)
+    // Set collision bounds (40x30 hitbox for 60x60 sprite) 
+    // Adjust offset to account for the visual sprite being moved up 4 pixels
     const body = this.sprite.body as Phaser.Physics.Arcade.StaticBody
     body.setSize(40, 30)
-    body.setOffset(-20, -15)
+    body.setOffset(-20, -15 + 4) // +4 to compensate for sprite being moved up
     
     // Add debug hitbox visualization
     if (GameSettings.debug) {
       this.createDebugHitbox(x, y)
     }
     
-    // Add glow effect
-    this.createGlowEffect(x, y)
+    // Add glow effect (match the shifted sprite position)
+    this.createGlowEffect(x, y - 4)
     
     // Chest pulsing animation disabled
   }
