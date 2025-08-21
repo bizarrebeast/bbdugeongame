@@ -2130,19 +2130,19 @@ export class GameScene extends Phaser.Scene {
       // Track all used positions and their types for this floor
       const floorUsedPositions: Array<{x: number, type: string}> = []
       
-      // Regular coins: 2-4 per floor (most common) - always allowed if coins are in the list
+      // Regular coins: distribute throughout floors (2-4 per floor)
       if (allowedCollectibles.includes('coin')) {
-        const numCoins = Math.floor(Math.random() * 3) + 2
+        const numCoins = Math.floor(Math.random() * 3) + 2 // 2-4 coins per floor
         this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
       }
       
-      // Blue coins: 1 per 1-2 floors (500 points)
-      if (allowedCollectibles.includes('blueCoin') && floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
+      // Blue coins: lower probability (20% chance per floor)
+      if (allowedCollectibles.includes('blueCoin') && floor > 0 && Math.random() < 0.2) {
         this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor, floorUsedPositions)
       }
       
-      // Diamonds: 1 per 1-3 floors (1000 points)
-      if (allowedCollectibles.includes('diamond') && floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
+      // Diamonds: much lower probability (8% chance per floor)
+      if (allowedCollectibles.includes('diamond') && floor > 1 && Math.random() < 0.08) {
         this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
       }
       
@@ -2294,9 +2294,21 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Check for ladders (need 2-tile buffer from any ladder)
-    const ladders = this.ladderPositions.get(floor) || []
-    for (const ladderX of ladders) {
-      if (Math.abs(x - ladderX) <= bufferSize) {
+    // Check ladders on current floor AND floor below (since ladders span between floors)
+    const laddersCurrentFloor = this.ladderPositions.get(floor) || []
+    const laddersFloorBelow = this.ladderPositions.get(floor - 1) || []
+    const allRelevantLadders = [...laddersCurrentFloor, ...laddersFloorBelow]
+    
+    console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST SAFETY CHECK: Floor ${floor}, Position ${x}`)
+    console.log(`   Ladders on floor ${floor}: [${laddersCurrentFloor.join(', ')}]`)
+    console.log(`   Ladders on floor ${floor - 1}: [${laddersFloorBelow.join(', ')}]`)
+    console.log(`   All relevant ladders: [${allRelevantLadders.join(', ')}]`)
+    
+    for (const ladderX of allRelevantLadders) {
+      const distance = Math.abs(x - ladderX)
+      console.log(`   Distance from ladder at ${ladderX}: ${distance} (buffer needed: ${bufferSize})`)
+      if (distance <= bufferSize) {
+        console.log(`   ❌ REJECTED: Too close to ladder at ${ladderX}`)
         return false
       }
     }
@@ -2304,9 +2316,11 @@ export class GameScene extends Phaser.Scene {
     // Check for doors (need 2-tile buffer from doors)
     const doorX = this.doorPositions.get(floor)
     if (doorX !== undefined && Math.abs(x - doorX) <= bufferSize + 2) { // Extra buffer on top of door's existing clearance
+      console.log(`   ❌ REJECTED: Too close to door at ${doorX}`)
       return false
     }
     
+    console.log(`   ✅ APPROVED: Safe position for treasure chest`)
     return true
   }
   
@@ -3033,8 +3047,38 @@ export class GameScene extends Phaser.Scene {
       })
     }
     
-    // Spawn diamond if present
-    if (contents.diamond && positionIndex < spawnPositions.length) {
+    // Spawn blue coins
+    for (let i = 0; i < contents.blueCoins; i++) {
+      if (positionIndex >= spawnPositions.length) break
+      
+      const pos = spawnPositions[positionIndex++]
+      const blueCoin = new BlueCoin(this, pos.x, pos.y)
+      this.blueCoins.push(blueCoin)
+      
+      // Add physics overlap detection
+      this.physics.add.overlap(
+        this.player,
+        blueCoin.sprite,
+        () => this.handleBlueCoinCollection(blueCoin),
+        undefined,
+        this
+      )
+      
+      // Add bouncy spawn animation
+      this.tweens.add({
+        targets: blueCoin.sprite,
+        scaleX: 1.4,
+        scaleY: 1.4,
+        duration: 400,
+        ease: 'Back.easeOut',
+        yoyo: true
+      })
+    }
+    
+    // Spawn diamonds
+    for (let i = 0; i < contents.diamonds; i++) {
+      if (positionIndex >= spawnPositions.length) break
+      
       const pos = spawnPositions[positionIndex++]
       const diamond = new Diamond(this, pos.x, pos.y)
       this.diamonds.push(diamond)
@@ -3050,7 +3094,7 @@ export class GameScene extends Phaser.Scene {
       
       // Add dramatic spawn animation
       this.tweens.add({
-        targets: [diamond.sprite, diamond.diamondGraphics],
+        targets: diamond.sprite,
         scaleX: 1.5,
         scaleY: 1.5,
         duration: 500,
@@ -3260,13 +3304,13 @@ export class GameScene extends Phaser.Scene {
           this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
         }
         
-        // Blue coins: 1 per 1-2 floors (500 points)
-        if (allowedCollectibles.includes('blueCoin') && floor > 0 && (floor % 2 === 0 || Math.random() < 0.5)) {
+        // Blue coins: lower probability (20% chance per floor)
+        if (allowedCollectibles.includes('blueCoin') && floor > 0 && Math.random() < 0.2) {
           this.placeCollectiblesOfType(validPositions, 1, 'blueCoin', collectibleY, floor, floorUsedPositions)
         }
         
-        // Diamonds: 1 per 1-3 floors (1000 points)  
-        if (allowedCollectibles.includes('diamond') && floor > 1 && (floor % 3 === 0 || Math.random() < 0.3)) {
+        // Diamonds: much lower probability (8% chance per floor)
+        if (allowedCollectibles.includes('diamond') && floor > 1 && Math.random() < 0.08) {
           this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
         }
         

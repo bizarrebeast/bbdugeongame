@@ -86,20 +86,87 @@ export class TreasureChest {
       yoyo: true
     })
     
-    // Generate contents - removed flash powerup
-    const coins = Math.floor(Math.random() * 6) + 5 // 5-10 coins
-    const diamond = Math.random() < 0.3 // 30% chance
-    const flashPowerUp = false // Flash powerup disabled
+    // Generate contents based on level progression
+    const contents = this.generateRewardsByLevel()
     
     // Calculate total points
     let totalPoints = 2500 // Base chest value
-    totalPoints += coins * 50 // Coin value
-    if (diamond) totalPoints += 1000 // Diamond bonus
+    totalPoints += contents.coins * 50 // Regular coins (50 points each)
+    totalPoints += contents.blueCoins * 500 // Blue coins (500 points each)
+    totalPoints += contents.diamonds * 1000 // Diamonds (1000 points each)
     
     // Create treasure burst effect
     this.createTreasureBurstEffect()
     
-    return { coins, diamond, flashPowerUp, totalPoints }
+    return { 
+      coins: contents.coins, 
+      blueCoins: contents.blueCoins,
+      diamonds: contents.diamonds, 
+      flashPowerUp: false, // Disabled for now
+      totalPoints 
+    }
+  }
+  
+  private generateRewardsByLevel(): { coins: number, blueCoins: number, diamonds: number } {
+    // Get current level from scene (assuming it's available via registry or level manager)
+    const currentLevel = this.scene.registry.get('currentLevel') || 1
+    
+    // Define reward tiers based on level progression
+    let rewardTier: 'early' | 'mid' | 'late'
+    if (currentLevel <= 3) {
+      rewardTier = 'early'
+    } else if (currentLevel <= 7) {
+      rewardTier = 'mid' 
+    } else {
+      rewardTier = 'late'
+    }
+    
+    // Generate 3-5 total items
+    const totalItems = Math.floor(Math.random() * 3) + 3 // 3-5 items
+    
+    const rewards = { coins: 0, blueCoins: 0, diamonds: 0 }
+    
+    // Define probabilities for each tier (higher value items less likely)
+    const probabilities = {
+      early: {   // Levels 1-3: Mostly regular coins
+        coin: 0.85,      // 85% chance for regular coins
+        blueCoin: 0.13,  // 13% chance for blue coins  
+        diamond: 0.02    // 2% chance for diamonds
+      },
+      mid: {     // Levels 4-7: More variety
+        coin: 0.65,      // 65% chance for regular coins
+        blueCoin: 0.28,  // 28% chance for blue coins
+        diamond: 0.07    // 7% chance for diamonds
+      },
+      late: {    // Levels 8+: Best rewards
+        coin: 0.45,      // 45% chance for regular coins
+        blueCoin: 0.40,  // 40% chance for blue coins
+        diamond: 0.15    // 15% chance for diamonds
+      }
+    }
+    
+    const tierProbs = probabilities[rewardTier]
+    
+    // Generate each reward item
+    for (let i = 0; i < totalItems; i++) {
+      const roll = Math.random()
+      
+      if (roll < tierProbs.diamond) {
+        rewards.diamonds++
+      } else if (roll < tierProbs.diamond + tierProbs.blueCoin) {
+        rewards.blueCoins++
+      } else {
+        rewards.coins++
+      }
+    }
+    
+    console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST REWARDS (Level ${currentLevel}, Tier: ${rewardTier}):`)
+    console.log(`   Total items: ${totalItems}`)
+    console.log(`   Regular coins: ${rewards.coins}`)
+    console.log(`   Blue coins: ${rewards.blueCoins}`) 
+    console.log(`   Diamonds: ${rewards.diamonds}`)
+    
+    return rewards
   }
   
   private createTreasureBurstEffect(): void {
