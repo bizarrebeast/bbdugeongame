@@ -284,6 +284,10 @@ export class GameScene extends Phaser.Scene {
     this.load.image('invincibility-pendant', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendant-cJISby3d7EEREasbi0gRZkn2u3rNrG.png?xf9m')
     this.load.image('invincibility-timer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/timer-0GaE5deB5l9rD6D1m8so6Nq3mVA3xa.png?gZWG')
 
+    // Load spike sprites
+    this.load.image('yellow-ceiling-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20spikes%20ceiling%20tile-8vq9W1Y2e1RSpgUfMl9sTp0ZILFHL3.png?mUEb')
+    this.load.image('pink-floor-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20spikes%20floor%20tile-ncAVgIHazwYlznCBP4H6LWLiIhN7OF.png?n27v')
+
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
     this.load.image('floor-tile-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%202-EuITFMsdSDebMUmfcikeKCDLqDupml.png?C2mi')
@@ -1650,81 +1654,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createSpikesInGap(gapStart: number, gapSize: number, floorY: number, tileSize: number): void {
-    // console.log(`🔱 createSpikesInGap called: creating ${gapSize} spike tiles`)
-    // Create pink spikes in each tile of the gap
+    // Fill the entire gap with pink spikes - every tile in the gap gets a spike
     for (let x = gapStart; x < gapStart + gapSize; x++) {
       const spikeX = x * tileSize + tileSize/2
       const spikeY = floorY // Position at floor level
       
-      // console.log(`🔱 Creating spike at tile ${x}: position (${spikeX}, ${spikeY})`)
-      this.createSpikeGraphics(spikeX, spikeY, tileSize)
+      this.createSpikeSprite(spikeX, spikeY, tileSize)
     }
   }
   
-  private createSpikeGraphics(x: number, y: number, tileSize: number): void {
-    const spikeHeight = tileSize // Full tile height (32px)
-    const spikesPerTile = 3 // 3 spikes per tile, side by side
-    const spikeWidth = tileSize / spikesPerTile // Width per spike
+  private createSpikeSprite(x: number, y: number, tileSize: number): void {
+    // Position spike sprite at the bottom edge of platforms, shifted down 1 pixel
+    const spikeBaseY = y + tileSize/2 - 1 + 1 // Move to bottom of platform tiles, then down 1 more pixel
     
-    // Position spikes at the bottom edge of platforms (align with green line), moved up 1px
-    const spikeBaseY = y + tileSize/2 - 1 // Move to bottom of platform tiles, 1px higher
+    // Create drop shadow for spike (like floor tiles)
+    const shadowSprite = this.add.image(x + 3, spikeBaseY + 3, 'pink-floor-spike-tile')
+    shadowSprite.setDisplaySize(tileSize, tileSize) // Match floor tile size
+    shadowSprite.setOrigin(0.5, 1) // Bottom center origin for proper positioning
+    shadowSprite.setDepth(11) // Behind the main spike
+    shadowSprite.setTint(0x000000) // Black shadow
+    shadowSprite.setAlpha(0.3) // 30% opacity
     
-    // console.log(`🔱 createSpikeGraphics: x=${x}, y=${y}, spikeBaseY=${spikeBaseY}, spikeHeight=${spikeHeight}, spikesPerTile=${spikesPerTile}`)
-    
-    // Create graphics object for spikes
-    const spikesGraphics = this.add.graphics()
-    
-    // First draw drop shadows for all spikes (like floor tiles)
-    spikesGraphics.fillStyle(0x000000, 0.3) // Black shadow with 30% opacity
-    for (let i = 0; i < spikesPerTile; i++) {
-      const offsetX = (i - (spikesPerTile - 1) / 2) * spikeWidth
-      const spikeX = x + offsetX
-      
-      // Create shadow triangle slightly offset down and right
-      const shadowOffsetX = 3
-      const shadowOffsetY = 3
-      
-      spikesGraphics.beginPath()
-      spikesGraphics.moveTo(spikeX - spikeWidth/2 + shadowOffsetX, spikeBaseY + shadowOffsetY) // Bottom left
-      spikesGraphics.lineTo(spikeX + spikeWidth/2 + shadowOffsetX, spikeBaseY + shadowOffsetY) // Bottom right  
-      spikesGraphics.lineTo(spikeX + shadowOffsetX, spikeBaseY - spikeHeight + shadowOffsetY) // Top point
-      spikesGraphics.closePath()
-      spikesGraphics.fillPath()
-    }
-    
-    // Now draw the actual spikes on top
-    spikesGraphics.fillStyle(0xff1493, 1) // Deep pink color
-    
-    // Create 3 triangular spikes per tile, side by side
-    for (let i = 0; i < spikesPerTile; i++) {
-      const offsetX = (i - (spikesPerTile - 1) / 2) * spikeWidth
-      const spikeX = x + offsetX
-      
-      // console.log(`🔱 Creating triangular spike ${i}: offsetX=${offsetX}, spikeX=${spikeX}`)
-      
-      // Create triangular spike pointing upward
-      spikesGraphics.beginPath()
-      spikesGraphics.moveTo(spikeX - spikeWidth/2, spikeBaseY) // Bottom left
-      spikesGraphics.lineTo(spikeX + spikeWidth/2, spikeBaseY) // Bottom right  
-      spikesGraphics.lineTo(spikeX, spikeBaseY - spikeHeight) // Top point
-      spikesGraphics.closePath()
-      spikesGraphics.fillPath()
-      
-      // Add gem-style outline for consistency
-      spikesGraphics.lineStyle(1, 0xffffff, 0.8)
-      spikesGraphics.beginPath()
-      spikesGraphics.moveTo(spikeX - spikeWidth/2, spikeBaseY) // Bottom left
-      spikesGraphics.lineTo(spikeX + spikeWidth/2, spikeBaseY) // Bottom right  
-      spikesGraphics.lineTo(spikeX, spikeBaseY - spikeHeight) // Top point
-      spikesGraphics.closePath()
-      spikesGraphics.strokePath()
-    }
-    
-    spikesGraphics.setDepth(12) // Above platforms but below player
-    // console.log(`🔱 Graphics created with depth 12, ${spikesPerTile} triangular spikes`)
+    // Create pink floor spike sprite (width matches tile size, contains 3 spikes pointing up)
+    const spikeSprite = this.add.image(x, spikeBaseY, 'pink-floor-spike-tile')
+    spikeSprite.setDisplaySize(tileSize, tileSize) // Match floor tile size
+    spikeSprite.setOrigin(0.5, 1) // Bottom center origin for proper positioning
+    spikeSprite.setDepth(12) // Above platforms but below player
     
     // Create physics body for collision detection - same height as floor tiles for enemy movement
-    // Visual spikes still look the same, but collision body extends to floor level
     const fullTileHeight = tileSize
     const spikeCollisionY = y // Same Y as platform tiles
     const spikeBody = this.add.rectangle(x, spikeCollisionY, tileSize * 0.9, fullTileHeight, 0x000000, 0)
@@ -1732,11 +1689,10 @@ export class GameScene extends Phaser.Scene {
     
     // Store spike data for different collision behaviors
     spikeBody.setData('isFloorSpike', true)
-    spikeBody.setData('visualSpikeHeight', spikeHeight) // Store visual spike height for player damage
+    spikeBody.setData('visualSpikeHeight', tileSize) // Store visual spike height for player damage
     spikeBody.setData('visualSpikeBaseY', spikeBaseY) // Store visual spike base Y
     
     this.spikes.add(spikeBody)
-    // console.log(`🔱 Visual spikes: height ${spikeHeight}px at ${spikeBaseY} for player damage`)
   }
 
   private createCeilingSpikes(): void {
@@ -1817,39 +1773,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createCeilingSpikeGraphics(x: number, y: number, tileSize: number): void {
-    const spikeHeight = tileSize * 0.5 // 50% of tile height
-    const spikesPerTile = 3 // 3 spikes per tile, matching floor spikes
-    const spikeWidth = tileSize / spikesPerTile
+    const spikeHeight = tileSize * 0.5 // 50% of tile height for collision
     
     // Position spikes hanging from ceiling
     const spikeBaseY = y - tileSize/2 + 1 // Attach to ceiling
     
-    // Create graphics object for ceiling spikes (yellow color)
-    const spikesGraphics = this.add.graphics()
-    spikesGraphics.fillStyle(0xffff00, 1) // Yellow color for ceiling spikes
-    spikesGraphics.lineStyle(2, 0xffd700, 1) // Golden outline
-    
-    // Create triangular spikes pointing downward
-    for (let i = 0; i < spikesPerTile; i++) {
-      const spikeX = x - tileSize/2 + (i * spikeWidth) + spikeWidth/2
-      
-      // Draw inverted triangle (pointing down)
-      spikesGraphics.beginPath()
-      spikesGraphics.moveTo(spikeX - spikeWidth/3, spikeBaseY) // Top left
-      spikesGraphics.lineTo(spikeX + spikeWidth/3, spikeBaseY) // Top right
-      spikesGraphics.lineTo(spikeX, spikeBaseY + spikeHeight) // Bottom point
-      spikesGraphics.closePath()
-      spikesGraphics.fillPath()
-      spikesGraphics.strokePath()
-    }
-    
-    spikesGraphics.setDepth(12) // Same depth as floor spikes
+    // Create yellow ceiling spike sprite (width matches tile size, contains 3 spikes pointing down)
+    const spikeSprite = this.add.image(x, spikeBaseY, 'yellow-ceiling-spike-tile')
+    spikeSprite.setDisplaySize(tileSize, tileSize) // Match floor tile size
+    spikeSprite.setOrigin(0.5, 0) // Top center origin for ceiling attachment
+    spikeSprite.setDepth(12) // Same depth as floor spikes
     
     // Create physics body for collision detection
     const spikeBody = this.add.rectangle(x, spikeBaseY + spikeHeight/2, tileSize * 0.9, spikeHeight, 0x000000, 0)
     spikeBody.setVisible(false) // Invisible collision box
     spikeBody.setData('isCeilingSpike', true) // Mark as ceiling spike
-    spikeBody.setData('graphics', spikesGraphics) // Store graphics reference for shaking
+    spikeBody.setData('sprite', spikeSprite) // Store sprite reference for shaking
     spikeBody.setData('x', x) // Store position for dropping later
     spikeBody.setData('y', spikeBaseY)
     
