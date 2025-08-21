@@ -4,6 +4,7 @@ import { Cat } from "../objects/Cat"
 import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
+import { FreeLife } from "../objects/FreeLife"
 import { TreasureChest } from "../objects/TreasureChest"
 import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
@@ -23,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   private coins: Coin[] = []
   private blueCoins: BlueCoin[] = []
   private diamonds: Diamond[] = []
+  private freeLifes: FreeLife[] = []
   private treasureChests: TreasureChest[] = []
   private flashPowerUps: FlashPowerUp[] = []
   private isGameOver: boolean = false
@@ -36,6 +38,7 @@ export class GameScene extends Phaser.Scene {
   private lives: number = 3
   private totalCoinsCollected: number = 0 // Still using coins internally for backwards compatibility
   private livesText!: Phaser.GameObjects.Text
+  private livesIcon!: Phaser.GameObjects.Image
   private coinCounterText!: Phaser.GameObjects.Text // Display shows crystals, but variable kept for compatibility
   private readonly COINS_PER_EXTRA_LIFE = 150 // Crystals needed for extra life
   private readonly MAX_LIVES = 9
@@ -265,6 +268,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('gem-purple-opal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/purple%20opal-vq4CL7MxiGQDenIU0ZvqVQJJbWAvt5.png?GjQL')
     this.load.image('gem-teal-triangle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20triangle-HVpi82a0c01MbkO92zYvH4tIN3CdMw.png?N700')
     this.load.image('gem-diamond', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond-LB22Ijoji8erIrMFMvtSwd5Y9rDDwS.png?LlEv')
+    this.load.image('heart-crystal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/free%20life%20heart%20crystal-2EJMsIvSQKzdgrqytakBZcDbGf7Jpf.png?E1JG')
 
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -602,10 +606,15 @@ export class GameScene extends Phaser.Scene {
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
-    // Add lives display with hearts (left side, top)
-    this.livesText = this.add.text(20, 20, '❤️ x3', {
+    // Add lives display with heart crystal icon (left side, top)
+    this.livesIcon = this.add.image(35, 28, 'heart-crystal')
+    this.livesIcon.setDisplaySize(20, 20)
+    this.livesIcon.setDepth(100)
+    this.livesIcon.setScrollFactor(0)
+    
+    this.livesText = this.add.text(50, 20, 'x3', {
       fontSize: '16px',
-      color: '#ff4444',  // Red color for hearts
+      color: '#ff4444',  // Red color to match heart theme
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
@@ -2146,6 +2155,11 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
       }
       
+      // Free lives: very low probability starting after level 3 (3% chance per floor)
+      if (allowedCollectibles.includes('freeLife') && floor > 2 && Math.random() < 0.03) {
+        this.placeCollectiblesOfType(validPositions, 1, 'freeLife', collectibleY, floor, floorUsedPositions)
+      }
+      
       // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
       if (allowedCollectibles.includes('treasureChest') && floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
         this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
@@ -2162,7 +2176,7 @@ export class GameScene extends Phaser.Scene {
   private placeCollectiblesOfType(
     validPositions: number[], 
     count: number, 
-    type: 'coin' | 'blueCoin' | 'diamond' | 'treasureChest' | 'flashPowerUp',
+    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'treasureChest' | 'flashPowerUp',
     y: number,
     floor: number,
     floorUsedPositions: Array<{x: number, type: string}>
@@ -2232,6 +2246,18 @@ export class GameScene extends Phaser.Scene {
             this.player,
             diamond.sprite,
             () => this.handleDiamondCollection(diamond),
+            undefined,
+            this
+          )
+          break
+        
+        case 'freeLife':
+          const freeLife = new FreeLife(this, x, y)
+          this.freeLifes.push(freeLife)
+          this.physics.add.overlap(
+            this.player,
+            freeLife.sprite,
+            () => this.handleFreeLifeCollection(freeLife),
             undefined,
             this
           )
@@ -2458,6 +2484,39 @@ export class GameScene extends Phaser.Scene {
     const index = this.diamonds.indexOf(diamond)
     if (index > -1) {
       this.diamonds.splice(index, 1)
+    }
+  }
+  
+  private handleFreeLifeCollection(freeLife: FreeLife): void {
+    // Don't collect during intro animation
+    if (this.isLevelStarting) return
+    
+    // Check if already collected
+    if (freeLife.isCollected()) return
+    
+    const points = 2000
+    this.score += points
+    
+    // Add extra life (if not at max)
+    if (this.lives < this.MAX_LIVES) {
+      this.lives++
+      this.game.registry.set('lives', this.lives)
+    }
+    
+    // Update displays
+    this.updateScoreDisplay()
+    this.updateLivesDisplay()
+    
+    // Show point popup
+    this.showPointPopup(freeLife.sprite.x, freeLife.sprite.y - 20, points)
+    
+    // Play collection animation
+    freeLife.collect()
+    
+    // Remove from array
+    const index = this.freeLifes.indexOf(freeLife)
+    if (index > -1) {
+      this.freeLifes.splice(index, 1)
     }
   }
   
@@ -3095,6 +3154,34 @@ export class GameScene extends Phaser.Scene {
       // Add dramatic spawn animation
       this.tweens.add({
         targets: diamond.sprite,
+        scaleX: 1.5,
+        scaleY: 1.5,
+        duration: 500,
+        ease: 'Back.easeOut',
+        yoyo: true
+      })
+    }
+    
+    // Spawn free lives
+    for (let i = 0; i < contents.freeLifs; i++) {
+      if (positionIndex >= spawnPositions.length) break
+      
+      const pos = spawnPositions[positionIndex++]
+      const freeLife = new FreeLife(this, pos.x, pos.y)
+      this.freeLifes.push(freeLife)
+      
+      // Add physics overlap detection
+      this.physics.add.overlap(
+        this.player,
+        freeLife.sprite,
+        () => this.handleFreeLifeCollection(freeLife),
+        undefined,
+        this
+      )
+      
+      // Add dramatic spawn animation (same as diamond)
+      this.tweens.add({
+        targets: freeLife.sprite,
         scaleX: 1.5,
         scaleY: 1.5,
         duration: 500,
@@ -4048,10 +4135,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateLivesDisplay(): void {
-    // Show hearts for lives (max 9 to fit on screen)  
+    // Show count for lives (max 9 to fit on screen)  
     const livesToShow = Math.min(this.lives, 9)
-    const livesText = livesToShow > 0 ? `❤️ x${livesToShow}` : 'GAME OVER'
+    const livesText = livesToShow > 0 ? `x${livesToShow}` : 'GAME OVER'
     this.livesText.setText(livesText)
+    
+    // Hide heart icon when game over
+    if (this.livesIcon) {
+      this.livesIcon.setVisible(livesToShow > 0)
+    }
   }
 
   private checkForExtraLife(): void {

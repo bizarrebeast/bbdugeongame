@@ -59,9 +59,9 @@ export class TreasureChest {
     return !this.isOpened
   }
   
-  public open(): { coins: number, blueCoins: number, diamonds: number, flashPowerUp: boolean, totalPoints: number } {
+  public open(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number, flashPowerUp: boolean, totalPoints: number } {
     if (this.isOpened) {
-      return { coins: 0, blueCoins: 0, diamonds: 0, flashPowerUp: false, totalPoints: 0 }
+      return { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0, flashPowerUp: false, totalPoints: 0 }
     }
     
     this.isOpened = true
@@ -94,6 +94,7 @@ export class TreasureChest {
     totalPoints += contents.coins * 50 // Regular coins (50 points each)
     totalPoints += contents.blueCoins * 500 // Blue coins (500 points each)
     totalPoints += contents.diamonds * 1000 // Diamonds (1000 points each)
+    totalPoints += contents.freeLifes * 2000 // Free lives (2000 points each)
     
     // Create treasure burst effect
     this.createTreasureBurstEffect()
@@ -101,13 +102,14 @@ export class TreasureChest {
     return { 
       coins: contents.coins, 
       blueCoins: contents.blueCoins,
-      diamonds: contents.diamonds, 
+      diamonds: contents.diamonds,
+      freeLifes: contents.freeLifes,
       flashPowerUp: false, 
       totalPoints 
     }
   }
   
-  private generateRewardsByLevel(): { coins: number, blueCoins: number, diamonds: number } {
+  private generateRewardsByLevel(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number } {
     // Get current level from scene (assuming it's available via registry or level manager)
     const currentLevel = this.scene.registry.get('currentLevel') || 1
     
@@ -124,24 +126,27 @@ export class TreasureChest {
     // Generate 3-5 total items
     const totalItems = Math.floor(Math.random() * 3) + 3 // 3-5 items
     
-    const rewards = { coins: 0, blueCoins: 0, diamonds: 0 }
+    const rewards = { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0 }
     
     // Define probabilities for each tier (higher value items less likely)
     const probabilities = {
-      early: {   // Levels 1-3: Mostly regular coins
+      early: {   // Levels 1-3: Mostly regular coins, no free lives yet
         coin: 0.85,      // 85% chance for regular coins
         blueCoin: 0.13,  // 13% chance for blue coins  
-        diamond: 0.02    // 2% chance for diamonds
+        diamond: 0.02,   // 2% chance for diamonds
+        freeLife: 0.00   // 0% chance for free lives (not available yet)
       },
-      mid: {     // Levels 4-7: More variety
-        coin: 0.65,      // 65% chance for regular coins
-        blueCoin: 0.28,  // 28% chance for blue coins
-        diamond: 0.07    // 7% chance for diamonds
+      mid: {     // Levels 4-7: More variety, free lives start appearing
+        coin: 0.62,      // 62% chance for regular coins
+        blueCoin: 0.26,  // 26% chance for blue coins
+        diamond: 0.09,   // 9% chance for diamonds
+        freeLife: 0.03   // 3% chance for free lives
       },
       late: {    // Levels 8+: Best rewards
-        coin: 0.45,      // 45% chance for regular coins
-        blueCoin: 0.40,  // 40% chance for blue coins
-        diamond: 0.15    // 15% chance for diamonds
+        coin: 0.40,      // 40% chance for regular coins
+        blueCoin: 0.35,  // 35% chance for blue coins
+        diamond: 0.20,   // 20% chance for diamonds
+        freeLife: 0.05   // 5% chance for free lives
       }
     }
     
@@ -151,9 +156,11 @@ export class TreasureChest {
     for (let i = 0; i < totalItems; i++) {
       const roll = Math.random()
       
-      if (roll < tierProbs.diamond) {
+      if (roll < tierProbs.freeLife) {
+        rewards.freeLifes++
+      } else if (roll < tierProbs.freeLife + tierProbs.diamond) {
         rewards.diamonds++
-      } else if (roll < tierProbs.diamond + tierProbs.blueCoin) {
+      } else if (roll < tierProbs.freeLife + tierProbs.diamond + tierProbs.blueCoin) {
         rewards.blueCoins++
       } else {
         rewards.coins++
@@ -165,6 +172,7 @@ export class TreasureChest {
     console.log(`   Regular coins: ${rewards.coins}`)
     console.log(`   Blue coins: ${rewards.blueCoins}`) 
     console.log(`   Diamonds: ${rewards.diamonds}`)
+    console.log(`   Free lives: ${rewards.freeLifes}`)
     
     return rewards
   }

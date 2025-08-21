@@ -98,12 +98,12 @@ export class LevelManager {
       return ['coin', 'blueCoin', 'diamond', 'treasureChest'] // All items for level 1
     } else if (levelNumber <= 2) {
       return ['coin']
-    } else if (levelNumber <= 4) {
+    } else if (levelNumber <= 3) {
       return ['coin', 'blueCoin']
     } else if (levelNumber <= 6) {
-      return ['coin', 'blueCoin', 'diamond']
+      return ['coin', 'blueCoin', 'diamond', 'freeLife']
     } else {
-      return ['coin', 'blueCoin', 'diamond', 'treasureChest']
+      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'treasureChest']
     }
   }
   
