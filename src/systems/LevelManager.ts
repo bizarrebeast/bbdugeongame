@@ -101,9 +101,9 @@ export class LevelManager {
     } else if (levelNumber <= 3) {
       return ['coin', 'blueCoin']
     } else if (levelNumber <= 6) {
-      return ['coin', 'blueCoin', 'diamond', 'freeLife']
+      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant']
     } else {
-      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'treasureChest']
+      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant', 'treasureChest']
     }
   }
   

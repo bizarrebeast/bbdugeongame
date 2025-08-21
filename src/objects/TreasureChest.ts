@@ -59,9 +59,9 @@ export class TreasureChest {
     return !this.isOpened
   }
   
-  public open(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number, flashPowerUp: boolean, totalPoints: number } {
+  public open(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number, invincibilityPendants: number, flashPowerUp: boolean, totalPoints: number } {
     if (this.isOpened) {
-      return { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0, flashPowerUp: false, totalPoints: 0 }
+      return { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0, invincibilityPendants: 0, flashPowerUp: false, totalPoints: 0 }
     }
     
     this.isOpened = true
@@ -94,7 +94,8 @@ export class TreasureChest {
     totalPoints += contents.coins * 50 // Regular coins (50 points each)
     totalPoints += contents.blueCoins * 500 // Blue coins (500 points each)
     totalPoints += contents.diamonds * 1000 // Diamonds (1000 points each)
-    totalPoints += contents.freeLifes * 2000 // Free lives (2000 points each)
+    totalPoints += contents.freeLifs * 2000 // Free lives (2000 points each)
+    totalPoints += contents.invincibilityPendants * 300 // Invincibility pendants (300 points each)
     
     // Create treasure burst effect
     this.createTreasureBurstEffect()
@@ -104,6 +105,7 @@ export class TreasureChest {
       blueCoins: contents.blueCoins,
       diamonds: contents.diamonds,
       freeLifes: contents.freeLifes,
+      invincibilityPendants: contents.invincibilityPendants,
       flashPowerUp: false, 
       totalPoints 
     }

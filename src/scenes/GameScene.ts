@@ -5,6 +5,7 @@ import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
 import { FreeLife } from "../objects/FreeLife"
+import { InvincibilityPendant } from "../objects/InvincibilityPendant"
 import { TreasureChest } from "../objects/TreasureChest"
 import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
@@ -25,6 +26,7 @@ export class GameScene extends Phaser.Scene {
   private blueCoins: BlueCoin[] = []
   private diamonds: Diamond[] = []
   private freeLifes: FreeLife[] = []
+  private invincibilityPendants: InvincibilityPendant[] = []
   private treasureChests: TreasureChest[] = []
   private flashPowerUps: FlashPowerUp[] = []
   private isGameOver: boolean = false
@@ -53,6 +55,10 @@ export class GameScene extends Phaser.Scene {
   private visibilityRadius: number = 160 // 5 tiles * 32 pixels
   private flashPowerUpActive: boolean = false
   private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
+  private invincibilityActive: boolean = false
+  private invincibilityTimer: Phaser.Time.TimerEvent | null = null
+  private invincibilityHudTimer!: Phaser.GameObjects.Text
+  private invincibilityHudIcon!: Phaser.GameObjects.Image
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
   
@@ -269,6 +275,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('gem-teal-triangle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20triangle-HVpi82a0c01MbkO92zYvH4tIN3CdMw.png?N700')
     this.load.image('gem-diamond', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond-LB22Ijoji8erIrMFMvtSwd5Y9rDDwS.png?LlEv')
     this.load.image('heart-crystal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/free%20life%20heart%20crystal-2EJMsIvSQKzdgrqytakBZcDbGf7Jpf.png?E1JG')
+    this.load.image('invincibility-pendant', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendant-cJISby3d7EEREasbi0gRZkn2u3rNrG.png?xf9m')
 
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -2160,6 +2167,11 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'freeLife', collectibleY, floor, floorUsedPositions)
       }
       
+      // Invincibility pendants: same probability as free lives (3% chance per floor after level 3)
+      if (allowedCollectibles.includes('invincibilityPendant') && floor > 2 && Math.random() < 0.03) {
+        this.placeCollectiblesOfType(validPositions, 1, 'invincibilityPendant', collectibleY, floor, floorUsedPositions)
+      }
+      
       // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
       if (allowedCollectibles.includes('treasureChest') && floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
         this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
@@ -2176,7 +2188,7 @@ export class GameScene extends Phaser.Scene {
   private placeCollectiblesOfType(
     validPositions: number[], 
     count: number, 
-    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'treasureChest' | 'flashPowerUp',
+    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'flashPowerUp',
     y: number,
     floor: number,
     floorUsedPositions: Array<{x: number, type: string}>
@@ -2258,6 +2270,18 @@ export class GameScene extends Phaser.Scene {
             this.player,
             freeLife.sprite,
             () => this.handleFreeLifeCollection(freeLife),
+            undefined,
+            this
+          )
+          break
+        
+        case 'invincibilityPendant':
+          const pendant = new InvincibilityPendant(this, x, y)
+          this.invincibilityPendants.push(pendant)
+          this.physics.add.overlap(
+            this.player,
+            pendant.sprite,
+            () => this.handleInvincibilityPendantCollection(pendant),
             undefined,
             this
           )
