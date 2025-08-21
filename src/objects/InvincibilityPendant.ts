@@ -1,11 +1,13 @@
+import GameSettings from "../config/GameSettings"
+
 export class InvincibilityPendant {
-  public sprite: Phaser.GameObjects.Container
-  private pendantSprite: Phaser.GameObjects.Image
+  public sprite: Phaser.GameObjects.Image
   private scene: Phaser.Scene
   private collected: boolean = false
   private sparkleTimer?: Phaser.Time.TimerEvent
   private aura: Phaser.GameObjects.Arc | null = null
   private particles: Phaser.GameObjects.Graphics[] = []
+  private debugHitbox: Phaser.GameObjects.Graphics | null = null
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
@@ -13,30 +15,26 @@ export class InvincibilityPendant {
     // Move up by 5 pixels for better eye level positioning
     const adjustedY = y - 5
     
-    // Create container for pendant sprite
-    this.sprite = scene.add.container(x, adjustedY)
-    
-    // Create pendant sprite from URL
-    this.pendantSprite = scene.add.image(0, 0, 'invincibility-pendant')
+    // Create pendant sprite directly (like treasure chest)
+    this.sprite = scene.add.image(x, adjustedY, 'invincibility-pendant')
     
     // Set size same as diamond (29x29)
-    this.pendantSprite.setDisplaySize(29, 29)
-    
-    this.sprite.add(this.pendantSprite)
+    this.sprite.setDisplaySize(29, 29)
     this.sprite.setDepth(13)
     
-    // Add physics to the container
+    console.log(`🔱 PENDANT VISUAL: Created pendant sprite at (${x}, ${adjustedY}), visible: ${this.sprite.visible}, depth: ${this.sprite.depth}`)
+    
+    // Add physics to the sprite directly
     scene.physics.add.existing(this.sprite, true) // Static body
     
-    // Set hitbox size to match diamond size
-    if (this.sprite.body) {
-      const body = this.sprite.body as Phaser.Physics.Arcade.Body
-      body.setSize(29, 29)
-      // Container physics bodies need offset adjustment
-      body.setOffset(-14.5, -14.5) // Center the hitbox on the container (29/2 = 14.5)
+    // Visual sprite IS the hitbox - no offset needed!
+    
+    // Add debug hitbox visualization
+    if (GameSettings.debug) {
+      this.createDebugHitbox(x, adjustedY)
     }
     
-    // Add gentle floating motion to container (same as diamond)
+    // Add gentle floating motion to sprite (same as diamond)
     scene.tweens.add({
       targets: this.sprite,
       y: adjustedY - 5,
@@ -46,16 +44,7 @@ export class InvincibilityPendant {
       ease: 'Sine.easeInOut'
     })
     
-    // Add pulsing animation to container (more dramatic for power-up)
-    scene.tweens.add({
-      targets: this.sprite,
-      scaleX: 1.2,
-      scaleY: 1.2,
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    })
+    // No pulsing animation - pendant stays at normal size
     
     // Create golden aura
     this.createGoldenAura(x, adjustedY)
@@ -193,6 +182,14 @@ export class InvincibilityPendant {
       this.sparkleTimer.destroy()
     }
     
+    // Clean up aura and particles immediately
+    if (this.aura) {
+      this.aura.destroy()
+      this.aura = null
+    }
+    this.particles.forEach(particle => particle.destroy())
+    this.particles = []
+    
     // Immediately disable physics to prevent further collisions
     if (this.sprite.body) {
       this.sprite.body.enable = false
@@ -258,6 +255,32 @@ export class InvincibilityPendant {
     })
   }
   
+  private createDebugHitbox(x: number, y: number): void {
+    this.debugHitbox = this.scene.add.graphics()
+    this.debugHitbox.setDepth(999) // On top of everything
+    
+    // Draw hitbox outline (29x29 to match physics body)
+    this.debugHitbox.lineStyle(2, 0x00ff00, 0.8) // Bright green, semi-transparent
+    this.debugHitbox.strokeRect(x - 14.5, y - 14.5, 29, 29)
+    
+    // Add a small center dot to show exact position
+    this.debugHitbox.fillStyle(0xff0000, 1.0) // Red dot
+    this.debugHitbox.fillCircle(x, y, 2)
+    
+    // Add text label
+    const debugText = this.scene.add.text(x, y - 35, 'PENDANT\\n29x29', {
+      fontSize: '8px',
+      color: '#00ff00',
+      fontFamily: 'monospace',
+      align: 'center',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      padding: { x: 2, y: 1 }
+    }).setOrigin(0.5).setDepth(1000)
+    
+    // Store text reference for cleanup
+    this.debugHitbox.setData('debugText', debugText)
+  }
+  
   destroy(): void {
     if (this.sparkleTimer) {
       this.sparkleTimer.destroy()
@@ -266,6 +289,13 @@ export class InvincibilityPendant {
       this.aura.destroy()
     }
     this.particles.forEach(particle => particle.destroy())
+    if (this.debugHitbox) {
+      const debugText = this.debugHitbox.getData('debugText')
+      if (debugText) {
+        debugText.destroy()
+      }
+      this.debugHitbox.destroy()
+    }
     this.sprite.destroy()
   }
 }

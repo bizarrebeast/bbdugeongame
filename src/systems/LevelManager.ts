@@ -95,7 +95,7 @@ export class LevelManager {
    */
   private getCollectibleTypes(levelNumber: number): string[] {
     if (levelNumber === 1) {
-      return ['coin', 'blueCoin', 'diamond', 'treasureChest'] // All items for level 1
+      return ['coin', 'blueCoin', 'diamond', 'treasureChest', 'freeLife', 'invincibilityPendant'] // All items for level 1 + testing items
     } else if (levelNumber <= 2) {
       return ['coin']
     } else if (levelNumber <= 3) {

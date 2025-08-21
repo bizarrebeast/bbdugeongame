@@ -61,6 +61,10 @@ export class GameScene extends Phaser.Scene {
   private invincibilityTimerGreyImage!: Phaser.GameObjects.Image
   private invincibilityTimerMask!: Phaser.GameObjects.Graphics
   private invincibilityTimeRemaining: number = 0
+  private playerGoldenAura: Phaser.GameObjects.Arc | null = null
+  private playerParticleTrail: Phaser.GameObjects.Graphics[] = []
+  private playerSpikeOverlap: Phaser.Physics.Arcade.Collider | null = null
+  private playerSpikeCollider: Phaser.Physics.Arcade.Collider | null = null
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
   
@@ -411,6 +415,9 @@ export class GameScene extends Phaser.Scene {
     this.diamonds = []
     this.treasureChests = []
     this.flashPowerUps = []
+    this.freeLifs = []
+    this.invincibilityPendants = []
+    console.log(`🔱 PENDANT RESET: Cleared all pendants for new level`)
     
     // Create mining theme background - DISABLED (using custom background image instead)
     // this.createMiningThemeBackground()
@@ -568,7 +575,8 @@ export class GameScene extends Phaser.Scene {
     )
     
     // Player vs spikes collision - lose life on contact
-    this.physics.add.overlap(
+    // Store reference to spike overlap so we can disable it during invincibility
+    this.playerSpikeOverlap = this.physics.add.overlap(
       this.player,
       this.spikes,
       this.handlePlayerSpikeCollision,
@@ -686,9 +694,14 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0, 0.5).setDepth(100)
     this.coinCounterText.setScrollFactor(0)
     
-    // Level counter (left side, row 3)
+    // Level counter with door icon (left side, row 3)
+    const doorIcon = this.add.image(30, 96, 'door')
+    doorIcon.setDisplaySize(16, 16)
+    doorIcon.setDepth(100)
+    doorIcon.setScrollFactor(0)
+    
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(30, 96, `LEVEL: ${currentLevel}`, {
+    this.levelText = this.add.text(45, 96, `${currentLevel}`, {
       fontSize: '14px',
       color: '#9acf07',  // Same green as hamburger menu
       fontFamily: 'Arial Black',
@@ -1241,7 +1254,7 @@ export class GameScene extends Phaser.Scene {
           }
           
           // Add spikes to all gaps in initial floor creation too
-          console.log(`🔱 Initial floor ${floor}: Creating spikes: gapStart=${gapStart}, gapSize=${gapSize}, floorY=${y}`)
+          // console.log(`🔱 Initial floor ${floor}: Creating spikes: gapStart=${gapStart}, gapSize=${gapSize}, floorY=${y}`)
           this.createSpikesInGap(gapStart, gapSize, y, tileSize)
           
           // Store safe ladder positions (not in or next to gaps)
@@ -1638,13 +1651,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createSpikesInGap(gapStart: number, gapSize: number, floorY: number, tileSize: number): void {
-    console.log(`🔱 createSpikesInGap called: creating ${gapSize} spike tiles`)
+    // console.log(`🔱 createSpikesInGap called: creating ${gapSize} spike tiles`)
     // Create pink spikes in each tile of the gap
     for (let x = gapStart; x < gapStart + gapSize; x++) {
       const spikeX = x * tileSize + tileSize/2
       const spikeY = floorY // Position at floor level
       
-      console.log(`🔱 Creating spike at tile ${x}: position (${spikeX}, ${spikeY})`)
+      // console.log(`🔱 Creating spike at tile ${x}: position (${spikeX}, ${spikeY})`)
       this.createSpikeGraphics(spikeX, spikeY, tileSize)
     }
   }
@@ -1657,7 +1670,7 @@ export class GameScene extends Phaser.Scene {
     // Position spikes at the bottom edge of platforms (align with green line), moved up 1px
     const spikeBaseY = y + tileSize/2 - 1 // Move to bottom of platform tiles, 1px higher
     
-    console.log(`🔱 createSpikeGraphics: x=${x}, y=${y}, spikeBaseY=${spikeBaseY}, spikeHeight=${spikeHeight}, spikesPerTile=${spikesPerTile}`)
+    // console.log(`🔱 createSpikeGraphics: x=${x}, y=${y}, spikeBaseY=${spikeBaseY}, spikeHeight=${spikeHeight}, spikesPerTile=${spikesPerTile}`)
     
     // Create graphics object for spikes
     const spikesGraphics = this.add.graphics()
@@ -1688,7 +1701,7 @@ export class GameScene extends Phaser.Scene {
       const offsetX = (i - (spikesPerTile - 1) / 2) * spikeWidth
       const spikeX = x + offsetX
       
-      console.log(`🔱 Creating triangular spike ${i}: offsetX=${offsetX}, spikeX=${spikeX}`)
+      // console.log(`🔱 Creating triangular spike ${i}: offsetX=${offsetX}, spikeX=${spikeX}`)
       
       // Create triangular spike pointing upward
       spikesGraphics.beginPath()
@@ -1709,7 +1722,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     spikesGraphics.setDepth(12) // Above platforms but below player
-    console.log(`🔱 Graphics created with depth 12, ${spikesPerTile} triangular spikes`)
+    // console.log(`🔱 Graphics created with depth 12, ${spikesPerTile} triangular spikes`)
     
     // Create physics body for collision detection - same height as floor tiles for enemy movement
     // Visual spikes still look the same, but collision body extends to floor level
@@ -1725,7 +1738,7 @@ export class GameScene extends Phaser.Scene {
     
     this.spikes.add(spikeBody)
     console.log(`🔱 Physics body added: full tile height (${fullTileHeight}px) at platform level for enemy collision`)
-    console.log(`🔱 Visual spikes: height ${spikeHeight}px at ${spikeBaseY} for player damage`)
+    // console.log(`🔱 Visual spikes: height ${spikeHeight}px at ${spikeBaseY} for player damage`)
   }
 
   private createCeilingSpikes(): void {
@@ -1798,7 +1811,7 @@ export class GameScene extends Phaser.Scene {
           const idx = validPositions.indexOf(tileX)
           if (idx > -1) validPositions.splice(idx, 1)
           
-          console.log(`🔱⬇️ Creating ceiling spike at floor ${floor}, tile X=${tileX}`)
+          // console.log(`🔱⬇️ Creating ceiling spike at floor ${floor}, tile X=${tileX}`)
           this.createCeilingSpikeGraphics(tileX * tileSize + tileSize/2, ceilingY, tileSize)
         }
       }
@@ -2129,7 +2142,7 @@ export class GameScene extends Phaser.Scene {
     
     // This handler is now only called for enemies that should collide
     // (jumpers and caterpillars are filtered out by the process callback)
-    console.log(`🐱 Normal cat collision: ${catObj1.getCatColor()} vs ${catObj2.getCatColor()}`)
+    // console.log(`🐱 Normal cat collision: ${catObj1.getCatColor()} vs ${catObj2.getCatColor()}`)
     
     // Add small separation to prevent sticking
     const separationForce = 10
@@ -2199,8 +2212,17 @@ export class GameScene extends Phaser.Scene {
       }
       
       // Invincibility pendants: same probability as free lives (3% chance per floor after level 3)
-      if (allowedCollectibles.includes('invincibilityPendant') && floor > 2 && Math.random() < 0.03) {
+      // But never spawn on floor 0 (player spawn floor)
+      const pendantRoll = Math.random()
+      const pendantIncluded = allowedCollectibles.includes('invincibilityPendant')
+      const isPlayerSpawnFloor = floor === 0
+      console.log(`🔱 PENDANT DEBUG Floor ${floor}: included=${pendantIncluded}, roll=${pendantRoll.toFixed(3)}, playerSpawnFloor=${isPlayerSpawnFloor}`)
+      
+      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.50) {
+        console.log(`🔱 PENDANT SPAWN: Placing pendant on floor ${floor}`)
         this.placeCollectiblesOfType(validPositions, 1, 'invincibilityPendant', collectibleY, floor, floorUsedPositions)
+      } else {
+        console.log(`🔱 PENDANT SKIP: Not placing pendant on floor ${floor} (included=${pendantIncluded}, spawnFloor=${isPlayerSpawnFloor}, roll=${pendantRoll.toFixed(3)})`)
       }
       
       // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
@@ -2307,12 +2329,19 @@ export class GameScene extends Phaser.Scene {
           break
         
         case 'invincibilityPendant':
+          console.log(`🔱 PENDANT CREATE: Creating pendant at (${x}, ${y})`)
           const pendant = new InvincibilityPendant(this, x, y)
           this.invincibilityPendants.push(pendant)
+          console.log(`🔱 PENDANT ARRAY: Now have ${this.invincibilityPendants.length} pendants total`)
+          console.log(`🔱 PENDANT PHYSICS: Setting up overlap detection for pendant at (${x}, ${y})`)
           this.physics.add.overlap(
             this.player,
             pendant.sprite,
-            () => this.handleInvincibilityPendantCollection(pendant),
+            () => {
+              console.log(`🔱 PENDANT OVERLAP: Detected overlap with pendant at (${pendant.sprite.x}, ${pendant.sprite.y})`)
+              console.log(`🔱 PENDANT STATE: collected=${pendant.isCollected()}, sprite exists=${!!pendant.sprite}, array length=${this.invincibilityPendants.length}`)
+              this.handleInvincibilityPendantCollection(pendant)
+            },
             undefined,
             this
           )
@@ -2380,16 +2409,16 @@ export class GameScene extends Phaser.Scene {
     const laddersFloorBelow = this.ladderPositions.get(floor - 1) || []
     const allRelevantLadders = [...laddersCurrentFloor, ...laddersFloorBelow]
     
-    console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST SAFETY CHECK: Floor ${floor}, Position ${x}`)
-    console.log(`   Ladders on floor ${floor}: [${laddersCurrentFloor.join(', ')}]`)
-    console.log(`   Ladders on floor ${floor - 1}: [${laddersFloorBelow.join(', ')}]`)
-    console.log(`   All relevant ladders: [${allRelevantLadders.join(', ')}]`)
+    // console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST SAFETY CHECK: Floor ${floor}, Position ${x}`)
+    // console.log(`   Ladders on floor ${floor}: [${laddersCurrentFloor.join(', ')}]`)
+    // console.log(`   Ladders on floor ${floor - 1}: [${laddersFloorBelow.join(', ')}]`)
+    // console.log(`   All relevant ladders: [${allRelevantLadders.join(', ')}]`)
     
     for (const ladderX of allRelevantLadders) {
       const distance = Math.abs(x - ladderX)
-      console.log(`   Distance from ladder at ${ladderX}: ${distance} (buffer needed: ${bufferSize})`)
+      // console.log(`   Distance from ladder at ${ladderX}: ${distance} (buffer needed: ${bufferSize})`)
       if (distance <= bufferSize) {
-        console.log(`   ❌ REJECTED: Too close to ladder at ${ladderX}`)
+        // console.log(`   ❌ REJECTED: Too close to ladder at ${ladderX}`)
         return false
       }
     }
@@ -2401,7 +2430,7 @@ export class GameScene extends Phaser.Scene {
       return false
     }
     
-    console.log(`   ✅ APPROVED: Safe position for treasure chest`)
+    // console.log(`   ✅ APPROVED: Safe position for treasure chest`)
     return true
   }
   
@@ -2575,6 +2604,48 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private handleInvincibilityPendantCollection(pendant: InvincibilityPendant): void {
+    console.log(`🔱 PENDANT COLLECTION ATTEMPT: isLevelStarting=${this.isLevelStarting}, isCollected=${pendant.isCollected()}`)
+    
+    // Don't collect during intro animation
+    if (this.isLevelStarting) {
+      console.log(`🔱 PENDANT BLOCKED: Level is starting`)
+      return
+    }
+    
+    // Check if already collected
+    if (pendant.isCollected()) {
+      console.log(`🔱 PENDANT BLOCKED: Already collected`)
+      return
+    }
+    
+    console.log(`🔱 PENDANT SUCCESS: Collecting pendant!`)
+    
+    const points = 300
+    this.score += points
+    
+    // Activate invincibility for 10 seconds
+    this.activateInvincibility()
+    
+    // Update score display
+    this.updateScoreDisplay()
+    
+    // Show point popup
+    this.showPointPopup(pendant.sprite.x, pendant.sprite.y - 20, points)
+    
+    // Play collection animation
+    pendant.collect()
+    
+    // Remove from array
+    const index = this.invincibilityPendants.indexOf(pendant)
+    if (index > -1) {
+      this.invincibilityPendants.splice(index, 1)
+      console.log(`🔱 PENDANT CLEANUP: Removed pendant from array, new length: ${this.invincibilityPendants.length}`)
+    } else {
+      console.log(`🔱 PENDANT ERROR: Pendant not found in array for removal!`)
+    }
+  }
+  
   private handleFlashPowerUpCollection(flashPowerUp: FlashPowerUp): void {
     // Don't collect during intro animation
     if (this.isLevelStarting) return
@@ -2623,7 +2694,9 @@ export class GameScene extends Phaser.Scene {
   
   private activateInvincibility(): void {
     // If already invincible, reset timer to full 10 seconds
+    console.log(`🔱 TIMER START: Activating invincibility for 10 seconds`)
     if (this.invincibilityTimer) {
+      console.log(`🔱 TIMER RESET: Destroying existing timer and resetting`)
       this.invincibilityTimer.destroy()
     }
     
@@ -2633,25 +2706,39 @@ export class GameScene extends Phaser.Scene {
     // Show colored timer
     this.invincibilityTimerImage.setVisible(true)
     
-    // Start countdown timer
+    // Start countdown timer (loop indefinitely, we'll handle stopping in the callback)
     this.invincibilityTimer = this.time.addEvent({
       delay: 100, // Update every 100ms for smooth animation
       callback: () => this.updateInvincibilityTimer(),
-      repeat: 99 // 10 seconds = 100 updates at 100ms each
+      loop: true // Loop indefinitely, stop manually when time runs out
     })
     
-    // Add golden aura to player (we'll implement this later)
-    // this.addPlayerGoldenAura()
+    // Add golden aura to player
+    this.addPlayerGoldenAura()
+    
+    // Enable spike walking (disable damage overlap, enable collision)
+    this.enableSpikeWalking()
   }
   
   private updateInvincibilityTimer(): void {
     this.invincibilityTimeRemaining -= 0.1
     
+    // Debug: show remaining time every second
+    if (Math.round(this.invincibilityTimeRemaining * 10) % 10 === 0) {
+      console.log(`🔱 TIMER: ${Math.max(0, Math.ceil(this.invincibilityTimeRemaining))} seconds remaining`)
+    }
+    
     if (this.invincibilityTimeRemaining <= 0) {
       // End invincibility
+      console.log(`🔱 TIMER END: Invincibility expired, disabling`)
       this.invincibilityActive = false
       this.invincibilityTimeRemaining = 0
-      this.invincibilityTimer = null
+      
+      // Destroy the timer completely
+      if (this.invincibilityTimer) {
+        this.invincibilityTimer.destroy()
+        this.invincibilityTimer = null
+      }
       
       // Hide colored timer
       this.invincibilityTimerImage.setVisible(false)
@@ -2659,8 +2746,11 @@ export class GameScene extends Phaser.Scene {
       // Clear mask
       this.invincibilityTimerMask.clear()
       
-      // Remove player aura (we'll implement this later)
-      // this.removePlayerGoldenAura()
+      // Remove player aura
+      this.removePlayerGoldenAura()
+      
+      // Disable spike walking (restore damage overlap, remove collision)
+      this.disableSpikeWalking()
     } else {
       // Update circular mask for countdown effect
       this.updateInvincibilityMask()
@@ -2710,6 +2800,117 @@ export class GameScene extends Phaser.Scene {
     // Apply mask to colored timer image
     const mask = this.invincibilityTimerMask.createGeometryMask()
     this.invincibilityTimerImage.setMask(mask)
+  }
+  
+  private addPlayerGoldenAura(): void {
+    if (this.playerGoldenAura || !this.player) return
+    
+    // Create golden aura around player
+    this.playerGoldenAura = this.add.circle(this.player.x, this.player.y, 25, 0xffd700)
+    this.playerGoldenAura.setAlpha(0.3)
+    this.playerGoldenAura.setDepth(this.player.depth - 1)
+    
+    // Add pulsing animation to aura
+    this.tweens.add({
+      targets: this.playerGoldenAura,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      alpha: 0.1,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+    
+    // Create particle trail system
+    this.createPlayerParticleTrail()
+  }
+  
+  private removePlayerGoldenAura(): void {
+    if (this.playerGoldenAura) {
+      this.playerGoldenAura.destroy()
+      this.playerGoldenAura = null
+    }
+    
+    // Clean up particle trail
+    this.playerParticleTrail.forEach(particle => particle.destroy())
+    this.playerParticleTrail = []
+  }
+  
+  private createPlayerParticleTrail(): void {
+    // Create floating golden particles around player
+    for (let i = 0; i < 8; i++) {
+      const particle = this.add.graphics()
+      particle.setDepth(this.player.depth + 1)
+      
+      // Draw small golden circle
+      particle.fillStyle(0xffd700, 0.8)
+      particle.fillCircle(0, 0, 2)
+      
+      this.playerParticleTrail.push(particle)
+      
+      // Start particle animation cycle
+      this.animateParticle(particle, i)
+    }
+  }
+  
+  private animateParticle(particle: Phaser.GameObjects.Graphics, index: number): void {
+    if (!this.player || !this.invincibilityActive) {
+      particle.destroy()
+      return
+    }
+    
+    // Position particle around player
+    const angle = (Math.PI * 2 / 8) * index + (this.time.now * 0.003)
+    const radius = 20 + Math.sin(this.time.now * 0.005 + index) * 5
+    
+    particle.setPosition(
+      this.player.x + Math.cos(angle) * radius,
+      this.player.y + Math.sin(angle) * radius
+    )
+    
+    // Continue animation if still invincible
+    if (this.invincibilityActive) {
+      this.time.delayedCall(50, () => this.animateParticle(particle, index))
+    }
+  }
+  
+  private enableSpikeWalking(): void {
+    console.log(`🔱 SPIKE PHYSICS: Enabling spike walking mode`)
+    
+    // Disable the damage-dealing overlap
+    if (this.playerSpikeOverlap) {
+      this.playerSpikeOverlap.active = false
+    }
+    
+    // Add collision so player can walk on spikes like enemies
+    // Only collide with floor spikes, not ceiling spikes (same logic as stalker cats)
+    this.playerSpikeCollider = this.physics.add.collider(
+      this.player,
+      this.spikes,
+      undefined,
+      (player, spike) => {
+        const spikeObj = spike as Phaser.GameObjects.Rectangle
+        const isFloorSpike = spikeObj.getData('isFloorSpike')
+        return isFloorSpike // Only collide with floor spikes
+      },
+      this
+    )
+  }
+  
+  private disableSpikeWalking(): void {
+    console.log(`🔱 SPIKE PHYSICS: Disabling spike walking mode`)
+    
+    // Remove the collision
+    if (this.playerSpikeCollider) {
+      this.physics.world.removeCollider(this.playerSpikeCollider)
+      this.playerSpikeCollider = null
+    }
+    
+    // Re-enable the damage-dealing overlap
+    if (this.playerSpikeOverlap) {
+      this.playerSpikeOverlap.active = true
+    }
   }
   
   private shouldCollideWithPlatform(): boolean {
@@ -2791,6 +2992,12 @@ export class GameScene extends Phaser.Scene {
   ): void {
     if (this.isGameOver) return
     
+    // During invincibility, player can walk on spikes like enemies - no damage
+    if (this.invincibilityActive) {
+      console.log(`🔱 SPIKE WALK: Player walking on spikes during invincibility`)
+      return
+    }
+    
     const playerObj = player as Player
     const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
     const spikeObj = spike as Phaser.GameObjects.Rectangle
@@ -2803,7 +3010,7 @@ export class GameScene extends Phaser.Scene {
       // 1. Player jumps up into them (negative Y velocity)
       // 2. TODO: They drop onto player (will implement dropping later)
       if (playerBody.velocity.y < -50) { // Jumping up into ceiling spikes
-        console.log(`🔱 Player jumped into ceiling spikes! Velocity Y: ${playerBody.velocity.y}`)
+        // console.log(`🔱 Player jumped into ceiling spikes! Velocity Y: ${playerBody.velocity.y}`)
         
         // Add shaking animation before damage
         const graphics = spikeObj.getData('graphics') as Phaser.GameObjects.Graphics
@@ -2834,18 +3041,18 @@ export class GameScene extends Phaser.Scene {
         // With full-height spikes, damage when player lands on them while falling
         // Since spikes are now full tile height, we can use simpler collision detection
         if (playerBody.velocity.y > 50) { // Falling down onto spikes
-          console.log(`🔱 Player fell onto floor spikes! Velocity Y: ${playerBody.velocity.y}`)
+          // console.log(`🔱 Player fell onto floor spikes! Velocity Y: ${playerBody.velocity.y}`)
           this.handlePlayerDamage(playerObj)
         } else {
-          console.log(`🔱 Player touched floor spikes but not falling fast enough (Y velocity: ${playerBody.velocity.y}) - no damage`)
+          // console.log(`🔱 Player touched floor spikes but not falling fast enough (Y velocity: ${playerBody.velocity.y}) - no damage`)
         }
       } else {
         // Legacy floor spike behavior (if any old spikes don't have the new data)
         if (playerBody.velocity.y > 50) { // Must be falling with some speed
-          console.log(`🔱 Player fell onto legacy floor spikes! Velocity Y: ${playerBody.velocity.y}`)
+          // console.log(`🔱 Player fell onto legacy floor spikes! Velocity Y: ${playerBody.velocity.y}`)
           this.handlePlayerDamage(playerObj)
         } else {
-          console.log(`🔱 Player touched legacy floor spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
+          // console.log(`🔱 Player touched legacy floor spikes but not falling (Y velocity: ${playerBody.velocity.y}) - no damage`)
         }
       }
     }
@@ -2908,6 +3115,26 @@ export class GameScene extends Phaser.Scene {
     // Show point popup at cat position
     this.showPointPopup(cat.x, cat.y - 20, points)
     
+  }
+  
+  private handleInvincibilityEnemyKill(player: Player, enemy: any): void {
+    // Check if enemy is already squished to prevent multiple kills
+    if (enemy.isSquished) return
+    
+    // Award triple points for invincibility kills
+    const basePoints = 200
+    const triplePoints = basePoints * 3
+    this.score += triplePoints
+    this.updateScoreDisplay()
+    
+    // Make player bounce slightly (less than normal jump)
+    player.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
+    
+    // Squish the enemy with special golden effect
+    enemy.squish()
+    
+    // Show triple point popup with golden color
+    this.showInvincibilityPointPopup(enemy.x, enemy.y - 20, triplePoints)
   }
   
   private handleStalkerCatKill(player: Player, stalkerCat: Cat): void {
@@ -3057,8 +3284,43 @@ export class GameScene extends Phaser.Scene {
     })
   }
   
+  private showInvincibilityPointPopup(x: number, y: number, points: number): void {
+    // Create golden popup text for invincibility kills
+    const popupText = this.add.text(x, y, `+${points}`, {
+      fontSize: '18px',
+      color: '#ffd700',
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5).setDepth(150)
+    
+    // Larger fade out animation with slight movement
+    this.tweens.add({
+      targets: popupText,
+      alpha: 0,
+      y: y - 30,
+      scaleX: 1.5,
+      scaleY: 1.5,
+      duration: 1500,
+      ease: 'Power2.easeOut',
+      onComplete: () => {
+        popupText.destroy()
+      }
+    })
+  }
+  
   private handlePlayerDamage(player: Player, cat: any): void {
     if (this.isGameOver) return
+    
+    // Check if player is invincible
+    if (this.invincibilityActive) {
+      // Player is invincible - kill enemy and award triple points
+      if (cat && cat.squish) {
+        this.handleInvincibilityEnemyKill(player, cat)
+      }
+      return
+    }
     
     // Reset combo on hit
     this.resetCombo()
@@ -3378,6 +3640,11 @@ export class GameScene extends Phaser.Scene {
     
     // Update player
     this.player.update()
+    
+    // Update golden aura position if invincible
+    if (this.playerGoldenAura && this.invincibilityActive) {
+      this.playerGoldenAura.setPosition(this.player.x, this.player.y)
+    }
     
     // Update visibility system
     this.updateVisibilitySystem()
@@ -4034,8 +4301,8 @@ export class GameScene extends Phaser.Scene {
       // topFloorY is platform center, platform is 32px tall, so platform top is topFloorY - 16
       const platformTop = topFloorY - (tileSize / 2)
       const doorY = platformTop - 50 // Door center positioned so bottom sits on platform surface
-      console.log(`🚪 DOOR POSITIONING DEBUG: topFloorY=${topFloorY}, platformTop=${platformTop}, doorY=${doorY}`)
-      console.log(`🚪 DOOR POSITIONING DEBUG: Camera Y=${this.cameras.main.scrollY}, Player Y should be around ${doorY + 100}`)
+      // console.log(`🚪 DOOR POSITIONING DEBUG: topFloorY=${topFloorY}, platformTop=${platformTop}, doorY=${doorY}`)
+      // console.log(`🚪 DOOR POSITIONING DEBUG: Camera Y=${this.cameras.main.scrollY}, Player Y should be around ${doorY + 100}`)
       
       const isFirstLevel = this.levelManager.getCurrentLevel() === 1
       this.door = new Door(this, doorX, doorY, isFirstLevel)
