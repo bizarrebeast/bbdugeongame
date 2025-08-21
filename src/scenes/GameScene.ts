@@ -599,22 +599,22 @@ export class GameScene extends Phaser.Scene {
     hudBg.fillStyle(0x4a148c, 1.0)  // Dark purple color with full opacity
     hudBg.lineStyle(2, 0x7b1fa2, 1.0) // Slightly lighter purple border with full opacity
     
-    // Single connected rectangle across the top
-    hudBg.fillRoundedRect(8, 8, screenWidth - 16, 56, 12)  // Full width minus margins
-    hudBg.strokeRoundedRect(8, 8, screenWidth - 16, 56, 12) // Add border stroke
+    // Single connected rectangle across the top (increased padding by 50%)
+    hudBg.fillRoundedRect(8, 12, screenWidth - 16, 56, 12)  // Full width minus margins
+    hudBg.strokeRoundedRect(8, 12, screenWidth - 16, 56, 12) // Add border stroke
     
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
     // Add lives display with heart crystal icon (left side, top)
-    this.livesIcon = this.add.image(35, 28, 'heart-crystal')
+    this.livesIcon = this.add.image(35, 32, 'heart-crystal')
     this.livesIcon.setDisplaySize(20, 20)
     this.livesIcon.setDepth(100)
     this.livesIcon.setScrollFactor(0)
     
-    this.livesText = this.add.text(50, 20, 'x3', {
+    this.livesText = this.add.text(50, 24, 'x3', {
       fontSize: '16px',
-      color: '#ff4444',  // Red color to match heart theme
+      color: '#ff69b4',  // Pink color to match heart crystal theme
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
@@ -653,9 +653,9 @@ export class GameScene extends Phaser.Scene {
     
     // Add level counter (left side, bottom)
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(20, 40, `LEVEL: ${currentLevel}`, {
+    this.levelText = this.add.text(20, 44, `LEVEL: ${currentLevel}`, {
       fontSize: '16px',
-      color: '#ff88ff',
+      color: '#9acf07',  // Same green as hamburger menu
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
@@ -671,7 +671,7 @@ export class GameScene extends Phaser.Scene {
     this.levelText.setScrollFactor(0)
     
     // Add score display in center (top)
-    this.scoreText = this.add.text(screenWidth / 2, 20, 'SCORE: 0', {
+    this.scoreText = this.add.text(screenWidth / 2, 24, 'SCORE: 0', {
       fontSize: '16px',
       color: '#ffd700',  // Gold color
       fontFamily: 'Arial Black',
@@ -690,7 +690,7 @@ export class GameScene extends Phaser.Scene {
     this.comboText.setScrollFactor(0)
     
     // Add crystal counter display (center, bottom)
-    this.coinCounterText = this.add.text(screenWidth / 2, 40, 'CRYSTALS: 0/150', {
+    this.coinCounterText = this.add.text(screenWidth / 2, 44, 'CRYSTALS: 0/150', {
       fontSize: '16px',
       color: '#40e0d0',  // Teal color for crystals
       fontFamily: 'Arial Black',
@@ -708,7 +708,7 @@ export class GameScene extends Phaser.Scene {
     this.coinCounterText.setScrollFactor(0)
     
     // Add hamburger menu button (right side)
-    this.hamburgerMenuButton = this.add.text(screenWidth - 20, 32, '☰', {
+    this.hamburgerMenuButton = this.add.text(screenWidth - 20, 36, '☰', {
       fontSize: '32px',
       color: '#9acf07',  // Bright green color
       fontFamily: 'Arial Black',
