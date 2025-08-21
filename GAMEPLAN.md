@@ -97,7 +97,9 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 2. **Blue Coins:** ✅ Larger teal gem clusters (4-6 gems, 500 points) - count as 5 toward extra life
 3. **Diamonds:** ✅ Proper gemstone cut with facets (table/crown/pavilion, 1000 points) - count as 10 toward extra life
 4. **Treasure Chests:** ✅ Interactive chests (2500 points + contents) requiring ACTION button
-5. **Flash Power-ups:** 🔄 DISABLED (can be re-enabled later)
+5. **Free Lives:** ✅ Heart-shaped life restoration items (2000 points + 1 extra life)
+6. **Invincibility Pendants:** ✅ Golden pendants granting 10 seconds of invincibility power (300 points)
+7. **Flash Power-ups:** 🔄 DISABLED (can be re-enabled later)
 
 ### Enhanced Collectible System ✅ ACTIVE
 - ✅ **Level-Based Progression:** Collectibles unlock by level (coins→blue coins→diamonds→treasure chests)
@@ -115,6 +117,17 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ Brief opening animation with smooth fade-out effect
 - ✅ Contains multiple coins plus chance of diamonds (flash power-ups disabled)
 - ✅ Full reset on death for replay value
+
+### Invincibility Pendant System ✅ FULLY IMPLEMENTED
+- ✅ **Power-up Duration:** 10 seconds of complete invincibility (immunity from all damage)
+- ✅ **Combat Enhancement:** Player contact with enemies kills them for triple points (600 instead of 200)
+- ✅ **Spike Walking:** Player can walk on spikes like enemies during invincibility
+- ✅ **Visual Effects:** Golden aura, floating particles, and sparkle effects around player
+- ✅ **HUD Integration:** Circular countdown timer showing remaining invincibility time
+- ✅ **Timer Reset:** Collecting additional pendants resets timer to full 10 seconds
+- ✅ **Level Progression:** Available from level 4+ (level 1 for testing)
+- ✅ **Smart Spawning:** Prevents spawning on player spawn floor (floor 0)
+- ✅ **Physics Integration:** Dual collision system (overlap for damage, collision for walking)
 
 ### Flash Power-up System 🔄 TEMPORARILY DISABLED
 - 🔄 **Status:** System disabled for cleaner gameplay (code preserved for future re-enablement)
@@ -142,8 +155,10 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - **Blue Coins:** ✅ 500 points per teal gem cluster (larger, more valuable)
 - **Diamonds:** ✅ 1000 points per cut gemstone (proper diamond faceting)
 - **Treasure Chests:** ✅ 2500 points plus contents
+- **Free Lives:** ✅ 2000 points plus 1 extra life restoration
+- **Invincibility Pendants:** ✅ 300 points plus 10 seconds of invincibility
 - **Height Milestones:** ✅ 500 bonus points for reaching new floors
-- **Defeating Blobs:** ✅ 200 points per blob with combo multipliers
+- **Defeating Blobs:** ✅ 200 points per blob (600 during invincibility) with combo multipliers
 - **Combo System:** ✅ Consecutive kills multiply score (x1, x2, x3, x4+)
 
 ### Current Implementation ✅ WORKING
@@ -158,7 +173,8 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ### Future Additions 🔄 PLANNED
 - **High Score Integration:** Remix platform leaderboards
-- **Additional Power-ups:** Speed boost, invincibility, double points
+- **Additional Power-ups:** Speed boost, double points
+- **Spike Mechanics:** ✅ Environmental hazards (spikes) with damage system and invincibility interaction
 
 ## Player Character ✅ FULLY IMPLEMENTED
 
@@ -239,9 +255,11 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Complete combat system with jump-to-kill mechanics and combo multipliers
 - Professional custom visibility overlay system with asymmetric player positioning
 - Enhanced flash power-up with instant transitions and seamless effects
-- Enhanced collectibles: gem clusters (50pts), teal clusters (500pts), cut diamonds (1000pts), treasure chests (2500pts + contents)
+- Enhanced collectibles: gem clusters (50pts), teal clusters (500pts), cut diamonds (1000pts), treasure chests (2500pts + contents), free lives (2000pts + life), invincibility pendants (300pts + power)
 - Automatic treasure chest system with contact-based opening
-- Professional HUD system with unified top bar layout (score/crystals left, hearts/level right)
+- **Invincibility pendant system:** 10-second power-up with golden visual effects, enemy contact kills for triple points, spike walking ability, and circular countdown timer
+- **Spike mechanics:** Environmental hazards with damage system and invincibility interaction
+- **Reorganized HUD:** Left (lives/crystals/level), center (score/invincibility timer), right (menu)
 - Multi-touch support with virtual joystick and jump button
 - Complete scoring system with point popups and combo feedback
 - Progressive difficulty with speed increases
@@ -259,6 +277,48 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ---
 
 ## 📂 COMPLETED SPRINTS
+
+### ✅ Invincibility Pendant System Sprint - COMPLETED
+*Focus: Complete power-up system with invincibility mechanics, visual effects, and HUD integration*
+
+**Power-up Implementation** ✅ COMPLETE
+- [x] Create InvincibilityPendant class with golden visual effects and floating animations
+- [x] Implement 10-second invincibility timer with automatic deactivation
+- [x] Add pendant to level progression system (available from level 4+, testing on level 1)
+- [x] Prevent pendant spawning on player spawn floor (floor 0) for better gameplay balance
+
+**Combat Enhancement System** ✅ COMPLETE
+- [x] Player contact with enemies during invincibility kills enemies for triple points (600 instead of 200)
+- [x] Maintain combo system integration with invincibility kills
+- [x] Add visual feedback for invincibility-enhanced combat
+- [x] Preserve existing enemy defeat mechanics while adding new power-up interaction
+
+**Spike Walking Mechanics** ✅ COMPLETE
+- [x] Implement dual collision system (overlap for damage, collision for walking)
+- [x] Dynamic physics switching during invincibility activation/deactivation
+- [x] Allow player to walk on spikes like enemies do during invincibility
+- [x] Seamless transition between damage and walking states
+
+**Visual Effects System** ✅ COMPLETE
+- [x] Golden aura around player during invincibility with pulsing animation
+- [x] Floating particle trail system with orbital motion and twinkling effects
+- [x] Player tinting system (golden glow during invincibility)
+- [x] Pendant collection burst effect with golden particles
+- [x] Enhanced pendant visual design with sparkles and floating motion
+
+**HUD Integration & Timer** ✅ COMPLETE
+- [x] Reorganize HUD layout: left (lives/crystals/level), center (score/timer), right (menu)
+- [x] Implement circular countdown timer with geometry masking for smooth animation
+- [x] Timer reset functionality when collecting multiple pendants
+- [x] Visual timer integration with existing HUD elements
+- [x] Proper depth ordering and responsive positioning
+
+**Technical Optimization** ✅ COMPLETE
+- [x] Fix hitbox alignment issues by switching from Container to Image sprite approach
+- [x] Debug visualization system for pendant hitbox testing
+- [x] Proper timer lifecycle management with loop-based approach instead of repeat-based
+- [x] Performance optimization with efficient particle cleanup and memory management
+- [x] Integration with existing collectible and physics systems
 
 ### ✅ Balance & Progression Sprint - COMPLETED  
 *Focus: Discrete level system with progressive difficulty and refined game mechanics*

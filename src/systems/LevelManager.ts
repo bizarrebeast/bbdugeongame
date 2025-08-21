@@ -87,16 +87,13 @@ export class LevelManager {
   
   /**
    * Determine which collectibles are available at this level
-   * Level 1: All collectibles (for testing)
-   * Level 2: Regular coins only
-   * Level 3-4: Regular coins + Blue coins
-   * Level 5-6: Regular coins + Blue coins + Diamonds
+   * Level 1-2: Regular coins only
+   * Level 3: Regular coins + Blue coins
+   * Level 4-6: Regular coins + Blue coins + Diamonds + Free lives + Invincibility pendants
    * Level 7+: All collectibles (+ Treasure chests)
    */
   private getCollectibleTypes(levelNumber: number): string[] {
-    if (levelNumber === 1) {
-      return ['coin', 'blueCoin', 'diamond', 'treasureChest', 'freeLife', 'invincibilityPendant'] // All items for level 1 + testing items
-    } else if (levelNumber <= 2) {
+    if (levelNumber <= 2) {
       return ['coin']
     } else if (levelNumber <= 3) {
       return ['coin', 'blueCoin']

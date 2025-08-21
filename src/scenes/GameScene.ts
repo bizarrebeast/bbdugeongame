@@ -417,7 +417,6 @@ export class GameScene extends Phaser.Scene {
     this.flashPowerUps = []
     this.freeLifs = []
     this.invincibilityPendants = []
-    console.log(`🔱 PENDANT RESET: Cleared all pendants for new level`)
     
     // Create mining theme background - DISABLED (using custom background image instead)
     // this.createMiningThemeBackground()
@@ -1737,7 +1736,6 @@ export class GameScene extends Phaser.Scene {
     spikeBody.setData('visualSpikeBaseY', spikeBaseY) // Store visual spike base Y
     
     this.spikes.add(spikeBody)
-    console.log(`🔱 Physics body added: full tile height (${fullTileHeight}px) at platform level for enemy collision`)
     // console.log(`🔱 Visual spikes: height ${spikeHeight}px at ${spikeBaseY} for player damage`)
   }
 
@@ -2216,13 +2214,9 @@ export class GameScene extends Phaser.Scene {
       const pendantRoll = Math.random()
       const pendantIncluded = allowedCollectibles.includes('invincibilityPendant')
       const isPlayerSpawnFloor = floor === 0
-      console.log(`🔱 PENDANT DEBUG Floor ${floor}: included=${pendantIncluded}, roll=${pendantRoll.toFixed(3)}, playerSpawnFloor=${isPlayerSpawnFloor}`)
       
-      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.50) {
-        console.log(`🔱 PENDANT SPAWN: Placing pendant on floor ${floor}`)
+      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.03) {
         this.placeCollectiblesOfType(validPositions, 1, 'invincibilityPendant', collectibleY, floor, floorUsedPositions)
-      } else {
-        console.log(`🔱 PENDANT SKIP: Not placing pendant on floor ${floor} (included=${pendantIncluded}, spawnFloor=${isPlayerSpawnFloor}, roll=${pendantRoll.toFixed(3)})`)
       }
       
       // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
@@ -2329,17 +2323,12 @@ export class GameScene extends Phaser.Scene {
           break
         
         case 'invincibilityPendant':
-          console.log(`🔱 PENDANT CREATE: Creating pendant at (${x}, ${y})`)
           const pendant = new InvincibilityPendant(this, x, y)
           this.invincibilityPendants.push(pendant)
-          console.log(`🔱 PENDANT ARRAY: Now have ${this.invincibilityPendants.length} pendants total`)
-          console.log(`🔱 PENDANT PHYSICS: Setting up overlap detection for pendant at (${x}, ${y})`)
           this.physics.add.overlap(
             this.player,
             pendant.sprite,
             () => {
-              console.log(`🔱 PENDANT OVERLAP: Detected overlap with pendant at (${pendant.sprite.x}, ${pendant.sprite.y})`)
-              console.log(`🔱 PENDANT STATE: collected=${pendant.isCollected()}, sprite exists=${!!pendant.sprite}, array length=${this.invincibilityPendants.length}`)
               this.handleInvincibilityPendantCollection(pendant)
             },
             undefined,
@@ -2605,21 +2594,17 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleInvincibilityPendantCollection(pendant: InvincibilityPendant): void {
-    console.log(`🔱 PENDANT COLLECTION ATTEMPT: isLevelStarting=${this.isLevelStarting}, isCollected=${pendant.isCollected()}`)
     
     // Don't collect during intro animation
     if (this.isLevelStarting) {
-      console.log(`🔱 PENDANT BLOCKED: Level is starting`)
       return
     }
     
     // Check if already collected
     if (pendant.isCollected()) {
-      console.log(`🔱 PENDANT BLOCKED: Already collected`)
       return
     }
     
-    console.log(`🔱 PENDANT SUCCESS: Collecting pendant!`)
     
     const points = 300
     this.score += points
@@ -2640,9 +2625,6 @@ export class GameScene extends Phaser.Scene {
     const index = this.invincibilityPendants.indexOf(pendant)
     if (index > -1) {
       this.invincibilityPendants.splice(index, 1)
-      console.log(`🔱 PENDANT CLEANUP: Removed pendant from array, new length: ${this.invincibilityPendants.length}`)
-    } else {
-      console.log(`🔱 PENDANT ERROR: Pendant not found in array for removal!`)
     }
   }
   
@@ -2694,9 +2676,7 @@ export class GameScene extends Phaser.Scene {
   
   private activateInvincibility(): void {
     // If already invincible, reset timer to full 10 seconds
-    console.log(`🔱 TIMER START: Activating invincibility for 10 seconds`)
     if (this.invincibilityTimer) {
-      console.log(`🔱 TIMER RESET: Destroying existing timer and resetting`)
       this.invincibilityTimer.destroy()
     }
     
@@ -2723,14 +2703,9 @@ export class GameScene extends Phaser.Scene {
   private updateInvincibilityTimer(): void {
     this.invincibilityTimeRemaining -= 0.1
     
-    // Debug: show remaining time every second
-    if (Math.round(this.invincibilityTimeRemaining * 10) % 10 === 0) {
-      console.log(`🔱 TIMER: ${Math.max(0, Math.ceil(this.invincibilityTimeRemaining))} seconds remaining`)
-    }
     
     if (this.invincibilityTimeRemaining <= 0) {
       // End invincibility
-      console.log(`🔱 TIMER END: Invincibility expired, disabling`)
       this.invincibilityActive = false
       this.invincibilityTimeRemaining = 0
       
@@ -2876,7 +2851,6 @@ export class GameScene extends Phaser.Scene {
   }
   
   private enableSpikeWalking(): void {
-    console.log(`🔱 SPIKE PHYSICS: Enabling spike walking mode`)
     
     // Disable the damage-dealing overlap
     if (this.playerSpikeOverlap) {
@@ -2899,7 +2873,6 @@ export class GameScene extends Phaser.Scene {
   }
   
   private disableSpikeWalking(): void {
-    console.log(`🔱 SPIKE PHYSICS: Disabling spike walking mode`)
     
     // Remove the collision
     if (this.playerSpikeCollider) {
@@ -2994,7 +2967,6 @@ export class GameScene extends Phaser.Scene {
     
     // During invincibility, player can walk on spikes like enemies - no damage
     if (this.invincibilityActive) {
-      console.log(`🔱 SPIKE WALK: Player walking on spikes during invincibility`)
       return
     }
     
@@ -3744,7 +3716,6 @@ export class GameScene extends Phaser.Scene {
         }
         
         // Add spikes to all gaps
-        console.log(`🔱 Creating spikes: gapStart=${gapStart}, gapSize=${gapSize}, floorY=${y}`)
         this.createSpikesInGap(gapStart, gapSize, y, tileSize)
       } else {
         layout = { gapStart: -1, gapSize: 0 }

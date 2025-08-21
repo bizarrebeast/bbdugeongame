@@ -22,7 +22,6 @@ export class InvincibilityPendant {
     this.sprite.setDisplaySize(29, 29)
     this.sprite.setDepth(13)
     
-    console.log(`🔱 PENDANT VISUAL: Created pendant sprite at (${x}, ${adjustedY}), visible: ${this.sprite.visible}, depth: ${this.sprite.depth}`)
     
     // Add physics to the sprite directly
     scene.physics.add.existing(this.sprite, true) // Static body
