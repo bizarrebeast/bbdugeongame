@@ -132,7 +132,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Apply enemy hitbox sizing AFTER physics body is created
     if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
-      this.body.setSize(67.5, 45)  // 75% of 90x60: 90*0.75=67.5, 60*0.75=45
+      this.body.setSize(63.5, 45)  // Decreased width by 4px: 67.5-4=63.5, height stays 45
       
       // Adjust physics body offset to align with sprite visual
       const isAnimationSprite = this.isBlueEnemyAnimationSprite(textureKey)
@@ -208,20 +208,20 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     } else if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
       // For all blue enemy animation sprites - use consistent positioning
       this.setDisplaySize(36, 36)
-      this.setOffset(3 - 2, 58 - 18 - 8) // Move left 2px and down 26 pixels
+      this.setOffset(3 - 2 + 4, 58 - 18 - 8) // Move left 6px total (2px + 4px) and down 26 pixels
       this.setFlipX(false)
       this.initializeBlueEnemyAnimations()
       this.addDebugVisualization()
     } else if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
       // Original blue enemy sprite fallback
       this.setDisplaySize(36, 36)
-      this.setOffset(3 - 2, 45 - 18 - 8) // Move left 2px and down 26 pixels
+      this.setOffset(3 - 2 + 4, 45 - 18 - 8) // Move left 6px total (2px + 4px) and down 26 pixels
       this.setFlipX(false)
       this.addDebugVisualization()
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
       this.setDisplaySize(52, 52) // Larger sprite size (52x52)
-      this.setOffset(3, 44 - 12 - 2) // Move down 14 pixels total (44 - 14 = 30)
+      this.setOffset(18, 44 - 12 - 2) // Moved 15 pixels left (3 + 15 = 18), down 14 pixels total
       this.setFlipX(false)
       this.initializeRedEnemyAnimations()
       this.addDebugVisualization()
@@ -238,7 +238,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       } else {
         // Red enemies keep normal sizing
         this.setDisplaySize(36, 36)
-        this.setOffset(3, 45 - 12 - 2) // Move down 14 pixels total (45 - 14 = 31)
+        this.setOffset(18, 45 - 12 - 2) // Moved 15 pixels left (3 + 15 = 18), down 14 pixels total
       }
       this.setFlipX(false)
       this.addDebugVisualization()

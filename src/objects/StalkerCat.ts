@@ -58,7 +58,7 @@ export class StalkerCat extends Cat {
     
     // Set consistent size for stalker sprites using only displaySize
     this.setDisplaySize(40, 40)  // Larger square stalker size
-    this.setOffset(-20, -8 + 12 + 20 - 6)  // Move visual sprite 20 pixels left and DOWN 18 pixels (moved up 6)
+    this.setOffset(-20, -8 + 12 + 20 - 6 - 8 - 4)  // Move visual sprite 20 pixels left and UP 12 pixels total (18 - 12 = 6)
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
       this.body.setSize(57, 54)  // 50% of tripled size: 114*0.5=57, 108*0.5=54
       // Adjust offset to center the smaller hitbox on the sprite (now accounting for sprite offset)
