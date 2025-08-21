@@ -42,13 +42,33 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private nextRedBlinkTime: number = 0
   private redBiteFrameIndex: number = 0
   
+  // Stalker properties (special type of red enemy)
+  private isStalker: boolean = false
+  private stalkerState: 'hidden' | 'activated' | 'chasing' = 'hidden'
+  private stalkerTriggerDistance: number = 32
+  private stalkerPlayerRef: Phaser.Physics.Arcade.Sprite | null = null
+  private stalkerOriginalY: number = 0
+  private stalkerHasPlayerPassed: boolean = false
+  private stalkerMineTimer: number = 0
+  private stalkerMineDelayDuration: number = 3000 // 3 second delay
+  private stalkerCurrentSpeed: number = 80 * 1.5
+  private stalkerSpeedIncrement: number = 5
+  private stalkerChasePersistenceTimer: number = 0
+  private stalkerChasePersistenceDuration: number = 4000 // 4 seconds
+  private stalkerIsInPersistentChase: boolean = false
+  
+  // Stalker eye animation
+  private stalkerEyeState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'blink' = 'eye1'
+  private stalkerEyeAnimationTimer: number = 0
+  
   constructor(
     scene: Phaser.Scene, 
     x: number, 
     y: number, 
     platformLeft: number, 
     platformRight: number,
-    color?: CatColor | string
+    color?: CatColor | string,
+    isStalker: boolean = false
   ) {
     const colors = [CatColor.BLUE, CatColor.YELLOW, CatColor.GREEN, CatColor.RED]
     
@@ -118,6 +138,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, textureKey)
     
     this.catColor = catColor
+    this.isStalker = isStalker
+    
+    // Set up stalker if needed
+    if (this.isStalker) {
+      this.stalkerOriginalY = y
+      // Use stalker enemy sprites
+      if (scene.textures.exists('stalkerEnemyEye1')) {
+        this.setTexture('stalkerEnemyEye1')
+      }
+      this.stalkerEyeState = 'eye1'
+      console.log(`🔴 STALKER CAT: Creating at (${x}, ${y})`)
+    }
     
     scene.add.existing(this)
     scene.physics.add.existing(this)
@@ -220,11 +252,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.addDebugVisualization()
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
-      this.setDisplaySize(52, 52) // Larger sprite size (52x52)
-      this.setOffset(18, 44 - 12 - 2) // Moved 15 pixels left (3 + 15 = 18), down 14 pixels total
+      const displaySize = this.isStalker ? 42 : 52 // Stalkers: 20% smaller (42x42), regular red: (52x52)
+      this.setDisplaySize(displaySize, displaySize)
+      // Adjust offset for stalkers vs regular red enemies
+      const yOffset = this.isStalker ? (44 - 12 - 2 - 6) : (44 - 12 - 2) // Stalkers: move up 6 pixels
+      this.setOffset(18, yOffset) // Moved 15 pixels left (3 + 15 = 18), stalkers up 6 pixels from regular red
       this.setFlipX(false)
       this.initializeRedEnemyAnimations()
       this.addDebugVisualization()
+      
+      if (this.isStalker) {
+        console.log(`🔴 STALKER SPRITE POSITIONING: size ${displaySize}x${displaySize} (20% smaller), offset (18, ${yOffset}) - moved up 6 pixels from regular red enemy`)
+      }
     } else if (this.isEnemySprite(textureKey)) {
       // For sprite-based enemies (yellow, green, red), use proper sizing similar to blue enemies
       if (catColor === CatColor.YELLOW) {
@@ -237,8 +276,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.setOffset(3, -3) // Decreased by 48 pixels total (45 - 24 - 16 - 8 = -3)
       } else {
         // Red enemies keep normal sizing
-        this.setDisplaySize(36, 36)
-        this.setOffset(18, 45 - 12 - 2) // Moved 15 pixels left (3 + 15 = 18), down 14 pixels total
+        const displaySize = this.isStalker ? 29 : 36 // Stalkers: 20% smaller (29x29), regular red: (36x36)
+        this.setDisplaySize(displaySize, displaySize)
+        // Adjust offset for stalkers vs regular red enemies
+        const yOffset = this.isStalker ? (45 - 12 - 2 - 6) : (45 - 12 - 2) // Stalkers: move up 6 pixels
+        this.setOffset(18, yOffset) // Moved 15 pixels left (3 + 15 = 18), stalkers up 6 pixels from regular red
+        
+        if (this.isStalker) {
+          console.log(`🔴 STALKER FALLBACK SPRITE POSITIONING: size ${displaySize}x${displaySize} (20% smaller), offset (18, ${yOffset}) - moved up 6 pixels from regular red enemy`)
+        }
       }
       this.setFlipX(false)
       this.addDebugVisualization()
@@ -273,7 +319,17 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Phaser's built-in debug visualization will show the hitbox
     
-    this.setVelocityX(this.moveSpeed * this.direction)
+    // Special setup for stalkers
+    if (this.isStalker) {
+      // Start hidden
+      this.setVisible(false)
+      this.setVelocity(0, 0)
+      this.body!.setGravityY(0) // No gravity for stalkers
+      this.body!.setImmovable(true) // Don't move while hidden
+      console.log(`🔴 STALKER: Hidden and waiting at (${this.x}, ${this.y})`)
+    } else {
+      this.setVelocityX(this.moveSpeed * this.direction)
+    }
   }
   
   private setupBehavior(): void {
@@ -298,6 +354,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Update collision cooldown for all enemy types
     this.collisionCooldown -= delta
+    
+    // Special handling for stalkers
+    if (this.isStalker) {
+      this.updateStalker(delta)
+      return
+    }
     
     // Movement logging temporarily disabled to see creation logs
     
@@ -919,5 +981,222 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.setFlipX(this.direction > 0) // Flip when moving right
       }
     }
+  }
+  
+  // ============== STALKER METHODS ==============
+  
+  setPlayerReference(player: Phaser.Physics.Arcade.Sprite): void {
+    this.stalkerPlayerRef = player
+  }
+  
+  canDamagePlayer(): boolean {
+    // Stalkers can only damage the player after popping out
+    return this.isStalker && this.stalkerState === 'chasing'
+  }
+  
+  private updateStalker(delta: number): void {
+    if (!this.stalkerPlayerRef) return
+    
+    // Debug: Log position changes
+    const previousY = this.y
+    
+    switch (this.stalkerState) {
+      case 'hidden':
+        this.updateStalkerHidden()
+        break
+      case 'activated':
+        this.updateStalkerActivated(delta)
+        break
+      case 'chasing':
+        this.updateStalkerChasing(delta)
+        this.updateStalkerEyeAnimations(delta)
+        break
+    }
+    
+    // Debug: Check if Y position changed unexpectedly
+    if (Math.abs(this.y - previousY) > 0.1) {
+      console.log(`🔴🚨 STALKER Y POSITION CHANGED: ${previousY} -> ${this.y} (change: ${this.y - previousY})`)
+      console.log(`  - State: ${this.stalkerState}`)
+      console.log(`  - Original Y: ${this.stalkerOriginalY}`)
+      console.log(`  - Velocity: (${this.body?.velocity.x}, ${this.body?.velocity.y})`)
+      console.log(`  - Gravity: ${(this.body as any)?.gravity?.y}`)
+    }
+  }
+  
+  private updateStalkerHidden(): void {
+    if (!this.stalkerPlayerRef) return
+    
+    const playerX = this.stalkerPlayerRef.x
+    const playerY = this.stalkerPlayerRef.y
+    const distanceToPlayer = Math.abs(playerX - this.x)
+    
+    // Check if player is on same floor or above (not below) - prevent stalker from seeing player below
+    const playerIsAboveOrSameLevel = playerY <= this.y + 40 // Player must be at same level or above
+    const playerIsNotTooFarAbove = playerY >= this.y - 40 // But not too far above
+    const canSeePlayer = playerIsAboveOrSameLevel && playerIsNotTooFarAbove
+    
+    if (canSeePlayer && distanceToPlayer <= this.stalkerTriggerDistance && !this.stalkerHasPlayerPassed) {
+      console.log(`🔴👁️ STALKER ACTIVATED at distance ${distanceToPlayer}`)
+      console.log(`  - Stalker position: (${this.x}, ${this.y})`)
+      console.log(`  - Player position: (${playerX}, ${playerY})`)
+      console.log(`  - Original Y: ${this.stalkerOriginalY}`)
+      
+      // Activate stalker
+      this.stalkerState = 'activated'
+      this.stalkerMineTimer = this.stalkerMineDelayDuration
+      this.stalkerHasPlayerPassed = true
+      
+      // Show eyes only
+      if (this.scene.textures.exists('stalkerEnemyEyeOnly')) {
+        this.setTexture('stalkerEnemyEyeOnly')
+        console.log(`  - Changed texture to stalkerEnemyEyeOnly`)
+      }
+      this.setVisible(true)
+      console.log(`  - Now visible and activated`)
+    }
+  }
+  
+  private updateStalkerActivated(delta: number): void {
+    this.stalkerMineTimer -= delta
+    
+    if (this.stalkerMineTimer <= 0) {
+      this.stalkerPopOut()
+    }
+  }
+  
+  private stalkerPopOut(): void {
+    console.log(`🔴💥 STALKER POPPING OUT!`)
+    console.log(`  - Current position: (${this.x}, ${this.y})`)
+    console.log(`  - Original Y: ${this.stalkerOriginalY}`)
+    console.log(`  - Y difference: ${this.y - this.stalkerOriginalY}`)
+    
+    this.stalkerState = 'chasing'
+    this.setVisible(true)
+    
+    // Switch to full stalker sprite
+    if (this.scene.textures.exists('stalkerEnemyEye1')) {
+      this.setTexture('stalkerEnemyEye1')
+      console.log(`  - Changed texture to stalkerEnemyEye1`)
+    }
+    this.stalkerEyeState = 'eye1'
+    
+    // Enable movement
+    this.body!.setGravityY(0) // Still no gravity
+    this.body!.setImmovable(false) // Allow movement
+    console.log(`  - Physics: gravity=${(this.body as any)?.gravity?.y}, immovable=${this.body?.immovable}`)
+    
+    // Update original Y to prevent teleporting
+    this.stalkerOriginalY = this.y
+    console.log(`  - Updated floor lock to: ${this.stalkerOriginalY}`)
+    
+    // Reset speed
+    this.stalkerCurrentSpeed = 80 * 1.5
+    
+    // Start chase persistence
+    this.stalkerChasePersistenceTimer = this.stalkerChasePersistenceDuration
+    this.stalkerIsInPersistentChase = true
+    console.log(`  - Starting persistent chase for ${this.stalkerChasePersistenceDuration}ms`)
+  }
+  
+  private updateStalkerChasing(delta: number): void {
+    const playerX = this.stalkerPlayerRef!.x
+    const playerY = this.stalkerPlayerRef!.y
+    
+    // Keep Y position stable
+    const beforeY = this.y
+    this.y = this.stalkerOriginalY
+    
+    if (Math.abs(beforeY - this.stalkerOriginalY) > 0.1) {
+      console.log(`🔴🔧 STALKER Y CORRECTION: ${beforeY} -> ${this.stalkerOriginalY} (corrected ${beforeY - this.stalkerOriginalY} drift)`)
+    }
+    
+    // Only chase player if they are at same level or above (not below)
+    const playerIsAboveOrSameLevel = playerY <= this.y + 40 // Player must be at same level or above
+    const playerIsNotTooFarAbove = playerY >= this.y - 120 // But not too far above (increased tolerance for chasing)
+    const canChasePlayer = playerIsAboveOrSameLevel && playerIsNotTooFarAbove
+    
+    // Update chase persistence
+    if (this.stalkerIsInPersistentChase) {
+      this.stalkerChasePersistenceTimer -= delta
+      if (this.stalkerChasePersistenceTimer <= 0) {
+        this.stalkerIsInPersistentChase = false
+      }
+    }
+    
+    if (canChasePlayer) {
+      // Chase the player
+      this.stalkerCurrentSpeed += this.stalkerSpeedIncrement * 0.01
+      const maxSpeed = 80 * 2.25
+      if (this.stalkerCurrentSpeed > maxSpeed) {
+        this.stalkerCurrentSpeed = maxSpeed
+      }
+      
+      const direction = playerX > this.x ? 1 : -1
+      this.direction = direction
+      this.setVelocityX(this.stalkerCurrentSpeed * direction)
+    } else {
+      // Player too far vertically
+      if (this.stalkerIsInPersistentChase) {
+        // Continue moving horizontally
+        const direction = playerX > this.x ? 1 : -1
+        this.direction = direction
+        this.setVelocityX(this.stalkerCurrentSpeed * direction * 0.7)
+      } else {
+        // Patrol like regular red enemy
+        this.updateRedPatrol()
+      }
+    }
+  }
+  
+  private updateStalkerEyeAnimations(delta: number): void {
+    if (!this.scene.textures.exists('stalkerEnemyEye1')) return
+    
+    this.stalkerEyeAnimationTimer += delta
+    
+    let animationSpeed: number
+    if (this.stalkerEyeState === 'blink') {
+      animationSpeed = 100 + Math.random() * 80
+    } else {
+      animationSpeed = 1200 + (Math.random() - 0.5) * 800
+    }
+    
+    if (this.stalkerEyeAnimationTimer >= animationSpeed) {
+      const randomAction = Math.random()
+      
+      // Simple eye state transitions
+      if (this.stalkerEyeState === 'blink') {
+        // Return to a random eye state
+        const states = ['eye1', 'eye2', 'eye3', 'eye4'] as const
+        this.stalkerEyeState = states[Math.floor(Math.random() * 4)]
+      } else {
+        // Either blink or change eye position
+        if (randomAction < 0.2) {
+          this.stalkerEyeState = 'blink'
+        } else {
+          const states = ['eye1', 'eye2', 'eye3', 'eye4'] as const
+          this.stalkerEyeState = states[Math.floor(Math.random() * 4)]
+        }
+      }
+      
+      // Apply the texture
+      const textureMap = {
+        'eye1': 'stalkerEnemyEye1',
+        'eye2': 'stalkerEnemyEye2', 
+        'eye3': 'stalkerEnemyEye3',
+        'eye4': 'stalkerEnemyEye4',
+        'blink': 'stalkerEnemyBlinking'
+      }
+      
+      const textureKey = textureMap[this.stalkerEyeState]
+      if (this.scene.textures.exists(textureKey)) {
+        this.setTexture(textureKey)
+      }
+      
+      this.stalkerEyeAnimationTimer = 0
+    }
+  }
+  
+  getIsStalker(): boolean {
+    return this.isStalker
   }
 }

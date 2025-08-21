@@ -1,7 +1,6 @@
 import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
 import { Cat } from "../objects/Cat"
-import { StalkerCat } from "../objects/StalkerCat"
 import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
@@ -378,9 +377,9 @@ export class GameScene extends Phaser.Scene {
       runChildUpdate: true
     })
     
-    // Create stalker cats group
+    // Create stalker cats group  
     this.stalkerCats = this.physics.add.group({
-      classType: StalkerCat,
+      classType: Cat,
       runChildUpdate: true
     })
     
@@ -509,7 +508,22 @@ export class GameScene extends Phaser.Scene {
       this.cats,
       this.cats,
       this.handleCatCatCollision,
-      undefined,
+      // Process callback to determine if collision should happen
+      (cat1: any, cat2: any) => {
+        const catObj1 = cat1 as Cat
+        const catObj2 = cat2 as Cat
+        
+        // Check if either cat is a jumper (green) or caterpillar (yellow)
+        const cat1CanPassThrough = catObj1.getCatColor() === 'green' || catObj1.getCatColor() === 'yellow'
+        const cat2CanPassThrough = catObj2.getCatColor() === 'green' || catObj2.getCatColor() === 'yellow'
+        
+        // Return false to prevent collision if either enemy can pass through
+        if (cat1CanPassThrough || cat2CanPassThrough) {
+          return false // No collision
+        }
+        
+        return true // Allow collision for other enemy types
+      },
       this
     )
     
@@ -1886,13 +1900,15 @@ export class GameScene extends Phaser.Scene {
         console.log(`🐛 Creating enemy: ${enemyType} at position (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
         
         if (EnemySpawningSystem.isStalkerType(enemyType)) {
-          // Create Stalker enemy
-          const stalkerCat = new StalkerCat(
+          // Create Stalker enemy as a regular Cat with stalker flag
+          const stalkerCat = new Cat(
             this,
             x,
             y,
             tileSize * 0.5,
-            tileSize * (floorWidth - 0.5)
+            tileSize * (floorWidth - 0.5),
+            'red', // Stalkers are red enemies
+            true   // This is a stalker
           )
           stalkerCat.setPlayerReference(this.player)
           this.stalkerCats.add(stalkerCat)
@@ -2031,12 +2047,14 @@ export class GameScene extends Phaser.Scene {
           }
         }
         
-        const stalkerCat = new StalkerCat(
+        const stalkerCat = new Cat(
           this,
           stalkerCatX,
           stalkerY,
           leftBound,
-          rightBound
+          rightBound,
+          'red', // Stalkers are red enemies  
+          true   // This is a stalker
         )
         
         // Set player reference for detection
@@ -2054,17 +2072,8 @@ export class GameScene extends Phaser.Scene {
     const catObj1 = cat1 as Cat
     const catObj2 = cat2 as Cat
     
-    // Jumpers (green enemies) can pass through other enemies
-    const cat1IsJumper = catObj1.getCatColor() === 'green'
-    const cat2IsJumper = catObj2.getCatColor() === 'green'
-    
-    if (cat1IsJumper || cat2IsJumper) {
-      console.log(`🟢 Jumper passthrough: ${cat1IsJumper ? 'cat1' : 'cat2'} is green, allowing passthrough`)
-      // Allow green enemies to pass through - no collision response
-      return
-    }
-    
-    // Normal collision handling for non-jumper enemies
+    // This handler is now only called for enemies that should collide
+    // (jumpers and caterpillars are filtered out by the process callback)
     console.log(`🐱 Normal cat collision: ${catObj1.getCatColor()} vs ${catObj2.getCatColor()}`)
     
     // Add small separation to prevent sticking
@@ -2482,7 +2491,7 @@ export class GameScene extends Phaser.Scene {
     if (this.isGameOver || this.justKilledCat) return
     
     const playerObj = player as Player
-    const stalkerCatObj = cat as StalkerCat
+    const stalkerCatObj = cat as Cat
     
     // Check if this stalker cat can damage the player
     if (!stalkerCatObj.canDamagePlayer()) {
@@ -2637,7 +2646,7 @@ export class GameScene extends Phaser.Scene {
     
   }
   
-  private handleStalkerCatKill(player: Player, stalkerCat: StalkerCat): void {
+  private handleStalkerCatKill(player: Player, stalkerCat: Cat): void {
     // Check if stalker cat is already squished to prevent multiple kills
     if ((stalkerCat as any).isSquished) return
     
@@ -3058,7 +3067,7 @@ export class GameScene extends Phaser.Scene {
     
     // Update all stalker cats and check ladder exits
     this.stalkerCats.children.entries.forEach(stalkerCat => {
-      const catObj = stalkerCat as StalkerCat
+      const catObj = stalkerCat as Cat
       catObj.update(this.time.now, this.game.loop.delta)
       
       // Red cats no longer climb ladders
