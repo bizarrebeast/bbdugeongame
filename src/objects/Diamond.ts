@@ -123,7 +123,7 @@ export class Diamond {
     
     // Diamond collection animation with brilliant flash
     this.scene.tweens.add({
-      targets: [this.sprite, this.diamondGraphics],
+      targets: this.sprite,
       scaleX: 2.5,
       scaleY: 2.5,
       alpha: 0,

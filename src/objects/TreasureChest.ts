@@ -59,9 +59,9 @@ export class TreasureChest {
     return !this.isOpened
   }
   
-  public open(): { coins: number, diamond: boolean, flashPowerUp: boolean, totalPoints: number } {
+  public open(): { coins: number, blueCoins: number, diamonds: number, flashPowerUp: boolean, totalPoints: number } {
     if (this.isOpened) {
-      return { coins: 0, diamond: false, flashPowerUp: false, totalPoints: 0 }
+      return { coins: 0, blueCoins: 0, diamonds: 0, flashPowerUp: false, totalPoints: 0 }
     }
     
     this.isOpened = true
@@ -102,7 +102,7 @@ export class TreasureChest {
       coins: contents.coins, 
       blueCoins: contents.blueCoins,
       diamonds: contents.diamonds, 
-      flashPowerUp: false, // Disabled for now
+      flashPowerUp: false, 
       totalPoints 
     }
   }
