@@ -9,6 +9,7 @@ import { TreasureChest } from "../objects/TreasureChest"
 import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
+import { EnemySpawningSystem, EnemyType } from "../systems/EnemySpawningSystem"
 import { Door } from "../objects/Door"
 import { AssetPool, AssetConfig } from "../systems/AssetPool"
 import { GemShapeGenerator, GemStyle, GemCut } from "../utils/GemShapes"
@@ -1807,23 +1808,12 @@ export class GameScene extends Phaser.Scene {
     const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
     
-    // Get allowed enemy types for current level
+    console.log(`🎯 Using new difficulty-based enemy spawning system for Level ${this.levelManager.getCurrentLevel()}`)
+    
+    // Debug: Log the enemy spawning process
+    console.log(`🐛 ENEMY SPAWNING DEBUG START`)
+    
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
-    const allowedEnemies = levelConfig.enemyTypes
-    console.log(`🐱 Level ${this.levelManager.getCurrentLevel()}: ${allowedEnemies.join(', ')}`)
-    
-    // Map enemy types to cat colors
-    const availableColors: string[] = []
-    if (allowedEnemies.includes('blue')) availableColors.push('blue')
-    if (allowedEnemies.includes('yellow')) availableColors.push('yellow')
-    if (allowedEnemies.includes('green')) availableColors.push('green')
-    if (allowedEnemies.includes('red')) availableColors.push('red') // ADD RED SUPPORT
-    console.log(`🐱 Available: ${availableColors.join(', ')}`)
-    
-    // If no regular enemies are allowed yet, return
-    if (availableColors.length === 0) {
-      return
-    }
     
     // Add cats on floors 1 through second-to-last floor (skip ground floor and door floor)
     const doorFloor = levelConfig.isEndless ? 999 : (levelConfig.floorCount - 1)
@@ -1842,113 +1832,87 @@ export class GameScene extends Phaser.Scene {
       
       console.log(`🟢 FLOOR ${floor} POSITIONING: platformY=${platformY}, floorSurfaceY=${floorSurfaceY}, enemyY=${y}`)
       
-      if (layout.gapStart === -1) {
-        // Complete floor - place cats based on level
-        const isLevel1 = this.levelManager.getCurrentLevel() === 1
-        const numCats = isLevel1 ? 
-          Math.floor(Math.random() * 2) + 2 : // 2-3 cats for level 1
-          Math.floor(Math.random() * 3) + 2   // 2-4 cats for other levels
-        const sectionSize = Math.floor(floorWidth / numCats)
+      // Use new difficulty-based enemy spawning system
+      const selectedEnemies = this.levelManager.getEnemyTypesForFloor(this.levelManager.getCurrentLevel(), floor)
+      
+      console.log(`🐛 Floor ${floor}: Selected enemies: ${selectedEnemies.join(', ')}`)
+      
+      if (selectedEnemies.length === 0) {
+        console.log(`🎯 Floor ${floor}: No enemies selected by difficulty system`)
+        continue
+      }
+
+      // Create enemies based on selected types
+      for (let enemyIndex = 0; enemyIndex < selectedEnemies.length; enemyIndex++) {
+        const enemyType = selectedEnemies[enemyIndex]
         
-        for (let i = 0; i < numCats; i++) {
-          const leftBound = Math.max(tileSize * 1.5, i * sectionSize * tileSize)
-          const rightBound = Math.min(tileSize * (floorWidth - 1.5), (i + 1) * sectionSize * tileSize)
+        // Calculate position for this enemy
+        let x: number
+        let leftBound: number
+        let rightBound: number
+        
+        if (layout.gapStart === -1) {
+          // Complete floor - distribute enemies across floor
+          const sectionSize = floorWidth / selectedEnemies.length
+          const sectionStart = enemyIndex * sectionSize
+          const sectionEnd = (enemyIndex + 1) * sectionSize
           
-          if (rightBound - leftBound > tileSize * 3) {
-            // Pick a random color from available colors
-            const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
-            console.log(`🐱 INITIAL SPAWN: ${randomColor} enemy on floor ${floor} (complete floor)`)
-            
-            // Green cats get full floor bounds, others get section bounds
-            const cat = new Cat(
-              this,
-              (leftBound + rightBound) / 2,
-              y,
-              leftBound,
-              rightBound,
-              randomColor as any
-            )
-            
-            // Override bounds for green cats to use full floor
-            if (cat.getCatColor() === 'green') {
-              cat.platformBounds = {
-                left: tileSize * 1.5,
-                right: tileSize * (floorWidth - 1.5)
-              }
-            }
-            
-            this.cats.add(cat)
-          }
-        }
-      } else {
-        // Floor with gap - place cats on sections
-        const leftSectionSize = layout.gapStart
-        const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
-        
-        // Left section cats
-        if (leftSectionSize > 4) {
-          const isLevel1 = this.levelManager.getCurrentLevel() === 1
-          const leftCats = isLevel1 ? 
-            1 : // Always 1 cat for level 1
-            (leftSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1)
-          for (let i = 0; i < leftCats; i++) {
-            const leftSectionTileSize = Math.floor(leftSectionSize / leftCats)
-            const leftBound = tileSize * (0.5 + i * leftSectionTileSize)
-            const rightBound = tileSize * (0.5 + (i + 1) * leftSectionTileSize - 0.5)
-            
-            if (rightBound - leftBound > tileSize * 2) {
-              // Pick a random color from available colors
-              const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
-              
-              const cat = new Cat(
-                this,
-                (leftBound + rightBound) / 2,
-                y,
-                tileSize * 0.5,  // Full floor left bound
-                tileSize * (floorWidth - 0.5),  // Full floor right bound
-                randomColor as any
-              )
-              
-              // All enemies now use full floor bounds since spikes act as platforms
-              // No need to override for green cats anymore
-              
-              this.cats.add(cat)
-            }
+          leftBound = tileSize * Math.max(1.5, sectionStart)
+          rightBound = tileSize * Math.min(floorWidth - 1.5, sectionEnd)
+          x = (leftBound + rightBound) / 2
+        } else {
+          // Floor with gap - place enemies on either left or right section
+          const leftSectionSize = layout.gapStart
+          const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
+          
+          if (enemyIndex % 2 === 0 && leftSectionSize > 4) {
+            // Place on left section
+            leftBound = tileSize * 0.5
+            rightBound = tileSize * (leftSectionSize - 0.5)
+            x = (leftBound + rightBound) / 2
+          } else if (rightSectionSize > 4) {
+            // Place on right section
+            const rightStart = layout.gapStart + layout.gapSize
+            leftBound = tileSize * (rightStart + 0.5)
+            rightBound = tileSize * (floorWidth - 0.5)
+            x = (leftBound + rightBound) / 2
+          } else {
+            // Skip if no valid section
+            continue
           }
         }
         
-        // Right section cats
-        if (rightSectionSize > 4) {
-          const rightStart = layout.gapStart + layout.gapSize
-          const isLevel1 = this.levelManager.getCurrentLevel() === 1
-          const rightCats = isLevel1 ?
-            1 : // Always 1 cat for level 1
-            (rightSectionSize > 8 ? Math.floor(Math.random() * 2) + 1 : 1)
+        // Create the appropriate enemy type
+        console.log(`🐛 Creating enemy: ${enemyType} at position (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+        
+        if (EnemySpawningSystem.isStalkerType(enemyType)) {
+          // Create Stalker enemy
+          const stalkerCat = new StalkerCat(
+            this,
+            x,
+            y,
+            tileSize * 0.5,
+            tileSize * (floorWidth - 0.5)
+          )
+          stalkerCat.setPlayerReference(this.player)
+          this.stalkerCats.add(stalkerCat)
+          console.log(`🔴 SPAWN: Stalker at (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+        } else {
+          // Create regular Cat enemy
+          const color = EnemySpawningSystem.getColorForEnemyType(enemyType)
+          console.log(`🐛 Converting ${enemyType} to color: ${color}`)
           
-          for (let i = 0; i < rightCats; i++) {
-            const rightSectionTileSize = Math.floor(rightSectionSize / rightCats)
-            const leftBound = tileSize * (rightStart + 0.5 + i * rightSectionTileSize)
-            const rightBound = tileSize * (rightStart + 0.5 + (i + 1) * rightSectionTileSize - 0.5)
-            
-            if (rightBound - leftBound > tileSize * 2) {
-              // Pick a random color from available colors
-              const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
-              
-              const cat = new Cat(
-                this,
-                (leftBound + rightBound) / 2,
-                y,
-                tileSize * 0.5,  // Full floor left bound
-                tileSize * (floorWidth - 0.5),  // Full floor right bound
-                randomColor as any
-              )
-              
-              // All enemies now use full floor bounds since spikes act as platforms
-              // No need to override for green cats anymore
-              
-              this.cats.add(cat)
-            }
-          }
+          const cat = new Cat(
+            this,
+            x,
+            y,
+            tileSize * 0.5,  // All enemies use full floor bounds
+            tileSize * (floorWidth - 0.5),
+            color as any
+          )
+          this.cats.add(cat)
+          console.log(`🐱 SPAWN: ${enemyType} (${color}) at (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+          enemiesCreated++
         }
       }
     }
@@ -2087,9 +2051,21 @@ export class GameScene extends Phaser.Scene {
     cat1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     cat2: Phaser.Types.Physics.Arcade.GameObjectWithBody
   ): void {
-    // Both cats reverse direction when they bump into each other
     const catObj1 = cat1 as Cat
     const catObj2 = cat2 as Cat
+    
+    // Jumpers (green enemies) can pass through other enemies
+    const cat1IsJumper = catObj1.getCatColor() === 'green'
+    const cat2IsJumper = catObj2.getCatColor() === 'green'
+    
+    if (cat1IsJumper || cat2IsJumper) {
+      console.log(`🟢 Jumper passthrough: ${cat1IsJumper ? 'cat1' : 'cat2'} is green, allowing passthrough`)
+      // Allow green enemies to pass through - no collision response
+      return
+    }
+    
+    // Normal collision handling for non-jumper enemies
+    console.log(`🐱 Normal cat collision: ${catObj1.getCatColor()} vs ${catObj2.getCatColor()}`)
     
     // Add small separation to prevent sticking
     const separationForce = 10
@@ -3309,65 +3285,8 @@ export class GameScene extends Phaser.Scene {
         }
       }
       
-      // Add stalker cats to some floors (only if red enemies are allowed)
-      if (allowedEnemies.includes('red') && floor > 2 && Math.random() > 0.4) { // 60% chance
-        const maxStalkerCats = floor < 20 ? 1 : 2
-        const numStalkerCats = Math.floor(Math.random() * maxStalkerCats) + 1
-        
-        // Find valid ceiling positions
-        const validStalkerPositions: number[] = []
-        
-        if (layout.gapStart === -1) {
-          // Complete floor
-          for (let x = 2; x < floorWidth - 2; x++) {
-            validStalkerPositions.push(x)
-          }
-        } else {
-          // Floor with gap
-          for (let x = 2; x < layout.gapStart - 1; x++) {
-            validStalkerPositions.push(x)
-          }
-          for (let x = layout.gapStart + layout.gapSize + 1; x < floorWidth - 2; x++) {
-            validStalkerPositions.push(x)
-          }
-        }
-        
-        // Place stalker cats
-        for (let j = 0; j < Math.min(numStalkerCats, validStalkerPositions.length); j++) {
-          const randomIndex = Math.floor(Math.random() * validStalkerPositions.length)
-          const tileX = validStalkerPositions[randomIndex]
-          const stalkerCatX = tileX * tileSize + tileSize/2
-          
-          // Calculate floor Y position for stalker cats (on the floor, not ceiling)
-          const currentFloorY = -floor * floorSpacing + GameSettings.canvas.height - tileSize/2
-          const stalkerY = currentFloorY - 16 // Just above the floor platform
-          
-          validStalkerPositions.splice(randomIndex, 1)
-          
-          // Calculate platform bounds
-          let leftBound = tileSize * 0.5
-          let rightBound = tileSize * (floorWidth - 0.5)
-          
-          if (layout.gapStart !== -1) {
-            if (tileX < layout.gapStart) {
-              rightBound = tileSize * (layout.gapStart - 0.5)
-            } else {
-              leftBound = tileSize * (layout.gapStart + layout.gapSize + 0.5)
-            }
-          }
-          
-          const stalkerCat = new StalkerCat(
-            this,
-            stalkerCatX,
-            stalkerY,
-            leftBound,
-            rightBound
-          )
-          
-          stalkerCat.setPlayerReference(this.player)
-          this.stalkerCats.add(stalkerCat)
-        }
-      }
+      // Enemy spawning now handled by the new difficulty-based system in createCats()
+      // No need for separate stalker spawning - they're integrated into the main system
     }
     
     this.highestFloorGenerated += floorsToGenerate

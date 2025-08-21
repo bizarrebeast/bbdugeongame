@@ -122,36 +122,49 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
     scene.physics.add.existing(this)
     
-    console.log(`🚀 ${catColor.toUpperCase()} enemy: ${textureKey} at (${x}, ${y})`)
-    
-    // Extra logging for green enemies to track creation and physics
-    if (catColor === CatColor.GREEN) {
-      console.log(`🟢 GREEN ENEMY CREATION DEBUG:`)
+    // Only log caterpillar (yellow enemy) positioning for debugging
+    if (catColor === CatColor.YELLOW) {
+      console.log(`🐛 CATERPILLAR ENEMY DEBUG:`)
       console.log(`  - Texture key: ${textureKey}`)
-      console.log(`  - Using sprite: ${this.isEnemySprite(textureKey)}`)
-      console.log(`  - Position: (${x}, ${y})`)
+      console.log(`  - Spawn position: (${x}, ${y})`)
+      console.log(`  - Using animation sprite: ${this.isYellowEnemyAnimationSprite(textureKey)}`)
     }
     
     // Apply enemy hitbox sizing AFTER physics body is created
     if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
-      console.log(`🚀 STEP 5A: Setting blue enemy hitbox to 30x20...`)
-      this.body.setSize(30, 20)
-      console.log(`🚀 STEP 5B: Blue enemy (${textureKey}) hitbox SET, actual size: ${this.body.width}x${this.body.height}`)
+      this.body.setSize(67.5, 45)  // 75% of 90x60: 90*0.75=67.5, 60*0.75=45
+      
+      // Adjust physics body offset to align with sprite visual
+      const isAnimationSprite = this.isBlueEnemyAnimationSprite(textureKey)
+      const spriteYOffset = isAnimationSprite ? 32 : 19  // Updated offsets after moving down 26px total
+      
+      // Center the hitbox on the sprite visual
+      this.body.setOffset(-15.75 + 2, spriteYOffset - 4.5) // Center horizontally with 2px left offset
+      
+    } else if (catColor === CatColor.YELLOW && this.body instanceof Phaser.Physics.Arcade.Body) {
+      // Decrease Caterpillar (yellow enemy) hitbox by 30%
+      const defaultWidth = this.body.width
+      const defaultHeight = this.body.height
+      this.body.setSize(defaultWidth * 0.7, defaultHeight * 0.7)
+      
+      // Center the smaller hitbox horizontally and align bottom edges
+      const hitboxCenterOffsetX = (defaultWidth - this.body.width) / 2
+      const hitboxCenterOffsetY = (defaultHeight - this.body.height) / 2
+      this.body.setOffset(hitboxCenterOffsetX, hitboxCenterOffsetY)
+      
+      console.log(`🐛 CATERPILLAR HITBOX DEBUG:`)
+      console.log(`  - Original hitbox: ${defaultWidth}x${defaultHeight}`)
+      console.log(`  - New hitbox size: ${this.body.width}x${this.body.height}`)
+      console.log(`  - Hitbox offset: (${this.body.offset.x}, ${this.body.offset.y})`)
+      console.log(`  - Sprite and hitbox bottom edges should now be aligned`)
+      
     } else if (catColor === CatColor.RED && this.body instanceof Phaser.Physics.Arcade.Body) {
-      this.body.setSize(32, 32)
+      // Increase Snail (red patrol enemy) hitbox by 50%
+      this.body.setSize(48, 48)  // 32*1.5=48 for both dimensions
+      // Center the larger hitbox on the sprite (accounting for 14px sprite offset down)
+      this.body.setOffset(-8, -8 + 14)  // Offset to center: (-8, 6) to account for sprite movement
     } else if (catColor === CatColor.GREEN && this.body instanceof Phaser.Physics.Arcade.Body) {
-      console.log(`🟢 GREEN ENEMY HITBOX DEBUG:`)
-      console.log(`  - Sprite size: 36x36 pixels`)
-      console.log(`  - Default body size before adjustment: ${this.body.width}x${this.body.height}`)
-      console.log(`  - Keeping default hitbox for bouncing mechanics`)
-      console.log(`  - FINAL GREEN ENEMY HITBOX: ${this.body.width}x${this.body.height}`)
-      console.log(`  - Body position: (${this.body.x}, ${this.body.y})`)
-      console.log(`  - Sprite position: (${this.x}, ${this.y})`)
-      console.log(`  - Offset: (${this.body.offset.x}, ${this.body.offset.y})`)
-      console.log(`  - Gravity enabled: ${this.body.allowGravity}`)
-      console.log(`  - World bounds collision: ${this.body.collideWorldBounds}`)
-    } else if (this.body instanceof Phaser.Physics.Arcade.Body) {
-      console.log(`🚀 STEP 5C: ${catColor} enemy (${textureKey}) keeping default hitbox: ${this.body.width}x${this.body.height}`)
+      // Keep default hitbox for bouncing mechanics
     }
     
     this.setCollideWorldBounds(true)
@@ -172,29 +185,43 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Set up hitbox and visual alignment
     if (catColor === CatColor.YELLOW && this.isYellowEnemyAnimationSprite(textureKey)) {
-      // For all yellow enemy animation sprites - use 60x24 size
-      this.setDisplaySize(60, 24)
-      this.setOffset(3, -5) // Increased by 1 pixel (-6 + 1 = -5)
+      // For all yellow enemy animation sprites - use 54x21.6 size (90% of original)
+      this.setDisplaySize(54, 21.6)
+      
+      // Align bottom edge of sprite with bottom edge of hitbox
+      // setOffset positions the TOP-LEFT corner of the sprite
+      // Sprite: 54x21.6, Hitbox: 70x28 (after 30% reduction)
+      // To align bottom edges:
+      // - X: Center sprite horizontally relative to hitbox: (70-54)/2 = 8px to the right
+      // - Y: Move sprite down so bottoms align: (28-21.6) = 6.4px down
+      this.setOffset(15, 4) // Moved 20 pixels left total (-5 + 20 = 15)
+      
+      console.log(`🐛 CATERPILLAR SPRITE OFFSET DEBUG (Animation):`)
+      console.log(`  - Sprite size: 54x21.6`)
+      console.log(`  - Hitbox size will be: 70x28 (after 30% reduction)`)
+      console.log(`  - Top-left offset for bottom alignment: (15, 4)`)
+      console.log(`  - Spawn position: (${this.x}, ${this.y})`)
+      
       this.setFlipX(false)
       this.initializeYellowEnemyAnimations()
       this.addDebugVisualization()
     } else if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
       // For all blue enemy animation sprites - use consistent positioning
       this.setDisplaySize(36, 36)
-      this.setOffset(3, 58) // Consistent positioning for all animation sprites
+      this.setOffset(3 - 2, 58 - 18 - 8) // Move left 2px and down 26 pixels
       this.setFlipX(false)
       this.initializeBlueEnemyAnimations()
       this.addDebugVisualization()
     } else if (catColor === CatColor.BLUE && textureKey === 'blueEnemy') {
       // Original blue enemy sprite fallback
       this.setDisplaySize(36, 36)
-      this.setOffset(3, 45)
+      this.setOffset(3 - 2, 45 - 18 - 8) // Move left 2px and down 26 pixels
       this.setFlipX(false)
       this.addDebugVisualization()
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
       this.setDisplaySize(52, 52) // Larger sprite size (52x52)
-      this.setOffset(3, 44) // Decreased Y offset by 2 pixels (46 - 2 = 44)
+      this.setOffset(3, 44 - 12 - 2) // Move down 14 pixels total (44 - 14 = 30)
       this.setFlipX(false)
       this.initializeRedEnemyAnimations()
       this.addDebugVisualization()
@@ -211,20 +238,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       } else {
         // Red enemies keep normal sizing
         this.setDisplaySize(36, 36)
-        this.setOffset(3, 45)
+        this.setOffset(3, 45 - 12 - 2) // Move down 14 pixels total (45 - 14 = 31)
       }
       this.setFlipX(false)
       this.addDebugVisualization()
-    } else if (catColor !== CatColor.BLUE) {
-      // Fallback generated texture settings for non-blue colors
-      if (catColor === CatColor.YELLOW) {
-        // Make yellow enemies 3x wider even with fallback texture
-        this.setDisplaySize(54, 14) // 3x width (18 * 3 = 54)
-        this.setOffset(1, 1)
-      } else {
-        this.setSize(18, 14)
-        this.setOffset(1, 1)
-      }
+    } else if (catColor !== CatColor.BLUE && catColor !== CatColor.YELLOW) {
+      // Fallback generated texture settings for non-blue, non-yellow colors only
+      this.setSize(18, 14)
+      this.setOffset(1, 1)
       this.addDebugVisualization()
     } else {
       // Blue enemy using fallback texture

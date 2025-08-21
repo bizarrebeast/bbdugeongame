@@ -3,6 +3,8 @@
  * Handles discrete level progression with endless mode after level 100
  */
 
+import { EnemySpawningSystem, EnemyType } from './EnemySpawningSystem'
+
 export interface LevelConfig {
   levelNumber: number
   floorCount: number
@@ -10,6 +12,9 @@ export interface LevelConfig {
   collectibleTypes: string[]
   worldWidth: number // in tiles
   isEndless: boolean
+  // New properties for difficulty-based spawning
+  difficultyBudgetPerFloor: number
+  enemySpawnWeights: { [key: string]: number }
 }
 
 export class LevelManager {
@@ -25,14 +30,18 @@ export class LevelManager {
    */
   getLevelConfig(levelNumber: number): LevelConfig {
     const isEndless = levelNumber >= this.ENDLESS_LEVEL
+    const weights = EnemySpawningSystem.getSpawnWeights(levelNumber)
     
     return {
       levelNumber,
       floorCount: this.calculateFloorCount(levelNumber),
-      enemyTypes: this.getEnemyTypes(levelNumber),
+      enemyTypes: this.getEnemyTypes(levelNumber), // Keep for backward compatibility
       collectibleTypes: this.getCollectibleTypes(levelNumber),
       worldWidth: this.getWorldWidth(levelNumber),
-      isEndless
+      isEndless,
+      // New difficulty-based properties
+      difficultyBudgetPerFloor: EnemySpawningSystem.getDifficultyBudget(levelNumber, 1), // Base budget
+      enemySpawnWeights: weights
     }
   }
   
@@ -54,24 +63,26 @@ export class LevelManager {
   
   /**
    * Determine which enemy types are available at this level
-   * Level 1: All types (TEMPORARY for sprite testing)
-   * Level 2: Blue only  
-   * Level 3-4: Blue + Yellow
-   * Level 5-6: Blue + Yellow + Green  
-   * Level 7+: All types (Blue, Yellow, Green, Red)
+   * Now returns all enemy types since we use weighted spawning instead of restrictions
+   * Kept for backward compatibility with existing spawning code
    */
   private getEnemyTypes(levelNumber: number): string[] {
-    if (levelNumber === 1) {
-      return ['blue', 'yellow', 'green', 'red'] // TEMPORARY: All enemies on level 1 for testing
-    } else if (levelNumber <= 2) {
-      return ['blue']
-    } else if (levelNumber <= 4) {
-      return ['blue', 'yellow']
-    } else if (levelNumber <= 6) {
-      return ['blue', 'yellow', 'green']
-    } else {
-      return ['blue', 'yellow', 'green', 'red']
-    }
+    // With the new weighted spawning system, all enemy types are available
+    // but with different spawn probabilities based on level
+    return ['blue', 'yellow', 'green', 'red']
+  }
+
+  /**
+   * Get enemy types to spawn for a specific floor using the new difficulty system
+   */
+  getEnemyTypesForFloor(levelNumber: number, floorNumber: number): EnemyType[] {
+    const budget = EnemySpawningSystem.getDifficultyBudget(levelNumber, floorNumber)
+    const selectedEnemies = EnemySpawningSystem.selectEnemies(budget, levelNumber)
+    
+    // Log for debugging
+    EnemySpawningSystem.logSpawnInfo(levelNumber, floorNumber, selectedEnemies)
+    
+    return selectedEnemies
   }
   
   /**
