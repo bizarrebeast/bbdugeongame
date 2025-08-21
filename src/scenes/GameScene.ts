@@ -57,8 +57,10 @@ export class GameScene extends Phaser.Scene {
   private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
   private invincibilityActive: boolean = false
   private invincibilityTimer: Phaser.Time.TimerEvent | null = null
-  private invincibilityHudTimer!: Phaser.GameObjects.Text
-  private invincibilityHudIcon!: Phaser.GameObjects.Image
+  private invincibilityTimerImage!: Phaser.GameObjects.Image
+  private invincibilityTimerGreyImage!: Phaser.GameObjects.Image
+  private invincibilityTimerMask!: Phaser.GameObjects.Graphics
+  private invincibilityTimeRemaining: number = 0
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
   
@@ -276,6 +278,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('gem-diamond', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond-LB22Ijoji8erIrMFMvtSwd5Y9rDDwS.png?LlEv')
     this.load.image('heart-crystal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/free%20life%20heart%20crystal-2EJMsIvSQKzdgrqytakBZcDbGf7Jpf.png?E1JG')
     this.load.image('invincibility-pendant', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendant-cJISby3d7EEREasbi0gRZkn2u3rNrG.png?xf9m')
+    this.load.image('invincibility-timer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/timer-0GaE5deB5l9rD6D1m8so6Nq3mVA3xa.png?gZWG')
 
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -613,14 +616,15 @@ export class GameScene extends Phaser.Scene {
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
-    // Add lives display with heart crystal icon (left side, top)
-    this.livesIcon = this.add.image(35, 60, 'heart-crystal')
-    this.livesIcon.setDisplaySize(20, 20)
+    // LEFT SIDE: Lives, Crystals, Level
+    // Lives display with heart crystal icon (left side, row 1)
+    this.livesIcon = this.add.image(25, 52, 'heart-crystal')
+    this.livesIcon.setDisplaySize(16, 16)
     this.livesIcon.setDepth(100)
     this.livesIcon.setScrollFactor(0)
     
-    this.livesText = this.add.text(50, 52, 'x3', {
-      fontSize: '16px',
+    this.livesText = this.add.text(40, 52, 'x3', {
+      fontSize: '14px',
       color: '#ff69b4',  // Pink color to match heart crystal theme
       fontFamily: 'Arial Black',
       fontStyle: 'bold',
@@ -633,7 +637,8 @@ export class GameScene extends Phaser.Scene {
         blur: 3,
         fill: true
       }
-    }).setDepth(100)
+    }).setOrigin(0, 0.5).setDepth(100)
+    this.livesText.setScrollFactor(0)
     
     // Create combo text with purple theme (hidden initially)
     this.comboText = this.add.text(
@@ -656,9 +661,27 @@ export class GameScene extends Phaser.Scene {
         }
       }
     ).setOrigin(0.5).setDepth(200).setVisible(false)
-    this.livesText.setScrollFactor(0)
+    this.comboText.setScrollFactor(0)
     
-    // Add level counter (left side, bottom)
+    // Crystal counter (left side, row 2)
+    this.coinCounterText = this.add.text(20, 62, 'CRYSTALS: 0/150', {
+      fontSize: '14px',
+      color: '#40e0d0',  // Teal color for crystals
+      fontFamily: 'Arial Black',
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
+    }).setOrigin(0, 0).setDepth(100)
+    this.coinCounterText.setScrollFactor(0)
+    
+    // Level counter (left side, row 3)
     const currentLevel = this.levelManager.getCurrentLevel()
     this.levelText = this.add.text(20, 72, `LEVEL: ${currentLevel}`, {
       fontSize: '16px',
@@ -677,7 +700,8 @@ export class GameScene extends Phaser.Scene {
     }).setDepth(100)
     this.levelText.setScrollFactor(0)
     
-    // Add score display in center (top)
+    // CENTER: Score and Invincibility Timer
+    // Score display (center, top)
     this.scoreText = this.add.text(screenWidth / 2, 52, 'SCORE: 0', {
       fontSize: '16px',
       color: '#ffd700',  // Gold color
@@ -696,23 +720,25 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Add crystal counter display (center, bottom)
-    this.coinCounterText = this.add.text(screenWidth / 2, 72, 'CRYSTALS: 0/150', {
-      fontSize: '16px',
-      color: '#40e0d0',  // Teal color for crystals
-      fontFamily: 'Arial Black',
-      fontStyle: 'bold',
-      stroke: '#4a148c',  // Dark purple stroke to match HUD
-      strokeThickness: 1,
-      shadow: {
-        offsetX: 2,
-        offsetY: 2,
-        color: '#000000',  // Black drop shadow
-        blur: 3,
-        fill: true
-      }
-    }).setOrigin(0.5, 0).setDepth(100)  // Center-aligned
-    this.coinCounterText.setScrollFactor(0)
+    // Invincibility Timer (center, bottom)
+    // Create grey version (always visible)
+    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 72, 'invincibility-timer')
+    this.invincibilityTimerGreyImage.setDisplaySize(24, 24)
+    this.invincibilityTimerGreyImage.setTint(0x808080) // Grey tint for inactive state
+    this.invincibilityTimerGreyImage.setDepth(100)
+    this.invincibilityTimerGreyImage.setScrollFactor(0)
+    
+    // Create colored version (shown during invincibility)
+    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 72, 'invincibility-timer')
+    this.invincibilityTimerImage.setDisplaySize(24, 24)
+    this.invincibilityTimerImage.setDepth(101)
+    this.invincibilityTimerImage.setScrollFactor(0)
+    this.invincibilityTimerImage.setVisible(false) // Hidden by default
+    
+    // Create circular mask for countdown effect
+    this.invincibilityTimerMask = this.add.graphics()
+    this.invincibilityTimerMask.setDepth(102)
+    this.invincibilityTimerMask.setScrollFactor(0)
     
     // Add hamburger menu button (right side)
     this.hamburgerMenuButton = this.add.text(screenWidth - 20, 64, '☰', {
@@ -2588,6 +2614,97 @@ export class GameScene extends Phaser.Scene {
       this.visibilityMask.setScale(1, 1) // Instant scale back to normal
       this.visibilityMask.setAlpha(1) // Instant fade back to visible
     })
+  }
+  
+  private activateInvincibility(): void {
+    // If already invincible, reset timer to full 10 seconds
+    if (this.invincibilityTimer) {
+      this.invincibilityTimer.destroy()
+    }
+    
+    this.invincibilityActive = true
+    this.invincibilityTimeRemaining = 10
+    
+    // Show colored timer
+    this.invincibilityTimerImage.setVisible(true)
+    
+    // Start countdown timer
+    this.invincibilityTimer = this.time.addEvent({
+      delay: 100, // Update every 100ms for smooth animation
+      callback: () => this.updateInvincibilityTimer(),
+      repeat: 99 // 10 seconds = 100 updates at 100ms each
+    })
+    
+    // Add golden aura to player (we'll implement this later)
+    // this.addPlayerGoldenAura()
+  }
+  
+  private updateInvincibilityTimer(): void {
+    this.invincibilityTimeRemaining -= 0.1
+    
+    if (this.invincibilityTimeRemaining <= 0) {
+      // End invincibility
+      this.invincibilityActive = false
+      this.invincibilityTimeRemaining = 0
+      this.invincibilityTimer = null
+      
+      // Hide colored timer
+      this.invincibilityTimerImage.setVisible(false)
+      
+      // Clear mask
+      this.invincibilityTimerMask.clear()
+      
+      // Remove player aura (we'll implement this later)
+      // this.removePlayerGoldenAura()
+    } else {
+      // Update circular mask for countdown effect
+      this.updateInvincibilityMask()
+      
+      // Pulse effect in last 3 seconds
+      if (this.invincibilityTimeRemaining <= 3) {
+        const pulse = Math.sin(this.invincibilityTimeRemaining * 10) * 0.2 + 0.8
+        this.invincibilityTimerImage.setAlpha(pulse)
+      }
+    }
+  }
+  
+  private updateInvincibilityMask(): void {
+    const centerX = this.cameras.main.width / 2
+    const centerY = 72
+    const radius = 12 // Half of 24px timer size
+    
+    // Calculate angle for clockwise countdown (starts at top, goes clockwise)
+    const progress = this.invincibilityTimeRemaining / 10 // 0 to 1
+    const angle = (1 - progress) * Math.PI * 2 - Math.PI / 2 // Start from top
+    
+    // Clear and redraw mask
+    this.invincibilityTimerMask.clear()
+    
+    // Draw pie slice mask
+    this.invincibilityTimerMask.fillStyle(0xffffff, 1)
+    this.invincibilityTimerMask.beginPath()
+    this.invincibilityTimerMask.moveTo(centerX, centerY)
+    
+    // Draw arc clockwise from top
+    const steps = 32
+    const startAngle = -Math.PI / 2
+    for (let i = 0; i <= steps; i++) {
+      const stepAngle = startAngle + (angle - startAngle) * (i / steps)
+      const x = centerX + Math.cos(stepAngle) * radius
+      const y = centerY + Math.sin(stepAngle) * radius
+      if (i === 0) {
+        this.invincibilityTimerMask.lineTo(x, y)
+      } else {
+        this.invincibilityTimerMask.lineTo(x, y)
+      }
+    }
+    
+    this.invincibilityTimerMask.closePath()
+    this.invincibilityTimerMask.fillPath()
+    
+    // Apply mask to colored timer image
+    const mask = this.invincibilityTimerMask.createGeometryMask()
+    this.invincibilityTimerImage.setMask(mask)
   }
   
   private shouldCollideWithPlatform(): boolean {
