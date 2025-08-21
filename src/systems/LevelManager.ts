@@ -94,11 +94,11 @@ export class LevelManager {
    */
   private getCollectibleTypes(levelNumber: number): string[] {
     if (levelNumber <= 2) {
-      return ['coin']
+      return ['coin', 'treasureChest']  // Add treasure chests for testing
     } else if (levelNumber <= 3) {
-      return ['coin', 'blueCoin']
+      return ['coin', 'blueCoin', 'treasureChest']  // Add treasure chests for testing
     } else if (levelNumber <= 6) {
-      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant']
+      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant', 'treasureChest']  // Add treasure chests for testing
     } else {
       return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant', 'treasureChest']
     }

@@ -1,17 +1,26 @@
 import GameSettings from "../config/GameSettings"
 
+export type ChestTier = 'purple' | 'teal' | 'yellow'
+
 export class TreasureChest {
   public sprite: Phaser.GameObjects.Sprite
   private scene: Phaser.Scene
   private isOpened: boolean = false
   private glowEffect: Phaser.GameObjects.Arc | null = null
   private debugHitbox: Phaser.GameObjects.Graphics | null = null
+  private chestTier: ChestTier
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene
     
-    // Create treasure chest using sprite image (shifted up 4 pixels visually)
-    this.sprite = scene.add.sprite(x, y - 4, 'treasure-chest')
+    // Randomly select chest tier
+    this.chestTier = this.selectRandomChestTier()
+    
+    // Get sprite key based on tier
+    const spriteKey = this.getSpriteKeyForTier(this.chestTier)
+    
+    // Create treasure chest using tier-specific sprite (shifted up 4 pixels visually)
+    this.sprite = scene.add.sprite(x, y - 4, spriteKey)
     this.sprite.setDisplaySize(60, 60) // Set to 60x60 pixels as requested
     this.sprite.setDepth(13)
     
@@ -29,16 +38,45 @@ export class TreasureChest {
       this.createDebugHitbox(x, y)
     }
     
-    // Add glow effect (match the shifted sprite position)
-    this.createGlowEffect(x, y - 4)
+    // Add glow effect (match the shifted sprite position and tier)
+    this.createGlowEffect(x, y - 4, this.chestTier)
     
     // Chest pulsing animation disabled
   }
   
   
-  private createGlowEffect(x: number, y: number): void {
-    // Simple single circle with 15% opacity
-    this.glowEffect = this.scene.add.circle(x, y, 18, 0xffd700)
+  private selectRandomChestTier(): ChestTier {
+    const random = Math.random()
+    // Purple: 60% (common), Teal: 30% (rare), Yellow: 10% (epic)
+    if (random < 0.6) {
+      return 'purple'
+    } else if (random < 0.9) {
+      return 'teal'
+    } else {
+      return 'yellow'
+    }
+  }
+  
+  private getSpriteKeyForTier(tier: ChestTier): string {
+    switch (tier) {
+      case 'purple': return 'purple-chest'
+      case 'teal': return 'teal-chest'
+      case 'yellow': return 'yellow-chest'
+    }
+  }
+  
+  private getGlowColorForTier(tier: ChestTier): number {
+    switch (tier) {
+      case 'purple': return 0x9932cc // Purple glow
+      case 'teal': return 0x008b8b   // Teal glow
+      case 'yellow': return 0xffd700 // Gold glow
+    }
+  }
+  
+  private createGlowEffect(x: number, y: number, tier: ChestTier): void {
+    // Simple single circle with 15% opacity, color based on tier
+    const glowColor = this.getGlowColorForTier(tier)
+    this.glowEffect = this.scene.add.circle(x, y, 18, glowColor)
     this.glowEffect.setAlpha(0.15)
     this.glowEffect.setDepth(12)
     
@@ -86,15 +124,15 @@ export class TreasureChest {
       yoyo: true
     })
     
-    // Generate contents based on level progression
-    const contents = this.generateRewardsByLevel()
+    // Generate contents based on chest tier and level progression
+    const contents = this.generateRewardsByTier(this.chestTier)
     
     // Calculate total points
     let totalPoints = 2500 // Base chest value
     totalPoints += contents.coins * 50 // Regular coins (50 points each)
     totalPoints += contents.blueCoins * 500 // Blue coins (500 points each)
     totalPoints += contents.diamonds * 1000 // Diamonds (1000 points each)
-    totalPoints += contents.freeLifs * 2000 // Free lives (2000 points each)
+    totalPoints += contents.freeLifes * 2000 // Free lives (2000 points each)
     totalPoints += contents.invincibilityPendants * 300 // Invincibility pendants (300 points each)
     
     // Create treasure burst effect
@@ -111,66 +149,43 @@ export class TreasureChest {
     }
   }
   
-  private generateRewardsByLevel(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number } {
-    // Get current level from scene (assuming it's available via registry or level manager)
-    const currentLevel = this.scene.registry.get('currentLevel') || 1
-    
-    // Define reward tiers based on level progression
-    let rewardTier: 'early' | 'mid' | 'late'
-    if (currentLevel <= 3) {
-      rewardTier = 'early'
-    } else if (currentLevel <= 7) {
-      rewardTier = 'mid' 
-    } else {
-      rewardTier = 'late'
-    }
-    
-    // Generate 3-5 total items
-    const totalItems = Math.floor(Math.random() * 3) + 3 // 3-5 items
-    
+  private generateRewardsByTier(tier: ChestTier): { coins: number, blueCoins: number, diamonds: number, freeLifes: number } {
     const rewards = { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0 }
     
-    // Define probabilities for each tier (higher value items less likely)
-    const probabilities = {
-      early: {   // Levels 1-3: Mostly regular coins, no free lives yet
-        coin: 0.85,      // 85% chance for regular coins
-        blueCoin: 0.13,  // 13% chance for blue coins  
-        diamond: 0.02,   // 2% chance for diamonds
-        freeLife: 0.00   // 0% chance for free lives (not available yet)
-      },
-      mid: {     // Levels 4-7: More variety, free lives start appearing
-        coin: 0.62,      // 62% chance for regular coins
-        blueCoin: 0.26,  // 26% chance for blue coins
-        diamond: 0.09,   // 9% chance for diamonds
-        freeLife: 0.03   // 3% chance for free lives
-      },
-      late: {    // Levels 8+: Best rewards
-        coin: 0.40,      // 40% chance for regular coins
-        blueCoin: 0.35,  // 35% chance for blue coins
-        diamond: 0.20,   // 20% chance for diamonds
-        freeLife: 0.05   // 5% chance for free lives
-      }
+    switch (tier) {
+      case 'purple': // Common tier: crystals + small chance of free life
+        rewards.coins = Math.floor(Math.random() * 3) + 2 // 2-4 crystals
+        if (Math.random() < 0.1) { // 10% chance for free life
+          rewards.freeLifes = 1
+        }
+        break
+        
+      case 'teal': // Rare tier: blue gems + crystals + better chance for powerup/free life
+        rewards.blueCoins = Math.floor(Math.random() * 2) + 1 // 1-2 blue gems
+        rewards.coins = Math.floor(Math.random() * 2) + 1 // 1-2 crystals
+        if (Math.random() < 0.25) { // 25% chance for free life or powerup
+          if (Math.random() < 0.7) {
+            rewards.freeLifes = 1
+          } else {
+            // TODO: Add powerup when invincibility pendant system is integrated
+            rewards.freeLifes = 1 // For now, give free life instead
+          }
+        }
+        break
+        
+      case 'yellow': // Epic tier: guaranteed free life or powerup + crystals
+        rewards.coins = Math.floor(Math.random() * 2) + 2 // 2-3 crystals
+        // Guaranteed free life or powerup
+        if (Math.random() < 0.8) {
+          rewards.freeLifes = 1
+        } else {
+          // TODO: Add powerup when invincibility pendant system is integrated
+          rewards.freeLifes = 1 // For now, give free life instead
+        }
+        break
     }
     
-    const tierProbs = probabilities[rewardTier]
-    
-    // Generate each reward item
-    for (let i = 0; i < totalItems; i++) {
-      const roll = Math.random()
-      
-      if (roll < tierProbs.freeLife) {
-        rewards.freeLifes++
-      } else if (roll < tierProbs.freeLife + tierProbs.diamond) {
-        rewards.diamonds++
-      } else if (roll < tierProbs.freeLife + tierProbs.diamond + tierProbs.blueCoin) {
-        rewards.blueCoins++
-      } else {
-        rewards.coins++
-      }
-    }
-    
-    console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST REWARDS (Level ${currentLevel}, Tier: ${rewardTier}):`)
-    console.log(`   Total items: ${totalItems}`)
+    console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST REWARDS (${tier.toUpperCase()} tier):`)
     console.log(`   Regular coins: ${rewards.coins}`)
     console.log(`   Blue coins: ${rewards.blueCoins}`) 
     console.log(`   Diamonds: ${rewards.diamonds}`)

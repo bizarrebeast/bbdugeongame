@@ -255,11 +255,17 @@ export class GameScene extends Phaser.Scene {
     this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%20new-aH3WiqHkbYLeW14yketC7EdmowlQ02.png?jLLJ')
     this.load.image('playerRunRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Running%20right%20foot%20forward%202-aGnWjaFUNnYXwTfNKfSCfCLppOHzDU.png?mXmE')
     
-    // Load treasure chest sprite
-    this.load.image('treasure-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20chest-Lbz3SXcQLBiaVQPtyPcGBghVjEFPaA.png?oDXs')
+    // Load new treasure chest sprites (3 tiers)
+    this.load.image('purple-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/purple%20chest-4wMMVDFuAO3FpYyH7edWzeA3xVENZw.png?IkvS')
+    this.load.image('teal-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20chest-FpKKXWv5XWlb5H19IHW0G49DAm7Adb.png?Odul')
+    this.load.image('yellow-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20chest-QMRMmVk9i7S0qkLteaXfhjqQBI351B.png?sE5u')
     
-    // Load door sprite
-    this.load.image('door-sprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door-MwIAeC2xN9Q3T5FyfJ7U2tOLsM9Aom.png?7q9L')
+    // Load new door sprite
+    this.load.image('door-sprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20door-SX8un6qHvlx4mzlRYUC77dJ4lpBmOT.png?548U')
+    
+    // Load HUD icons
+    this.load.image('door-hud-icon', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door%20for%20hud-veW9YPgRL7GNNZWIF1VkHhGzn4MgcH.png?x2hT')
+    this.load.image('crystal-hud-icon', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20hud%20icon-6cCEP7jp90eqI7W9LeBp7v4s3OgCPX.png?nMJm')
     
     // Load talking bubble sprite
     this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
@@ -282,7 +288,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('gem-diamond', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond-LB22Ijoji8erIrMFMvtSwd5Y9rDDwS.png?LlEv')
     this.load.image('heart-crystal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/free%20life%20heart%20crystal-2EJMsIvSQKzdgrqytakBZcDbGf7Jpf.png?E1JG')
     this.load.image('invincibility-pendant', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendant-cJISby3d7EEREasbi0gRZkn2u3rNrG.png?xf9m')
-    this.load.image('invincibility-timer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/timer-0GaE5deB5l9rD6D1m8so6Nq3mVA3xa.png?gZWG')
+    this.load.image('invincibility-timer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/timer2-X3PMyQUgCU3fz146QaD9mBBy38e8Vw.png?Yy9W')
 
     // Load spike sprites
     this.load.image('yellow-ceiling-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20spikes%20ceiling%20tile-8vq9W1Y2e1RSpgUfMl9sTp0ZILFHL3.png?mUEb')
@@ -629,12 +635,12 @@ export class GameScene extends Phaser.Scene {
     
     // LEFT SIDE: Lives, Crystals, Level
     // Lives display with heart crystal icon (left side, row 1)
-    this.livesIcon = this.add.image(30, 56, 'heart-crystal')
+    this.livesIcon = this.add.image(30, 60, 'heart-crystal')
     this.livesIcon.setDisplaySize(16, 16)
     this.livesIcon.setDepth(100)
     this.livesIcon.setScrollFactor(0)
     
-    this.livesText = this.add.text(45, 56, 'x3', {
+    this.livesText = this.add.text(45, 60, 'x3', {
       fontSize: '14px',
       color: '#ff69b4',  // Pink color to match heart crystal theme
       fontFamily: 'Arial Black',
@@ -674,13 +680,13 @@ export class GameScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(200).setVisible(false)
     this.comboText.setScrollFactor(0)
     
-    // Crystal counter with yellow emerald icon (left side, row 2)
-    const crystalIcon = this.add.image(30, 76, 'gem-yellow-emerald')
+    // Crystal counter with new crystal HUD icon (left side, row 2)
+    const crystalIcon = this.add.image(30, 80, 'crystal-hud-icon')
     crystalIcon.setDisplaySize(16, 16)
     crystalIcon.setDepth(100)
     crystalIcon.setScrollFactor(0)
     
-    this.coinCounterText = this.add.text(45, 76, '0/150', {
+    this.coinCounterText = this.add.text(45, 80, '0/150', {
       fontSize: '14px',
       color: '#ffd700',  // Gold color for crystals
       fontFamily: 'Arial Black',
@@ -697,14 +703,14 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0, 0.5).setDepth(100)
     this.coinCounterText.setScrollFactor(0)
     
-    // Level counter with door icon (left side, row 3)
-    const doorIcon = this.add.image(30, 96, 'door')
+    // Level counter with new door HUD icon (left side, row 3)
+    const doorIcon = this.add.image(30, 100, 'door-hud-icon')
     doorIcon.setDisplaySize(16, 16)
     doorIcon.setDepth(100)
     doorIcon.setScrollFactor(0)
     
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(45, 96, `${currentLevel}`, {
+    this.levelText = this.add.text(45, 100, `${currentLevel}`, {
       fontSize: '14px',
       color: '#9acf07',  // Same green as hamburger menu
       fontFamily: 'Arial Black',
@@ -723,7 +729,7 @@ export class GameScene extends Phaser.Scene {
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
-    this.scoreText = this.add.text(screenWidth / 2, 60, 'SCORE: 0', {
+    this.scoreText = this.add.text(screenWidth / 2, 50, 'SCORE: 0', {
       fontSize: '18px',
       color: '#ffd700',  // Gold color
       fontFamily: 'Arial Black',
@@ -743,15 +749,16 @@ export class GameScene extends Phaser.Scene {
     
     // Invincibility Timer (center, bottom)
     // Create grey version (always visible)
-    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 88, 'invincibility-timer')
-    this.invincibilityTimerGreyImage.setDisplaySize(24, 24)
+    // NOTE: In Phaser, Y increases DOWNWARD. "negative offset" means LOWER on screen = HIGHER Y value
+    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 95, 'invincibility-timer')
+    this.invincibilityTimerGreyImage.setDisplaySize(36, 36)
     this.invincibilityTimerGreyImage.setTint(0x808080) // Grey tint for inactive state
     this.invincibilityTimerGreyImage.setDepth(100)
     this.invincibilityTimerGreyImage.setScrollFactor(0)
     
     // Create colored version (shown during invincibility)
-    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 88, 'invincibility-timer')
-    this.invincibilityTimerImage.setDisplaySize(24, 24)
+    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 95, 'invincibility-timer')
+    this.invincibilityTimerImage.setDisplaySize(36, 36)
     this.invincibilityTimerImage.setDepth(101)
     this.invincibilityTimerImage.setScrollFactor(0)
     this.invincibilityTimerImage.setVisible(false) // Hidden by default
@@ -762,7 +769,7 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.setScrollFactor(0)
     
     // RIGHT SIDE: Hamburger menu
-    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 72, '☰', {
+    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 80, '☰', {
       fontSize: '32px',
       color: '#9acf07',  // Bright green color
       fontFamily: 'Arial Black',
@@ -2174,9 +2181,13 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'invincibilityPendant', collectibleY, floor, floorUsedPositions)
       }
       
-      // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
-      if (allowedCollectibles.includes('treasureChest') && floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
-        this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
+      // Treasure chests: Level-based spawning (2500 points + contents)
+      if (allowedCollectibles.includes('treasureChest') && floor >= 3) {
+        const currentLevel = this.levelManager.getCurrentLevel()
+        const shouldSpawnChest = this.shouldSpawnChestOnFloor(currentLevel, floor)
+        if (shouldSpawnChest) {
+          this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
+        }
       }
       
       // Flash power-ups: DISABLED
@@ -2325,6 +2336,29 @@ export class GameScene extends Phaser.Scene {
     
     // Need 2-3 tiles clearance around door (doors are wider than ladders)
     return Math.abs(x - doorX) <= 2
+  }
+
+  private shouldSpawnChestOnFloor(level: number, floor: number): boolean {
+    // Level-based chest spawning rules:
+    // Levels 1-4: Max 1 chest per level
+    // Levels 5-6: Max 2 chests per level  
+    // Levels 7+: Original rule (1 per 1-3 floors with 35% chance)
+    
+    if (level <= 4) {
+      // Levels 1-4: 1 chest maximum, spawn on middle floors
+      const levelConfig = this.levelManager.getLevelConfig(level)
+      const middleFloor = Math.floor(levelConfig.floorCount / 2)
+      return floor === middleFloor || (floor === middleFloor + 1 && Math.random() < 0.5)
+    } else if (level <= 6) {
+      // Levels 5-6: 2 chests maximum, spread across level
+      const levelConfig = this.levelManager.getLevelConfig(level)
+      const firstChestFloor = Math.floor(levelConfig.floorCount / 3)
+      const secondChestFloor = Math.floor((levelConfig.floorCount * 2) / 3)
+      return floor === firstChestFloor || floor === secondChestFloor
+    } else {
+      // Levels 7+: Original rule
+      return floor % 3 === 0 || Math.random() < 0.35
+    }
   }
 
   private isSafeForTreasureChest(x: number, floor: number): boolean {
@@ -3740,9 +3774,13 @@ export class GameScene extends Phaser.Scene {
           this.placeCollectiblesOfType(validPositions, 1, 'diamond', collectibleY, floor, floorUsedPositions)
         }
         
-        // Treasure chests: 1 per 1-3 floors starting floor 3 (2500 points + contents)
-        if (allowedCollectibles.includes('treasureChest') && floor >= 3 && (floor % 3 === 0 || Math.random() < 0.35)) {
-          this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
+        // Treasure chests: Level-based spawning (2500 points + contents)
+        if (allowedCollectibles.includes('treasureChest') && floor >= 3) {
+          const currentLevel = this.levelManager.getCurrentLevel()
+          const shouldSpawnChest = this.shouldSpawnChestOnFloor(currentLevel, floor)
+          if (shouldSpawnChest) {
+            this.placeCollectiblesOfType(validPositions, 1, 'treasureChest', collectibleY, floor, floorUsedPositions)
+          }
         }
         
         // Flash power-ups: DISABLED
