@@ -8,8 +8,8 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     console.log(`   Position: (${x}, ${y})`)
     console.log(`   Is first level: ${isFirstLevel}`)
     
-    // Use the preloaded door sprite
-    super(scene, x, y, 'door-sprite')
+    // Use the preloaded door sprite (moved up 9 pixels total)
+    super(scene, x, y - 9, 'door-sprite')
     
     this.isFirstLevel = isFirstLevel
     console.log("🚪 DOOR CONSTRUCTOR: Base sprite created")

@@ -2171,13 +2171,13 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'freeLife', collectibleY, floor, floorUsedPositions)
       }
       
-      // Invincibility pendants: same probability as free lives (3% chance per floor after level 3)
+      // Invincibility pendants: INCREASED FOR TESTING (was 3%, now 25% chance per floor after level 3)
       // But never spawn on floor 0 (player spawn floor)
       const pendantRoll = Math.random()
       const pendantIncluded = allowedCollectibles.includes('invincibilityPendant')
       const isPlayerSpawnFloor = floor === 0
       
-      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.03) {
+      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.25) {
         this.placeCollectiblesOfType(validPositions, 1, 'invincibilityPendant', collectibleY, floor, floorUsedPositions)
       }
       
@@ -2729,8 +2729,8 @@ export class GameScene extends Phaser.Scene {
   
   private updateInvincibilityMask(): void {
     const centerX = this.cameras.main.width / 2
-    const centerY = 88  // Updated to match new timer position
-    const radius = 12 // Half of 24px timer size
+    const centerY = 95  // Updated to match new timer position
+    const radius = 18 // Half of 36px timer size
     
     // Calculate angle for clockwise countdown (starts at top, goes clockwise)
     const progress = this.invincibilityTimeRemaining / 10 // 0 to 1
@@ -2739,8 +2739,8 @@ export class GameScene extends Phaser.Scene {
     // Clear and redraw mask
     this.invincibilityTimerMask.clear()
     
-    // Draw pie slice mask
-    this.invincibilityTimerMask.fillStyle(0xffffff, 1)
+    // Draw pie slice mask - this will mask the full-color timer sprite to show countdown
+    this.invincibilityTimerMask.fillStyle(0xff00ff, 1) // Changed from white to magenta
     this.invincibilityTimerMask.beginPath()
     this.invincibilityTimerMask.moveTo(centerX, centerY)
     
@@ -2761,9 +2761,13 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.closePath()
     this.invincibilityTimerMask.fillPath()
     
-    // Apply mask to colored timer image
+    // Apply mask to colored timer image to show countdown progress
     const mask = this.invincibilityTimerMask.createGeometryMask()
     this.invincibilityTimerImage.setMask(mask)
+    
+    // Ensure colored timer is visible and on top
+    this.invincibilityTimerImage.setVisible(true)
+    this.invincibilityTimerImage.setDepth(101)
   }
   
   private addPlayerGoldenAura(): void {
