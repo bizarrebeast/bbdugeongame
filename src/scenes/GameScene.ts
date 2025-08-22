@@ -1938,20 +1938,21 @@ export class GameScene extends Phaser.Scene {
       console.log(`🟢 FLOOR ${floor} POSITIONING: platformY=${platformY}, floorSurfaceY=${floorSurfaceY}, enemyY=${y}`)
       
       // Randomly spawn BaseBlu on some floors (not every floor, max 1 per floor)
-      // TESTING: Spawn on every floor for level 1
       const currentLevel = this.levelManager.getCurrentLevel()
-      const baseBluChance = currentLevel === 1 ? 1.0 : (0.15 + (currentLevel * 0.01)) // 100% on level 1 for testing
-      if (Math.random() < baseBluChance && (currentLevel === 1 || floor % 3 !== 0)) { // Every floor on level 1, otherwise skip every 3rd
+      const baseBluChance = 0.15 + (currentLevel * 0.01) // Normal spawn rate: starts at 15%, increases by 1% per level
+      if (Math.random() < baseBluChance && floor % 3 !== 0) { // Skip every 3rd floor for variety
         // Spawn BaseBlu on this floor
         let baseBluX: number
         let leftBound: number
         let rightBound: number
         
         if (layout.gapStart === -1) {
-          // Complete floor - spawn in center, patrol whole floor
-          baseBluX = tileSize * (floorWidth / 2)
-          leftBound = tileSize * 0.5
-          rightBound = tileSize * (floorWidth - 0.5)
+          // Complete floor - randomize spawn position and patrol area
+          const patrolAreaStart = 1 + Math.random() * 3 // Random start between tiles 1-4
+          const patrolAreaEnd = floorWidth - (1 + Math.random() * 3) // Random end leaving 1-4 tiles from edge
+          baseBluX = tileSize * (patrolAreaStart + (patrolAreaEnd - patrolAreaStart) * Math.random()) // Random position within patrol area
+          leftBound = tileSize * (patrolAreaStart + 0.5)
+          rightBound = tileSize * (patrolAreaEnd - 0.5)
         } else {
           // Floor with gap - choose the larger section for patrol
           const leftSectionSize = layout.gapStart
@@ -1990,40 +1991,48 @@ export class GameScene extends Phaser.Scene {
         continue
       }
 
-      // Create enemies based on selected types
+      // Determine spawn pattern for this floor
+      const spawnPattern = this.getRandomSpawnPattern(selectedEnemies.length)
+      console.log(`🎲 Floor ${floor}: Using spawn pattern '${spawnPattern}' for ${selectedEnemies.length} enemies`)
+      
+      // Create enemies based on selected types and pattern
       for (let enemyIndex = 0; enemyIndex < selectedEnemies.length; enemyIndex++) {
         const enemyType = selectedEnemies[enemyIndex]
         
-        // Calculate position for this enemy
+        // Calculate position for this enemy based on spawn pattern
         let x: number
         let leftBound: number
         let rightBound: number
         
         if (layout.gapStart === -1) {
-          // Complete floor - distribute enemies across floor
-          const sectionSize = floorWidth / selectedEnemies.length
-          const sectionStart = enemyIndex * sectionSize
-          const sectionEnd = (enemyIndex + 1) * sectionSize
+          // Complete floor - use pattern-based positioning
+          const positions = this.calculateEnemyPositions(selectedEnemies.length, spawnPattern, floorWidth, tileSize)
+          const position = positions[enemyIndex]
           
-          leftBound = tileSize * Math.max(1.5, sectionStart)
-          rightBound = tileSize * Math.min(floorWidth - 1.5, sectionEnd)
-          x = (leftBound + rightBound) / 2
+          x = tileSize * position.x
+          leftBound = tileSize * position.leftBound
+          rightBound = tileSize * position.rightBound
         } else {
-          // Floor with gap - place enemies on either left or right section
+          // Floor with gap - randomly assign to left or right section
           const leftSectionSize = layout.gapStart
           const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
           
-          if (enemyIndex % 2 === 0 && leftSectionSize > 4) {
-            // Place on left section
+          // Randomly choose section (not just alternating)
+          const useLeftSection = Math.random() < 0.5 && leftSectionSize > 4
+          
+          if (useLeftSection && leftSectionSize > 4) {
+            // Place on left section with random positioning
+            const randomOffset = 1 + Math.random() * (leftSectionSize - 2)
             leftBound = tileSize * 0.5
             rightBound = tileSize * (leftSectionSize - 0.5)
-            x = (leftBound + rightBound) / 2
+            x = tileSize * randomOffset
           } else if (rightSectionSize > 4) {
-            // Place on right section
+            // Place on right section with random positioning
             const rightStart = layout.gapStart + layout.gapSize
+            const randomOffset = rightStart + 1 + Math.random() * (rightSectionSize - 2)
             leftBound = tileSize * (rightStart + 0.5)
             rightBound = tileSize * (floorWidth - 0.5)
-            x = (leftBound + rightBound) / 2
+            x = tileSize * randomOffset
           } else {
             // Skip if no valid section
             continue
@@ -2056,10 +2065,16 @@ export class GameScene extends Phaser.Scene {
             this,
             x,
             y,
-            tileSize * 0.5,  // All enemies use full floor bounds
-            tileSize * (floorWidth - 0.5),
+            leftBound,  // Use calculated bounds for more varied patrol areas
+            rightBound,
             color as any
           )
+          
+          // Randomize initial direction (50/50 chance)
+          if (Math.random() < 0.5) {
+            cat.reverseDirection() // Start going opposite direction
+          }
+          
           this.cats.add(cat)
           console.log(`🐱 SPAWN: ${enemyType} (${color}) at (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
           enemiesCreated++
@@ -2068,6 +2083,102 @@ export class GameScene extends Phaser.Scene {
     }
     
     console.log(`🐱 CREATE CATS COMPLETE: Created ${enemiesCreated} enemies total`)
+  }
+
+  /**
+   * Get a random spawn pattern for enemies on a floor
+   */
+  private getRandomSpawnPattern(enemyCount: number): string {
+    const patterns = ['spread', 'cluster', 'edges', 'random']
+    
+    // Some patterns work better with certain enemy counts
+    if (enemyCount === 1) {
+      return Math.random() < 0.7 ? 'random' : 'center'
+    } else if (enemyCount === 2) {
+      return Math.random() < 0.5 ? 'edges' : 'spread'
+    } else {
+      // 3+ enemies can use any pattern
+      return patterns[Math.floor(Math.random() * patterns.length)]
+    }
+  }
+
+  /**
+   * Calculate enemy positions based on spawn pattern
+   */
+  private calculateEnemyPositions(enemyCount: number, pattern: string, floorWidth: number, tileSize: number): Array<{x: number, leftBound: number, rightBound: number}> {
+    const positions: Array<{x: number, leftBound: number, rightBound: number}> = []
+    const margin = 1.5 // Tiles from edge
+    const usableWidth = floorWidth - (margin * 2)
+    
+    switch (pattern) {
+      case 'spread':
+        // Evenly distribute across floor with slight randomization
+        for (let i = 0; i < enemyCount; i++) {
+          const basePosition = margin + (usableWidth / (enemyCount + 1)) * (i + 1)
+          const randomOffset = (Math.random() - 0.5) * 1.5 // ±0.75 tiles variance
+          const x = Math.max(margin, Math.min(floorWidth - margin, basePosition + randomOffset))
+          
+          // Give each enemy a section to patrol
+          const sectionWidth = usableWidth / enemyCount
+          const leftBound = Math.max(0.5, margin + (i * sectionWidth))
+          const rightBound = Math.min(floorWidth - 0.5, margin + ((i + 1) * sectionWidth))
+          
+          positions.push({ x, leftBound, rightBound })
+        }
+        break
+        
+      case 'cluster':
+        // Group enemies together in center area
+        const clusterCenter = floorWidth / 2
+        const clusterRadius = Math.min(2, usableWidth / 4) // Max 2 tiles radius
+        
+        for (let i = 0; i < enemyCount; i++) {
+          const angle = (Math.PI * 2 * i) / enemyCount
+          const radius = Math.random() * clusterRadius
+          const x = Math.max(margin, Math.min(floorWidth - margin, 
+            clusterCenter + Math.cos(angle) * radius))
+          
+          // Shared patrol area for cluster
+          const leftBound = Math.max(0.5, clusterCenter - clusterRadius - 1)
+          const rightBound = Math.min(floorWidth - 0.5, clusterCenter + clusterRadius + 1)
+          
+          positions.push({ x, leftBound, rightBound })
+        }
+        break
+        
+      case 'edges':
+        // Place enemies near edges of platform
+        for (let i = 0; i < enemyCount; i++) {
+          const isLeftSide = i % 2 === 0
+          const x = isLeftSide ? 
+            margin + Math.random() * 2 : // Left side (tiles 1.5-3.5)
+            floorWidth - margin - Math.random() * 2 // Right side
+          
+          // Give edge enemies wider patrol areas
+          const leftBound = 0.5
+          const rightBound = floorWidth - 0.5
+          
+          positions.push({ x, leftBound, rightBound })
+        }
+        break
+        
+      case 'random':
+      default:
+        // Completely random positioning
+        for (let i = 0; i < enemyCount; i++) {
+          const x = margin + Math.random() * usableWidth
+          
+          // Random patrol area sizes
+          const patrolRadius = 2 + Math.random() * 3 // 2-5 tiles radius
+          const leftBound = Math.max(0.5, x - patrolRadius)
+          const rightBound = Math.min(floorWidth - 0.5, x + patrolRadius)
+          
+          positions.push({ x, leftBound, rightBound })
+        }
+        break
+    }
+    
+    return positions
   }
   
   private createTemporaryFloorGrid(): void {
@@ -2277,13 +2388,13 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'freeLife', collectibleY, floor, floorUsedPositions)
       }
       
-      // Invincibility pendants: INCREASED FOR TESTING (was 3%, now 25% chance per floor after level 3)
+      // Invincibility pendants: Normal spawn rate (3% chance per floor after level 3)
       // But never spawn on floor 0 (player spawn floor)
       const pendantRoll = Math.random()
       const pendantIncluded = allowedCollectibles.includes('invincibilityPendant')
       const isPlayerSpawnFloor = floor === 0
       
-      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.25) {
+      if (pendantIncluded && !isPlayerSpawnFloor && pendantRoll < 0.03) {
         this.placeCollectiblesOfType(validPositions, 1, 'invincibilityPendant', collectibleY, floor, floorUsedPositions)
       }
       
