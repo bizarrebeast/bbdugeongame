@@ -161,38 +161,37 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
       this.setVelocityX(0)
       
+      // Check if at ground floor limit FIRST, before any movement
+      const tileSize = GameSettings.game.tileSize
+      const groundFloorY = GameSettings.canvas.height - tileSize/2 // Ground floor platform position
+      const groundFloorLimit = groundFloorY - 20 // Allow player to reach just above ground platforms
+      const atGroundFloor = this.y >= groundFloorLimit
+      
       if (upPressed) {
         this.setVelocityY(-GameSettings.game.climbSpeed)
         // Track climbing movement for animation
         this.isMoving = true
-      } else if (downPressed) {
-        // Always allow climbing down, but with floor boundary protection
-        const tileSize = GameSettings.game.tileSize
-        const groundFloorY = GameSettings.canvas.height - tileSize/2 // Ground floor platform position
-        const groundFloorLimit = groundFloorY - 20 // Allow player to reach just above ground platforms
-        
-        if (this.y < groundFloorLimit) {
-          // Safe to climb down
-          this.setVelocityY(GameSettings.game.climbSpeed)
-          // Track climbing movement for animation
-          this.isMoving = true
-        } else {
-          // At ground floor limit - stop here to prevent falling through
-          this.setVelocityY(0)
-        }
+      } else if (downPressed && !atGroundFloor) {
+        // Only allow climbing down if NOT at ground floor
+        this.setVelocityY(GameSettings.game.climbSpeed)
+        // Track climbing movement for animation
+        this.isMoving = true
       } else {
         this.setVelocityY(0)
       }
       
-      // Allow horizontal movement to exit ladder at any time
-      if (leftPressed) {
-        this.exitClimbing()
-        this.setFlipX(true)  // Face left when exiting ladder
-        this.setVelocityX(-GameSettings.game.playerSpeed) // Start moving immediately
-      } else if (rightPressed) {
-        this.exitClimbing()
-        this.setFlipX(false)  // Face right when exiting ladder
-        this.setVelocityX(GameSettings.game.playerSpeed) // Start moving immediately
+      // Prevent horizontal movement to exit ladder when at ground floor
+      // This prevents falling through the floor with any directional combination
+      if (!atGroundFloor) {
+        if (leftPressed) {
+          this.exitClimbing()
+          this.setFlipX(true)  // Face left when exiting ladder
+          this.setVelocityX(-GameSettings.game.playerSpeed) // Start moving immediately
+        } else if (rightPressed) {
+          this.exitClimbing()
+          this.setFlipX(false)  // Face right when exiting ladder
+          this.setVelocityX(GameSettings.game.playerSpeed) // Start moving immediately
+        }
       }
       
       // Exit climbing with jump
