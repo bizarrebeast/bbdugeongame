@@ -729,7 +729,7 @@ export class GameScene extends Phaser.Scene {
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
-    this.scoreText = this.add.text(screenWidth / 2, 50, 'SCORE: 0', {
+    this.scoreText = this.add.text(screenWidth / 2, 50, '0', {
       fontSize: '18px',
       color: '#ffd700',  // Gold color
       fontFamily: 'Arial Black',
@@ -1728,8 +1728,8 @@ export class GameScene extends Phaser.Scene {
       
       // Build list of valid positions
       for (let x = 2; x < GameSettings.game.floorWidth - 2; x++) {
-        // Skip if over a gap or within 1-tile buffer zone
-        if (layout.gapStart !== -1 && x >= layout.gapStart - 1 && x < layout.gapStart + layout.gapSize + 1) {
+        // Skip if over a gap or within 2-tile buffer zone to avoid placing near pink spikes
+        if (layout.gapStart !== -1 && x >= layout.gapStart - 2 && x < layout.gapStart + layout.gapSize + 2) {
           continue
         }
         
@@ -2740,7 +2740,7 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.clear()
     
     // Draw pie slice mask - this will mask the full-color timer sprite to show countdown
-    this.invincibilityTimerMask.fillStyle(0xff00ff, 1) // Changed from white to magenta
+    this.invincibilityTimerMask.fillStyle(0xc0c0c0, 0.5) // Light grey with 50% opacity
     this.invincibilityTimerMask.beginPath()
     this.invincibilityTimerMask.moveTo(centerX, centerY)
     
@@ -3164,7 +3164,7 @@ export class GameScene extends Phaser.Scene {
   private updateScoreDisplay(): void {
     // Show total score = accumulated from completed levels + current level score
     const totalScore = this.accumulatedScore + this.score
-    this.scoreText.setText(`SCORE: ${totalScore}`)
+    this.scoreText.setText(`${totalScore}`)
   }
   
   private updateComboDisplay(): void {
