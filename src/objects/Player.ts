@@ -17,6 +17,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private runningTiltTimer: number = 0
   private lastFrameWasJump: boolean = false
   
+  // Scaleable jump system
+  private jumpButtonDown: boolean = false
+  private jumpHoldTime: number = 0
+  private isAirborne: boolean = false
+  private jumpReleased: boolean = false
+  private readonly MIN_JUMP_VELOCITY: number = -250 // Small hop - just enough to be useful
+  private readonly MAX_JUMP_VELOCITY: number = -350 // Full jump (current value)
+  private readonly MAX_JUMP_HOLD_TIME: number = 300 // milliseconds to reach max height
+  private readonly MIN_HOLD_TIME: number = 50 // Minimum time before boost starts
+  
   // Speech/Thought bubble system
   private idleTimer: number = 0
   private readonly IDLE_THRESHOLD: number = 5000 // 5 seconds in milliseconds
@@ -103,7 +113,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  update(): void {
+  update(time: number, delta: number): void {
     const onGround = this.body!.blocked.down
     const spaceKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     
@@ -119,6 +129,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.upPressed || false)
     const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.downPressed || false)
     const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || (this.touchControls?.isJumpJustPressed() || false)
+    const jumpButtonHeld = spaceKey.isDown || (this.touchControls?.jumpPressed || false)
     
     // Track if player is moving horizontally
     this.isMoving = (leftPressed || rightPressed) && !this.isClimbing
@@ -147,9 +158,58 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityX(0)
       }
       
-      // Jumping
-      if (jumpJustPressed && onGround) {
-        this.setVelocityY(GameSettings.game.jumpVelocity)
+      // Scaleable jumping system
+      if (jumpJustPressed && onGround && !this.isAirborne) {
+        // Start jump with initial velocity
+        this.jumpButtonDown = true
+        this.jumpHoldTime = 0
+        this.isAirborne = true
+        this.jumpReleased = false
+        // Apply initial jump velocity
+        this.setVelocityY(this.MIN_JUMP_VELOCITY)
+        console.log(`🚀 JUMP START: Initial velocity = ${this.MIN_JUMP_VELOCITY}`)
+      }
+      
+      // Continue boosting jump while airborne
+      if (this.isAirborne && this.jumpButtonDown && !this.jumpReleased) {
+        if (jumpButtonHeld) {
+          this.jumpHoldTime += delta
+          
+          // Only start boosting after minimum hold time
+          if (this.jumpHoldTime > this.MIN_HOLD_TIME && 
+              this.jumpHoldTime < this.MAX_JUMP_HOLD_TIME && 
+              this.body?.velocity.y! < 0) {
+            
+            // Calculate boost based on how long held (ramp up over time)
+            const holdProgress = (this.jumpHoldTime - this.MIN_HOLD_TIME) / (this.MAX_JUMP_HOLD_TIME - this.MIN_HOLD_TIME)
+            const boostForce = -5 - (holdProgress * 10) // Starts at -5, ramps to -15
+            const oldVelocity = this.body!.velocity.y
+            this.setVelocityY(this.body!.velocity.y + boostForce)
+            
+            // Cap at max velocity
+            if (this.body!.velocity.y < this.MAX_JUMP_VELOCITY) {
+              this.setVelocityY(this.MAX_JUMP_VELOCITY)
+              console.log(`⚡ JUMP MAX: Reached max velocity ${this.MAX_JUMP_VELOCITY}`)
+            } else {
+              console.log(`📈 JUMP BOOST: ${oldVelocity.toFixed(0)} -> ${this.body!.velocity.y.toFixed(0)} (hold: ${this.jumpHoldTime.toFixed(0)}ms)`)
+            }
+          }
+        } else {
+          // Button released
+          this.jumpButtonDown = false
+          this.jumpReleased = true
+          console.log(`🔚 JUMP RELEASED at ${this.jumpHoldTime.toFixed(0)}ms - ${this.jumpHoldTime < this.MIN_HOLD_TIME ? 'QUICK TAP (small jump)' : 'HELD (boosted jump)'}`)
+        }
+      }
+      
+      // Reset jump state when landing - but with a small delay to prevent immediate re-triggering
+      if (onGround && this.isAirborne && this.body?.velocity.y! >= 0) {
+        this.isAirborne = false
+        this.jumpButtonDown = false
+        this.jumpReleased = false
+        const totalHoldTime = this.jumpHoldTime
+        this.jumpHoldTime = 0
+        console.log(`🏁 JUMP LANDED: Total hold time was ${totalHoldTime.toFixed(0)}ms`)
       }
     }
     
@@ -174,11 +234,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Track climbing movement for animation
         this.isMoving = true
       } else if (downPressed && !atLadderBottom) {
-        // Only allow climbing down if not at ladder bottom
+        // Allow climbing down but stop at ladder bottom
         this.setVelocityY(GameSettings.game.climbSpeed)
         // Track climbing movement for animation
         this.isMoving = true
       } else {
+        // Stop movement when not pressing or at ladder bottom
         this.setVelocityY(0)
       }
       
@@ -186,10 +247,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Players must reach the top/bottom or jump to exit
       // (Horizontal exit while climbing is disabled)
       
-      // Exit climbing with jump
+      // Exit climbing with jump (always full jump from ladder)
       if (jumpJustPressed) {
         this.exitClimbing()
-        this.setVelocityY(GameSettings.game.jumpVelocity)
+        this.setVelocityY(this.MAX_JUMP_VELOCITY)
       }
     }
     

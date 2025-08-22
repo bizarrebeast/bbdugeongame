@@ -3853,7 +3853,7 @@ export class GameScene extends Phaser.Scene {
     // }
   }
 
-  update(_time: number, _deltaTime: number): void {
+  update(time: number, deltaTime: number): void {
     if (this.isGameOver) return
     
     
@@ -3867,7 +3867,7 @@ export class GameScene extends Phaser.Scene {
     this.updateDoorPrompt()
     
     // Update player
-    this.player.update()
+    this.player.update(time, deltaTime)
     
     // Update golden aura position if invincible
     if (this.playerGoldenAura && this.invincibilityActive) {
