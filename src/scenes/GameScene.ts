@@ -3915,11 +3915,7 @@ export class GameScene extends Phaser.Scene {
     const playerFloor = Math.max(0, Math.floor((GameSettings.canvas.height - this.player.y - tileSize/2) / floorSpacing))
     
     if (playerFloor !== this.currentFloor) {
-      // Award bonus points for reaching new floors
-      if (playerFloor > this.currentFloor) {
-        this.score += GameSettings.scoring.floorBonus
-        this.updateScoreDisplay()
-      }
+      // Floor changed - update tracking (no points awarded)
       this.currentFloor = playerFloor
       // No floor text to update anymore - we show coins instead
     }
