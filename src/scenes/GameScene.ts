@@ -1,6 +1,7 @@
 import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
 import { Cat } from "../objects/Cat"
+import { BaseBlu } from "../objects/BaseBlu"
 import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
@@ -22,6 +23,7 @@ export class GameScene extends Phaser.Scene {
   private player!: Player
   private cats!: Phaser.Physics.Arcade.Group
   private stalkerCats!: Phaser.Physics.Arcade.Group
+  private baseBlus!: Phaser.Physics.Arcade.Group
   private coins: Coin[] = []
   private blueCoins: BlueCoin[] = []
   private diamonds: Diamond[] = []
@@ -293,6 +295,17 @@ export class GameScene extends Phaser.Scene {
     // Load spike sprites
     this.load.image('yellow-ceiling-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20spikes%20ceiling%20tile-8vq9W1Y2e1RSpgUfMl9sTp0ZILFHL3.png?mUEb')
     this.load.image('pink-floor-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20spikes%20floor%20tile-ncAVgIHazwYlznCBP4H6LWLiIhN7OF.png?n27v')
+    
+    // Load BaseBlu enemy sprites (9 eye positions)
+    this.load.image('baseblue-eyes-center', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20center-BWjYc09iCwYsTuEB3TEsa7GdmDc4Nj.png?NZtQ')
+    this.load.image('baseblue-eyes-down', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20down-Vtp9tuVzlbp29Cn3GqoEVHzSGyZLYX.png?u15t')
+    this.load.image('baseblue-eyes-down-right', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20down%20right-eJGRVL9E1aqNPUimWVa0aoEEHbmMca.png?ObTg')
+    this.load.image('baseblue-eyes-middle-right', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20middle%20right-ShBskufoh2zXFcfI5AHUCpx6ecnIWi.png?TizP')
+    this.load.image('baseblue-eyes-up', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20up-lot6W1Y3ns3uhL8Xd59yoSCusiT48e.png?fMIa')
+    this.load.image('baseblue-eyes-up-left', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20up%20left-biYISTHmHXS9VFQa63REv8KCGeHMC2.png?Fp2W')
+    this.load.image('baseblue-eyes-middle-left', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20middle%20left-o5tw4V3qJ9gmASZ2TjaeUcJpD220CM.png?bL2r')
+    this.load.image('baseblue-eyes-down-left', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20down%20left-8txJQ9OPVkMTkW0eaWprmvS5igTbqZ.png?hOzV')
+    this.load.image('baseblue-eyes-blinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20blinking-nZFjSjOXa1RAYpXPefApbKEET49sRr.png?96YM')
 
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -416,6 +429,12 @@ export class GameScene extends Phaser.Scene {
     // Create stalker cats group  
     this.stalkerCats = this.physics.add.group({
       classType: Cat,
+      runChildUpdate: true
+    })
+    
+    // Create BaseBlu enemies group
+    this.baseBlus = this.physics.add.group({
+      classType: BaseBlu,
       runChildUpdate: true
     })
     
@@ -579,6 +598,19 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.stalkerCats,
       this.handlePlayerStalkerCatInteraction,
+      undefined,
+      this
+    )
+    
+    // BaseBlu collisions
+    this.physics.add.collider(this.baseBlus, this.platforms)
+    // BaseBlu can walk on spikes - no spike collision
+    
+    // Player vs BaseBlu collision - solid obstacle with special interactions
+    this.physics.add.collider(
+      this.player,
+      this.baseBlus,
+      this.handlePlayerBaseBluInteraction,
       undefined,
       this
     )
@@ -1874,6 +1906,56 @@ export class GameScene extends Phaser.Scene {
       
       console.log(`🟢 FLOOR ${floor} POSITIONING: platformY=${platformY}, floorSurfaceY=${floorSurfaceY}, enemyY=${y}`)
       
+      // Randomly spawn BaseBlu on some floors (not every floor, max 1 per floor)
+      // TESTING: Spawn on every floor for level 1
+      const currentLevel = this.levelManager.getCurrentLevel()
+      const baseBluChance = currentLevel === 1 ? 1.0 : (0.15 + (currentLevel * 0.01)) // 100% on level 1 for testing
+      if (Math.random() < baseBluChance && (currentLevel === 1 || floor % 3 !== 0)) { // Every floor on level 1, otherwise skip every 3rd
+        // Spawn BaseBlu on this floor
+        let baseBluX: number
+        let leftBound: number
+        let rightBound: number
+        
+        if (layout.gapStart === -1) {
+          // Complete floor - spawn in center, patrol whole floor
+          baseBluX = tileSize * (floorWidth / 2)
+          leftBound = tileSize * 0.5
+          rightBound = tileSize * (floorWidth - 0.5)
+        } else {
+          // Floor with gap - choose the larger section for patrol
+          const leftSectionSize = layout.gapStart
+          const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
+          
+          if (rightSectionSize >= leftSectionSize && rightSectionSize > 3) {
+            // Use right section if it's larger
+            const rightStart = layout.gapStart + layout.gapSize
+            baseBluX = tileSize * (rightStart + rightSectionSize / 2)
+            leftBound = tileSize * (rightStart + 0.5)
+            rightBound = tileSize * (floorWidth - 0.5)
+          } else if (leftSectionSize > 3) {
+            // Use left section
+            baseBluX = tileSize * (leftSectionSize / 2)
+            leftBound = tileSize * 0.5
+            rightBound = tileSize * (layout.gapStart - 0.5)
+          } else {
+            // Skip this floor if both sections are too small
+            console.log(`🔵 SKIPPING BaseBlu on floor ${floor} - sections too small`)
+            continue
+          }
+        }
+        
+        const baseBlu = new BaseBlu(this, baseBluX, y)
+        
+        baseBlu.setPlatformBounds(leftBound, rightBound)
+        this.baseBlus.add(baseBlu)
+        
+        // Log detailed spawn info
+        const baseBluBody = baseBlu.body as Phaser.Physics.Arcade.Body
+        console.log(`🔵 SPAWN: BaseBlu at (${baseBluX.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+        console.log(`   Final hitbox: ${baseBluBody.width}x${baseBluBody.height}`)
+        console.log(`   Patrol bounds: ${leftBound.toFixed(0)} to ${rightBound.toFixed(0)}`)
+      }
+      
       // Use new difficulty-based enemy spawning system
       const selectedEnemies = this.levelManager.getEnemyTypesForFloor(this.levelManager.getCurrentLevel(), floor)
       
@@ -2915,6 +2997,50 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private handlePlayerBaseBluInteraction(
+    player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    baseBlu: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    if (this.isGameOver) return
+    
+    const playerObj = player as Player
+    const baseBluObj = baseBlu as BaseBlu
+    
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const baseBluBody = baseBluObj.body as Phaser.Physics.Arcade.Body
+    
+    // Check if player is invincible and can kill BaseBlu
+    console.log(`🔵 BASEBLUE COLLISION: invincibilityTimeRemaining=${this.invincibilityTimeRemaining}`)
+    if (this.invincibilityTimeRemaining > 0 && baseBluObj.canBeKilledByInvinciblePlayer()) {
+      console.log(`🔵 BASEBLUE: Killed by invincible player!`)
+      const points = baseBluObj.handleInvinciblePlayerKill()
+      this.score += points
+      this.updateScoreDisplay()
+      this.showPointPopup(baseBluObj.x, baseBluObj.y - 20, points)
+      
+      // Remove BaseBlu from group
+      this.baseBlus.remove(baseBluObj)
+      return
+    }
+    
+    // Check if player is on top (bounce scenario)
+    const playerFalling = playerBody.velocity.y > 0
+    const playerAbove = playerBody.bottom <= baseBluBody.top + 10
+    
+    if (playerFalling && playerAbove) {
+      // Player bounces off top - NO POINTS awarded
+      baseBluObj.handlePlayerBounce()
+      playerBody.setVelocityY(GameSettings.game.jumpVelocity * 0.8) // Bounce up
+    } else {
+      // Any collision (side or top) - BaseBlu gets stunned
+      baseBluObj.startStun()
+      
+      // Push player back slightly
+      const pushDirection = playerBody.x < baseBluBody.x ? -1 : 1
+      playerBody.setVelocityX(pushDirection * 100)
+    }
+  }
+  
   private handlePlayerStalkerCatInteraction(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     cat: Phaser.Types.Physics.Arcade.GameObjectWithBody
@@ -3625,6 +3751,11 @@ export class GameScene extends Phaser.Scene {
       catObj.update(this.time.now, this.game.loop.delta)
       
       // Red cats no longer climb ladders
+    })
+    
+    // Update all BaseBlu enemies
+    this.baseBlus.children.entries.forEach(baseBlu => {
+      (baseBlu as BaseBlu).update(this.time.now, this.game.loop.delta)
     })
     
     // Check if player is no longer overlapping any ladder while climbing
