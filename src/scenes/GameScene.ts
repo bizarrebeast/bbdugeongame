@@ -351,7 +351,7 @@ export class GameScene extends Phaser.Scene {
     
     // Start pooled loading for advanced error handling and retries
     this.assetPool.loadAllAssets().then(() => {
-      console.log('All assets loaded via AssetPool - retries and fallbacks ready')
+      // All assets loaded via AssetPool (replaced console.log)
       
       // Mark that assets are ready
       this.registry.set('assetsReady', true)
@@ -513,7 +513,7 @@ export class GameScene extends Phaser.Scene {
     
     if (!shouldShowAnimation) {
       // Death/retry - skip intro animation, spawn directly
-      console.log('💀 DEATH/RETRY DETECTED - Skipping intro animation')
+      // Death/retry detected - skipping intro animation (replaced console.log)
       this.player.setPosition(spawnX, spawnY)
       this.player.body!.enable = true
       this.isLevelStarting = false
@@ -521,10 +521,10 @@ export class GameScene extends Phaser.Scene {
       this.showStartBanner()
     } else {
       // New level - show intro animation
-      console.log('🎬 NEW LEVEL - Showing intro animation')
+      // New level - showing intro animation (replaced console.log)
       // IMMEDIATELY disable physics to prevent falling before intro
       this.player.body!.enable = false
-      console.log('🚫 Player physics DISABLED immediately to prevent falling')
+      // Player physics disabled to prevent falling (replaced console.log)
       
       // Start intro immediately - assets will be checked during animation
       this.startLevelIntro(spawnX, spawnY)
@@ -534,9 +534,9 @@ export class GameScene extends Phaser.Scene {
     // this.createTemporaryFloorGrid()
     
     // Add some cats to test (pass floor layouts)
-    console.log('🎮 ABOUT TO CALL createCats()...')
+    // About to call createCats() (replaced console.log)
     this.createCats()
-    console.log('🎮 createCats() call completed')
+    // createCats() call completed (replaced console.log)
     
     // Add stalker cats
     this.createStalkerCats()
@@ -853,7 +853,7 @@ export class GameScene extends Phaser.Scene {
     this.hamburgerMenuButton.setInteractive({ useHandCursor: true })
     this.hamburgerMenuButton.on('pointerdown', () => {
       // Future: Open settings/menu
-      console.log('Hamburger menu clicked - feature coming soon!')
+      // Hamburger menu clicked (replaced console.log)
     })
     
     // Initialize displays
@@ -1841,7 +1841,7 @@ export class GameScene extends Phaser.Scene {
           }
           
           if (conflictsWithLadder) {
-            console.log(`⚠️ Skipping ceiling spike at tile ${tileX} - too close to ladder`)
+            // Skipping ceiling spike - too close to ladder (replaced console.log)
             continue
           }
           
@@ -1849,7 +1849,7 @@ export class GameScene extends Phaser.Scene {
           const idx = validPositions.indexOf(tileX)
           if (idx > -1) validPositions.splice(idx, 1)
           
-          console.log(`⬇️ Creating yellow ceiling spike at floor ${floor}, tile X=${tileX}, Y=${ceilingY}`)
+          // Creating yellow ceiling spike (replaced console.log)
           this.createCeilingSpikeGraphics(tileX * tileSize + tileSize/2, ceilingY, tileSize)
         }
       }
@@ -1862,7 +1862,7 @@ export class GameScene extends Phaser.Scene {
     // Position spikes hanging from ceiling
     const spikeBaseY = y - tileSize/2 + 1 // Attach to ceiling
     
-    console.log(`🟡 Creating yellow ceiling spike sprite at (${x}, ${spikeBaseY})`)
+    // Creating yellow ceiling spike sprite (replaced console.log)
     
     // Create yellow ceiling spike sprite (width matches tile size, contains 3 spikes pointing down)
     const spikeSprite = this.add.image(x, spikeBaseY, 'yellow-ceiling-spike-tile')
@@ -1900,11 +1900,11 @@ export class GameScene extends Phaser.Scene {
       if (ladderFloor === floor || ladderFloor === floor - 1 || ladderFloor === floor + 1) {
         const ladderTileX = Math.floor(ladderObj.x / tileSize)
         positions.push(ladderTileX)
-        console.log(`🪜 Floor ${floor}: Found ladder at tile X=${ladderTileX}, ladder Y=${ladderObj.y}`)
+        // Found ladder position (replaced console.log)
       }
     })
     
-    console.log(`🪜 Floor ${floor}: Total ladder positions: ${positions.join(', ')}`)
+    // Total ladder positions (replaced console.log)
     return positions
   }
 
@@ -1913,10 +1913,10 @@ export class GameScene extends Phaser.Scene {
     const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
     
-    console.log(`🎯 Using new difficulty-based enemy spawning system for Level ${this.levelManager.getCurrentLevel()}`)
+    // Using difficulty-based enemy spawning system (replaced console.log)
     
     // Debug: Log the enemy spawning process
-    console.log(`🐛 ENEMY SPAWNING DEBUG START`)
+    // Enemy spawning debug start (replaced console.log)
     
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     
@@ -1935,7 +1935,7 @@ export class GameScene extends Phaser.Scene {
       const floorSurfaceY = platformY - tileSize/2  // Top surface of platform tiles
       const y = floorSurfaceY - 15     // Position enemy standing on top (hitbox bottom above surface)
       
-      console.log(`🟢 FLOOR ${floor} POSITIONING: platformY=${platformY}, floorSurfaceY=${floorSurfaceY}, enemyY=${y}`)
+      // Floor positioning info (replaced console.log)
       
       // Randomly spawn BaseBlu on some floors (not every floor, max 1 per floor)
       const currentLevel = this.levelManager.getCurrentLevel()
@@ -1984,16 +1984,16 @@ export class GameScene extends Phaser.Scene {
       // Use new difficulty-based enemy spawning system
       const selectedEnemies = this.levelManager.getEnemyTypesForFloor(this.levelManager.getCurrentLevel(), floor)
       
-      console.log(`🐛 Floor ${floor}: Selected enemies: ${selectedEnemies.join(', ')}`)
+      // Selected enemies for floor (replaced console.log)
       
       if (selectedEnemies.length === 0) {
-        console.log(`🎯 Floor ${floor}: No enemies selected by difficulty system`)
+        // No enemies selected by difficulty system (replaced console.log)
         continue
       }
 
       // Determine spawn pattern for this floor
       const spawnPattern = this.getRandomSpawnPattern(selectedEnemies.length)
-      console.log(`🎲 Floor ${floor}: Using spawn pattern '${spawnPattern}' for ${selectedEnemies.length} enemies`)
+      // Using spawn pattern for enemies (replaced console.log)
       
       // Create enemies based on selected types and pattern
       for (let enemyIndex = 0; enemyIndex < selectedEnemies.length; enemyIndex++) {
@@ -2040,7 +2040,7 @@ export class GameScene extends Phaser.Scene {
         }
         
         // Create the appropriate enemy type
-        console.log(`🐛 Creating enemy: ${enemyType} at position (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+        // Creating enemy at position (replaced console.log)
         
         if (EnemySpawningSystem.isStalkerType(enemyType)) {
           // Create Stalker enemy as a regular Cat with stalker flag
@@ -2055,11 +2055,11 @@ export class GameScene extends Phaser.Scene {
           )
           stalkerCat.setPlayerReference(this.player)
           this.stalkerCats.add(stalkerCat)
-          console.log(`🔴 SPAWN: Stalker at (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+          // Spawning stalker (replaced console.log)
         } else {
           // Create regular Cat enemy
           const color = EnemySpawningSystem.getColorForEnemyType(enemyType)
-          console.log(`🐛 Converting ${enemyType} to color: ${color}`)
+          // Converting enemy type to color (replaced console.log)
           
           const cat = new Cat(
             this,
@@ -2076,13 +2076,13 @@ export class GameScene extends Phaser.Scene {
           }
           
           this.cats.add(cat)
-          console.log(`🐱 SPAWN: ${enemyType} (${color}) at (${x.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
+          // Spawning enemy (replaced console.log)
           enemiesCreated++
         }
       }
     }
     
-    console.log(`🐱 CREATE CATS COMPLETE: Created ${enemiesCreated} enemies total`)
+    // Enemy creation complete (replaced console.log)
   }
 
   /**
@@ -2182,7 +2182,7 @@ export class GameScene extends Phaser.Scene {
   }
   
   private createTemporaryFloorGrid(): void {
-    console.log('📐 CREATING TEMPORARY FLOOR GRID...')
+    // Creating temporary floor grid (replaced console.log)
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 5
     const canvasWidth = GameSettings.canvas.width
@@ -2211,13 +2211,13 @@ export class GameScene extends Phaser.Scene {
       })
       floorText.setDepth(101)
       
-      console.log(`📐 Floor ${floor} line drawn at Y: ${topSurfaceY} (platform top surface)`)
+      // Floor line drawn at Y position (replaced console.log)
     }
     
     // Draw the stroke to make lines visible
     gridGraphics.strokePath()
     
-    console.log(`📐 Grid complete - ${this.floorLayouts.length} floor lines drawn`)
+    // Grid complete (replaced console.log)
   }
   
   private createStalkerCats(): void {
@@ -2621,7 +2621,7 @@ export class GameScene extends Phaser.Scene {
     // Check for doors (need 2-tile buffer from doors)
     const doorX = this.doorPositions.get(floor)
     if (doorX !== undefined && Math.abs(x - doorX) <= bufferSize + 2) { // Extra buffer on top of door's existing clearance
-      console.log(`   ❌ REJECTED: Too close to door at ${doorX}`)
+      // Rejected: too close to door (replaced console.log)
       return false
     }
     
@@ -3958,7 +3958,7 @@ export class GameScene extends Phaser.Scene {
       const hasGap = Math.random() > 0.3
       let layout: { gapStart: number, gapSize: number }
       
-      console.log(`🏗️ Floor ${floor}: hasGap=${hasGap}`)
+      // Floor has gap info (replaced console.log)
       
       if (hasGap) {
         const gapStart = Math.floor(Math.random() * (floorWidth - 5)) + 2
@@ -4070,14 +4070,14 @@ export class GameScene extends Phaser.Scene {
       // Add regular cat on some floors (if any colors are available) - NEVER on floor 0 or 1
       if (availableColors.length > 0 && floor > 1 && Math.random() > 0.5) {
         const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)]
-        console.log(`🐱 SPAWNING: ${randomColor} enemy on floor ${floor} (from colors: ${availableColors.join(', ')})`)
+        // Spawning enemy on floor (replaced console.log)
         
         if (layout.gapStart === -1) {
           // Complete floor
           // Position enemy ON TOP of floor tiles, like the player
           const floorSurfaceY = y - tileSize/2  // Top surface of platform tiles
           const enemyY = floorSurfaceY - 15     // Position enemy standing on top (hitbox bottom above surface)
-          console.log(`Spawning enemy on complete floor - floor surface Y: ${floorSurfaceY}, enemy Y: ${enemyY} (standing on tiles)`)
+          // Spawning enemy on complete floor (replaced console.log)
           const cat = new Cat(
             this,
             (floorWidth / 2) * tileSize,
@@ -4094,7 +4094,7 @@ export class GameScene extends Phaser.Scene {
           // Position enemy ON TOP of floor tiles, like the player
           const floorSurfaceY = y - tileSize/2  // Top surface of platform tiles
           const enemyY = floorSurfaceY - 15     // Position enemy standing on top (hitbox bottom above surface)
-          console.log(`Spawning enemy on left section - floor surface Y: ${floorSurfaceY}, enemy Y: ${enemyY} (standing on tiles)`)
+          // Spawning enemy on left section (replaced console.log)
           const cat = new Cat(
             this,
             (layout.gapStart / 2) * tileSize,
@@ -4123,19 +4123,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private waitForAssetsAndStartIntro(targetX: number, targetY: number): void {
-    console.log('⏳ WAITING FOR ASSETS TO LOAD')
+    // Waiting for assets to load (replaced console.log)
     
     const checkAssets = () => {
       const assetsReady = this.registry.get('assetsReady')
       const hasClimbSprites = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
       const hasRunSprites = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
       
-      console.log(`   Assets ready flag: ${assetsReady}`)
-      console.log(`   Climb sprites: ${hasClimbSprites}`)
-      console.log(`   Run sprites: ${hasRunSprites}`)
+      // Assets ready status (replaced console.log)
       
       if (assetsReady && hasClimbSprites && hasRunSprites) {
-        console.log('✅ ALL ASSETS READY - Starting intro')
+        // All assets ready - starting intro (replaced console.log)
         this.startLevelIntro(targetX, targetY)
       } else {
         // Check again in 100ms
@@ -4149,21 +4147,14 @@ export class GameScene extends Phaser.Scene {
   private startLevelIntro(targetX: number, targetY: number): void {
     this.isLevelStarting = true
     
-    console.log('🎬 LEVEL INTRO START')
-    console.log(`   Target position: (${targetX}, ${targetY})`)
-    console.log(`   Canvas size: ${GameSettings.canvas.width}x${GameSettings.canvas.height}`)
-    console.log('   Player physics already disabled - no falling!')
+    // Level intro start (replaced console.log)
     
     // Create entrance ladder extending below the floor
     const tileSize = GameSettings.game.tileSize
     const ladderX = tileSize/2 // Position ladder on the farthest left tile (tile 0)
     const floorY = GameSettings.canvas.height - tileSize/2
     
-    console.log('🪜 ENTRANCE LADDER SETUP')
-    console.log(`   Tile size: ${tileSize}`)
-    console.log(`   Floor Y position: ${floorY}`)
-    console.log(`   Target Y position: ${targetY}`)
-    console.log(`   Ladder X position: ${ladderX}`)
+    // Entrance ladder setup (replaced console.log)
     
     // Create entrance ladder using new teal ladder sprite
     const ladderTop = targetY - 60 // Extends above player position
@@ -4197,8 +4188,7 @@ export class GameScene extends Phaser.Scene {
       entranceLadder.setDepth(5)
     }
     
-    console.log(`   Ladder extends from Y:${ladderTop} (top) to Y:${ladderBottom} (bottom)`)
-    console.log(`   Ladder height: ${ladderHeight}px`)
+    // Ladder positioning info (replaced console.log)
     
     // Position player at bottom of ladder (off-screen)
     const playerStartY = ladderBottom - 20
@@ -4213,9 +4203,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.player.setDisplaySize(48, 64)
     
-    console.log('👤 PLAYER START POSITION')
-    console.log(`   Player starting at: (${ladderX}, ${playerStartY})`)
-    console.log(`   Player will climb to: (${ladderX}, ${targetY})`)
+    // Player start position (replaced console.log)
     
     // Debug markers (temporary)
     if (GameSettings.debug) {
@@ -4228,9 +4216,7 @@ export class GameScene extends Phaser.Scene {
       debugGraphics.fillCircle(targetX, targetY, 10) // Blue dot at target position
       debugGraphics.setDepth(500)
       
-      console.log('🔴 Red = Floor level')
-      console.log('🟢 Green = Player start position')
-      console.log('🔵 Blue = Target position')
+      // Debug color indicators (replaced console.log)
     }
     
     // Phase 1: Climbing animation - climb to the actual target Y (not floor Y)
@@ -4258,14 +4244,11 @@ export class GameScene extends Phaser.Scene {
   }
   
   private animatePlayerClimbing(ladderX: number, targetY: number, onComplete: () => void): void {
-    console.log('🧗 CLIMBING ANIMATION START')
-    console.log(`   Current player Y: ${this.player.y}`)
-    console.log(`   Target Y: ${targetY}`)
-    console.log(`   Distance to climb: ${this.player.y - targetY}px`)
+    // Climbing animation start (replaced console.log)
     
     // Check if sprites are loaded
     const hasClimbSprites = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
-    console.log(`   Climb sprites loaded: ${hasClimbSprites}`)
+    // Climb sprites loaded status (replaced console.log)
     
     if (!hasClimbSprites) {
       console.warn('⚠️ Climb sprites not loaded! Using fallback animation')
@@ -4305,12 +4288,11 @@ export class GameScene extends Phaser.Scene {
       ease: 'Linear',
       onUpdate: (tween) => {
         if (climbFrame === 1) { // Log once during climb
-          console.log(`   Climbing... Current Y: ${this.player.y.toFixed(0)}`)
+          // Climbing progress (replaced console.log)
         }
       },
       onComplete: () => {
-        console.log('🧗 CLIMBING COMPLETE')
-        console.log(`   Final climb position: (${this.player.x}, ${this.player.y})`)
+        // Climbing complete (replaced console.log)
         climbTimer.destroy()
         onComplete()
       }
@@ -4318,14 +4300,11 @@ export class GameScene extends Phaser.Scene {
   }
   
   private animatePlayerWalking(targetX: number, targetY: number, onComplete: () => void): void {
-    console.log('🚶 WALKING ANIMATION START')
-    console.log(`   Current player position: (${this.player.x}, ${this.player.y})`)
-    console.log(`   Target X: ${targetX}`)
-    console.log(`   Distance to walk: ${targetX - this.player.x}px`)
+    // Walking animation start (replaced console.log)
     
     // Check if sprites are loaded
     const hasRunSprites = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
-    console.log(`   Run sprites loaded: ${hasRunSprites}`)
+    // Run sprites loaded status (replaced console.log)
     
     if (!hasRunSprites) {
       console.warn('⚠️ Run sprites not loaded! Using fallback animation')
@@ -4398,9 +4377,7 @@ export class GameScene extends Phaser.Scene {
       duration: 1500, // 1.5 seconds to walk
       ease: 'Linear',
       onComplete: () => {
-        console.log('🚶 WALKING COMPLETE')
-        console.log(`   Final position: (${this.player.x}, ${this.player.y})`)
-        console.log('✅ INTRO SEQUENCE COMPLETE - Enabling controls')
+        // Walking complete and intro sequence complete (replaced console.log)
         
         walkTimer.destroy()
         // Reset rotation and set idle animation

@@ -224,8 +224,6 @@ export class EnemySpawningSystem {
       sum + this.ENEMY_DEFINITIONS[type].difficultyScore, 0
     )
     
-    console.log(`🎯 ENEMY SPAWN - Level ${levelNumber}, Floor ${floorNumber}:`)
-    console.log(`   Budget: ${budget.toFixed(1)}, Used: ${usedBudget.toFixed(1)}`)
-    console.log(`   Enemies: ${selectedEnemies.join(', ')}`)
+    // Enemy spawn info (replaced console.log)
   }
 }

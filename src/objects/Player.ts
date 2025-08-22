@@ -38,10 +38,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Use the new player idle sprite or fallback to placeholder
     const textureKey = scene.textures.exists('playerIdleEye1') ? 'playerIdleEye1' : 'player'
     
-    console.log(`🎮 PLAYER SPAWN DEBUG:`)
-    console.log(`  - Initial position: (${x}, ${y})`)
-    console.log(`  - Texture key: ${textureKey}`)
-    
     // Create fallback if sprite not loaded
     if (!scene.textures.exists('playerIdleEye1')) {
       const graphics = scene.add.graphics()
@@ -66,12 +62,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true)
     this.setBounce(0)
     this.setSize(18, 45)  // Reduced by 10px each for more forgiving hitbox
-    
-    console.log(`🎮 PLAYER PHYSICS DEBUG:`)
-    console.log(`  - Physics body size: 18x45 (more forgiving)`)
-    console.log(`  - Display size: 48x64`)
-    console.log(`  - World bounds collision: ${this.body!.collideWorldBounds}`)
-    console.log(`  - Gravity enabled: ${(this.body as Phaser.Physics.Arcade.Body).allowGravity}`)
     
     // The hitbox is positioned correctly, we need to shift the visual sprite UP
     // so that the sprite's bottom aligns with the hitbox's bottom
@@ -167,7 +157,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.jumpReleased = false
         // Apply initial jump velocity
         this.setVelocityY(this.MIN_JUMP_VELOCITY)
-        console.log(`🚀 JUMP START: Initial velocity = ${this.MIN_JUMP_VELOCITY}`)
+        // Jump started with initial velocity
       }
       
       // Continue boosting jump while airborne
@@ -189,16 +179,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             // Cap at max velocity
             if (this.body!.velocity.y < this.MAX_JUMP_VELOCITY) {
               this.setVelocityY(this.MAX_JUMP_VELOCITY)
-              console.log(`⚡ JUMP MAX: Reached max velocity ${this.MAX_JUMP_VELOCITY}`)
+              // Reached maximum jump velocity
             } else {
-              console.log(`📈 JUMP BOOST: ${oldVelocity.toFixed(0)} -> ${this.body!.velocity.y.toFixed(0)} (hold: ${this.jumpHoldTime.toFixed(0)}ms)`)
+              // Jump velocity boosted while holding button
             }
           }
         } else {
           // Button released
           this.jumpButtonDown = false
           this.jumpReleased = true
-          console.log(`🔚 JUMP RELEASED at ${this.jumpHoldTime.toFixed(0)}ms - ${this.jumpHoldTime < this.MIN_HOLD_TIME ? 'QUICK TAP (small jump)' : 'HELD (boosted jump)'}`)
+          // Jump button released
         }
       }
       
@@ -209,7 +199,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.jumpReleased = false
         const totalHoldTime = this.jumpHoldTime
         this.jumpHoldTime = 0
-        console.log(`🏁 JUMP LANDED: Total hold time was ${totalHoldTime.toFixed(0)}ms`)
+        // Player landed, jump complete
       }
     }
     

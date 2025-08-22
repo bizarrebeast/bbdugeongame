@@ -116,7 +116,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       textureKey = 'redEnemyMouthClosedEyes1'
     } else {
       // This shouldn't happen with proper enemy spawning
-      console.warn(`⚠️ Unexpected cat color: ${catColor}`)
+      // Unexpected cat color fallback (replaced console.log)
       textureKey = 'blueEnemyMouthClosed' // Default fallback
     }
     
@@ -134,19 +134,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.setTexture('stalkerEnemyEye1')
       }
       this.stalkerEyeState = 'eye1'
-      console.log(`🔴 STALKER CAT: Creating at (${x}, ${y})`)
+      // Stalker cat creation (replaced console.log)
     }
     
     scene.add.existing(this)
     scene.physics.add.existing(this)
     
-    // Only log caterpillar (yellow enemy) positioning for debugging
-    if (catColor === CatColor.YELLOW) {
-      console.log(`🐛 CATERPILLAR ENEMY DEBUG:`)
-      console.log(`  - Texture key: ${textureKey}`)
-      console.log(`  - Spawn position: (${x}, ${y})`)
-      console.log(`  - Using animation sprite: ${this.isYellowEnemyAnimationSprite(textureKey)}`)
-    }
+    // Caterpillar enemy debug info (replaced console.log)
     
     // Apply enemy hitbox sizing AFTER physics body is created
     if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
@@ -170,11 +164,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       const hitboxCenterOffsetY = (defaultHeight - this.body.height) / 2
       this.body.setOffset(hitboxCenterOffsetX, hitboxCenterOffsetY)
       
-      console.log(`🐛 CATERPILLAR HITBOX DEBUG:`)
-      console.log(`  - Original hitbox: ${defaultWidth}x${defaultHeight}`)
-      console.log(`  - New hitbox size: ${this.body.width}x${this.body.height}`)
-      console.log(`  - Hitbox offset: (${this.body.offset.x}, ${this.body.offset.y})`)
-      console.log(`  - Sprite and hitbox bottom edges should now be aligned`)
+      // Caterpillar hitbox debug info (replaced console.log)
       
     } else if (catColor === CatColor.RED && this.body instanceof Phaser.Physics.Arcade.Body) {
       // Increase Snail (red patrol enemy) hitbox by 50%
@@ -194,10 +184,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.body.setAllowGravity(false) // Blue, Yellow, Red patrol without gravity
       } else {
         // Green enemies keep gravity for bouncing behavior
-        console.log(`🟢 GREEN ENEMY PHYSICS SETUP:`)
-        console.log(`  - Gravity enabled: ${this.body.allowGravity}`)
-        console.log(`  - World bounds collision: ${this.body.collideWorldBounds}`)
-        console.log(`  - Initial velocity: (${this.body.velocity.x}, ${this.body.velocity.y})`)
+        // Green enemy physics setup (replaced console.log)
       }
     }
     
@@ -214,11 +201,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // - Y: Move sprite down so bottoms align: (28-21.6) = 6.4px down
       this.setOffset(15, 4) // Moved 20 pixels left total (-5 + 20 = 15)
       
-      console.log(`🐛 CATERPILLAR SPRITE OFFSET DEBUG (Animation):`)
-      console.log(`  - Sprite size: 54x21.6`)
-      console.log(`  - Hitbox size will be: 70x28 (after 30% reduction)`)
-      console.log(`  - Top-left offset for bottom alignment: (15, 4)`)
-      console.log(`  - Spawn position: (${this.x}, ${this.y})`)
+      // Caterpillar sprite offset debug (replaced console.log)
       
       this.setFlipX(false)
       this.initializeYellowEnemyAnimations()
@@ -243,7 +226,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.addDebugVisualization()
       
       if (this.isStalker) {
-        console.log(`🔴 STALKER SPRITE POSITIONING: size ${displaySize}x${displaySize} (20% smaller), offset (18, ${yOffset}) - moved up 6 pixels from regular red enemy`)
+        // Stalker sprite positioning info (replaced console.log)
       }
     } else if (catColor === CatColor.GREEN && textureKey === 'greenEnemy') {
       // Green enemy uses single sprite (not animation sprites yet)
@@ -253,13 +236,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.addDebugVisualization()
     } else {
       // No fallback needed - all enemies should use proper animation sprites
-      console.warn(`⚠️ UNKNOWN SPRITE: ${textureKey} for color ${catColor} - this should not happen`)
+      // Unknown sprite warning (replaced console.log)
       this.addDebugVisualization()
     }
     
     // === FINAL VERIFICATION ===
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
-      console.log(`🚀 FINAL: ${catColor} enemy constructor complete - hitbox: ${this.body.width}x${this.body.height}, display: ${this.displayWidth}x${this.displayHeight}`)
+      // Enemy constructor complete (replaced console.log)
     }
     
     this.setDepth(15)
@@ -285,7 +268,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.setVelocity(0, 0)
       this.body!.setGravityY(0) // No gravity for stalkers
       this.body!.setImmovable(true) // Don't move while hidden
-      console.log(`🔴 STALKER: Hidden and waiting at (${this.x}, ${this.y})`)
+      // Stalker hidden and waiting (replaced console.log)
     } else {
       this.setVelocityX(this.moveSpeed * this.direction)
     }
@@ -930,7 +913,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private updateStalker(delta: number): void {
     if (!this.stalkerPlayerRef) return
     
-    // Debug: Log position changes
+    // Position tracking for debug (replaced console.log)
     const previousY = this.y
     
     switch (this.stalkerState) {
@@ -946,13 +929,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
     }
     
-    // Debug: Check if Y position changed unexpectedly
+    // Y position change tracking (replaced console.log)
     if (Math.abs(this.y - previousY) > 0.1) {
-      console.log(`🔴🚨 STALKER Y POSITION CHANGED: ${previousY} -> ${this.y} (change: ${this.y - previousY})`)
-      console.log(`  - State: ${this.stalkerState}`)
-      console.log(`  - Original Y: ${this.stalkerOriginalY}`)
-      console.log(`  - Velocity: (${this.body?.velocity.x}, ${this.body?.velocity.y})`)
-      console.log(`  - Gravity: ${(this.body as any)?.gravity?.y}`)
+      // Y position changed unexpectedly (replaced console.log)
     }
   }
   
@@ -969,10 +948,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     const canSeePlayer = playerIsAboveOrSameLevel && playerIsNotTooFarAbove
     
     if (canSeePlayer && distanceToPlayer <= this.stalkerTriggerDistance && !this.stalkerHasPlayerPassed) {
-      console.log(`🔴👁️ STALKER ACTIVATED at distance ${distanceToPlayer}`)
-      console.log(`  - Stalker position: (${this.x}, ${this.y})`)
-      console.log(`  - Player position: (${playerX}, ${playerY})`)
-      console.log(`  - Original Y: ${this.stalkerOriginalY}`)
+      // Stalker activated (replaced console.log)
       
       // Activate stalker
       this.stalkerState = 'activated'
@@ -982,10 +958,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Show eyes only
       if (this.scene.textures.exists('stalkerEnemyEyeOnly')) {
         this.setTexture('stalkerEnemyEyeOnly')
-        console.log(`  - Changed texture to stalkerEnemyEyeOnly`)
+        // Changed texture to stalkerEnemyEyeOnly (replaced console.log)
       }
       this.setVisible(true)
-      console.log(`  - Now visible and activated`)
+      // Now visible and activated (replaced console.log)
     }
   }
   
@@ -998,10 +974,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private stalkerPopOut(): void {
-    console.log(`🔴💥 STALKER POPPING OUT!`)
-    console.log(`  - Current position: (${this.x}, ${this.y})`)
-    console.log(`  - Original Y: ${this.stalkerOriginalY}`)
-    console.log(`  - Y difference: ${this.y - this.stalkerOriginalY}`)
+    // Stalker popping out (replaced console.log)
     
     this.stalkerState = 'chasing'
     this.setVisible(true)
@@ -1009,18 +982,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Switch to full stalker sprite
     if (this.scene.textures.exists('stalkerEnemyEye1')) {
       this.setTexture('stalkerEnemyEye1')
-      console.log(`  - Changed texture to stalkerEnemyEye1`)
+      // Changed texture to stalkerEnemyEye1 (replaced console.log)
     }
     this.stalkerEyeState = 'eye1'
     
     // Enable movement
     this.body!.setGravityY(0) // Still no gravity
     this.body!.setImmovable(false) // Allow movement
-    console.log(`  - Physics: gravity=${(this.body as any)?.gravity?.y}, immovable=${this.body?.immovable}`)
+    // Physics settings (replaced console.log)
     
     // Update original Y to prevent teleporting
     this.stalkerOriginalY = this.y
-    console.log(`  - Updated floor lock to: ${this.stalkerOriginalY}`)
+    // Updated floor lock (replaced console.log)
     
     // Reset speed
     this.stalkerCurrentSpeed = 80 * 1.5
@@ -1028,7 +1001,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Start chase persistence
     this.stalkerChasePersistenceTimer = this.stalkerChasePersistenceDuration
     this.stalkerIsInPersistentChase = true
-    console.log(`  - Starting persistent chase for ${this.stalkerChasePersistenceDuration}ms`)
+    // Starting persistent chase (replaced console.log)
   }
   
   private updateStalkerChasing(delta: number): void {
@@ -1040,7 +1013,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.y = this.stalkerOriginalY
     
     if (Math.abs(beforeY - this.stalkerOriginalY) > 0.1) {
-      console.log(`🔴🔧 STALKER Y CORRECTION: ${beforeY} -> ${this.stalkerOriginalY} (corrected ${beforeY - this.stalkerOriginalY} drift)`)
+      // Stalker Y correction (replaced console.log)
     }
     
     // Only chase player if they are at same level or above (not below)
