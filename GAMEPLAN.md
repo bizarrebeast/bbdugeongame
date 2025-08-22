@@ -25,15 +25,17 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ### Core Actions
 - **Movement:** Joystick/arrow keys for horizontal movement
-- **Climbing:** Up/down on ladders
-- **Jumping:** Jump button to clear gaps and avoid enemies
-- **Combat:** Fire button to defeat enemies (if applicable)
+- **Climbing:** Up/down on ladders (with bottom boundary protection)
+- **Jumping:** Scaleable jump system - quick tap for small hop, hold for full jump
+- **Combat:** Jump on enemies or use invincibility power-up
 
 ### Controls ✅ FULLY IMPLEMENTED
 - **Mobile:** ✅ Virtual joystick for movement/climbing + jump button with multi-touch support
 - **Desktop:** ✅ Arrow keys + WASD for movement/climbing, spacebar for jump
 - **Dual Input:** ✅ All control schemes work simultaneously
 - **Interaction System:** ✅ Automatic contact-based treasure chest opening (simplified from ACTION button)
+- **Scaleable Jumping:** ✅ Hold jump button for higher jumps (50-350ms hold time)
+- **Ladder Mechanics:** ✅ Can climb up/down, cannot exit horizontally, cannot fall through bottom
 
 ## Level Design ✅ IMPLEMENTED
 
@@ -71,10 +73,19 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
   - **Yellow Blobs:** Slower speed with random movement patterns  
   - **Green Blobs:** Fast bouncing movement across full floor width (uses gravity)
   - **Red Blobs:** Floor-based AI with smart chase behavior
+- **BaseBlu Enemy:** ✅ Immovable blocker with eye animations
+  - Cannot be defeated by jumping (provides bounce instead)
+  - Stuns when player collides from side (2 second stun)
+  - Can be defeated with invincibility power-up (1000 points)
+  - Features 9 eye sprite animations with blinking and eye rolling
 - **Combat Integration:** ✅ All blobs can be defeated via jump-to-kill mechanics
 - **Multiple Kill Protection:** ✅ Prevents double-scoring from single enemy
 - **Combo Restrictions:** ✅ No combos while climbing ladders
 - **Safety Rules:** ✅ No enemies spawn on ground floor (Floor 1)
+- **Spawn System:** ✅ Dynamic spawn patterns (spread, cluster, edges, random)
+  - Randomized spawn directions (50/50 left/right facing)
+  - Varied patrol areas based on spawn pattern
+  - Difficulty-based enemy selection system
 
 ### Future Additions 🔄 PLANNED
 - **Spiders:** Crawl along platforms and down ladders (not yet implemented)
