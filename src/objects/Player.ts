@@ -158,6 +158,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Apply initial jump velocity
         this.setVelocityY(this.MIN_JUMP_VELOCITY)
         // Jump started with initial velocity
+        this.triggerHapticFeedback() // Haptic feedback for jump start
       }
       
       // Continue boosting jump while airborne
@@ -200,6 +201,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         const totalHoldTime = this.jumpHoldTime
         this.jumpHoldTime = 0
         // Player landed, jump complete
+        this.triggerHapticFeedback() // Haptic feedback for landing
       }
     }
     
@@ -675,5 +677,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         graphics.y = this.y
       }
     })
+  }
+
+  private triggerHapticFeedback(): void {
+    // Trigger haptic feedback through GameScene
+    const gameScene = this.scene as any
+    if (gameScene && gameScene.triggerFarcadeHapticFeedback) {
+      gameScene.triggerFarcadeHapticFeedback()
+    }
   }
 }

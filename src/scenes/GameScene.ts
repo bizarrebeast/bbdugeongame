@@ -390,6 +390,9 @@ export class GameScene extends Phaser.Scene {
     // Enable multi-touch support
     this.input.addPointer(2) // Allow up to 3 pointers total (default 1 + 2 more)
     
+    // Setup Farcade SDK event handlers
+    this.setupFarcadeEventHandlers()
+    
     
     // Initialize level manager
     if (!this.levelManager) {
@@ -519,6 +522,9 @@ export class GameScene extends Phaser.Scene {
       this.isLevelStarting = false
       this.changePlayerTexture('playerIdleEye1')
       this.showStartBanner()
+      
+      // Notify Farcade SDK that game is ready
+      this.notifyFarcadeGameReady()
     } else {
       // New level - show intro animation
       // New level - showing intro animation (replaced console.log)
@@ -2692,6 +2698,9 @@ export class GameScene extends Phaser.Scene {
     // Show point popup
     this.showPointPopup(coin.sprite.x, coin.sprite.y - 20, GameSettings.scoring.coinCollect)
     
+    // Trigger haptic feedback for collecting coin
+    this.triggerFarcadeHapticFeedback()
+    
     // Play collection animation and remove coin
     coin.collect()
     
@@ -2724,6 +2733,9 @@ export class GameScene extends Phaser.Scene {
     // Show point popup
     this.showPointPopup(blueCoin.sprite.x, blueCoin.sprite.y - 20, points)
     
+    // Trigger haptic feedback for collecting blue coin
+    this.triggerFarcadeHapticFeedback()
+    
     // Play collection animation
     blueCoin.collect()
     
@@ -2755,6 +2767,9 @@ export class GameScene extends Phaser.Scene {
     
     // Show point popup
     this.showPointPopup(diamond.sprite.x, diamond.sprite.y - 20, points)
+    
+    // Trigger haptic feedback for collecting diamond
+    this.triggerFarcadeHapticFeedback()
     
     // Play collection animation
     diamond.collect()
@@ -3558,6 +3573,9 @@ export class GameScene extends Phaser.Scene {
     this.game.registry.set('playerLives', this.lives)  // Save to registry
     this.updateLivesDisplay()
     
+    // Trigger haptic feedback for taking damage
+    this.triggerFarcadeHapticFeedback()
+    
     // Stop the player and disable physics temporarily
     player.setVelocity(0, 0)
     player.setTint(0xff0000) // Turn player red
@@ -3675,6 +3693,9 @@ export class GameScene extends Phaser.Scene {
     
     // Show point popup for chest
     this.showPointPopup(chest.sprite.x, chest.sprite.y - 30, 2500)
+    
+    // Trigger haptic feedback for opening treasure chest
+    this.triggerFarcadeHapticFeedback()
     
     // Spawn items on the floor around the chest
     this.spawnTreasureChestContents(chest.sprite.x, chest.sprite.y, contents)
@@ -4227,6 +4248,9 @@ export class GameScene extends Phaser.Scene {
         this.player.body!.enable = true
         this.isLevelStarting = false
         
+        // Notify Farcade SDK that game is ready
+        this.notifyFarcadeGameReady()
+        
         // Fade out entrance ladder
         this.tweens.add({
           targets: entranceLadder,
@@ -4640,6 +4664,9 @@ export class GameScene extends Phaser.Scene {
   private showLevelCompleteScreen(): void {
     const levelNum = this.levelManager.getCurrentLevel()
     
+    // Trigger haptic feedback for level completion
+    this.triggerFarcadeHapticFeedback()
+    
     // Create overlay
     const overlay = this.add.rectangle(
       GameSettings.canvas.width / 2,
@@ -4901,6 +4928,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showGameOverScreen(): void {
+    // Notify Farcade SDK of game over with final score
+    const finalScore = this.accumulatedScore + this.score
+    this.notifyFarcadeGameOver(finalScore)
+    
     // Create semi-transparent overlay
     const overlay = this.add.rectangle(
       GameSettings.canvas.width / 2,
@@ -5194,6 +5225,70 @@ export class GameScene extends Phaser.Scene {
     // Rotate through backgrounds based on level
     const backgroundIndex = (level - 1) % this.backgroundLibrary.length
     return this.backgroundLibrary[backgroundIndex]
+  }
+
+  // Farcade SDK Integration Methods
+  private notifyFarcadeGameReady(): void {
+    try {
+      if (typeof window !== 'undefined' && (window as any).FarcadeSDK) {
+        (window as any).FarcadeSDK.singlePlayer.actions.ready()
+      }
+    } catch (error) {
+      // Fail silently if SDK not available
+    }
+  }
+
+  private notifyFarcadeGameOver(score: number): void {
+    try {
+      if (typeof window !== 'undefined' && (window as any).FarcadeSDK) {
+        (window as any).FarcadeSDK.singlePlayer.actions.gameOver({ score })
+      }
+    } catch (error) {
+      // Fail silently if SDK not available
+    }
+  }
+
+  private triggerFarcadeHapticFeedback(): void {
+    try {
+      if (typeof window !== 'undefined' && (window as any).FarcadeSDK) {
+        (window as any).FarcadeSDK.singlePlayer.actions.hapticFeedback()
+      }
+    } catch (error) {
+      // Fail silently if SDK not available
+    }
+  }
+
+  private setupFarcadeEventHandlers(): void {
+    try {
+      if (typeof window !== 'undefined' && (window as any).FarcadeSDK) {
+        const sdk = (window as any).FarcadeSDK
+        
+        // Handle play_again event
+        sdk.singlePlayer.events.on('play_again', () => {
+          this.restartGame()
+        })
+        
+        // Handle toggle_mute event (placeholder for when audio is added)
+        sdk.singlePlayer.events.on('toggle_mute', () => {
+          // TODO: Implement audio mute/unmute when audio system is added
+        })
+      }
+    } catch (error) {
+      // Fail silently if SDK not available
+    }
+  }
+
+  private restartGame(): void {
+    // Reset game state for new game
+    this.game.registry.set('isDeathRetry', false)
+    this.game.registry.set('isLevelProgression', false)
+    this.game.registry.set('currentLevel', 1)
+    this.game.registry.set('lives', 3)
+    this.game.registry.set('totalCoinsCollected', 0)
+    this.game.registry.set('accumulatedScore', 0)
+    
+    // Restart the scene
+    this.scene.restart()
   }
 
   shutdown() {}
