@@ -70,6 +70,15 @@ export class GameScene extends Phaser.Scene {
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
   
+  // Background management
+  private currentBackground: string = 'background-treasure-quest-5'
+  private backgroundLibrary: string[] = [
+    'background-treasure-quest-5',
+    'background-treasure-quest-6', 
+    'background-treasure-quest-7'
+    // More backgrounds will be added here over time
+  ]
+  
   // Smart tile placement tracking
   private recentTiles: number[] = [] // Track last few tiles to avoid repeats
   private tileGrid: Map<string, {variant: number, flipX: boolean}> = new Map() // Track tile variant and horizontal flip at each position
@@ -98,6 +107,25 @@ export class GameScene extends Phaser.Scene {
       {
         key: 'visibilityOverlay',
         url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/4cc595d8-5f6a-49c0-9b97-9eabd3193403/black%20overlay-aQ9bbCj7ooLaxsRl5pO9PxSt2SsWun.png?0nSO',
+        type: 'image',
+        retries: 3
+      },
+      // Background assets
+      {
+        key: 'background-treasure-quest-5',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Treasure%20Quest%20BG%205-pVHhUmXIAvnZT4aFVRFgYvljKibVS0.png?qco1',
+        type: 'image',
+        retries: 3
+      },
+      {
+        key: 'background-treasure-quest-6',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Treasure%20Quest%20BG%206-gX1QoTf3UJnMPvbDKVt9hYGDD1AltE.png?LWtY',
+        type: 'image',
+        retries: 3
+      },
+      {
+        key: 'background-treasure-quest-7',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Treasure%20Quest%20BG%207-YeACeKZk8lSEU1IDy5zOU6G79VqYKx.png?TWtQ',
         type: 'image',
         retries: 3
       },
@@ -335,11 +363,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Add crystal cavern background (first, so it appears behind everything)
-    const background = this.add.image(0, 0, 'crystal-cavern-bg')
+    // Select background based on current level
+    this.currentBackground = this.getBackgroundForLevel(this.levelManager?.getCurrentLevel() || 1)
+    
+    // Add current background (first, so it appears behind everything)
+    const background = this.add.image(0, 0, this.currentBackground)
     background.setOrigin(0, 0) // Position from top-left corner
     background.setDepth(-100) // Behind everything
-    background.setScrollFactor(0.05) // Subtle parallax effect for 2000x2000 background
+    background.setScrollFactor(0.05) // Subtle parallax effect
     
     // Scale background to fill entire game area, ensuring full coverage
     const gameWidth = this.cameras.main.width
@@ -347,7 +378,7 @@ export class GameScene extends Phaser.Scene {
     const scaleX = gameWidth / background.width
     const scaleY = gameHeight / background.height
     // Use larger scale and add extra coverage to ensure no gaps
-    const scale = Math.max(scaleX, scaleY) * 1.1 // 10% larger to ensure full coverage
+    const scale = Math.max(scaleX, scaleY) * 1.2 // 20% larger to ensure full coverage
     background.setScale(scale)
     
     // Position background centered for optimal coverage with 2000x2000 image
@@ -1939,7 +1970,6 @@ export class GameScene extends Phaser.Scene {
             rightBound = tileSize * (layout.gapStart - 0.5)
           } else {
             // Skip this floor if both sections are too small
-            console.log(`🔵 SKIPPING BaseBlu on floor ${floor} - sections too small`)
             continue
           }
         }
@@ -1948,12 +1978,6 @@ export class GameScene extends Phaser.Scene {
         
         baseBlu.setPlatformBounds(leftBound, rightBound)
         this.baseBlus.add(baseBlu)
-        
-        // Log detailed spawn info
-        const baseBluBody = baseBlu.body as Phaser.Physics.Arcade.Body
-        console.log(`🔵 SPAWN: BaseBlu at (${baseBluX.toFixed(0)}, ${y.toFixed(0)}) on floor ${floor}`)
-        console.log(`   Final hitbox: ${baseBluBody.width}x${baseBluBody.height}`)
-        console.log(`   Patrol bounds: ${leftBound.toFixed(0)} to ${rightBound.toFixed(0)}`)
       }
       
       // Use new difficulty-based enemy spawning system
@@ -3010,13 +3034,14 @@ export class GameScene extends Phaser.Scene {
     const baseBluBody = baseBluObj.body as Phaser.Physics.Arcade.Body
     
     // Check if player is invincible and can kill BaseBlu
-    console.log(`🔵 BASEBLUE COLLISION: invincibilityTimeRemaining=${this.invincibilityTimeRemaining}`)
     if (this.invincibilityTimeRemaining > 0 && baseBluObj.canBeKilledByInvinciblePlayer()) {
-      console.log(`🔵 BASEBLUE: Killed by invincible player!`)
       const points = baseBluObj.handleInvinciblePlayerKill()
       this.score += points
       this.updateScoreDisplay()
       this.showPointPopup(baseBluObj.x, baseBluObj.y - 20, points)
+      
+      // Make player bounce (same as other enemies killed by pendant)
+      playerBody.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
       
       // Remove BaseBlu from group
       this.baseBlus.remove(baseBluObj)
@@ -3028,9 +3053,10 @@ export class GameScene extends Phaser.Scene {
     const playerAbove = playerBody.bottom <= baseBluBody.top + 10
     
     if (playerFalling && playerAbove) {
-      // Player bounces off top - NO POINTS awarded
+      // Player bounces off top - NO POINTS awarded, but BaseBlu gets stunned
       baseBluObj.handlePlayerBounce()
-      playerBody.setVelocityY(GameSettings.game.jumpVelocity * 0.8) // Bounce up
+      baseBluObj.startStun()
+      playerBody.setVelocityY(GameSettings.game.jumpVelocity * 0.7) // Standard bounce (same as other enemies)
     } else {
       // Any collision (side or top) - BaseBlu gets stunned
       baseBluObj.startStun()
@@ -5077,6 +5103,13 @@ export class GameScene extends Phaser.Scene {
     
     // Notify player that bubble is no longer active
     this.player.notifyBubbleActive(false)
+  }
+
+  // Background management methods
+  private getBackgroundForLevel(level: number): string {
+    // Rotate through backgrounds based on level
+    const backgroundIndex = (level - 1) % this.backgroundLibrary.length
+    return this.backgroundLibrary[backgroundIndex]
   }
 
   shutdown() {}
