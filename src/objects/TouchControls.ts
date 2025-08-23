@@ -5,13 +5,13 @@ export class TouchControls {
   
   // Touchpad system (replaces D-pad buttons)
   private touchpadContainer: Phaser.GameObjects.Container
-  private touchpadBackground: Phaser.GameObjects.Arc
+  private touchpadBackground: Phaser.GameObjects.Image
   private touchpadIndicator: Phaser.GameObjects.Arc
   private touchPosition: { x: number, y: number } | null = null
   
   // Jump button
   private jumpButton: Phaser.GameObjects.Container
-  private jumpButtonCircle: Phaser.GameObjects.Arc
+  private jumpButtonImage: Phaser.GameObjects.Image
   private jumpButtonText: Phaser.GameObjects.Text
   
   // Action button
@@ -61,9 +61,9 @@ export class TouchControls {
     this.touchpadContainer.setDepth(1000)
     this.touchpadContainer.setScrollFactor(0)
 
-    // Create circular touchpad background (pink theme)
-    this.touchpadBackground = this.scene.add.circle(0, 0, this.touchpadRadius, 0xff1493, 0.2) // Deep pink background
-    this.touchpadBackground.setStrokeStyle(3, 0xff69b4, 0.6) // Hot pink border
+    // Create custom D-pad background image
+    this.touchpadBackground = this.scene.add.image(0, 0, 'custom-dpad')
+    this.touchpadBackground.setDisplaySize(this.touchpadRadius * 2, this.touchpadRadius * 2) // 120px diameter
     this.touchpadContainer.add(this.touchpadBackground)
 
     // Create touch position indicator (initially hidden) - bright pink
@@ -71,29 +71,10 @@ export class TouchControls {
     this.touchpadIndicator.setStrokeStyle(2, 0xffffff, 0.9)
     this.touchpadIndicator.setVisible(false)
     this.touchpadContainer.add(this.touchpadIndicator)
-
-    // Add subtle directional hints
-    this.addDirectionalHints()
   }
 
-  private addDirectionalHints(): void {
-    // Add subtle arrows to show directional areas (pink theme)
-    const hintDistance = this.touchpadRadius * 0.7
-    const arrowSize = 6
-    const hints = this.scene.add.graphics()
-    hints.fillStyle(0xff69b4, 0.5) // Hot pink arrows
-    
-    // Up arrow
-    hints.fillTriangle(0, -hintDistance - arrowSize/2, -arrowSize/2, -hintDistance + arrowSize/2, arrowSize/2, -hintDistance + arrowSize/2)
-    // Down arrow  
-    hints.fillTriangle(0, hintDistance + arrowSize/2, -arrowSize/2, hintDistance - arrowSize/2, arrowSize/2, hintDistance - arrowSize/2)
-    // Left arrow
-    hints.fillTriangle(-hintDistance - arrowSize/2, 0, -hintDistance + arrowSize/2, -arrowSize/2, -hintDistance + arrowSize/2, arrowSize/2)
-    // Right arrow
-    hints.fillTriangle(hintDistance + arrowSize/2, 0, hintDistance - arrowSize/2, -arrowSize/2, hintDistance - arrowSize/2, arrowSize/2)
-    
-    this.touchpadContainer.add(hints)
-  }
+  // Note: Directional hints are now built into the custom D-pad image
+  // private addDirectionalHints(): void { ... } - removed since custom D-pad includes visual cues
 
   private createJumpButton(): void {
     const buttonX = GameSettings.canvas.width - 60
@@ -104,12 +85,12 @@ export class TouchControls {
     this.jumpButton.setDepth(1000)
     this.jumpButton.setScrollFactor(0)
 
-    // Button circle (pink theme to match touchpad)
-    this.jumpButtonCircle = this.scene.add.circle(0, 0, 35, 0xff1493, 0.8) // Deep pink
-    this.jumpButtonCircle.setStrokeStyle(3, 0xff69b4, 0.9) // Hot pink border
+    // Custom jump button image
+    this.jumpButtonImage = this.scene.add.image(0, 0, 'custom-jump-button')
+    this.jumpButtonImage.setDisplaySize(70, 70) // Keep same relative size as before (was 70px diameter circle)
     
     // No text - clean minimal design
-    this.jumpButton.add([this.jumpButtonCircle])
+    this.jumpButton.add([this.jumpButtonImage])
   }
 
   private createActionButton(): void {
@@ -187,7 +168,7 @@ export class TouchControls {
       if (this.jumpPointerId === -1) {
         this.jumpPointerId = pointer.id
         this.jumpPressed = true
-        this.jumpButtonCircle.setFillStyle(0xff69b4, 1.0) // Hot pink when pressed
+        this.jumpButtonImage.setTint(0xaaaaaa) // Slightly dimmed when pressed
       }
       return
     }
@@ -281,7 +262,7 @@ export class TouchControls {
     if (pointer.id === this.jumpPointerId) {
       this.jumpPointerId = -1
       this.jumpPressed = false
-      this.jumpButtonCircle.setFillStyle(0xff1493, 0.8) // Return to deep pink when released
+      this.jumpButtonImage.clearTint() // Return to normal color when released
     }
     
     if (pointer.id === this.actionPointerId) {
