@@ -60,9 +60,9 @@ export class GameScene extends Phaser.Scene {
   private invincibilityActive: boolean = false
   private invincibilityTimer: Phaser.Time.TimerEvent | null = null
   private invincibilityTimerImage!: Phaser.GameObjects.Image
-  private invincibilityTimerGreyImage!: Phaser.GameObjects.Image
   private invincibilityTimerMask!: Phaser.GameObjects.Graphics
   private invincibilityTimeRemaining: number = 0
+  private invincibilityTimerSparkleTimer: Phaser.Time.TimerEvent | null = null
   private playerGoldenAura: Phaser.GameObjects.Arc | null = null
   private playerParticleTrail: Phaser.GameObjects.Graphics[] = []
   private playerSpikeOverlap: Phaser.Physics.Arcade.Collider | null = null
@@ -871,21 +871,13 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Invincibility Timer (center, bottom)
-    // Create grey version (always visible)
+    // Invincibility Timer (center, bottom) - always full color
     // NOTE: In Phaser, Y increases DOWNWARD. "negative offset" means LOWER on screen = HIGHER Y value
-    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 105, 'invincibility-timer')
-    this.invincibilityTimerGreyImage.setDisplaySize(36, 36)
-    this.invincibilityTimerGreyImage.setTint(0x808080) // Grey tint for inactive state
-    this.invincibilityTimerGreyImage.setDepth(100)
-    this.invincibilityTimerGreyImage.setScrollFactor(0)
-    
-    // Create colored version (shown during invincibility)
     this.invincibilityTimerImage = this.add.image(screenWidth / 2, 105, 'invincibility-timer')
     this.invincibilityTimerImage.setDisplaySize(36, 36)
     this.invincibilityTimerImage.setDepth(101)
     this.invincibilityTimerImage.setScrollFactor(0)
-    this.invincibilityTimerImage.setVisible(false) // Hidden by default
+    this.invincibilityTimerImage.setVisible(true) // Always visible in full color
     
     // Create circular mask for countdown effect
     this.invincibilityTimerMask = this.add.graphics()
@@ -2960,9 +2952,6 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityActive = true
     this.invincibilityTimeRemaining = 10
     
-    // Show colored timer
-    this.invincibilityTimerImage.setVisible(true)
-    
     // Start countdown timer (loop indefinitely, we'll handle stopping in the callback)
     this.invincibilityTimer = this.time.addEvent({
       delay: 100, // Update every 100ms for smooth animation
@@ -2972,6 +2961,9 @@ export class GameScene extends Phaser.Scene {
     
     // Add golden aura to player
     this.addPlayerGoldenAura()
+    
+    // Start sparkle effect around HUD timer
+    this.startTimerSparkles()
     
     // Enable spike walking (disable damage overlap, enable collision)
     this.enableSpikeWalking()
@@ -2992,11 +2984,11 @@ export class GameScene extends Phaser.Scene {
         this.invincibilityTimer = null
       }
       
-      // Hide colored timer
-      this.invincibilityTimerImage.setVisible(false)
-      
       // Clear mask
       this.invincibilityTimerMask.clear()
+      
+      // Stop timer sparkles
+      this.stopTimerSparkles()
       
       // Remove player aura
       this.removePlayerGoldenAura()
@@ -3049,13 +3041,9 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.closePath()
     this.invincibilityTimerMask.fillPath()
     
-    // Apply mask to colored timer image to show countdown progress
+    // Apply mask to timer image to show countdown progress
     const mask = this.invincibilityTimerMask.createGeometryMask()
     this.invincibilityTimerImage.setMask(mask)
-    
-    // Ensure colored timer is visible and on top
-    this.invincibilityTimerImage.setVisible(true)
-    this.invincibilityTimerImage.setDepth(101)
   }
   
   private addPlayerGoldenAura(): void {
@@ -3091,6 +3079,74 @@ export class GameScene extends Phaser.Scene {
     // Clean up particle trail
     this.playerParticleTrail.forEach(particle => particle.destroy())
     this.playerParticleTrail = []
+  }
+
+  private startTimerSparkles(): void {
+    // Clear any existing sparkle timer
+    if (this.invincibilityTimerSparkleTimer) {
+      this.invincibilityTimerSparkleTimer.destroy()
+    }
+    
+    // Create sparkle effect timer (similar to pendant sparkles)
+    this.invincibilityTimerSparkleTimer = this.time.addEvent({
+      delay: 300 + Math.random() * 200,
+      callback: () => this.createTimerSparkle(),
+      loop: true
+    })
+  }
+
+  private stopTimerSparkles(): void {
+    if (this.invincibilityTimerSparkleTimer) {
+      this.invincibilityTimerSparkleTimer.destroy()
+      this.invincibilityTimerSparkleTimer = null
+    }
+  }
+
+  private createTimerSparkle(): void {
+    if (!this.invincibilityTimerImage || !this.invincibilityActive) return
+    
+    // Get timer position
+    const timerX = this.invincibilityTimerImage.x
+    const timerY = this.invincibilityTimerImage.y
+    
+    // Random position around timer (within 25px radius)
+    const sparkleX = timerX + (Math.random() - 0.5) * 50
+    const sparkleY = timerY + (Math.random() - 0.5) * 50
+    
+    // Create star-shaped sparkle with golden color (matching pendant)
+    const sparkle = this.add.graphics()
+    sparkle.fillStyle(0xffd700, 0.9) // Golden color
+    sparkle.beginPath()
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2
+      const radius = i % 2 === 0 ? 3 : 1.5
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      if (i === 0) sparkle.moveTo(x, y)
+      else sparkle.lineTo(x, y)
+    }
+    sparkle.closePath()
+    sparkle.fillPath()
+    
+    // Create container for the sparkle
+    const sparkleContainer = this.add.container(sparkleX, sparkleY)
+    sparkleContainer.add(sparkle)
+    sparkleContainer.setDepth(103) // Above HUD timer (101) and mask (102)
+    sparkleContainer.setScrollFactor(0) // Keep with HUD
+    
+    // Animate the sparkle
+    this.tweens.add({
+      targets: sparkleContainer,
+      scaleX: 2,
+      scaleY: 2,
+      alpha: 0,
+      rotation: Math.PI,
+      duration: 600,
+      ease: 'Power2',
+      onComplete: () => {
+        sparkleContainer.destroy()
+      }
+    })
   }
   
   private createPlayerParticleTrail(): void {

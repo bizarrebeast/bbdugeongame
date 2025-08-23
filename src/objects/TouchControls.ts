@@ -68,9 +68,9 @@ export class TouchControls {
     this.touchpadContainer.add(this.touchpadBackground)
 
     // Debug: Add hitbox visualization (75px radius circle - 15px larger than visual)
-    const hitboxDebug = this.scene.add.circle(0, 0, this.touchpadRadius + 15, 0x0000ff, 0.3) // Semi-transparent blue circle
-    hitboxDebug.setStrokeStyle(2, 0x0000ff, 0.8) // Blue border
-    this.touchpadContainer.add(hitboxDebug)
+    // const hitboxDebug = this.scene.add.circle(0, 0, this.touchpadRadius + 15, 0x0000ff, 0.3) // Semi-transparent blue circle
+    // hitboxDebug.setStrokeStyle(2, 0x0000ff, 0.8) // Blue border
+    // this.touchpadContainer.add(hitboxDebug)
 
     // Create touch position indicator (initially hidden) - bright pink
     this.touchpadIndicator = this.scene.add.circle(0, 0, 8, 0xff1493, 0.9)
@@ -96,13 +96,13 @@ export class TouchControls {
     this.jumpButtonImage.setDisplaySize(70, 70) // Keep same relative size as before (was 70px diameter circle)
     
     // Debug: Add hitbox visualization (100px wide, screen height - 200px rectangle, shifted down 100px)
-    const screenHeight = GameSettings.canvas.height
-    const hitboxHeight = screenHeight - 200
-    const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 100, hitboxHeight, 0xff0000, 0.3) // Semi-transparent red rectangle, shifted down 100px
-    hitboxDebug.setStrokeStyle(2, 0xff0000, 0.8) // Red border
+    // const screenHeight = GameSettings.canvas.height
+    // const hitboxHeight = screenHeight - 200
+    // const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 100, hitboxHeight, 0xff0000, 0.3) // Semi-transparent red rectangle, shifted down 100px
+    // hitboxDebug.setStrokeStyle(2, 0xff0000, 0.8) // Red border
     
     // No text - clean minimal design
-    this.jumpButton.add([this.jumpButtonImage, hitboxDebug])
+    this.jumpButton.add([this.jumpButtonImage])
   }
 
   private createActionButton(): void {
@@ -120,12 +120,12 @@ export class TouchControls {
     this.actionButtonImage.setDisplaySize(70, 70) // Same size as jump button
     
     // Debug: Add hitbox visualization (110px wide, screen height - 200px rectangle, shifted down 100px)
-    const screenHeight = GameSettings.canvas.height
-    const hitboxHeight = screenHeight - 200
-    const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 110, hitboxHeight, 0x00ff00, 0.3) // Semi-transparent green rectangle, shifted down 100px
-    hitboxDebug.setStrokeStyle(2, 0x00ff00, 0.8) // Green border
+    // const screenHeight = GameSettings.canvas.height
+    // const hitboxHeight = screenHeight - 200
+    // const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 110, hitboxHeight, 0x00ff00, 0.3) // Semi-transparent green rectangle, shifted down 100px
+    // hitboxDebug.setStrokeStyle(2, 0x00ff00, 0.8) // Green border
     
-    this.actionButton.add([this.actionButtonImage, hitboxDebug])
+    this.actionButton.add([this.actionButtonImage])
   }
 
   private setupInputHandlers(): void {
