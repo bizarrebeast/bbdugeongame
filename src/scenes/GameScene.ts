@@ -249,6 +249,10 @@ export class GameScene extends Phaser.Scene {
     this.load.image('custom-dpad', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/dpad-HlSoc5tt8vs8cjbkEROL1GjaGzx8Ko.png?ecZG')
     this.load.image('custom-jump-button', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20button-yS4IpgcdvQerPZjpif3tOLmqIfO7yE.png?pRZm')
     
+    // Load HUD background sprites
+    this.load.image('test-hud-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/test%20gem%20for%20hud-7RamXtpyUYcrX6K6DLnuWOD7ZNssLi.png?1boq')
+    this.load.image('hud-bg-200', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/gem%20for%20hud-pTsDx0VNBRQzAIh45KCFTFoU0pM1om.png?4RuD')
+    
     // Load new blue enemy animation sprites
     this.load.image('blueEnemyMouthClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-HUXqx9HBdotEhJE2LBgzK8Z4kA7e2H.png?AVKZ')
     this.load.image('blueEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed%20blinking-bJ1xwYkoCZvjd4T9MdXzR45PfaZIcF.png?6LRV')
@@ -723,18 +727,33 @@ export class GameScene extends Phaser.Scene {
     
     // Game title removed - focusing on clean HUD
     
-    // Create dark purple HUD background bar across top
+    // Create HUD with image fill inside rounded rectangle
     const screenWidth = this.cameras.main.width
-    const hudBg = this.add.graphics()
-    hudBg.fillStyle(0x4a148c, 1.0)  // Dark purple color with full opacity
-    hudBg.lineStyle(2, 0x7b1fa2, 1.0) // Slightly lighter purple border with full opacity
     
-    // Single connected rectangle across the top (20% taller for better spacing)
-    hudBg.fillRoundedRect(8, 40, screenWidth - 16, 96, 12)  // Increased height from 80 to 96 (20% taller)
-    hudBg.strokeRoundedRect(8, 40, screenWidth - 16, 96, 12) // Add border stroke
+    // First, create the image that will fill the background (zoomed in)
+    const hudBgImage = this.add.image(screenWidth / 2, 40 + 48 + 4, 'hud-bg-200')  // Shifted down 4px (was 5px)
+    // Scale up the image by 1.6x to zoom in and crop edges
+    hudBgImage.setDisplaySize((screenWidth - 16) * 1.6, 96 * 1.6)  // 60% larger to zoom in
+    hudBgImage.setOrigin(0.5, 0.5)  // Keep centered
+    hudBgImage.setDepth(98)  // Behind the border but above game elements
+    hudBgImage.setScrollFactor(0)
     
-    hudBg.setDepth(99)
-    hudBg.setScrollFactor(0)
+    // Create a mask for the rounded rectangle shape
+    const maskGraphics = this.add.graphics()
+    maskGraphics.fillStyle(0xffffff)
+    maskGraphics.fillRoundedRect(8, 40, screenWidth - 16, 96, 12)
+    maskGraphics.setScrollFactor(0)
+    
+    // Apply the mask to clip the image to the rounded rectangle shape
+    const mask = maskGraphics.createGeometryMask()
+    hudBgImage.setMask(mask)
+    
+    // Now create the border on top
+    const hudBorder = this.add.graphics()
+    hudBorder.lineStyle(2, 0x7b1fa2, 1.0) // Slightly lighter purple border
+    hudBorder.strokeRoundedRect(8, 40, screenWidth - 16, 96, 12) // Just the border stroke
+    hudBorder.setDepth(99)
+    hudBorder.setScrollFactor(0)
     
     // LEFT SIDE: Lives, Crystals, Level
     // Lives display with heart crystal icon (left side, row 1)
@@ -873,8 +892,8 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.setScrollFactor(0)
     
     // RIGHT SIDE: Hamburger menu
-    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 88, '☰', {
-      fontSize: '32px',
+    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 78, '☰', {  // Moved up 10px from 88 to 78
+      fontSize: '42px',  // Increased by 10px from 32px
       color: '#9acf07',  // Bright green color
       fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
