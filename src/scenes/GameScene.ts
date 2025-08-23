@@ -3174,7 +3174,7 @@ export class GameScene extends Phaser.Scene {
     const baseBluBody = baseBluObj.body as Phaser.Physics.Arcade.Body
     
     // Check if player is invincible and can kill BaseBlu
-    if (this.invincibilityTimeRemaining > 0 && baseBluObj.canBeKilledByInvinciblePlayer()) {
+    if (this.invincibilityActive && baseBluObj.canBeKilledByInvinciblePlayer()) {
       const points = baseBluObj.handleInvinciblePlayerKill()
       this.score += points
       this.updateScoreDisplay()
