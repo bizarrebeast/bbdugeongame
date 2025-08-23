@@ -4779,7 +4779,8 @@ export class GameScene extends Phaser.Scene {
       const registry = this.game.registry
       registry.set('levelProgression', true)
       // Add current level score to accumulated score
-      registry.set('accumulatedScore', this.accumulatedScore + this.score)
+      const newAccumulatedScore = this.accumulatedScore + this.score
+      registry.set('accumulatedScore', newAccumulatedScore)
       registry.set('totalCoins', this.totalCoinsCollected)
       
       // Advance to next level
@@ -5424,8 +5425,8 @@ export class GameScene extends Phaser.Scene {
     this.game.registry.set('isDeathRetry', false)
     this.game.registry.set('isLevelProgression', false)
     this.game.registry.set('currentLevel', 1)
-    this.game.registry.set('lives', 3)
-    this.game.registry.set('totalCoinsCollected', 0)
+    this.game.registry.set('playerLives', 3) // Use correct key
+    this.game.registry.set('totalCoins', 0) // Use correct key
     this.game.registry.set('accumulatedScore', 0)
     
     // Restart the scene

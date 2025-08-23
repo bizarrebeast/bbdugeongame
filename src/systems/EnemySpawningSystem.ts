@@ -63,37 +63,37 @@ export class EnemySpawningSystem {
   }
 
   private static readonly LEVEL_SPAWN_WEIGHTS: Record<string, SpawnWeights> = {
-    // Levels 1-3: Easy focus
-    'early': {
-      [EnemyType.CATERPILLAR]: 0.35,  // 35%
-      [EnemyType.CHOMPER]: 0.25,      // 25% 
-      [EnemyType.SNAIL]: 0.25,        // 25%
-      [EnemyType.JUMPER]: 0.10,       // 10%
-      [EnemyType.STALKER]: 0.05       // 5%
+    // Levels 1-10: Tutorial phase - focus on basic enemies
+    'tutorial': {
+      [EnemyType.CATERPILLAR]: 0.40,  // 40% - easier enemy
+      [EnemyType.CHOMPER]: 0.35,      // 35% - main enemy (BaseBlu)
+      [EnemyType.SNAIL]: 0.20,        // 20% - faster variant
+      [EnemyType.JUMPER]: 0.05,       // 5% - rare advanced
+      [EnemyType.STALKER]: 0.00       // 0% - not in tutorial
     },
-    // Levels 4-7: Balanced
-    'balanced': {
-      [EnemyType.CATERPILLAR]: 0.20,  // 20%
-      [EnemyType.CHOMPER]: 0.20,      // 20%
-      [EnemyType.SNAIL]: 0.25,        // 25%
-      [EnemyType.JUMPER]: 0.25,       // 25%
-      [EnemyType.STALKER]: 0.10       // 10%
+    // Levels 11-25: Skill building - introduce all mechanics
+    'skill_building': {
+      [EnemyType.CATERPILLAR]: 0.25,  // 25% - still common
+      [EnemyType.CHOMPER]: 0.30,      // 30% - BaseBlu remains prominent
+      [EnemyType.SNAIL]: 0.25,        // 25% - balanced presence
+      [EnemyType.JUMPER]: 0.15,       // 15% - more common
+      [EnemyType.STALKER]: 0.05       // 5% - introduce stalkers
     },
-    // Levels 8-12: Challenge ramp
-    'challenging': {
-      [EnemyType.CATERPILLAR]: 0.15,  // 15%
-      [EnemyType.CHOMPER]: 0.15,      // 15%
-      [EnemyType.SNAIL]: 0.25,        // 25%
-      [EnemyType.JUMPER]: 0.30,       // 30%
-      [EnemyType.STALKER]: 0.15       // 15%
+    // Levels 26-40: Challenge ramp - balanced difficulty
+    'challenge_ramp': {
+      [EnemyType.CATERPILLAR]: 0.15,  // 15% - less common
+      [EnemyType.CHOMPER]: 0.25,      // 25% - BaseBlu still important
+      [EnemyType.SNAIL]: 0.25,        // 25% - standard presence
+      [EnemyType.JUMPER]: 0.25,       // 25% - equal to snails
+      [EnemyType.STALKER]: 0.10       // 10% - more stalkers
     },
-    // Levels 13+: Hard focus
-    'hard': {
-      [EnemyType.CATERPILLAR]: 0.08,  // 8%
-      [EnemyType.CHOMPER]: 0.12,      // 12%
-      [EnemyType.SNAIL]: 0.25,        // 25%
-      [EnemyType.JUMPER]: 0.35,       // 35%
-      [EnemyType.STALKER]: 0.20       // 20%
+    // Levels 41-50: Master phase - maximum challenge
+    'master_phase': {
+      [EnemyType.CATERPILLAR]: 0.08,  // 8% - rare easy enemy
+      [EnemyType.CHOMPER]: 0.20,      // 20% - BaseBlu for variety
+      [EnemyType.SNAIL]: 0.22,        // 22% - solid presence
+      [EnemyType.JUMPER]: 0.30,       // 30% - high difficulty
+      [EnemyType.STALKER]: 0.20       // 20% - significant threat
     }
   }
 
@@ -101,36 +101,43 @@ export class EnemySpawningSystem {
    * Get difficulty budget for a floor based on level progression
    */
   static getDifficultyBudget(levelNumber: number, floorNumber: number): number {
-    // Base difficulty increases with level
+    // Base difficulty increases with level according to our 4-phase structure
     let baseDifficulty: number
-    if (levelNumber <= 3) {
-      baseDifficulty = 2.0
-    } else if (levelNumber <= 7) {
-      baseDifficulty = 3.5
-    } else if (levelNumber <= 12) {
-      baseDifficulty = 5.0
+    if (levelNumber <= 10) {
+      // Tutorial phase: 1.5-3.0 difficulty
+      baseDifficulty = 1.5 + (levelNumber - 1) * 0.167 // smooth progression to 3.0
+    } else if (levelNumber <= 25) {
+      // Skill building: 3.0-5.5 difficulty
+      const progress = (levelNumber - 10) / 15 // 0-1 through this phase
+      baseDifficulty = 3.0 + progress * 2.5
+    } else if (levelNumber <= 40) {
+      // Challenge ramp: 5.5-8.0 difficulty
+      const progress = (levelNumber - 25) / 15
+      baseDifficulty = 5.5 + progress * 2.5
     } else {
-      baseDifficulty = 7.0
+      // Master phase (41-50): 8.0-10.0 difficulty
+      const progress = (levelNumber - 40) / 10
+      baseDifficulty = 8.0 + progress * 2.0
     }
 
-    // Add progressive difficulty within the level (0.1 per floor)
-    const floorBonus = Math.floor(floorNumber / 5) * 0.5 // +0.5 every 5 floors
+    // Add progressive difficulty within each level
+    const floorBonus = Math.floor(floorNumber / 4) * 0.3 // +0.3 every 4 floors
     
-    return baseDifficulty + floorBonus
+    return Math.round((baseDifficulty + floorBonus) * 10) / 10 // Round to 1 decimal
   }
 
   /**
    * Get spawn weights based on level
    */
   static getSpawnWeights(levelNumber: number): SpawnWeights {
-    if (levelNumber <= 3) {
-      return this.LEVEL_SPAWN_WEIGHTS['early']
-    } else if (levelNumber <= 7) {
-      return this.LEVEL_SPAWN_WEIGHTS['balanced'] 
-    } else if (levelNumber <= 12) {
-      return this.LEVEL_SPAWN_WEIGHTS['challenging']
+    if (levelNumber <= 10) {
+      return this.LEVEL_SPAWN_WEIGHTS['tutorial']
+    } else if (levelNumber <= 25) {
+      return this.LEVEL_SPAWN_WEIGHTS['skill_building']
+    } else if (levelNumber <= 40) {
+      return this.LEVEL_SPAWN_WEIGHTS['challenge_ramp']
     } else {
-      return this.LEVEL_SPAWN_WEIGHTS['hard']
+      return this.LEVEL_SPAWN_WEIGHTS['master_phase']
     }
   }
 

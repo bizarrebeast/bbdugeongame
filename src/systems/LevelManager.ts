@@ -224,21 +224,22 @@ export class LevelManager {
   }
   
   /**
-   * Get spawn rates for enemies based on level
+   * Get spawn rates for enemies based on level (legacy method - use EnemySpawningSystem instead)
+   * @deprecated Use EnemySpawningSystem.selectEnemies() for new difficulty-based spawning
    */
   getEnemySpawnRates(levelNumber: number): { [key: string]: number } {
     const baseRates = {
-      blue: 1.0,
-      yellow: 0.6,
-      green: 0.4,
-      red: 0.2
+      blue: 1.2,   // Increased BaseBlu frequency
+      yellow: 0.8, // Slightly increased caterpillar frequency
+      green: 0.5,  // Moderate jumper frequency
+      red: 0.3     // Controlled red enemy frequency
     }
     
     // Cap difficulty scaling at level 50 for BEAST MODE
     const configLevel = Math.min(levelNumber, this.MAX_PROGRESSION_LEVEL)
     
-    // Increase spawn rates as levels progress
-    const difficultyMultiplier = 1 + (configLevel * 0.02) // Max 2x at level 50
+    // More gradual increase in spawn rates
+    const difficultyMultiplier = 1 + (configLevel * 0.015) // Max 1.75x at level 50
     
     const rates: { [key: string]: number } = {}
     const availableEnemies = this.getEnemyTypes(configLevel)
