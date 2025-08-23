@@ -3520,9 +3520,18 @@ export class GameScene extends Phaser.Scene {
     // Create popup text matching HUD font style
     const popupText = this.add.text(x, y, `+${points}`, {
       fontSize: '16px',
-      color: '#00ff00',
+      color: '#ffd700',  // Gold color to match HUD
       fontFamily: '"Press Start 2P", system-ui',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 1,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
     }).setOrigin(0.5).setDepth(150)
     
     // Simple fade out animation - no movement
@@ -3541,11 +3550,18 @@ export class GameScene extends Phaser.Scene {
     // Create golden popup text for invincibility kills
     const popupText = this.add.text(x, y, `+${points}`, {
       fontSize: '18px',
-      color: '#ffd700',
+      color: '#ffd700',  // Gold color to match HUD
       fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 2
+      stroke: '#4a148c',  // Dark purple stroke to match HUD
+      strokeThickness: 2,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',  // Black drop shadow
+        blur: 3,
+        fill: true
+      }
     }).setOrigin(0.5).setDepth(150)
     
     // Larger fade out animation with slight movement
@@ -4434,11 +4450,18 @@ export class GameScene extends Phaser.Scene {
       levelConfig.isEndless ? 'ENDLESS MODE!' : `LEVEL ${levelNum}`,
       {
         fontSize: '28px',
-        color: '#ffff00',
+        color: '#ffd700',  // Gold color to match HUD
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 6
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
     
@@ -4448,11 +4471,18 @@ export class GameScene extends Phaser.Scene {
       'GO!',
       {
         fontSize: '36px',
-        color: '#00ff00',
+        color: '#9acf07',  // Green color to match HUD level text
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 6
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(300).setScrollFactor(0).setAlpha(0)
     
@@ -4689,24 +4719,25 @@ export class GameScene extends Phaser.Scene {
       0.7
     ).setDepth(299).setScrollFactor(0)
     
-    // Create popup
-    const popup = this.add.rectangle(
-      GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2,
+    // Create HUD-style popup background with rounded corners
+    const popupBg = this.add.graphics()
+    popupBg.fillStyle(0x4a148c, 1.0)  // Dark purple fill to match HUD
+    popupBg.lineStyle(2, 0x7b1fa2, 1.0) // Lighter purple border to match HUD
+    popupBg.fillRoundedRect(
+      GameSettings.canvas.width / 2 - 175,
+      GameSettings.canvas.height / 2 - 125,
       350,
       250,
-      0x2c2c2c
-    ).setDepth(300).setScrollFactor(0)
-    
-    const border = this.add.rectangle(
-      GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2,
-      354,
-      254,
-      0xffffff
-    ).setDepth(299.5).setScrollFactor(0)
-    border.setStrokeStyle(3, 0xffffff)
-    border.setFillStyle()
+      12  // Rounded corners like HUD
+    )
+    popupBg.strokeRoundedRect(
+      GameSettings.canvas.width / 2 - 175,
+      GameSettings.canvas.height / 2 - 125,
+      350,
+      250,
+      12  // Rounded corners like HUD
+    )
+    popupBg.setDepth(300).setScrollFactor(0)
     
     // Title
     const title = this.add.text(
@@ -4715,9 +4746,18 @@ export class GameScene extends Phaser.Scene {
       `LEVEL ${levelNum} COMPLETE!`,
       {
         fontSize: '22px',
-        color: '#44ff44',
+        color: '#9acf07',  // Green color to match HUD level text
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        },
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4729,8 +4769,17 @@ export class GameScene extends Phaser.Scene {
       `Score: ${this.accumulatedScore + this.score}\nFloors Climbed: ${this.currentFloor}`,
       {
         fontSize: '14px',
-        color: '#ffffff',
+        color: '#ffd700',  // Gold color to match HUD score text
         fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        },
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4744,22 +4793,31 @@ export class GameScene extends Phaser.Scene {
       nextConfig.isEndless ? 'Next: BEAST MODE!' : `Next: Level ${nextLevel}`,
       {
         fontSize: '12px',
-        color: '#ffff00',
+        color: '#ff69b4',  // Pink color to match HUD lives text
         fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        },
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
     
-    // Continue button
+    // Continue button (changed to teal)
     const continueBtn = this.add.rectangle(
       GameSettings.canvas.width / 2,
       GameSettings.canvas.height / 2 + 85,
       150,
       40,
-      0x44ff44
+      0x20b2aa  // Teal color
     ).setDepth(301).setScrollFactor(0)
     continueBtn.setInteractive({ useHandCursor: true })
-    continueBtn.setStrokeStyle(2, 0x22aa22)
+    continueBtn.setStrokeStyle(2, 0x188a82)  // Darker teal border
     
     const continueText = this.add.text(
       GameSettings.canvas.width / 2,
@@ -4767,9 +4825,18 @@ export class GameScene extends Phaser.Scene {
       'CONTINUE',
       {
         fontSize: '16px',
-        color: '#ffffff',
+        color: '#ffd700',  // Gold color to match HUD
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(302).setScrollFactor(0)
     
@@ -4810,15 +4877,25 @@ export class GameScene extends Phaser.Scene {
       0.8
     ).setDepth(299).setScrollFactor(0)
 
-    // Create notification background with glowing effect
-    const notificationBg = this.add.rectangle(
-      GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2,
+    // Create HUD-style notification background with rounded corners
+    const notificationBg = this.add.graphics()
+    notificationBg.fillStyle(0x4a148c, 1.0)  // Dark purple fill to match HUD
+    notificationBg.lineStyle(2, 0x7b1fa2, 1.0) // Lighter purple border to match HUD
+    notificationBg.fillRoundedRect(
+      GameSettings.canvas.width / 2 - 200,
+      GameSettings.canvas.height / 2 - 100,
       400,
       200,
-      0x330000
-    ).setDepth(300).setScrollFactor(0)
-    notificationBg.setStrokeStyle(4, 0xff0000, 1)
+      12  // Rounded corners like HUD
+    )
+    notificationBg.strokeRoundedRect(
+      GameSettings.canvas.width / 2 - 200,
+      GameSettings.canvas.height / 2 - 100,
+      400,
+      200,
+      12  // Rounded corners like HUD
+    )
+    notificationBg.setDepth(300).setScrollFactor(0)
     
     // Main BEAST MODE title
     const beastModeTitle = this.add.text(
@@ -4827,9 +4904,18 @@ export class GameScene extends Phaser.Scene {
       'BEAST MODE',
       {
         fontSize: '24px',
-        color: '#ff0000',
+        color: '#ff69b4',  // Pink color to match HUD lives (but for special BEAST MODE)
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
     
@@ -4840,9 +4926,18 @@ export class GameScene extends Phaser.Scene {
       'ACTIVATED',
       {
         fontSize: '16px',
-        color: '#ffffff',
+        color: '#9acf07',  // Green color to match HUD level text
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
     
@@ -4853,8 +4948,17 @@ export class GameScene extends Phaser.Scene {
       'Infinite floors at maximum difficulty!',
       {
         fontSize: '10px',
-        color: '#ffff00',
+        color: '#ffd700',  // Gold color to match HUD score text
         fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        },
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4960,15 +5064,25 @@ export class GameScene extends Phaser.Scene {
     const popupX = this.cameras.main.width / 2
     const popupY = this.cameras.main.height / 2
     
-    const popupBg = this.add.rectangle(
-      popupX,
-      popupY,
+    // Create HUD-style popup background with rounded corners
+    const popupBg = this.add.graphics()
+    popupBg.fillStyle(0x4a148c, 1.0)  // Dark purple fill to match HUD
+    popupBg.lineStyle(2, 0x7b1fa2, 1.0) // Lighter purple border to match HUD
+    popupBg.fillRoundedRect(
+      popupX - popupWidth/2,
+      popupY - popupHeight/2,
       popupWidth,
       popupHeight,
-      0x2c2c2c
-    ).setDepth(200).setScrollFactor(0)
-    
-    popupBg.setStrokeStyle(3, 0xffffff)
+      12  // Rounded corners like HUD
+    )
+    popupBg.strokeRoundedRect(
+      popupX - popupWidth/2,
+      popupY - popupHeight/2,
+      popupWidth,
+      popupHeight,
+      12  // Rounded corners like HUD
+    )
+    popupBg.setDepth(200).setScrollFactor(0)
     
     // Lost life title
     const title = this.add.text(
@@ -4977,11 +5091,18 @@ export class GameScene extends Phaser.Scene {
       'LIFE LOST!',
       {
         fontSize: '22px',
-        color: '#ff6666',
+        color: '#ff69b4',  // Pink color to match HUD lives text
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
@@ -4992,22 +5113,31 @@ export class GameScene extends Phaser.Scene {
       `Lives Remaining: ${this.lives}`,
       {
         fontSize: '14px',
-        color: '#ffffff',
+        color: '#ffd700',  // Gold color to match HUD score text
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Continue button
+    // Continue button (changed to teal)
     const continueBtn = this.add.rectangle(
       popupX,
       popupY + 40,
       140,
       35,
-      0x44ff44
+      0x20b2aa  // Teal color
     ).setDepth(201).setScrollFactor(0)
     continueBtn.setInteractive({ useHandCursor: true })
-    continueBtn.setStrokeStyle(2, 0x22aa22)
+    continueBtn.setStrokeStyle(2, 0x188a82)  // Darker teal border
     
     const continueText = this.add.text(
       popupX,
@@ -5015,9 +5145,18 @@ export class GameScene extends Phaser.Scene {
       'CONTINUE',
       {
         fontSize: '12px',
-        color: '#ffffff',
+        color: '#9acf07',  // Green color to match HUD level text
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
     
@@ -5057,15 +5196,25 @@ export class GameScene extends Phaser.Scene {
     const popupX = this.cameras.main.width / 2
     const popupY = this.cameras.main.height / 2
     
-    const popupBg = this.add.rectangle(
-      popupX,
-      popupY,
+    // Create HUD-style popup background with rounded corners
+    const popupBg = this.add.graphics()
+    popupBg.fillStyle(0x4a148c, 1.0)  // Dark purple fill to match HUD
+    popupBg.lineStyle(2, 0x7b1fa2, 1.0) // Lighter purple border to match HUD
+    popupBg.fillRoundedRect(
+      popupX - popupWidth/2,
+      popupY - popupHeight/2,
       popupWidth,
       popupHeight,
-      0x2c2c2c
-    ).setDepth(200).setScrollFactor(0)
-    
-    popupBg.setStrokeStyle(3, 0xffffff)
+      12  // Rounded corners like HUD
+    )
+    popupBg.strokeRoundedRect(
+      popupX - popupWidth/2,
+      popupY - popupHeight/2,
+      popupWidth,
+      popupHeight,
+      12  // Rounded corners like HUD
+    )
+    popupBg.setDepth(200).setScrollFactor(0)
     
     // Game over title
     const gameOverTitle = this.add.text(
@@ -5074,11 +5223,18 @@ export class GameScene extends Phaser.Scene {
       'GAME OVER!',
       {
         fontSize: '24px',
-        color: '#ff4444',
+        color: '#ff69b4',  // Pink color to match HUD lives text
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 4
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
@@ -5089,9 +5245,18 @@ export class GameScene extends Phaser.Scene {
       `Final Score: ${this.accumulatedScore + this.score}`,
       {
         fontSize: '16px',
-        color: '#ffd700',
+        color: '#ffd700',  // Gold color to match HUD score text
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
@@ -5102,22 +5267,31 @@ export class GameScene extends Phaser.Scene {
       `Coins Collected: ${this.totalCoinsCollected}`,
       {
         fontSize: '12px',
-        color: '#ffd700',
+        color: '#ffd700',  // Gold color to match HUD crystal text
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Restart button (full game restart)
+    // Restart button (full game restart, changed to teal)
     const restartButton = this.add.rectangle(
       popupX,
       popupY + 50,
       150,
       40,
-      0x44ff44
+      0x20b2aa  // Teal color
     ).setDepth(201).setScrollFactor(0)
     restartButton.setInteractive({ useHandCursor: true })
-    restartButton.setStrokeStyle(2, 0x22aa22)
+    restartButton.setStrokeStyle(2, 0x188a82)  // Darker teal border
     
     const restartText = this.add.text(
       popupX,
@@ -5125,9 +5299,18 @@ export class GameScene extends Phaser.Scene {
       'START OVER',
       {
         fontSize: '14px',
-        color: '#ffffff',
+        color: '#9acf07',  // Green color to match HUD level text
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',  // Black drop shadow
+          blur: 3,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
     
