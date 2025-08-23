@@ -19,17 +19,48 @@ export interface LevelConfig {
 
 export class LevelManager {
   private currentLevel: number = 1
+  private isInBonusLevel: boolean = false
   private readonly BEAST_MODE_LEVEL = 51
   private readonly MAX_PROGRESSION_LEVEL = 50
   constructor() {
     // Always start from Level 1 - we'll track furthest level reached separately
     this.currentLevel = 1
+    this.isInBonusLevel = false
   }
   
+  /**
+   * Check if a level should trigger a bonus level after it
+   */
+  private shouldHaveBonusAfter(levelNumber: number): boolean {
+    // Bonus levels appear after levels 10, 20, 30, 40, 50
+    return levelNumber > 0 && levelNumber % 10 === 0 && levelNumber < this.BEAST_MODE_LEVEL
+  }
+
+  /**
+   * Check if currently in a bonus level
+   */
+  isBonusLevel(): boolean {
+    return this.isInBonusLevel
+  }
+
   /**
    * Get configuration for a specific level
    */
   getLevelConfig(levelNumber: number): LevelConfig {
+    // Special configuration for bonus levels
+    if (this.isInBonusLevel) {
+      return {
+        levelNumber: levelNumber, // Keep the previous level number for HUD
+        floorCount: 5, // Bonus levels have 5 floors
+        enemyTypes: [], // No enemies in bonus levels
+        collectibleTypes: ['treasureChest'], // Only treasure chests in bonus levels
+        worldWidth: 24, // Standard width for simplicity
+        isEndless: false,
+        difficultyBudgetPerFloor: 0, // No enemies
+        enemySpawnWeights: {}
+      }
+    }
+
     const isBeastMode = levelNumber >= this.BEAST_MODE_LEVEL
     
     // For BEAST MODE (51+), use level 50's difficulty configuration
@@ -114,11 +145,11 @@ export class LevelManager {
    */
   private getCollectibleTypes(levelNumber: number): string[] {
     if (levelNumber <= 2) {
-      return ['coin', 'treasureChest', 'invincibilityPendant']  // Add pendants for testing
+      return ['coin', 'treasureChest']
     } else if (levelNumber <= 3) {
-      return ['coin', 'blueCoin', 'treasureChest', 'invincibilityPendant']  // Add pendants for testing
+      return ['coin', 'blueCoin', 'treasureChest']
     } else if (levelNumber <= 6) {
-      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant', 'treasureChest']  // Add treasure chests for testing
+      return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant', 'treasureChest']
     } else {
       return ['coin', 'blueCoin', 'diamond', 'freeLife', 'invincibilityPendant', 'treasureChest']
     }
@@ -159,7 +190,21 @@ export class LevelManager {
    * Advance to the next level
    */
   nextLevel(): number {
-    this.currentLevel++
+    // If we're in a bonus level, exit it and go to the next regular level
+    if (this.isInBonusLevel) {
+      this.isInBonusLevel = false
+      this.currentLevel++ // Move to the next regular level (11, 21, 31, etc.)
+    } 
+    // If we just completed a level that triggers a bonus (10, 20, 30, etc.)
+    else if (this.shouldHaveBonusAfter(this.currentLevel)) {
+      this.isInBonusLevel = true
+      // Don't increment level number - bonus level shows the same number
+    }
+    // Normal level progression
+    else {
+      this.currentLevel++
+    }
+    
     this.saveProgress()
     return this.currentLevel
   }
@@ -169,6 +214,7 @@ export class LevelManager {
    */
   resetToStart(): void {
     this.currentLevel = 1
+    this.isInBonusLevel = false
     // Don't save this - we want to preserve their furthest progress
   }
   

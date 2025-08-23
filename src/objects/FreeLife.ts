@@ -30,8 +30,8 @@ export class FreeLife {
     if (this.sprite.body) {
       const body = this.sprite.body as Phaser.Physics.Arcade.Body
       body.setSize(29, 29)
-      // Container physics bodies need offset adjustment
-      body.setOffset(-14.5, -14.5) // Center the hitbox on the container (29/2 = 14.5)
+      // Adjust hitbox position to better match visual sprite (right 10, down 10)
+      body.setOffset(10, 10) // Move hitbox right and down to align with visual sprite
     }
     
     // Add gentle floating motion to container (same as diamond)

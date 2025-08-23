@@ -417,6 +417,17 @@ export class GameScene extends Phaser.Scene {
       this.levelManager = new LevelManager()
     }
     
+    // Sync level manager with registry
+    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 1
+    // Sync level manager with registry
+    this.levelManager.setCurrentLevel(currentLevelFromRegistry)
+    
+    // Clear any cached level from localStorage and always start at level 1
+    localStorage.removeItem('bizarreUnderground_currentLevel')
+    // Also sync the level manager to level 1 to override any testing values
+    this.levelManager.setCurrentLevel(1)
+    this.game.registry.set('currentLevel', 1)
+    
     // Reset game state
     this.isGameOver = false
     this.isLevelComplete = false
@@ -1361,8 +1372,8 @@ export class GameScene extends Phaser.Scene {
         ladderPositions[floor] = -1 // Special marker for ground floor
         floorLayouts[floor] = { gapStart: -1, gapSize: 0 } // No gap
       } else {
-        // Upper floors - create platforms with random gaps
-        const hasGap = Math.random() > 0.3 // 70% chance of having a gap
+        // Upper floors - create platforms with random gaps (except bonus levels)
+        const hasGap = !this.levelManager.isBonusLevel() && Math.random() > 0.3 // 70% chance of having a gap (never for bonus levels)
         
         if (hasGap) {
           // Random gap position (avoiding edges)
@@ -1379,9 +1390,11 @@ export class GameScene extends Phaser.Scene {
             }
           }
           
-          // Add spikes to all gaps in initial floor creation too
+          // Add spikes to all gaps in initial floor creation too (except in bonus levels)
           // console.log(`🔱 Initial floor ${floor}: Creating spikes: gapStart=${gapStart}, gapSize=${gapSize}, floorY=${y}`)
-          this.createSpikesInGap(gapStart, gapSize, y, tileSize)
+          if (!this.levelManager.isBonusLevel()) {
+            this.createSpikesInGap(gapStart, gapSize, y, tileSize)
+          }
           
           // Store safe ladder positions (not in or next to gaps)
           const leftSafe = gapStart > 3 ? Math.floor(Math.random() * (gapStart - 1)) + 1 : -1
@@ -1823,6 +1836,11 @@ export class GameScene extends Phaser.Scene {
     const floorSpacing = tileSize * 5
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     
+    // Skip ceiling spikes entirely for bonus levels
+    if (this.levelManager.isBonusLevel()) {
+      return
+    }
+    
     // Only spawn ceiling spikes on level 1 for testing, later only on higher levels
     const minFloorForCeilingSpikes = 1 // Will change to higher number later
     
@@ -1962,6 +1980,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createCats(): void {
+    // Skip enemy spawning entirely for bonus levels
+    if (this.levelManager.isBonusLevel()) {
+      return
+    }
+
     const tileSize = GameSettings.game.tileSize
     const floorSpacing = tileSize * 5
     const floorWidth = GameSettings.game.floorWidth
@@ -2399,6 +2422,19 @@ export class GameScene extends Phaser.Scene {
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     const allowedCollectibles = levelConfig.collectibleTypes
     
+    // Special handling for bonus levels - place exactly 2 treasure chests
+    if (this.levelManager.isBonusLevel()) {
+      this.createBonusLevelChests()
+      return
+    }
+    
+    // Special handling for level 10 testing - only spawn invincibility pendants
+    const currentLevel = this.levelManager.getCurrentLevel()
+    if (currentLevel === 10) {
+      this.createLevel10TestingCollectibles()
+      return
+    }
+    
     // Place collectibles on each floor based on rarity rules from sprint plan
     for (let floor = 0; floor < this.floorLayouts.length; floor++) {
       const layout = this.floorLayouts[floor]
@@ -2607,6 +2643,251 @@ export class GameScene extends Phaser.Scene {
     
     // Need 2-3 tiles clearance around door (doors are wider than ladders)
     return Math.abs(x - doorX) <= 2
+  }
+
+  private createBonusLevelChests(): void {
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    
+    // Place 2 treasure chests on floors 2 and 3 of the bonus level
+    const chestFloors = [2, 3]
+    
+    for (let i = 0; i < chestFloors.length; i++) {
+      const floor = chestFloors[i]
+      if (floor >= this.floorLayouts.length) continue
+      
+      const layout = this.floorLayouts[floor]
+      
+      // Calculate Y position above the platform
+      const platformY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      const collectibleY = platformY - tileSize - 8 // Float above the platform
+      
+      // Find all valid positions (where there are platforms, avoiding ladders)
+      const validPositions: number[] = []
+      for (let x = 1; x < GameSettings.game.floorWidth - 1; x++) {
+        if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor)) {
+          validPositions.push(x)
+        }
+      }
+      
+      if (validPositions.length === 0) continue
+      
+      // Place the treasure chest at a random valid position
+      const randomIndex = Math.floor(Math.random() * validPositions.length)
+      const chestX = validPositions[randomIndex] * tileSize + tileSize/2
+      
+      // Create treasure chest - it will auto-generate contents when opened
+      const treasureChest = new TreasureChest(this, chestX, collectibleY)
+      this.treasureChests.push(treasureChest)
+      
+      // Note: Treasure chests auto-generate their contents when opened based on tier
+      // For bonus levels, all chests will contain good rewards automatically
+    }
+    
+    // Add lots of collectibles throughout the bonus level
+    this.createBonusLevelCollectibles()
+    
+    // Add guaranteed free life to bonus level
+    this.createBonusLevelFreeLife()
+  }
+  
+  private createBonusLevelCollectibles(): void {
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    
+    // Creating collectibles for bonus level floors
+    
+    // Place collectibles on all floors of the bonus level
+    for (let floor = 1; floor < this.floorLayouts.length - 1; floor++) { // Skip ground and door floors
+      const layout = this.floorLayouts[floor]
+      
+      // Calculate Y position above the platform
+      const platformY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      const collectibleY = platformY - tileSize - 8
+      
+      // Find all valid positions (skip treasure chest locations)
+      const validPositions: number[] = []
+      for (let x = 1; x < GameSettings.game.floorWidth - 1; x++) {
+        if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor)) {
+          // Skip positions where treasure chests might be placed (we don't know exact positions, but avoid center areas)
+          validPositions.push(x)
+        }
+      }
+      
+      if (validPositions.length === 0) continue
+      
+      // Shuffle positions for random placement
+      const shuffledPositions = [...validPositions].sort(() => Math.random() - 0.5)
+      
+      let positionIndex = 0
+      
+      // Place exactly 1 diamond per floor with smart spacing
+      if (shuffledPositions.length > 0) {
+        // Pick a position away from edges and ladders for better accessibility
+        const safePosition = Math.min(Math.floor(shuffledPositions.length / 3), shuffledPositions.length - 1)
+        const x = shuffledPositions[safePosition] * tileSize + tileSize/2
+        
+        const diamond = new Diamond(this, x, collectibleY)
+        this.diamonds.push(diamond)
+        
+        // Add collision detection with a small delay to ensure diamond is fully initialized
+        this.time.delayedCall(100, () => {
+          this.physics.add.overlap(
+            this.player,
+            diamond.sprite,
+            () => this.handleDiamondCollection(diamond),
+            undefined,
+            this
+          )
+        })
+        
+        // Remove used position to avoid conflicts
+        shuffledPositions.splice(safePosition, 1)
+      }
+      
+      // Place exactly 5 blue coins per floor with spacing
+      const blueCoinSpacing = Math.max(1, Math.floor(shuffledPositions.length / 6)) // Ensure spacing
+      for (let i = 0; i < 5 && i < shuffledPositions.length; i++) {
+        const spacedIndex = Math.min(i * blueCoinSpacing, shuffledPositions.length - 1)
+        const x = shuffledPositions[spacedIndex] * tileSize + tileSize/2
+        const blueCoin = new BlueCoin(this, x, collectibleY)
+        this.blueCoins.push(blueCoin)
+        
+        this.physics.add.overlap(
+          this.player,
+          blueCoin.sprite,
+          () => this.handleBlueCoinCollection(blueCoin),
+          undefined,
+          this
+        )
+        
+        // Remove used position
+        shuffledPositions.splice(spacedIndex, 1)
+      }
+      
+      // Fill remaining positions with regular crystals (with minimum spacing)
+      let crystalIndex = 0
+      const minCrystalSpacing = 2 // Minimum tiles between crystals
+      for (let i = 0; i < shuffledPositions.length; i++) {
+        // Only place if we have enough spacing from previous crystal
+        if (crystalIndex === 0 || i >= crystalIndex + minCrystalSpacing) {
+          const x = shuffledPositions[i] * tileSize + tileSize/2
+          const coin = new Coin(this, x, collectibleY)
+          this.coins.push(coin)
+          
+          this.physics.add.overlap(
+            this.player,
+            coin.sprite,
+            () => this.handleCoinCollection(coin),
+            undefined,
+            this
+          )
+          crystalIndex = i
+        }
+      }
+    }
+  }
+
+  private createBonusLevelFreeLife(): void {
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    
+    // Place guaranteed free life on floor 3 (middle floor) for easier access
+    const targetFloor = 3 // Middle floor of 5-floor bonus level
+    
+    if (targetFloor < this.floorLayouts.length) {
+      const layout = this.floorLayouts[targetFloor]
+      
+      // Calculate Y position above the platform (same as other collectibles)
+      const platformY = GameSettings.canvas.height - tileSize/2 - (targetFloor * floorSpacing)
+      const collectibleY = platformY - tileSize - 8 // Same Y as other collectibles for consistency
+      
+      // Find all valid positions
+      const validPositions: number[] = []
+      for (let x = 1; x < GameSettings.game.floorWidth - 1; x++) {
+        if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, targetFloor) && !this.hasDoorAt(x, targetFloor)) {
+          validPositions.push(x)
+        }
+      }
+      
+      if (validPositions.length > 0) {
+        // Place free life at position that won't conflict with other items
+        const safePosition = Math.min(2, validPositions.length - 1) // Near left side but not edge
+        const x = validPositions[safePosition] * tileSize + tileSize/2
+        
+        const freeLife = new FreeLife(this, x, collectibleY)
+        this.freeLifes.push(freeLife)
+        // Free life created on bonus level
+        
+        // Add collision detection with a small delay to ensure free life is fully initialized
+        this.time.delayedCall(100, () => {
+          this.physics.add.overlap(
+            this.player,
+            freeLife.sprite,
+            () => {
+              // Free life collected on bonus level
+              this.handleFreeLifeCollection(freeLife)
+            },
+            undefined,
+            this
+          )
+          // Free life collision detection added
+        })
+      }
+    }
+  }
+
+  private createLevel10TestingCollectibles(): void {
+    const tileSize = GameSettings.game.tileSize
+    const floorSpacing = tileSize * 5
+    
+    // Place invincibility pendants on ALL floors for easy testing
+    // Use all available floors from the layout
+    const pendantFloors = []
+    for (let i = 1; i < this.floorLayouts.length - 1; i++) { // Skip ground floor (0) and top floor (door floor)
+      pendantFloors.push(i)
+    }
+    
+    for (let floor of pendantFloors) {
+      if (floor >= this.floorLayouts.length) continue
+      
+      const layout = this.floorLayouts[floor]
+      
+      // Calculate Y position above the platform
+      const platformY = GameSettings.canvas.height - tileSize/2 - (floor * floorSpacing)
+      const collectibleY = platformY - tileSize - 8 // Float above the platform
+      
+      // Find all valid positions
+      const validPositions: number[] = []
+      for (let x = 1; x < GameSettings.game.floorWidth - 1; x++) {
+        if (this.hasPlatformAt(layout, x) && !this.hasLadderAt(x, floor) && !this.hasDoorAt(x, floor)) {
+          validPositions.push(x)
+        }
+      }
+      
+      if (validPositions.length === 0) continue
+      
+      // Place 2-3 invincibility pendants per floor for testing
+      const pendantsToPlace = Math.min(3, validPositions.length)
+      for (let i = 0; i < pendantsToPlace; i++) {
+        const randomIndex = Math.floor(Math.random() * validPositions.length)
+        const x = validPositions.splice(randomIndex, 1)[0] // Remove to avoid duplicates
+        const pendantX = x * tileSize + tileSize/2
+        
+        // Create invincibility pendant
+        const pendant = new InvincibilityPendant(this, pendantX, collectibleY)
+        this.invincibilityPendants.push(pendant)
+        
+        // Add collision detection
+        this.physics.add.overlap(
+          this.player,
+          pendant.sprite,
+          () => this.handleInvincibilityPendantCollection(pendant),
+          undefined,
+          this
+        )
+      }
+    }
   }
 
   private shouldSpawnChestOnFloor(level: number, floor: number): boolean {
@@ -2952,6 +3233,9 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityActive = true
     this.invincibilityTimeRemaining = 10
     
+    // Activate speed boost for player during invincibility
+    this.player.setSpeedMultiplier(1.5)
+    
     // Start countdown timer (loop indefinitely, we'll handle stopping in the callback)
     this.invincibilityTimer = this.time.addEvent({
       delay: 100, // Update every 100ms for smooth animation
@@ -2992,6 +3276,9 @@ export class GameScene extends Phaser.Scene {
       
       // Remove player aura
       this.removePlayerGoldenAura()
+      
+      // Reset player speed to normal
+      this.player.setSpeedMultiplier(1.0)
       
       // Disable spike walking (restore damage overlap, remove collision)
       this.disableSpikeWalking()
@@ -4125,8 +4412,10 @@ export class GameScene extends Phaser.Scene {
           }
         }
         
-        // Add spikes to all gaps
-        this.createSpikesInGap(gapStart, gapSize, y, tileSize)
+        // Add spikes to all gaps (except in bonus levels)
+        if (!this.levelManager.isBonusLevel()) {
+          this.createSpikesInGap(gapStart, gapSize, y, tileSize)
+        }
       } else {
         layout = { gapStart: -1, gapSize: 0 }
         
@@ -4550,16 +4839,19 @@ export class GameScene extends Phaser.Scene {
     const levelNum = this.levelManager.getCurrentLevel()
     const levelConfig = this.levelManager.getLevelConfig(levelNum)
     const isDarkModeLevel = levelNum % 10 === 9
+    const isBonusLevel = this.levelManager.isBonusLevel()
     
     // Create level number text
-    const levelText = levelConfig.isEndless ? 'ENDLESS MODE!' : `LEVEL ${levelNum}`
+    const levelText = isBonusLevel ? 'BONUS LEVEL!' : 
+                     levelConfig.isEndless ? 'ENDLESS MODE!' : 
+                     `LEVEL ${levelNum}`
     const bannerText = this.add.text(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 - (isDarkModeLevel ? 120 : 100),
+      GameSettings.canvas.height / 2 - (isDarkModeLevel && !isBonusLevel ? 120 : 100),
       levelText,
       {
         fontSize: '28px',
-        color: '#ffd700',  // Gold color to match HUD
+        color: isBonusLevel ? '#00ff00' : '#ffd700',  // Green for bonus, gold for regular
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         stroke: '#4a148c',  // Dark purple stroke to match HUD
@@ -4574,9 +4866,9 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
     
-    // Add "DARK MODE!" text for dark mode levels
+    // Add "DARK MODE!" text for dark mode levels (but not on bonus levels)
     let darkModeText: Phaser.GameObjects.Text | null = null
-    if (isDarkModeLevel && !levelConfig.isEndless) {
+    if (isDarkModeLevel && !levelConfig.isEndless && !isBonusLevel) {
       darkModeText = this.add.text(
         GameSettings.canvas.width / 2,
         GameSettings.canvas.height / 2 - 85,
@@ -5742,7 +6034,7 @@ export class GameScene extends Phaser.Scene {
     // Reset game state for new game
     this.game.registry.set('isDeathRetry', false)
     this.game.registry.set('isLevelProgression', false)
-    this.game.registry.set('currentLevel', 1)
+    this.game.registry.set('currentLevel', 1)  // Always start at level 1
     this.game.registry.set('playerLives', 3) // Use correct key
     this.game.registry.set('totalCoins', 0) // Use correct key
     this.game.registry.set('accumulatedScore', 0)

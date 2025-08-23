@@ -27,6 +27,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private readonly MAX_JUMP_HOLD_TIME: number = 300 // milliseconds to reach max height
   private readonly MIN_HOLD_TIME: number = 50 // Minimum time before boost starts
   
+  // Speed multiplier for power-ups (like invincibility)
+  private speedMultiplier: number = 1.0
+  
   // Speech/Thought bubble system
   private idleTimer: number = 0
   private readonly IDLE_THRESHOLD: number = 5000 // 5 seconds in milliseconds
@@ -138,11 +141,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Horizontal movement
     if (!this.isClimbing) {
+      const currentSpeed = GameSettings.game.playerSpeed * this.speedMultiplier
       if (leftPressed) {
-        this.setVelocityX(-GameSettings.game.playerSpeed)
+        this.setVelocityX(-currentSpeed)
         this.setFlipX(true)  // Flip sprite to face left
       } else if (rightPressed) {
-        this.setVelocityX(GameSettings.game.playerSpeed)
+        this.setVelocityX(currentSpeed)
         this.setFlipX(false)  // Face right (original direction)
       } else {
         this.setVelocityX(0)
@@ -239,10 +243,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (leftPressed || rightPressed) {
         this.exitClimbing()
         // Apply horizontal movement immediately after exiting
+        const currentSpeed = GameSettings.game.playerSpeed * this.speedMultiplier
         if (leftPressed) {
-          this.setVelocityX(-GameSettings.game.playerSpeed)
+          this.setVelocityX(-currentSpeed)
         } else if (rightPressed) {
-          this.setVelocityX(GameSettings.game.playerSpeed)
+          this.setVelocityX(currentSpeed)
         }
       }
       
@@ -310,6 +315,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   getIsClimbing(): boolean {
     return this.isClimbing
+  }
+  
+  setSpeedMultiplier(multiplier: number): void {
+    this.speedMultiplier = multiplier
   }
   
   private updateBubbleSystem(): void {
