@@ -235,9 +235,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityY(0)
       }
       
-      // Prevent horizontal movement to exit ladder at ANY floor
-      // Players must reach the top/bottom or jump to exit
-      // (Horizontal exit while climbing is disabled)
+      // Allow horizontal movement to exit ladder
+      if (leftPressed || rightPressed) {
+        this.exitClimbing()
+        // Apply horizontal movement immediately after exiting
+        if (leftPressed) {
+          this.setVelocityX(-GameSettings.game.playerSpeed)
+        } else if (rightPressed) {
+          this.setVelocityX(GameSettings.game.playerSpeed)
+        }
+      }
       
       // Exit climbing with jump (always full jump from ladder)
       if (jumpJustPressed) {

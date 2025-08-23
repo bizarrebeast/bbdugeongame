@@ -2467,11 +2467,12 @@ export class GameScene extends Phaser.Scene {
         }
       }
       
-      // Flash power-ups: DISABLED
-      // Note: Flash power-ups are disabled for now
-      // if (floor > 20 && Math.random() < 0.1) {
-      //   this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
-      // }
+      // Flash power-ups: Only spawn on dark mode levels (levels ending in 9)
+      const currentLevel = this.levelManager.getCurrentLevel()
+      const isDarkModeLevel = currentLevel % 10 === 9
+      if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
+        this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+      }
     }
   }
   
@@ -3535,8 +3536,10 @@ export class GameScene extends Phaser.Scene {
   private updateVisibilitySystem(): void {
     if (!this.visibilityMask) return
     
-    // Hide visibility mask for now
-    this.visibilityMask.setVisible(false)
+    // Show visibility mask only on dark mode levels (levels ending in 9)
+    const currentLevel = this.levelManager.getCurrentLevel()
+    const isDarkModeLevel = currentLevel % 10 === 9
+    this.visibilityMask.setVisible(isDarkModeLevel)
     
     // Get player world position
     const playerX = this.player.x
@@ -3917,31 +3920,31 @@ export class GameScene extends Phaser.Scene {
       })
     }
     
-    // Flash power-up spawning disabled
-    // if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
-    //   const pos = spawnPositions[positionIndex++]
-    //   const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
-    //   this.flashPowerUps.push(flashPowerUp)
-    //   
-    //   // Add physics overlap detection
-    //   this.physics.add.overlap(
-    //     this.player,
-    //     flashPowerUp.sprite,
-    //     () => this.handleFlashPowerUpCollection(flashPowerUp),
-    //     undefined,
-    //     this
-    //   )
-    //   
-    //   // Add electric spawn animation
-    //   this.tweens.add({
-    //     targets: flashPowerUp.sprite,
-    //     scaleX: 1.4,
-    //     scaleY: 1.4,
-    //     duration: 400,
-    //     ease: 'Back.easeOut',
-    //     yoyo: true
-    //   })
-    // }
+    // Flash power-up spawning - enabled for dark mode levels
+    if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
+      const pos = spawnPositions[positionIndex++]
+      const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
+      this.flashPowerUps.push(flashPowerUp)
+      
+      // Add physics overlap detection
+      this.physics.add.overlap(
+        this.player,
+        flashPowerUp.sprite,
+        () => this.handleFlashPowerUpCollection(flashPowerUp),
+        undefined,
+        this
+      )
+      
+      // Add electric spawn animation
+      this.tweens.add({
+        targets: flashPowerUp.sprite,
+        scaleX: 1.4,
+        scaleY: 1.4,
+        duration: 400,
+        ease: 'Back.easeOut',
+        yoyo: true
+      })
+    }
   }
 
   update(time: number, deltaTime: number): void {
@@ -4144,10 +4147,12 @@ export class GameScene extends Phaser.Scene {
           }
         }
         
-        // Flash power-ups: DISABLED
-        // if (floor > 20 && Math.random() < 0.1) {
-        //   this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
-        // }
+        // Flash power-ups: Only spawn on dark mode levels (levels ending in 9)
+        const currentLevel = this.levelManager.getCurrentLevel()
+        const isDarkModeLevel = currentLevel % 10 === 9
+        if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
+          this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+        }
       }
       
       // Get allowed enemy types for current level (reuse the levelConfig from above)
@@ -4487,11 +4492,14 @@ export class GameScene extends Phaser.Scene {
   private showStartBanner(): void {
     const levelNum = this.levelManager.getCurrentLevel()
     const levelConfig = this.levelManager.getLevelConfig(levelNum)
+    const isDarkModeLevel = levelNum % 10 === 9
     
+    // Create level number text
+    const levelText = levelConfig.isEndless ? 'ENDLESS MODE!' : `LEVEL ${levelNum}`
     const bannerText = this.add.text(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 - 100,
-      levelConfig.isEndless ? 'ENDLESS MODE!' : `LEVEL ${levelNum}`,
+      GameSettings.canvas.height / 2 - (isDarkModeLevel ? 120 : 100),
+      levelText,
       {
         fontSize: '28px',
         color: '#ffd700',  // Gold color to match HUD
@@ -4508,6 +4516,31 @@ export class GameScene extends Phaser.Scene {
         }
       }
     ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+    
+    // Add "DARK MODE!" text for dark mode levels
+    let darkModeText: Phaser.GameObjects.Text | null = null
+    if (isDarkModeLevel && !levelConfig.isEndless) {
+      darkModeText = this.add.text(
+        GameSettings.canvas.width / 2,
+        GameSettings.canvas.height / 2 - 85,
+        'DARK MODE!',
+        {
+          fontSize: '18px',
+          color: '#9932cc',  // Purple color
+          fontFamily: '"Press Start 2P", system-ui',
+          fontStyle: 'bold',
+          stroke: '#4a148c',  // Dark purple stroke
+          strokeThickness: 2,
+          shadow: {
+            offsetX: 2,
+            offsetY: 2,
+            color: '#000000',  // Black drop shadow
+            blur: 3,
+            fill: true
+          }
+        }
+      ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+    }
     
     const startText = this.add.text(
       GameSettings.canvas.width / 2,
@@ -4541,6 +4574,7 @@ export class GameScene extends Phaser.Scene {
         onComplete: () => {
           bannerText.destroy()
           startText.destroy()
+          if (darkModeText) darkModeText.destroy()
         }
       })
     })
