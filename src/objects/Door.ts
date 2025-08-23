@@ -92,8 +92,9 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
       centerY - 20,
       'Level Complete!',
       {
-        fontSize: '24px',
+        fontSize: '18px',
         color: '#44ff44',
+        fontFamily: '\"Press Start 2P\", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201)
@@ -103,8 +104,9 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
       centerY + 15,
       'Press UP to enter the door\nand advance to the next level',
       {
-        fontSize: '16px',
+        fontSize: '12px',
         color: '#ffffff',
+        fontFamily: '\"Press Start 2P\", system-ui',
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(201)

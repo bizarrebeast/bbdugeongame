@@ -128,9 +128,9 @@ export class TouchControls {
     
     // Button text
     this.actionButtonText = this.scene.add.text(0, 0, 'ACTION', {
-      fontSize: '11px',
+      fontSize: '8px',
       color: '#ffffff',
-      fontFamily: 'Arial Black',
+      fontFamily: '\"Press Start 2P\", system-ui',
       fontStyle: 'bold'
     }).setOrigin(0.5)
     

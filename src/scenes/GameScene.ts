@@ -704,24 +704,24 @@ export class GameScene extends Phaser.Scene {
     hudBg.fillStyle(0x4a148c, 1.0)  // Dark purple color with full opacity
     hudBg.lineStyle(2, 0x7b1fa2, 1.0) // Slightly lighter purple border with full opacity
     
-    // Single connected rectangle across the top (increased height for 3 rows)
-    hudBg.fillRoundedRect(8, 40, screenWidth - 16, 80, 12)  // Increased height from 56 to 80
-    hudBg.strokeRoundedRect(8, 40, screenWidth - 16, 80, 12) // Add border stroke
+    // Single connected rectangle across the top (20% taller for better spacing)
+    hudBg.fillRoundedRect(8, 40, screenWidth - 16, 96, 12)  // Increased height from 80 to 96 (20% taller)
+    hudBg.strokeRoundedRect(8, 40, screenWidth - 16, 96, 12) // Add border stroke
     
     hudBg.setDepth(99)
     hudBg.setScrollFactor(0)
     
     // LEFT SIDE: Lives, Crystals, Level
     // Lives display with heart crystal icon (left side, row 1)
-    this.livesIcon = this.add.image(30, 60, 'heart-crystal')
+    this.livesIcon = this.add.image(30, 65, 'heart-crystal')
     this.livesIcon.setDisplaySize(16, 16)
     this.livesIcon.setDepth(100)
     this.livesIcon.setScrollFactor(0)
     
-    this.livesText = this.add.text(45, 60, 'x3', {
+    this.livesText = this.add.text(45, 65, 'x3', {
       fontSize: '14px',
       color: '#ff69b4',  // Pink color to match heart crystal theme
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
       strokeThickness: 1,
@@ -743,7 +743,7 @@ export class GameScene extends Phaser.Scene {
       {
         fontSize: '13px',
         color: '#ffd700',  // Gold color
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         stroke: '#4a148c',  // Dark purple stroke to match HUD theme
         strokeThickness: 2,
@@ -759,15 +759,15 @@ export class GameScene extends Phaser.Scene {
     this.comboText.setScrollFactor(0)
     
     // Crystal counter with new crystal HUD icon (left side, row 2)
-    const crystalIcon = this.add.image(30, 80, 'crystal-hud-icon')
+    const crystalIcon = this.add.image(30, 88, 'crystal-hud-icon')
     crystalIcon.setDisplaySize(16, 16)
     crystalIcon.setDepth(100)
     crystalIcon.setScrollFactor(0)
     
-    this.coinCounterText = this.add.text(45, 80, '0/150', {
+    this.coinCounterText = this.add.text(45, 88, '0/150', {
       fontSize: '14px',
       color: '#ffd700',  // Gold color for crystals
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
       strokeThickness: 1,
@@ -782,17 +782,17 @@ export class GameScene extends Phaser.Scene {
     this.coinCounterText.setScrollFactor(0)
     
     // Level counter with new door HUD icon (left side, row 3)
-    const doorIcon = this.add.image(30, 100, 'door-hud-icon')
+    const doorIcon = this.add.image(30, 111, 'door-hud-icon')
     doorIcon.setDisplaySize(16, 16)
     doorIcon.setDepth(100)
     doorIcon.setScrollFactor(0)
     
     const currentLevel = this.levelManager.getCurrentLevel()
     const levelDisplayText = currentLevel >= 51 ? 'BEAST MODE' : `${currentLevel}`
-    this.levelText = this.add.text(45, 100, levelDisplayText, {
+    this.levelText = this.add.text(45, 111, levelDisplayText, {
       fontSize: '14px',
       color: '#9acf07',  // Same green as hamburger menu
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
       strokeThickness: 1,
@@ -808,10 +808,10 @@ export class GameScene extends Phaser.Scene {
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
-    this.scoreText = this.add.text(screenWidth / 2, 50, '0', {
-      fontSize: '18px',
+    this.scoreText = this.add.text(screenWidth / 2, 55, '0', {
+      fontSize: '19px',
       color: '#ffd700',  // Gold color
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
       strokeThickness: 1,
@@ -829,14 +829,14 @@ export class GameScene extends Phaser.Scene {
     // Invincibility Timer (center, bottom)
     // Create grey version (always visible)
     // NOTE: In Phaser, Y increases DOWNWARD. "negative offset" means LOWER on screen = HIGHER Y value
-    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 95, 'invincibility-timer')
+    this.invincibilityTimerGreyImage = this.add.image(screenWidth / 2, 105, 'invincibility-timer')
     this.invincibilityTimerGreyImage.setDisplaySize(36, 36)
     this.invincibilityTimerGreyImage.setTint(0x808080) // Grey tint for inactive state
     this.invincibilityTimerGreyImage.setDepth(100)
     this.invincibilityTimerGreyImage.setScrollFactor(0)
     
     // Create colored version (shown during invincibility)
-    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 95, 'invincibility-timer')
+    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 105, 'invincibility-timer')
     this.invincibilityTimerImage.setDisplaySize(36, 36)
     this.invincibilityTimerImage.setDepth(101)
     this.invincibilityTimerImage.setScrollFactor(0)
@@ -848,10 +848,10 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask.setScrollFactor(0)
     
     // RIGHT SIDE: Hamburger menu
-    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 80, '☰', {
+    this.hamburgerMenuButton = this.add.text(screenWidth - 30, 88, '☰', {
       fontSize: '32px',
       color: '#9acf07',  // Bright green color
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
       stroke: '#4a148c',  // Dark purple stroke to match HUD
       strokeThickness: 2,
@@ -3521,7 +3521,7 @@ export class GameScene extends Phaser.Scene {
     const popupText = this.add.text(x, y, `+${points}`, {
       fontSize: '16px',
       color: '#00ff00',
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(150)
     
@@ -3542,7 +3542,7 @@ export class GameScene extends Phaser.Scene {
     const popupText = this.add.text(x, y, `+${points}`, {
       fontSize: '18px',
       color: '#ffd700',
-      fontFamily: 'Arial Black',
+      fontFamily: '"Press Start 2P", system-ui',
       fontStyle: 'bold',
       stroke: '#000000',
       strokeThickness: 2
@@ -4433,9 +4433,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 - 100,
       levelConfig.isEndless ? 'ENDLESS MODE!' : `LEVEL ${levelNum}`,
       {
-        fontSize: '36px',
+        fontSize: '28px',
         color: '#ffff00',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         stroke: '#000000',
         strokeThickness: 6
@@ -4447,9 +4447,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 - 50,
       'GO!',
       {
-        fontSize: '48px',
+        fontSize: '36px',
         color: '#00ff00',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         stroke: '#000000',
         strokeThickness: 6
@@ -4714,9 +4714,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 - 80,
       `LEVEL ${levelNum} COMPLETE!`,
       {
-        fontSize: '28px',
+        fontSize: '22px',
         color: '#44ff44',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         align: 'center'
       }
@@ -4728,9 +4728,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 - 20,
       `Score: ${this.accumulatedScore + this.score}\nFloors Climbed: ${this.currentFloor}`,
       {
-        fontSize: '18px',
+        fontSize: '14px',
         color: '#ffffff',
-        fontFamily: 'Arial',
+        fontFamily: '"Press Start 2P", system-ui',
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4743,9 +4743,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 + 40,
       nextConfig.isEndless ? 'Next: BEAST MODE!' : `Next: Level ${nextLevel}`,
       {
-        fontSize: '16px',
+        fontSize: '12px',
         color: '#ffff00',
-        fontFamily: 'Arial',
+        fontFamily: '"Press Start 2P", system-ui',
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4766,9 +4766,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 + 85,
       'CONTINUE',
       {
-        fontSize: '20px',
+        fontSize: '16px',
         color: '#ffffff',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(302).setScrollFactor(0)
@@ -4826,9 +4826,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 - 40,
       'BEAST MODE',
       {
-        fontSize: '32px',
+        fontSize: '24px',
         color: '#ff0000',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4839,9 +4839,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2,
       'ACTIVATED',
       {
-        fontSize: '20px',
+        fontSize: '16px',
         color: '#ffffff',
-        fontFamily: 'Arial',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4852,9 +4852,9 @@ export class GameScene extends Phaser.Scene {
       GameSettings.canvas.height / 2 + 30,
       'Infinite floors at maximum difficulty!',
       {
-        fontSize: '14px',
+        fontSize: '10px',
         color: '#ffff00',
-        fontFamily: 'Arial',
+        fontFamily: '"Press Start 2P", system-ui',
         align: 'center'
       }
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
@@ -4976,9 +4976,9 @@ export class GameScene extends Phaser.Scene {
       popupY - 45,
       'LIFE LOST!',
       {
-        fontSize: '28px',
+        fontSize: '22px',
         color: '#ff6666',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         stroke: '#000000',
         strokeThickness: 3
@@ -4991,9 +4991,9 @@ export class GameScene extends Phaser.Scene {
       popupY - 10,
       `Lives Remaining: ${this.lives}`,
       {
-        fontSize: '18px',
+        fontSize: '14px',
         color: '#ffffff',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
@@ -5014,9 +5014,9 @@ export class GameScene extends Phaser.Scene {
       popupY + 40,
       'CONTINUE',
       {
-        fontSize: '16px',
+        fontSize: '12px',
         color: '#ffffff',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
@@ -5073,9 +5073,9 @@ export class GameScene extends Phaser.Scene {
       popupY - 60,
       'GAME OVER!',
       {
-        fontSize: '32px',
+        fontSize: '24px',
         color: '#ff4444',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
         stroke: '#000000',
         strokeThickness: 4
@@ -5088,9 +5088,9 @@ export class GameScene extends Phaser.Scene {
       popupY - 20,
       `Final Score: ${this.accumulatedScore + this.score}`,
       {
-        fontSize: '20px',
+        fontSize: '16px',
         color: '#ffd700',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
@@ -5101,9 +5101,9 @@ export class GameScene extends Phaser.Scene {
       popupY + 5,
       `Coins Collected: ${this.totalCoinsCollected}`,
       {
-        fontSize: '16px',
+        fontSize: '12px',
         color: '#ffd700',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
@@ -5124,9 +5124,9 @@ export class GameScene extends Phaser.Scene {
       popupY + 50,
       'START OVER',
       {
-        fontSize: '18px',
+        fontSize: '14px',
         color: '#ffffff',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
