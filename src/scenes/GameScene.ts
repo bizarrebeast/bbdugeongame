@@ -675,6 +675,27 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
+    // Add collider for pink floor spikes to make them solid from below
+    this.physics.add.collider(
+      this.player,
+      this.spikes,
+      undefined,  // No callback needed, just physics collision
+      (player, spike) => {
+        // Only collide with floor spikes from below (one-way platform behavior)
+        const spikeObj = spike as Phaser.Physics.Arcade.Sprite
+        const playerObj = player as Player
+        const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+        
+        // Only create solid collision for floor spikes when player is below them
+        if (spikeObj.getData('isFloorSpike')) {
+          // Block player from jumping through from below, allow falling from above
+          return playerBody.velocity.y < 0 // Solid when player is moving upward (jumping from below)
+        }
+        return false // Ceiling spikes are never solid
+      },
+      this
+    )
+    
     // Red cats no longer climb ladders
     
     // Set up coin collection (we'll handle this individually per coin)
@@ -3144,7 +3165,7 @@ export class GameScene extends Phaser.Scene {
     const catBody = catObj.body as Phaser.Physics.Arcade.Body
     
     const playerFalling = playerBody.velocity.y > 0 // Moving downward
-    const playerAboveCat = playerBody.bottom <= catBody.top + 15 // Player's bottom is near cat's top (increased tolerance)
+    const playerAboveCat = playerBody.bottom <= catBody.top + 5 // Player's bottom is near cat's top (reduced tolerance for more precise jumping)
     
     if (playerFalling && playerAboveCat) {
       // Jump-to-kill!
@@ -3227,7 +3248,7 @@ export class GameScene extends Phaser.Scene {
     const catBody = stalkerCatObj.body as Phaser.Physics.Arcade.Body
     
     const playerFalling = playerBody.velocity.y > 0 // Moving downward
-    const playerAboveCat = playerBody.bottom <= catBody.top + 15 // Player's bottom is near cat's top (increased tolerance)
+    const playerAboveCat = playerBody.bottom <= catBody.top + 5 // Player's bottom is near cat's top (reduced tolerance for more precise jumping)
     
     if (playerFalling && playerAboveCat) {
       // Jump-to-kill stalker cat (only when chasing)
@@ -4723,31 +4744,31 @@ export class GameScene extends Phaser.Scene {
       0.7
     ).setDepth(299).setScrollFactor(0)
     
-    // Create HUD-style popup background with rounded corners
+    // Create HUD-style popup background with rounded corners (taller for split text)
     const popupBg = this.add.graphics()
     popupBg.fillStyle(0x4a148c, 1.0)  // Dark purple fill to match HUD
     popupBg.lineStyle(2, 0x7b1fa2, 1.0) // Lighter purple border to match HUD
     popupBg.fillRoundedRect(
       GameSettings.canvas.width / 2 - 175,
-      GameSettings.canvas.height / 2 - 125,
+      GameSettings.canvas.height / 2 - 140,  // Moved up slightly
       350,
-      250,
+      280,  // Increased height from 250 to 280
       12  // Rounded corners like HUD
     )
     popupBg.strokeRoundedRect(
       GameSettings.canvas.width / 2 - 175,
-      GameSettings.canvas.height / 2 - 125,
+      GameSettings.canvas.height / 2 - 140,  // Moved up slightly
       350,
-      250,
+      280,  // Increased height from 250 to 280
       12  // Rounded corners like HUD
     )
     popupBg.setDepth(300).setScrollFactor(0)
     
-    // Title
+    // Title - split into two lines
     const title = this.add.text(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 - 80,
-      `LEVEL ${levelNum} COMPLETE!`,
+      GameSettings.canvas.height / 2 - 95,  // Adjusted position
+      `LEVEL ${levelNum}\nCOMPLETE!`,  // Split into two lines
       {
         fontSize: '22px',
         color: '#9acf07',  // Green color to match HUD level text
@@ -4769,7 +4790,7 @@ export class GameScene extends Phaser.Scene {
     // Stats
     const stats = this.add.text(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 - 20,
+      GameSettings.canvas.height / 2 - 10,  // Adjusted position for new layout
       `Score: ${this.accumulatedScore + this.score}\nFloors Climbed: ${this.currentFloor}`,
       {
         fontSize: '14px',
@@ -4793,7 +4814,7 @@ export class GameScene extends Phaser.Scene {
     const nextConfig = this.levelManager.getLevelConfig(nextLevel)
     const preview = this.add.text(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 + 40,
+      GameSettings.canvas.height / 2 + 50,  // Adjusted position for new layout
       nextConfig.isEndless ? 'Next: BEAST MODE!' : `Next: Level ${nextLevel}`,
       {
         fontSize: '12px',
@@ -4815,7 +4836,7 @@ export class GameScene extends Phaser.Scene {
     // Continue button (changed to teal)
     const continueBtn = this.add.rectangle(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 + 85,
+      GameSettings.canvas.height / 2 + 100,  // Adjusted position for new layout
       150,
       40,
       0x20b2aa  // Teal color
@@ -4825,7 +4846,7 @@ export class GameScene extends Phaser.Scene {
     
     const continueText = this.add.text(
       GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2 + 85,
+      GameSettings.canvas.height / 2 + 100,  // Adjusted position for new layout
       'CONTINUE',
       {
         fontSize: '16px',
