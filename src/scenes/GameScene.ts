@@ -248,6 +248,7 @@ export class GameScene extends Phaser.Scene {
     // Load custom touch control assets
     this.load.image('custom-dpad', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/dpad-HlSoc5tt8vs8cjbkEROL1GjaGzx8Ko.png?ecZG')
     this.load.image('custom-jump-button', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20button-yS4IpgcdvQerPZjpif3tOLmqIfO7yE.png?pRZm')
+    this.load.image('custom-action-button', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/action%20button-0ijEeXV3alwc5ZbDzkD4HaP7PXzsAN.png?1zZP')
     
     // Load HUD background sprites
     this.load.image('test-hud-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/test%20gem%20for%20hud-7RamXtpyUYcrX6K6DLnuWOD7ZNssLi.png?1boq')

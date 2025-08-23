@@ -16,6 +16,7 @@ export class TouchControls {
   
   // Action button
   private actionButton: Phaser.GameObjects.Container
+  private actionButtonImage: Phaser.GameObjects.Image
   private actionButtonCircle: Phaser.GameObjects.Arc
   private actionButtonText: Phaser.GameObjects.Text
   
@@ -66,6 +67,11 @@ export class TouchControls {
     this.touchpadBackground.setDisplaySize(this.touchpadRadius * 2, this.touchpadRadius * 2) // 120px diameter
     this.touchpadContainer.add(this.touchpadBackground)
 
+    // Debug: Add hitbox visualization (75px radius circle - 15px larger than visual)
+    const hitboxDebug = this.scene.add.circle(0, 0, this.touchpadRadius + 15, 0x0000ff, 0.3) // Semi-transparent blue circle
+    hitboxDebug.setStrokeStyle(2, 0x0000ff, 0.8) // Blue border
+    this.touchpadContainer.add(hitboxDebug)
+
     // Create touch position indicator (initially hidden) - bright pink
     this.touchpadIndicator = this.scene.add.circle(0, 0, 8, 0xff1493, 0.9)
     this.touchpadIndicator.setStrokeStyle(2, 0xffffff, 0.9)
@@ -89,33 +95,37 @@ export class TouchControls {
     this.jumpButtonImage = this.scene.add.image(0, 0, 'custom-jump-button')
     this.jumpButtonImage.setDisplaySize(70, 70) // Keep same relative size as before (was 70px diameter circle)
     
+    // Debug: Add hitbox visualization (100px wide, screen height - 200px rectangle, shifted down 100px)
+    const screenHeight = GameSettings.canvas.height
+    const hitboxHeight = screenHeight - 200
+    const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 100, hitboxHeight, 0xff0000, 0.3) // Semi-transparent red rectangle, shifted down 100px
+    hitboxDebug.setStrokeStyle(2, 0xff0000, 0.8) // Red border
+    
     // No text - clean minimal design
-    this.jumpButton.add([this.jumpButtonImage])
+    this.jumpButton.add([this.jumpButtonImage, hitboxDebug])
   }
 
   private createActionButton(): void {
-    const buttonX = GameSettings.canvas.width - 140 // Left of jump button
+    const buttonX = GameSettings.canvas.width - 165 // Left of jump button (moved 25px left)
     const buttonY = GameSettings.canvas.height - 80
     
-    // Create action button container (initially hidden)
+    // Create action button container (initially visible for setup)
     this.actionButton = this.scene.add.container(buttonX, buttonY)
     this.actionButton.setDepth(1000)
     this.actionButton.setScrollFactor(0)
-    this.actionButton.setVisible(false)
+    this.actionButton.setVisible(true)  // Make visible for now to test positioning
 
-    // Button circle (larger than jump button)
-    this.actionButtonCircle = this.scene.add.circle(0, 0, 40, 0xaa4444, 0.7)
-    this.actionButtonCircle.setStrokeStyle(3, 0xcc6666)
+    // Custom action button image
+    this.actionButtonImage = this.scene.add.image(0, 0, 'custom-action-button')
+    this.actionButtonImage.setDisplaySize(70, 70) // Same size as jump button
     
-    // Button text
-    this.actionButtonText = this.scene.add.text(0, 0, 'ACTION', {
-      fontSize: '8px',
-      color: '#ffffff',
-      fontFamily: '\"Press Start 2P\", system-ui',
-      fontStyle: 'bold'
-    }).setOrigin(0.5)
+    // Debug: Add hitbox visualization (110px wide, screen height - 200px rectangle, shifted down 100px)
+    const screenHeight = GameSettings.canvas.height
+    const hitboxHeight = screenHeight - 200
+    const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 110, hitboxHeight, 0x00ff00, 0.3) // Semi-transparent green rectangle, shifted down 100px
+    hitboxDebug.setStrokeStyle(2, 0x00ff00, 0.8) // Green border
     
-    this.actionButton.add([this.actionButtonCircle, this.actionButtonText])
+    this.actionButton.add([this.actionButtonImage, hitboxDebug])
   }
 
   private setupInputHandlers(): void {
@@ -143,28 +153,28 @@ export class TouchControls {
     const touchX = pointer.x
     const touchY = pointer.y
     
-    // Check if touch is on touchpad area
+    // Check if touch is on touchpad area (hitbox is 15px larger than visual)
     const touchpadDist = Math.sqrt(
       Math.pow(touchX - this.touchpadCenter.x, 2) + 
       Math.pow(touchY - this.touchpadCenter.y, 2)
     )
     
-    if (touchpadDist <= this.touchpadRadius && this.touchpadPointerId === -1) {
+    if (touchpadDist <= (this.touchpadRadius + 15) && this.touchpadPointerId === -1) {
       this.touchpadPointerId = pointer.id
       this.updateTouchpadFromPosition(touchX, touchY)
       this.touchpadIndicator.setVisible(true)
       return
     }
     
-    // Check if touch is on jump button area
+    // Check if touch is on jump button area (rectangle: 100px wide, screen height - 200px, shifted down 100px)
     const jumpButtonX = GameSettings.canvas.width - 60
-    const jumpButtonY = GameSettings.canvas.height - 80
-    const jumpButtonDist = Math.sqrt(
-      Math.pow(touchX - jumpButtonX, 2) + 
-      Math.pow(touchY - jumpButtonY, 2)
-    )
+    const jumpButtonLeft = jumpButtonX - 50  // 50px to the left of center
+    const jumpButtonRight = jumpButtonX + 50  // 50px to the right of center
+    const hitboxTop = 200  // 200px from top of screen (shifted down 100px)
+    const hitboxBottom = GameSettings.canvas.height  // Goes all the way to bottom
     
-    if (jumpButtonDist <= 50) { // Larger hit area for easier tapping
+    if (touchX >= jumpButtonLeft && touchX <= jumpButtonRight && 
+        touchY >= hitboxTop && touchY <= hitboxBottom) { // Within the rectangle
       if (this.jumpPointerId === -1) {
         this.jumpPointerId = pointer.id
         this.jumpPressed = true
@@ -175,18 +185,18 @@ export class TouchControls {
     
     // Check if touch is on action button area (only if visible)
     if (this.actionButton.visible) {
-      const actionButtonX = GameSettings.canvas.width - 140
-      const actionButtonY = GameSettings.canvas.height - 80
-      const actionButtonDist = Math.sqrt(
-        Math.pow(touchX - actionButtonX, 2) + 
-        Math.pow(touchY - actionButtonY, 2)
-      )
+      const actionButtonX = GameSettings.canvas.width - 165  // Moved 25px left
+      const actionButtonLeft = actionButtonX - 55  // 55px to the left of center
+      const actionButtonRight = actionButtonX + 55  // 55px to the right of center
+      const hitboxTop = 200  // 200px from top of screen (shifted down 100px)
+      const hitboxBottom = GameSettings.canvas.height  // Goes all the way to bottom
       
-      if (actionButtonDist <= 55) { // Larger hit area since button is bigger
+      if (touchX >= actionButtonLeft && touchX <= actionButtonRight && 
+          touchY >= hitboxTop && touchY <= hitboxBottom) { // Within the rectangle
         if (this.actionPointerId === -1) {
           this.actionPointerId = pointer.id
           this.actionPressed = true
-          this.actionButtonCircle.setFillStyle(0xff6666, 0.9)
+          this.actionButtonImage.setTint(0xaaaaaa) // Slightly dimmed when pressed
         }
       }
     }
@@ -268,7 +278,7 @@ export class TouchControls {
     if (pointer.id === this.actionPointerId) {
       this.actionPointerId = -1
       this.actionPressed = false
-      this.actionButtonCircle.setFillStyle(0xaa4444, 0.7)
+      this.actionButtonImage.clearTint() // Return to normal color when released
     }
   }
 
