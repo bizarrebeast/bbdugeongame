@@ -1,6 +1,6 @@
 /**
  * Level Manager for Bizarre Underground
- * Handles discrete level progression with endless mode after level 100
+ * Handles discrete level progression (1-50) with BEAST MODE infinite play (51+)
  */
 
 import { EnemySpawningSystem, EnemyType } from './EnemySpawningSystem'
@@ -19,7 +19,8 @@ export interface LevelConfig {
 
 export class LevelManager {
   private currentLevel: number = 1
-  private readonly ENDLESS_LEVEL = 101
+  private readonly BEAST_MODE_LEVEL = 51
+  private readonly MAX_PROGRESSION_LEVEL = 50
   constructor() {
     // Always start from Level 1 - we'll track furthest level reached separately
     this.currentLevel = 1
@@ -29,36 +30,55 @@ export class LevelManager {
    * Get configuration for a specific level
    */
   getLevelConfig(levelNumber: number): LevelConfig {
-    const isEndless = levelNumber >= this.ENDLESS_LEVEL
-    const weights = EnemySpawningSystem.getSpawnWeights(levelNumber)
+    const isBeastMode = levelNumber >= this.BEAST_MODE_LEVEL
+    
+    // For BEAST MODE (51+), use level 50's difficulty configuration
+    const configLevel = Math.min(levelNumber, this.MAX_PROGRESSION_LEVEL)
+    const weights = EnemySpawningSystem.getSpawnWeights(configLevel)
     
     return {
       levelNumber,
       floorCount: this.calculateFloorCount(levelNumber),
-      enemyTypes: this.getEnemyTypes(levelNumber), // Keep for backward compatibility
-      collectibleTypes: this.getCollectibleTypes(levelNumber),
-      worldWidth: this.getWorldWidth(levelNumber),
-      isEndless,
-      // New difficulty-based properties
-      difficultyBudgetPerFloor: EnemySpawningSystem.getDifficultyBudget(levelNumber, 1), // Base budget
+      enemyTypes: this.getEnemyTypes(configLevel), // Keep for backward compatibility
+      collectibleTypes: this.getCollectibleTypes(configLevel),
+      worldWidth: this.getWorldWidth(configLevel),
+      isEndless: isBeastMode,
+      // New difficulty-based properties - cap at level 50 difficulty
+      difficultyBudgetPerFloor: EnemySpawningSystem.getDifficultyBudget(configLevel, 1), // Base budget
       enemySpawnWeights: weights
     }
   }
   
   /**
    * Calculate number of floors for a level
-   * Levels 1-5: 10 floors
-   * Levels 6-10: 15 floors
-   * Levels 11-15: 20 floors
-   * Pattern: Add 5 floors every 5 levels
+   * Levels 1-10: Tutorial phase (10-12 floors)
+   * Levels 11-25: Skill building (13-18 floors)
+   * Levels 26-40: Challenge ramp (19-25 floors)
+   * Levels 41-50: Master phase (25-30 floors)
+   * Levels 51+: BEAST MODE (infinite floors, using level 50's floor count for display)
    */
   private calculateFloorCount(levelNumber: number): number {
-    if (levelNumber >= this.ENDLESS_LEVEL) {
-      return -1 // Infinite floors for endless mode
+    if (levelNumber >= this.BEAST_MODE_LEVEL) {
+      return -1 // Infinite floors for BEAST MODE
     }
     
-    const bracket = Math.floor((levelNumber - 1) / 5) // Which 5-level bracket
-    return 10 + (bracket * 5)
+    // Implement the refined difficulty scaling structure
+    if (levelNumber <= 10) {
+      // Tutorial phase: 10-12 floors
+      return 10 + Math.floor(levelNumber / 5) // 10-12 floors
+    } else if (levelNumber <= 25) {
+      // Skill building: 13-18 floors  
+      const progress = (levelNumber - 10) / 15 // 0-1 progress through this phase
+      return 13 + Math.floor(progress * 5) // 13-18 floors
+    } else if (levelNumber <= 40) {
+      // Challenge ramp: 19-25 floors
+      const progress = (levelNumber - 25) / 15 // 0-1 progress through this phase
+      return 19 + Math.floor(progress * 6) // 19-25 floors
+    } else {
+      // Master phase (41-50): 25-30 floors
+      const progress = (levelNumber - 40) / 10 // 0-1 progress through this phase
+      return 25 + Math.floor(progress * 5) // 25-30 floors
+    }
   }
   
   /**
@@ -76,11 +96,11 @@ export class LevelManager {
    * Get enemy types to spawn for a specific floor using the new difficulty system
    */
   getEnemyTypesForFloor(levelNumber: number, floorNumber: number): EnemyType[] {
-    const budget = EnemySpawningSystem.getDifficultyBudget(levelNumber, floorNumber)
-    const selectedEnemies = EnemySpawningSystem.selectEnemies(budget, levelNumber)
+    // Cap difficulty at level 50 for BEAST MODE
+    const configLevel = Math.min(levelNumber, this.MAX_PROGRESSION_LEVEL)
     
-    // Log for debugging
-    EnemySpawningSystem.logSpawnInfo(levelNumber, floorNumber, selectedEnemies)
+    const budget = EnemySpawningSystem.getDifficultyBudget(configLevel, floorNumber)
+    const selectedEnemies = EnemySpawningSystem.selectEnemies(budget, configLevel)
     
     return selectedEnemies
   }
@@ -126,12 +146,12 @@ export class LevelManager {
   isLevelComplete(currentFloor: number): boolean {
     const config = this.getLevelConfig(this.currentLevel)
     
-    // Endless mode never completes
+    // BEAST MODE (51+) never completes
     if (config.isEndless) {
       return false
     }
     
-    // Regular levels complete when reaching the top floor
+    // Regular levels (1-50) complete when reaching the top floor
     return currentFloor >= config.floorCount
   }
   
@@ -214,17 +234,34 @@ export class LevelManager {
       red: 0.2
     }
     
+    // Cap difficulty scaling at level 50 for BEAST MODE
+    const configLevel = Math.min(levelNumber, this.MAX_PROGRESSION_LEVEL)
+    
     // Increase spawn rates as levels progress
-    const difficultyMultiplier = 1 + (Math.min(levelNumber, 100) * 0.01) // Max 2x at level 100
+    const difficultyMultiplier = 1 + (configLevel * 0.02) // Max 2x at level 50
     
     const rates: { [key: string]: number } = {}
-    const availableEnemies = this.getEnemyTypes(levelNumber)
+    const availableEnemies = this.getEnemyTypes(configLevel)
     
     availableEnemies.forEach(enemy => {
       rates[enemy] = baseRates[enemy] * difficultyMultiplier
     })
     
     return rates
+  }
+
+  /**
+   * Check if current level is BEAST MODE
+   */
+  isBeastMode(): boolean {
+    return this.currentLevel >= this.BEAST_MODE_LEVEL
+  }
+
+  /**
+   * Get the maximum progression level (before BEAST MODE)
+   */
+  getMaxProgressionLevel(): number {
+    return this.MAX_PROGRESSION_LEVEL
   }
 }
 

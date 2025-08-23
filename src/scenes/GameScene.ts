@@ -78,6 +78,9 @@ export class GameScene extends Phaser.Scene {
     'background-treasure-quest-7'
     // More backgrounds will be added here over time
   ]
+  private backgroundSprite: Phaser.GameObjects.Image | null = null
+  private backgroundInitialY: number = 0
+  private backgroundHeight: number = 0
   
   // Smart tile placement tracking
   private recentTiles: number[] = [] // Track last few tiles to avoid repeats
@@ -382,10 +385,16 @@ export class GameScene extends Phaser.Scene {
     background.setScale(scale)
     
     // Position background centered for optimal coverage with 2000x2000 image
+    const initialY = (gameHeight - background.height * scale) / 2
     background.setPosition(
       (gameWidth - background.width * scale) / 2,
-      (gameHeight - background.height * scale) / 2 // Reset to center position
+      initialY
     )
+    
+    // Store background reference and properties for dynamic repositioning
+    this.backgroundSprite = background
+    this.backgroundInitialY = initialY
+    this.backgroundHeight = background.height * scale
     
     // Enable multi-touch support
     this.input.addPointer(2) // Allow up to 3 pointers total (default 1 + 2 more)
@@ -779,7 +788,8 @@ export class GameScene extends Phaser.Scene {
     doorIcon.setScrollFactor(0)
     
     const currentLevel = this.levelManager.getCurrentLevel()
-    this.levelText = this.add.text(45, 100, `${currentLevel}`, {
+    const levelDisplayText = currentLevel >= 51 ? 'BEAST MODE' : `${currentLevel}`
+    this.levelText = this.add.text(45, 100, levelDisplayText, {
       fontSize: '14px',
       color: '#9acf07',  // Same green as hamburger menu
       fontFamily: 'Arial Black',
@@ -3877,6 +3887,8 @@ export class GameScene extends Phaser.Scene {
   update(time: number, deltaTime: number): void {
     if (this.isGameOver) return
     
+    // Update dynamic background positioning to handle high floors
+    this.updateBackgroundPosition()
     
     // Update touch controls
     this.touchControls.update()
@@ -4729,7 +4741,7 @@ export class GameScene extends Phaser.Scene {
     const preview = this.add.text(
       GameSettings.canvas.width / 2,
       GameSettings.canvas.height / 2 + 40,
-      nextConfig.isEndless ? 'Next: ENDLESS MODE!' : `Next: Level ${nextLevel}`,
+      nextConfig.isEndless ? 'Next: BEAST MODE!' : `Next: Level ${nextLevel}`,
       {
         fontSize: '16px',
         color: '#ffff00',
@@ -4771,10 +4783,106 @@ export class GameScene extends Phaser.Scene {
       registry.set('totalCoins', this.totalCoinsCollected)
       
       // Advance to next level
-      this.levelManager.nextLevel()
+      const nextLevel = this.levelManager.nextLevel()
       
-      // Restart scene with new level
-      this.scene.restart()
+      // Check if entering BEAST MODE (level 51)
+      if (nextLevel === 51) {
+        this.showBeastModeNotification(() => {
+          // Restart scene after BEAST MODE notification
+          this.scene.restart()
+        })
+      } else {
+        // Regular level progression
+        this.scene.restart()
+      }
+    })
+  }
+
+  private showBeastModeNotification(onComplete: () => void): void {
+    // Create dramatic overlay
+    const overlay = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      GameSettings.canvas.width,
+      GameSettings.canvas.height,
+      0x000000,
+      0.8
+    ).setDepth(299).setScrollFactor(0)
+
+    // Create notification background with glowing effect
+    const notificationBg = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      400,
+      200,
+      0x330000
+    ).setDepth(300).setScrollFactor(0)
+    notificationBg.setStrokeStyle(4, 0xff0000, 1)
+    
+    // Main BEAST MODE title
+    const beastModeTitle = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 40,
+      'BEAST MODE',
+      {
+        fontSize: '32px',
+        color: '#ff0000',
+        fontFamily: 'Arial Black',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+    
+    // Subtitle
+    const subtitle = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      'ACTIVATED',
+      {
+        fontSize: '20px',
+        color: '#ffffff',
+        fontFamily: 'Arial',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+    
+    // Description
+    const description = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 + 30,
+      'Infinite floors at maximum difficulty!',
+      {
+        fontSize: '14px',
+        color: '#ffff00',
+        fontFamily: 'Arial',
+        align: 'center'
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+    
+    // Trigger haptic feedback for BEAST MODE activation
+    this.triggerFarcadeHapticFeedback()
+    
+    // Add pulsing effect to title
+    this.tweens.add({
+      targets: beastModeTitle,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Power2'
+    })
+    
+    // Auto-close after 3 seconds
+    this.time.delayedCall(3000, () => {
+      // Clean up
+      overlay.destroy()
+      notificationBg.destroy()
+      beastModeTitle.destroy()
+      subtitle.destroy()
+      description.destroy()
+      
+      // Call completion callback
+      onComplete()
     })
   }
 
@@ -5227,6 +5335,39 @@ export class GameScene extends Phaser.Scene {
     return this.backgroundLibrary[backgroundIndex]
   }
 
+  private updateBackgroundPosition(): void {
+    if (!this.backgroundSprite) return
+    
+    // Get current camera position
+    const cameraY = this.cameras.main.scrollY
+    
+    // Calculate how far the camera has moved from the initial position
+    // With scrollFactor 0.05, the background moves at 5% of camera speed
+    const parallaxOffset = cameraY * 0.05
+    
+    // Calculate the effective background Y position
+    const currentBackgroundY = this.backgroundInitialY - parallaxOffset
+    
+    // Define bounds for when we need to reposition
+    // We want to reposition before the background runs out of coverage
+    const repositionBuffer = this.backgroundHeight * 0.3 // 30% buffer
+    const topLimit = -this.backgroundHeight + repositionBuffer
+    const bottomLimit = GameSettings.canvas.height - repositionBuffer
+    
+    // Check if background is approaching the limits
+    if (currentBackgroundY > bottomLimit) {
+      // Background is too low, move it up by one background height
+      this.backgroundInitialY -= this.backgroundHeight
+    } else if (currentBackgroundY < topLimit) {
+      // Background is too high, move it down by one background height  
+      this.backgroundInitialY += this.backgroundHeight
+    }
+    
+    // Update the background position with the new initial Y
+    const newParallaxOffset = cameraY * 0.05
+    this.backgroundSprite.setY(this.backgroundInitialY - newParallaxOffset)
+  }
+
   // Farcade SDK Integration Methods
   private notifyFarcadeGameReady(): void {
     try {
@@ -5291,5 +5432,10 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart()
   }
 
-  shutdown() {}
+  shutdown() {
+    // Clean up background references
+    this.backgroundSprite = null
+    this.backgroundInitialY = 0
+    this.backgroundHeight = 0
+  }
 }
