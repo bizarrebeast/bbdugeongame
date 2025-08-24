@@ -37,6 +37,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private onBubbleTrigger: (() => void) | null = null
   private onMovementStart: (() => void) | null = null
   
+  // Two-layer running animation system
+  private runBodySprite: Phaser.GameObjects.Image | null = null
+  private runLegsSprite: Phaser.GameObjects.Image | null = null
+  private useTwoLayerRunning: boolean = true // Enable the new system
+  private currentLegFrame: 'bothDown' | 'leftMid' | 'leftHigh' | 'rightMid' | 'rightHigh' = 'bothDown'
+  private legAnimationStep: number = 0 // 0-7 for the 8-step animation cycle
+  private bodyAnimationTimer: number = 0 // Separate timer for body expressions
+  private legAnimationTimer: number = 0 // Separate timer for legs
+  
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Use the new player idle sprite or fallback to placeholder
     const textureKey = scene.textures.exists('playerIdleEye1') ? 'playerIdleEye1' : 'player'
@@ -80,6 +89,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Phaser's built-in debug visualization will show the hitbox
     
+    // Initialize two-layer running system if sprites are available
+    this.initializeTwoLayerRunning(scene)
+    
     // Create cursor keys for input
     this.cursors = scene.input.keyboard!.createCursorKeys()
     
@@ -97,6 +109,110 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   setMovementStartCallback(callback: () => void): void {
     this.onMovementStart = callback
+  }
+  
+  private initializeTwoLayerRunning(scene: Phaser.Scene): void {
+    // Check if the new two-layer sprites are available
+    const hasNewSprites = scene.textures.exists('playerRunBody') && 
+                          scene.textures.exists('playerRunLegsBothDown')
+    
+    if (hasNewSprites && this.useTwoLayerRunning) {
+      // Create the body sprite (upper layer) - initially hidden
+      this.runBodySprite = scene.add.image(this.x, this.y, 'playerRunBody')
+      this.runBodySprite.setDisplaySize(48, 64)
+      this.runBodySprite.setDepth(21) // Above the main sprite
+      this.runBodySprite.setVisible(false)
+      
+      // Create the legs sprite (lower layer) - initially hidden
+      this.runLegsSprite = scene.add.image(this.x, this.y, 'playerRunLegsBothDown')
+      this.runLegsSprite.setDisplaySize(48, 64)
+      this.runLegsSprite.setDepth(19) // Below the main sprite but above everything else
+      this.runLegsSprite.setVisible(false)
+      
+      // Set initial leg frame
+      this.currentLegFrame = 'bothDown'
+      this.legAnimationStep = 0
+    } else {
+      // Disable two-layer system if sprites not available
+      this.useTwoLayerRunning = false
+    }
+  }
+  
+  private updateTwoLayerPosition(): void {
+    // Keep both sprites aligned with the main player sprite
+    // Only update if sprites are visible to prevent unnecessary redraws
+    if (this.runBodySprite && this.runLegsSprite && this.runBodySprite.visible) {
+      // Only update if position actually changed to minimize redraws
+      if (this.runBodySprite.x !== this.x || this.runBodySprite.y !== this.y) {
+        this.runBodySprite.x = this.x
+        this.runBodySprite.y = this.y
+        
+        this.runLegsSprite.x = this.x
+        this.runLegsSprite.y = this.y
+      }
+      
+      // Only update flip if it actually changed
+      if (this.runBodySprite.flipX !== this.flipX) {
+        this.runBodySprite.setFlipX(this.flipX)
+        this.runLegsSprite.setFlipX(this.flipX)
+      }
+    }
+  }
+  
+  private showTwoLayerRunning(show: boolean): void {
+    if (this.useTwoLayerRunning && this.runBodySprite && this.runLegsSprite) {
+      this.runBodySprite.setVisible(show)
+      this.runLegsSprite.setVisible(show)
+      // Hide the main sprite when showing two-layer system
+      this.setVisible(!show)
+    }
+  }
+  
+  private updateLegAnimation(): void {
+    if (!this.runLegsSprite || !this.useTwoLayerRunning) return
+    
+    // 8-step animation cycle: 0->1->2->1->0->3->4->3 (and repeat)
+    // 0: both down, 1: left mid, 2: left high, 3: right mid, 4: right high
+    const legFrames = [
+      'bothDown',     // 0
+      'leftMid',      // 1  
+      'leftHigh',     // 2
+      'leftMid',      // 3 (back to mid)
+      'bothDown',     // 4 (back to both down)
+      'rightMid',     // 5
+      'rightHigh',    // 6
+      'rightMid'      // 7 (back to mid, then cycle repeats)
+    ]
+    
+    const frame = legFrames[this.legAnimationStep]
+    this.currentLegFrame = frame as any
+    
+    // Update the texture based on current frame
+    const textureMap = {
+      'bothDown': 'playerRunLegsBothDown',
+      'leftMid': 'playerRunLegsLeftMid', 
+      'leftHigh': 'playerRunLegsLeftHigh',
+      'rightMid': 'playerRunLegsRightMid',
+      'rightHigh': 'playerRunLegsRightHigh'
+    }
+    
+    this.runLegsSprite.setTexture(textureMap[frame])
+    
+    // Advance to next step (0-7 cycle)
+    this.legAnimationStep = (this.legAnimationStep + 1) % 8
+  }
+  
+  private updateBodyExpression(): void {
+    if (!this.runBodySprite || !this.useTwoLayerRunning) return
+    
+    // Future: Add random facial expressions here when more body sprites are available
+    // Example for when you have multiple body sprites:
+    // const bodyExpressions = ['playerRunBody', 'playerRunBodySmile', 'playerRunBodyFocus', 'playerRunBodyTired']
+    // const randomExpression = bodyExpressions[Math.floor(Math.random() * bodyExpressions.length)]
+    // this.runBodySprite.setTexture(randomExpression)
+    
+    // For now, do NOTHING - let the body sprite remain completely static and clean
+    // The texture was already set once when the sprite was created
   }
   
   notifyBubbleActive(isActive: boolean): void {
@@ -263,6 +379,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Handle smart animation system
     this.updateSmartAnimations()
+    
+    // Update two-layer running sprites position
+    this.updateTwoLayerPosition()
   }
   
   startClimbing(ladder: Phaser.GameObjects.GameObject): void {
@@ -383,12 +502,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.changePlayerTexture(textureKey)
     this.currentFrame = 'idle' // Reset frame when jumping
     
+    // Hide two-layer running system when jumping
+    this.showTwoLayerRunning(false)
+    
     // Reset running tilt when jumping
     this.resetRunningTilt()
   }
   
   private handleClimbingAnimation(deltaTime: number): void {
     const climbAnimationSpeed = 120 // Fun, active climbing animation (20% slower than 100ms)
+    
+    // Hide two-layer running system when climbing
+    this.showTwoLayerRunning(false)
     
     // Animation timer for climbing movement
     this.climbAnimationTimer += deltaTime
@@ -412,52 +537,77 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private handleRunningAnimation(deltaTime: number): void {
-    const runAnimationSpeed = 120 // Snappy, responsive running animation
-    
-    // IMMEDIATE RESPONSE: Start running animation instantly when movement begins
-    if (this.currentFrame === 'idle') {
-      this.currentFrame = 'leftStep'
-      this.changePlayerTexture('playerRunLeftFoot')
-      this.walkAnimationTimer = 0
-      this.runningTiltTimer = 0
-      this.lastFrameWasJump = false // Reset jump flag when starting to run
-      return
-    }
-    
-    this.walkAnimationTimer += deltaTime
-    this.runningTiltTimer += deltaTime
-    
-    // Apply subtle forward/backward tilt for motion sense (ONLY during running)
-    this.applyRunningTilt()
-    
-    if (this.walkAnimationTimer >= runAnimationSpeed) {
-      // Add natural variation with occasional jumping sprites during running
-      // Reduce chance if last frame was a jump to avoid too much bouncing
-      const jumpChance = this.lastFrameWasJump ? 0.15 : 0.30 // 15% or 30% chance
-      const shouldUseJumpingSprite = Math.random() < jumpChance
+    // Check if we should use the new two-layer system
+    if (this.useTwoLayerRunning && this.runBodySprite && this.runLegsSprite) {
+      // 50% faster leg animation (110ms * 0.5 = 55ms)
+      const legAnimationSpeed = 55 // Very fast leg movement
+      const bodyAnimationSpeed = 800 // Slower body expression changes
       
-      if (shouldUseJumpingSprite) {
-        // Use jumping sprites occasionally for natural bounding motion
-        if (this.currentFrame === 'rightStep' || this.currentFrame === 'jumpRightFoot') {
-          this.currentFrame = 'jumpLeftFoot'
-          this.changePlayerTexture(this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot')
-        } else {
-          this.currentFrame = 'jumpRightFoot' 
-          this.changePlayerTexture(this.flipX ? 'playerJumpLeftFoot' : 'playerJumpRightFoot')
-        }
-        this.lastFrameWasJump = true
-      } else {
-        // Normal running animation - switch between left and right step
-        if (this.currentFrame === 'rightStep' || this.currentFrame === 'jumpRightFoot') {
+      // IMMEDIATE RESPONSE: Start two-layer animation instantly when movement begins
+      if (this.currentFrame === 'idle') {
+        console.log('🏃 Starting two-layer running animation - body should be smooth now!')
+        this.currentFrame = 'leftStep' // Set to running state
+        this.showTwoLayerRunning(true)
+        this.legAnimationTimer = 0
+        this.bodyAnimationTimer = 0
+        this.runningTiltTimer = 0
+        this.lastFrameWasJump = false
+        this.legAnimationStep = 0 // Reset leg animation to start
+        return
+      }
+      
+      this.legAnimationTimer += deltaTime
+      this.bodyAnimationTimer += deltaTime
+      
+      // Keep two-layer system visible (position updated separately)
+      this.showTwoLayerRunning(true)
+      
+      // Update leg animation at fast rate
+      if (this.legAnimationTimer >= legAnimationSpeed) {
+        this.updateLegAnimation()
+        this.legAnimationTimer = 0
+      }
+      
+      // Only update body expression when we actually want to change it
+      // For now, don't call updateBodyExpression() at all since we're using a single sprite
+      // The body will remain perfectly still and clean
+      
+      // Future: Only update when you want random expressions
+      // if (this.bodyAnimationTimer >= bodyAnimationSpeed) {
+      //   this.updateBodyExpression()
+      //   this.bodyAnimationTimer = 0
+      // }
+    } else {
+      // Fall back to original single-sprite animation system
+      const runAnimationSpeed = 120 // Original timing
+      
+      // IMMEDIATE RESPONSE: Start running animation instantly when movement begins
+      if (this.currentFrame === 'idle') {
+        this.currentFrame = 'leftStep'
+        this.changePlayerTexture('playerRunLeftFoot')
+        this.walkAnimationTimer = 0
+        this.runningTiltTimer = 0
+        this.lastFrameWasJump = false
+        return
+      }
+      
+      this.walkAnimationTimer += deltaTime
+      this.runningTiltTimer += deltaTime
+      
+      // Apply subtle forward/backward tilt for motion sense (ONLY during running)
+      this.applyRunningTilt()
+      
+      if (this.walkAnimationTimer >= runAnimationSpeed) {
+        // Simple alternating animation for fallback
+        if (this.currentFrame === 'rightStep') {
           this.currentFrame = 'leftStep'
           this.changePlayerTexture('playerRunLeftFoot')
         } else {
           this.currentFrame = 'rightStep'
           this.changePlayerTexture('playerRunRightFoot')
         }
-        this.lastFrameWasJump = false
+        this.walkAnimationTimer = 0
       }
-      this.walkAnimationTimer = 0
     }
   }
   
@@ -472,6 +622,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.idleAnimationTimer = 0
       this.walkAnimationTimer = 0
       this.climbAnimationTimer = 0
+      this.legAnimationTimer = 0
+      this.bodyAnimationTimer = 0
+      
+      // Hide two-layer running system when going to idle
+      this.showTwoLayerRunning(false)
       
       // Reset running tilt when stopping
       this.resetRunningTilt()
