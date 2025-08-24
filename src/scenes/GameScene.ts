@@ -4847,8 +4847,8 @@ export class GameScene extends Phaser.Scene {
     
     // Phase 1: Climbing animation - climb to the actual target Y (not floor Y)
     this.animatePlayerClimbing(ladderX, targetY, () => {
-      // Phase 2: Walking animation
-      this.animatePlayerWalking(targetX, targetY, () => {
+      // Phase 2: Bouncing animation
+      this.animatePlayerBouncing(targetX, targetY, () => {
         // Phase 3: Complete intro
         this.player.body!.enable = true
         this.isLevelStarting = false
@@ -4928,91 +4928,49 @@ export class GameScene extends Phaser.Scene {
     })
   }
   
-  private animatePlayerWalking(targetX: number, targetY: number, onComplete: () => void): void {
-    // Walking animation start (replaced console.log)
+  private animatePlayerBouncing(targetX: number, targetY: number, onComplete: () => void): void {
+    // Sequence: jump off ladder → 2 bounces to target → idle + talking bubble
     
-    // Check if sprites are loaded
-    const hasRunSprites = this.textures.exists('playerRunLeftFoot') && this.textures.exists('playerRunRightFoot')
-    // Run sprites loaded status (replaced console.log)
-    
-    if (!hasRunSprites) {
-      console.warn('⚠️ Run sprites not loaded! Using fallback animation')
-    }
-    
-    // Use Player's natural animation system but faster for intro
-    let currentFrame = 'leftStep'
-    let walkAnimationTimer = 0
-    let runningTiltTimer = 0
-    let lastFrameWasJump = false
-    const runAnimationSpeed = 80 // Faster than Player class (was 120) for more lively intro
-    
-    // Face right for walking
+    // Face right for movement
     this.player.setFlipX(false)
     
-    // Start with first step immediately
-    this.changePlayerTexture('playerRunLeftFoot')
+    // Use jumping sprite for bouncing animation
+    const jumpTexture = this.textures.exists('playerJumpRightFoot') ? 'playerJumpRightFoot' : 'playerIdleEye1'
+    this.player.setTexture(jumpTexture)
     
-    // Create animation timer that matches Player's natural system
-    const walkTimer = this.time.addEvent({
-      delay: 16, // ~60fps for smooth animation
-      callback: () => {
-        const deltaTime = 16
-        walkAnimationTimer += deltaTime
-        runningTiltTimer += deltaTime
-        
-        // Apply the same running tilt as Player class
-        const tiltFrequency = 0.02
-        const tiltAmplitude = 0.08
-        const tiltAngle = Math.sin(runningTiltTimer * tiltFrequency) * tiltAmplitude
-        this.player.setRotation(tiltAngle)
-        
-        // Use Player's exact animation logic
-        if (walkAnimationTimer >= runAnimationSpeed) {
-          // Same natural variation logic as Player class
-          const jumpChance = lastFrameWasJump ? 0.15 : 0.30
-          const shouldUseJumpingSprite = Math.random() < jumpChance
-          
-          if (shouldUseJumpingSprite) {
-            // Use jumping sprites occasionally for natural bounding motion
-            if (currentFrame === 'rightStep' || currentFrame === 'jumpRightFoot') {
-              currentFrame = 'jumpLeftFoot'
-              this.changePlayerTexture('playerJumpRightFoot') // Not flipped since flipX is false
-            } else {
-              currentFrame = 'jumpRightFoot' 
-              this.changePlayerTexture('playerJumpRightFoot')
-            }
-            lastFrameWasJump = true
-          } else {
-            // Normal running animation - switch between left and right step
-            if (currentFrame === 'rightStep' || currentFrame === 'jumpRightFoot') {
-              currentFrame = 'leftStep'
-              this.changePlayerTexture('playerRunLeftFoot')
-            } else {
-              currentFrame = 'rightStep'
-              this.changePlayerTexture('playerRunRightFoot')
-            }
-            lastFrameWasJump = false
-          }
-          walkAnimationTimer = 0
-        }
-      },
-      loop: true
-    })
-    
-    // Move player horizontally to starting position
+    // Create horizontal movement with 2 bounces to target position
     this.tweens.add({
       targets: this.player,
       x: targetX,
-      duration: 1500, // 1.5 seconds to walk
-      ease: 'Linear',
+      duration: 800, // Faster movement with only 2 bounces
+      ease: 'Power2.easeOut',
       onComplete: () => {
-        // Walking complete and intro sequence complete (replaced console.log)
-        
-        walkTimer.destroy()
-        // Reset rotation and set idle animation
-        this.player.setRotation(0)
+        // Set to idle texture and trigger talking bubble
         this.changePlayerTexture('playerIdleEye1')
+        
+        // Trigger the talking bubble after a brief delay
+        this.time.delayedCall(300, () => {
+          // Trigger bubble system (this will show random thoughts/speech)
+          if (this.player.onBubbleTrigger) {
+            this.player.onBubbleTrigger()
+          }
+        })
+        
         onComplete()
+      }
+    })
+    
+    // Add 2 bounces during horizontal movement (not in place)
+    this.tweens.add({
+      targets: this.player,
+      y: targetY - 25, // Slightly smaller bounces (25px instead of 30px)
+      duration: 200,
+      ease: 'Power2.easeOut',
+      yoyo: true,
+      repeat: 1, // Only 2 total bounces (1 up/down cycle)
+      onComplete: () => {
+        // Ensure player ends at correct Y position
+        this.player.y = targetY
       }
     })
   }

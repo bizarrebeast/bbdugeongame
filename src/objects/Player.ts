@@ -545,7 +545,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       
       // IMMEDIATE RESPONSE: Start two-layer animation instantly when movement begins
       if (this.currentFrame === 'idle') {
-        console.log('🏃 Starting two-layer running animation - body should be smooth now!')
         this.currentFrame = 'leftStep' // Set to running state
         this.showTwoLayerRunning(true)
         this.legAnimationTimer = 0
