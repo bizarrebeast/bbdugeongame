@@ -380,8 +380,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Handle smart animation system
     this.updateSmartAnimations()
     
-    // Update two-layer running sprites position
-    this.updateTwoLayerPosition()
+    // Only update two-layer position when sprites are visible and player is moving
+    if (this.runBodySprite && this.runBodySprite.visible && (this.body.velocity.x !== 0 || this.body.velocity.y !== 0)) {
+      this.updateTwoLayerPosition()
+    }
   }
   
   startClimbing(ladder: Phaser.GameObjects.GameObject): void {
@@ -539,8 +541,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private handleRunningAnimation(deltaTime: number): void {
     // Check if we should use the new two-layer system
     if (this.useTwoLayerRunning && this.runBodySprite && this.runLegsSprite) {
-      // 50% faster leg animation (110ms * 0.5 = 55ms)
-      const legAnimationSpeed = 55 // Very fast leg movement
+      // 85% faster leg animation (35ms * 0.8 = 28ms)
+      const legAnimationSpeed = 28 // Very fast leg movement
       const bodyAnimationSpeed = 800 // Slower body expression changes
       
       // IMMEDIATE RESPONSE: Start two-layer animation instantly when movement begins
