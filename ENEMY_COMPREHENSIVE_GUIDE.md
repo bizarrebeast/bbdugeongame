@@ -11,11 +11,11 @@
   - Changes direction randomly
   - Unpredictable but slow
 - **Visual**: Yellow cat sprite with expressions
-- **Spawn Distribution**:
-  - Tutorial (1-10): 30%
-  - Skill (11-25): 20%
-  - Challenge (26-40): 12%
-  - Master (41-50): 5%
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 70%
+  - Basic (11-20): 30%
+  - Speed+ (21-50): 0%
+  - BEAST (51+): 10%
 
 ### 2. **Beetle**
 - **Points**: 75
@@ -27,11 +27,11 @@
   - Can reverse when hitting another beetle
   - Most predictable enemy
 - **Visual**: Red rectangle placeholder (20x16) - needs sprite
-- **Spawn Distribution**:
-  - Tutorial (1-10): 15%
-  - Skill (11-25): 12%
-  - Challenge (26-40): 8%
-  - Master (41-50): 5%
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 30%
+  - Basic (11-20): 20%
+  - Speed+ (21-50): 0%
+  - BEAST (51+): 5%
 
 ### 3. **Chomper (Blue Cat)**
 - **Points**: 100
@@ -42,11 +42,12 @@
   - Consistent speed
   - Bite animations while moving
 - **Visual**: Blue cat sprite with bite animations
-- **Spawn Distribution**:
-  - Tutorial (1-10): 30%
-  - Skill (11-25): 25%
-  - Challenge (26-40): 20%
-  - Master (41-50): 18%
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 0%
+  - Basic (11-20): 50%
+  - Speed (21-30): 35%
+  - Advanced+ (31-50): 2.5%
+  - BEAST (51+): 15%
 
 ### 4. **Snail (Red Cat)**
 - **Points**: 150
@@ -57,11 +58,13 @@
   - Similar to Chomper but 20% faster
   - More dangerous due to speed
 - **Visual**: Red cat sprite with animations
-- **Spawn Distribution**:
-  - Tutorial (1-10): 15%
-  - Skill (11-25): 20%
-  - Challenge (26-40): 20%
-  - Master (41-50): 20%
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 0%
+  - Basic (11-20): 0%
+  - Speed (21-30): 50%
+  - Advanced (31-40): 35%
+  - Expert+ (41+): 2.5%
+  - BEAST (51+): 15%
 
 ### 5. **Jumper (Green Cat)**
 - **Points**: 200
@@ -72,11 +75,13 @@
   - Hardest to predict and hit
   - Covers ground quickly
 - **Visual**: Green cat sprite with jump animations
-- **Spawn Distribution**:
-  - Tutorial (1-10): 5%
-  - Skill (11-25): 10%
-  - Challenge (26-40): 20%
-  - Master (41-50): 25%
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 0%
+  - Basic (11-20): 0%
+  - Speed (21-30): 0%
+  - Advanced (31-40): 40%
+  - Expert (41-50): 30%
+  - BEAST (51+): 20%
 
 ### 6. **Stalker (Red Cat Variant)**
 - **Points**: 300
@@ -90,11 +95,13 @@
   - 4-second persistent chase timer
   - Most dangerous regular enemy
 - **Visual**: Red cat sprite with special eye animations
-- **Spawn Distribution**:
+- **Spawn Distribution** (6-Tier System):
   - Tutorial (1-10): 0%
-  - Skill (11-25): 5%
-  - Challenge (26-40): 10%
-  - Master (41-50): 15%
+  - Basic (11-20): 0%
+  - Speed (21-30): 0%
+  - Advanced (31-40): 12.5%
+  - Expert (41-50): 35%
+  - BEAST (51+): 20%
 
 ### 7. **BaseBlu (Blue Blocker)**
 - **Points**: 1000 (only when invincible)
@@ -112,40 +119,48 @@
   - Complex eye animation system
   - 9 different eye positions + blinking
   - Eye rolling sequences
-- **Spawn Distribution**:
-  - Tutorial (1-10): 5%
-  - Skill (11-25): 8%
-  - Challenge (26-40): 10%
-  - Master (41-50): 12%
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 0%
+  - Basic (11-20): 0%
+  - Speed (21-30): 15%
+  - Advanced (31-40): 12.5%
+  - Expert (41-50): 25%
+  - BEAST (51+): 15%
 
-## Difficulty Scoring System
+## 6-Tier Progressive System
 
-**Difficulty Budget per Floor** (determines how many enemies spawn):
-- **Tutorial (1-10)**: 1.5 → 3.0
-- **Skill (11-25)**: 3.0 → 5.5
-- **Challenge (26-40)**: 5.5 → 8.0
-- **Master (41-50)**: 8.0 → 10.0
+**Enemy Count per Floor** (replaces difficulty budget system):
+- **Tutorial (1-10)**: 2-3 enemies per floor
+- **Basic (11-20)**: 3-4 enemies per floor
+- **Speed (21-30)**: 4-5 enemies per floor
+- **Advanced (31-40)**: 5-6 enemies per floor
+- **Expert (41-50)**: 6-7 enemies per floor
+- **BEAST (51+)**: 7-8 enemies per floor
 
-**Floor Bonus**: +0.3 difficulty every 4 floors within a level
+**Speed Scaling**: Progressive speed multiplier from 1.0x (level 1) to 1.25x (level 50+)
+**BaseBlu Limits**: Max 0/0/1/2/2/2 per floor for each tier respectively
 
-## Enemy Combinations Examples
+## 6-Tier Enemy Combinations Examples
 
-### Tutorial Level (Budget: 2.0)
-- 4 Caterpillars (4 × 0.5 = 2.0)
-- 2 Beetles + 1 Caterpillar (2 × 0.8 + 0.5 = 2.1)
-- 2 Chompers (2 × 1.0 = 2.0)
-- 1 BaseBlu alone (1 × 2.0 = 2.0)
+### Tutorial Floors (1-10)
+- 2-3 enemies: 2 Caterpillars + 1 Beetle
+- 70% Caterpillar, 30% Beetle spawns
+- No advanced enemies
 
-### Mid-Game Level (Budget: 5.0)
-- 1 Stalker + 1 Chomper (4.0 + 1.0 = 5.0)
-- 2 Jumpers (2 × 2.5 = 5.0)
-- 1 BaseBlu + 2 Snails (2.0 + 2 × 1.5 = 5.0)
-- 3 Snails + 1 Caterpillar (3 × 1.5 + 0.5 = 5.0)
+### Speed Tier Floors (21-30) 
+- 4-5 enemies: 2 Snails + 2 Chompers + 1 BaseBlu
+- 50% Snail, 35% Chomper, 15% BaseBlu (max 1 per floor)
+- Speed multiplier: ~1.10x
 
-### Master Level (Budget: 9.0)
-- 2 Stalkers + 1 Chomper (2 × 4.0 + 1.0 = 9.0)
-- 3 Jumpers + 1 Snail (3 × 2.5 + 1.5 = 9.0)
-- 1 Stalker + 1 BaseBlu + 1 Jumper + 1 Caterpillar (4.0 + 2.0 + 2.5 + 0.5 = 9.0)
+### Expert Floors (41-50)
+- 6-7 enemies: 2 Stalkers + 2 Jumpers + 2 BaseBlu + mix
+- 35% Stalker, 30% Jumper, 25% BaseBlu (max 2 per floor)  
+- Speed multiplier: 1.20x-1.25x
+
+### BEAST Mode (51+)
+- 7-8 enemies: Balanced chaos mix of all types
+- Equal emphasis on variety and challenge
+- Speed multiplier: 1.25x (capped)
 
 ## Special Spawning Notes
 
@@ -181,4 +196,5 @@
    - "BaseBlu gate" - BaseBlu blocking ladder access
 
 ---
-*Created: 2024 - Complete enemy reference for spawning and balance decisions*
+*Updated: August 2024 - Complete 6-tier enemy system with anti-clustering distribution*  
+*Latest: Enhanced with intelligent spawn patterns and production-ready balance*

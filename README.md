@@ -9,8 +9,8 @@ A retro-style endless climbing arcade game built with Phaser.js and TypeScript f
 - 🎮 **Retro Arcade Gameplay**: Classic Donkey Kong-style climbing action with modern enhancements
 - 💎 **Crystal Cavern Theme**: Magical underground setting with crystal platforms, gem formations, and floating orbs
 - 📱 **Mobile-Optimized**: 5:9 aspect ratio with full touch controls and virtual joystick
-- 🎯 **Progressive Levels**: Discrete level system (1-100) then endless mode with increasing difficulty
-- 👾 **Smart Enemy AI**: Four blob types (blue, yellow, green, red) with unique behaviors and chase AI
+- 🎯 **Progressive Levels**: Discrete level system (1-50) then BEAST MODE with 6-tier difficulty progression
+- 👾 **Advanced Enemy System**: 7 enemy types with 6-tier progressive spawning and anti-clustering distribution
 - 💎 **Rich Collectibles**: Coins, blue coins, diamonds, and treasure chests with automated opening
 - 🎪 **Combat System**: Jump-to-kill mechanics with combo multipliers and score popups
 - 🏆 **Scoring System**: Comprehensive point system with floor bonuses and achievement feedback
@@ -187,10 +187,11 @@ bizarre-underground/
 ```
 
 ### Key Game Systems:
-- **`GameScene.ts`**: Complete gameplay logic with Crystal Cavern Theme background
+- **`GameScene.ts`**: Complete gameplay logic with Crystal Cavern Theme background and 6-tier enemy spawning
 - **`Player.ts`**: Enhanced player with 9 custom animations and smart state management
-- **`LevelManager.ts`**: Progressive difficulty system (levels 1-100, then endless)
-- **`Cat.ts`**: Smart enemy AI system with four behavioral patterns
+- **`LevelManager.ts`**: Progressive difficulty system (levels 1-50, then BEAST MODE endless)
+- **`EnemySpawningSystem.ts`**: Sophisticated 6-tier enemy spawning with anti-clustering algorithms
+- **`Cat.ts`**: Smart enemy AI system with 7 enemy types and variable point values
 - **`Door.ts`**: Industrial-style doors with wooden panels and hardware
 
 ## Available Commands
@@ -271,12 +272,12 @@ This creates `dist/index.html` - a single file containing your entire game ready
 ## What's Included
 
 ### Game Features
-- **Complete Arcade Game**: Fully playable retro climbing adventure
+- **Complete Arcade Game**: Fully playable retro climbing adventure with production-ready polish
 - **Crystal Cavern Theme**: Magical underground setting with colorful crystal visuals
-- **Progressive Gameplay**: 100 discrete levels plus endless mode
-- **Smart Enemy AI**: Four blob types with unique behavioral patterns
-- **Enhanced Collision**: Forgiving hitbox system for better gameplay feel
-- **Mobile Optimized**: Full touch controls with virtual joystick
+- **6-Tier Difficulty System**: 50 discrete levels with progressive spawning then BEAST MODE
+- **Advanced Enemy System**: 7 enemy types (50-1000 points) with anti-clustering distribution
+- **Enhanced Collision**: Forgiving hitbox system and smart treasure chest safety zones
+- **Mobile Optimized**: Full touch controls with virtual joystick and haptic feedback
 
 ### Technology Stack
 - **Phaser.js**: HTML5 game framework loaded via CDN

@@ -2978,53 +2978,46 @@ export class GameScene extends Phaser.Scene {
   }
 
   private isSafeForTreasureChest(x: number, floor: number): boolean {
-    // Treasure chests need a 2-tile buffer zone from all hazards and edges
+    // Treasure chests need larger buffer zone because items scatter up to 60 pixels from chest center
     const floorWidth = GameSettings.game.floorWidth
-    const bufferSize = 2
+    const tileSize = GameSettings.game.tileSize
+    const itemScatterRadius = 60 // pixels - maximum distance items scatter from chest
+    const bufferTiles = Math.ceil((itemScatterRadius + 16) / tileSize) // +16 for item width, converted to tiles
     
-    // Check floor edges (need 2 tiles from left/right edges)
-    if (x < bufferSize || x >= floorWidth - bufferSize) {
+    // Check floor edges - ensure scattered items won't fall off the platform
+    if (x < bufferTiles || x >= floorWidth - bufferTiles) {
       return false
     }
     
-    // Check for gaps/spikes (need 2-tile buffer from any gap)
+    // Check for gaps/spikes - ensure scattered items won't fall into gaps
     const layout = this.floorLayouts[floor]
     if (layout && layout.gapStart !== -1) {
       const gapEnd = layout.gapStart + layout.gapSize
       // Check if position is within buffer zone of the gap
-      if (x >= layout.gapStart - bufferSize && x <= gapEnd + bufferSize - 1) {
+      if (x >= layout.gapStart - bufferTiles && x <= gapEnd + bufferTiles - 1) {
         return false
       }
     }
     
-    // Check for ladders (need 2-tile buffer from any ladder)
+    // Check for ladders - ensure scattered items won't interfere with ladders
     // Check ladders on current floor AND floor below (since ladders span between floors)
     const laddersCurrentFloor = this.ladderPositions.get(floor) || []
     const laddersFloorBelow = this.ladderPositions.get(floor - 1) || []
     const allRelevantLadders = [...laddersCurrentFloor, ...laddersFloorBelow]
     
-    // console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST SAFETY CHECK: Floor ${floor}, Position ${x}`)
-    // console.log(`   Ladders on floor ${floor}: [${laddersCurrentFloor.join(', ')}]`)
-    // console.log(`   Ladders on floor ${floor - 1}: [${laddersFloorBelow.join(', ')}]`)
-    // console.log(`   All relevant ladders: [${allRelevantLadders.join(', ')}]`)
-    
     for (const ladderX of allRelevantLadders) {
       const distance = Math.abs(x - ladderX)
-      // console.log(`   Distance from ladder at ${ladderX}: ${distance} (buffer needed: ${bufferSize})`)
-      if (distance <= bufferSize) {
-        // console.log(`   ❌ REJECTED: Too close to ladder at ${ladderX}`)
+      if (distance <= bufferTiles) {
         return false
       }
     }
     
-    // Check for doors (need 2-tile buffer from doors)
+    // Check for doors - ensure scattered items won't interfere with doors
     const doorX = this.doorPositions.get(floor)
-    if (doorX !== undefined && Math.abs(x - doorX) <= bufferSize + 2) { // Extra buffer on top of door's existing clearance
-      // Rejected: too close to door (replaced console.log)
+    if (doorX !== undefined && Math.abs(x - doorX) <= bufferTiles + 1) { // +1 extra buffer for door interaction
       return false
     }
     
-    // console.log(`   ✅ APPROVED: Safe position for treasure chest`)
     return true
   }
   
