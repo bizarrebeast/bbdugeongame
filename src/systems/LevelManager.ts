@@ -74,8 +74,8 @@ export class LevelManager {
       collectibleTypes: this.getCollectibleTypes(configLevel),
       worldWidth: this.getWorldWidth(configLevel),
       isEndless: isBeastMode,
-      // New difficulty-based properties - cap at level 50 difficulty
-      difficultyBudgetPerFloor: EnemySpawningSystem.getDifficultyBudget(configLevel, 1), // Base budget
+      // New 6-tier system properties
+      difficultyBudgetPerFloor: 0, // No longer used - replaced by enemy count system
       enemySpawnWeights: weights
     }
   }
@@ -124,16 +124,11 @@ export class LevelManager {
   }
 
   /**
-   * Get enemy types to spawn for a specific floor using the new difficulty system
+   * Get enemy types to spawn for a specific floor using the new 6-tier system
+   * @deprecated - Use EnemySpawningSystem.selectEnemiesForFloor directly
    */
   getEnemyTypesForFloor(levelNumber: number, floorNumber: number): EnemyType[] {
-    // Cap difficulty at level 50 for BEAST MODE
-    const configLevel = Math.min(levelNumber, this.MAX_PROGRESSION_LEVEL)
-    
-    const budget = EnemySpawningSystem.getDifficultyBudget(configLevel, floorNumber)
-    const selectedEnemies = EnemySpawningSystem.selectEnemies(budget, configLevel)
-    
-    return selectedEnemies
+    return EnemySpawningSystem.selectEnemiesForFloor(levelNumber, floorNumber)
   }
   
   /**
@@ -270,8 +265,7 @@ export class LevelManager {
   }
   
   /**
-   * Get spawn rates for enemies based on level (legacy method - use EnemySpawningSystem instead)
-   * @deprecated Use EnemySpawningSystem.selectEnemies() for new difficulty-based spawning
+   * @deprecated Legacy method - now using 6-tier system in EnemySpawningSystem
    */
   getEnemySpawnRates(levelNumber: number): { [key: string]: number } {
     const baseRates = {

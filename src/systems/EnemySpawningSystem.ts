@@ -4,11 +4,13 @@
  */
 
 export enum EnemyType {
-  CATERPILLAR = 'caterpillar', // Yellow - slow random movement
-  CHOMPER = 'chomper',         // Blue - standard patrol
-  SNAIL = 'snail',            // Red - faster patrol  
-  JUMPER = 'jumper',          // Green - bouncing movement
-  STALKER = 'stalker'         // Red - mine-like activation + chase
+  BASEBLU = 'baseblu',         // Blue blocker - very slow, immovable obstacle
+  BEETLE = 'beetle',           // Red beetle - simple patrol
+  CATERPILLAR = 'caterpillar', // Yellow cat - slow random movement
+  CHOMPER = 'chomper',         // Blue cat - standard patrol
+  SNAIL = 'snail',            // Red cat - faster patrol  
+  JUMPER = 'jumper',          // Green cat - bouncing movement
+  STALKER = 'stalker'         // Red cat - mine-like activation + chase
 }
 
 export interface EnemyDefinition {
@@ -16,6 +18,7 @@ export interface EnemyDefinition {
   color: string
   difficultyScore: number
   speed: number
+  pointValue: number  // Points awarded for defeating this enemy
   description: string
 }
 
@@ -25,11 +28,28 @@ export interface SpawnWeights {
 
 export class EnemySpawningSystem {
   private static readonly ENEMY_DEFINITIONS: Record<EnemyType, EnemyDefinition> = {
+    [EnemyType.BASEBLU]: {
+      type: EnemyType.BASEBLU,
+      color: 'blue',
+      difficultyScore: 2.0,
+      speed: 0.25,
+      pointValue: 1000,  // High value when killed by invincible player
+      description: 'Immovable blocker, can only be killed when invincible'
+    },
+    [EnemyType.BEETLE]: {
+      type: EnemyType.BEETLE,
+      color: 'red',
+      difficultyScore: 0.8,
+      speed: 1.0,
+      pointValue: 75,
+      description: 'Simple patrol beetle'
+    },
     [EnemyType.CATERPILLAR]: {
       type: EnemyType.CATERPILLAR,
       color: 'yellow',
       difficultyScore: 0.5,
       speed: 0.6,
+      pointValue: 50,
       description: 'Slow random movement'
     },
     [EnemyType.CHOMPER]: {
@@ -37,6 +57,7 @@ export class EnemySpawningSystem {
       color: 'blue', 
       difficultyScore: 1.0,
       speed: 1.0,
+      pointValue: 100,
       description: 'Standard patrol with bite animations'
     },
     [EnemyType.SNAIL]: {
@@ -44,6 +65,7 @@ export class EnemySpawningSystem {
       color: 'red',
       difficultyScore: 1.5,
       speed: 1.2,
+      pointValue: 150,
       description: 'Faster patrol enemy'
     },
     [EnemyType.JUMPER]: {
@@ -51,6 +73,7 @@ export class EnemySpawningSystem {
       color: 'green',
       difficultyScore: 2.5,
       speed: 1.5,
+      pointValue: 200,
       description: 'Fast bouncing movement'
     },
     [EnemyType.STALKER]: {
@@ -58,72 +81,125 @@ export class EnemySpawningSystem {
       color: 'red',
       difficultyScore: 4.0,
       speed: 1.5,
+      pointValue: 300,
       description: 'Hidden activation + chase AI'
     }
   }
 
   private static readonly LEVEL_SPAWN_WEIGHTS: Record<string, SpawnWeights> = {
-    // Levels 1-10: Tutorial phase - focus on basic enemies
+    // Levels 1-10: Tutorial Tier
     'tutorial': {
-      [EnemyType.CATERPILLAR]: 0.40,  // 40% - easier enemy
-      [EnemyType.CHOMPER]: 0.35,      // 35% - main enemy (BaseBlu)
-      [EnemyType.SNAIL]: 0.20,        // 20% - faster variant
-      [EnemyType.JUMPER]: 0.05,       // 5% - rare advanced
-      [EnemyType.STALKER]: 0.00       // 0% - not in tutorial
+      [EnemyType.CATERPILLAR]: 0.70,  // 70% - Yellow Cat
+      [EnemyType.BEETLE]: 0.30,       // 30% - Beetle
+      [EnemyType.BASEBLU]: 0.00,
+      [EnemyType.CHOMPER]: 0.00,
+      [EnemyType.SNAIL]: 0.00,
+      [EnemyType.JUMPER]: 0.00,
+      [EnemyType.STALKER]: 0.00
     },
-    // Levels 11-25: Skill building - introduce all mechanics
-    'skill_building': {
-      [EnemyType.CATERPILLAR]: 0.25,  // 25% - still common
-      [EnemyType.CHOMPER]: 0.30,      // 30% - BaseBlu remains prominent
-      [EnemyType.SNAIL]: 0.25,        // 25% - balanced presence
-      [EnemyType.JUMPER]: 0.15,       // 15% - more common
-      [EnemyType.STALKER]: 0.05       // 5% - introduce stalkers
+    // Levels 11-20: Basic Challenge
+    'basic': {
+      [EnemyType.CHOMPER]: 0.50,      // 50% - Blue Cat
+      [EnemyType.CATERPILLAR]: 0.30,  // 30% - Yellow Cat
+      [EnemyType.BEETLE]: 0.20,       // 20% - Beetle
+      [EnemyType.BASEBLU]: 0.00,
+      [EnemyType.SNAIL]: 0.00,
+      [EnemyType.JUMPER]: 0.00,
+      [EnemyType.STALKER]: 0.00
     },
-    // Levels 26-40: Challenge ramp - balanced difficulty
-    'challenge_ramp': {
-      [EnemyType.CATERPILLAR]: 0.15,  // 15% - less common
-      [EnemyType.CHOMPER]: 0.25,      // 25% - BaseBlu still important
-      [EnemyType.SNAIL]: 0.25,        // 25% - standard presence
-      [EnemyType.JUMPER]: 0.25,       // 25% - equal to snails
-      [EnemyType.STALKER]: 0.10       // 10% - more stalkers
+    // Levels 21-30: Speed Increase
+    'speed': {
+      [EnemyType.SNAIL]: 0.50,        // 50% - Red Cat
+      [EnemyType.CHOMPER]: 0.35,      // 35% - Blue Cat
+      [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu (max 1 per floor)
+      [EnemyType.CATERPILLAR]: 0.00,
+      [EnemyType.BEETLE]: 0.00,
+      [EnemyType.JUMPER]: 0.00,
+      [EnemyType.STALKER]: 0.00
     },
-    // Levels 41-50: Master phase - maximum challenge
-    'master_phase': {
-      [EnemyType.CATERPILLAR]: 0.08,  // 8% - rare easy enemy
-      [EnemyType.CHOMPER]: 0.20,      // 20% - BaseBlu for variety
-      [EnemyType.SNAIL]: 0.22,        // 22% - solid presence
-      [EnemyType.JUMPER]: 0.30,       // 30% - high difficulty
-      [EnemyType.STALKER]: 0.20       // 20% - significant threat
+    // Levels 31-40: Advanced Mechanics
+    'advanced': {
+      [EnemyType.JUMPER]: 0.40,       // 40% - Green Cat
+      [EnemyType.SNAIL]: 0.35,        // 35% - Red Cat
+      [EnemyType.STALKER]: 0.125,     // 12.5% - Red Cat Stalker
+      [EnemyType.BASEBLU]: 0.125,     // 12.5% - BaseBlu
+      [EnemyType.CATERPILLAR]: 0.00,
+      [EnemyType.BEETLE]: 0.00,
+      [EnemyType.CHOMPER]: 0.00
+    },
+    // Levels 41-50: Expert Challenge
+    'expert': {
+      [EnemyType.STALKER]: 0.35,      // 35% - Red Cat Stalker
+      [EnemyType.JUMPER]: 0.30,       // 30% - Green Cat
+      [EnemyType.BASEBLU]: 0.25,      // 25% - BaseBlu (max 2 per floor)
+      // 10% mixed earlier enemies
+      [EnemyType.CATERPILLAR]: 0.025, // 2.5%
+      [EnemyType.BEETLE]: 0.025,      // 2.5%
+      [EnemyType.CHOMPER]: 0.025,     // 2.5%
+      [EnemyType.SNAIL]: 0.025        // 2.5%
+    },
+    // Levels 51+: BEAST MODE - Chaos Variety
+    'beast': {
+      [EnemyType.STALKER]: 0.20,      // 20% - Balanced mix
+      [EnemyType.JUMPER]: 0.20,       // 20%
+      [EnemyType.BASEBLU]: 0.15,      // 15%
+      [EnemyType.SNAIL]: 0.15,        // 15%
+      [EnemyType.CHOMPER]: 0.15,      // 15%
+      [EnemyType.CATERPILLAR]: 0.10,  // 10%
+      [EnemyType.BEETLE]: 0.05        // 5%
     }
   }
 
   /**
-   * Get difficulty budget for a floor based on level progression
+   * Get max enemies per floor based on level tier
    */
-  static getDifficultyBudget(levelNumber: number, floorNumber: number): number {
-    // Base difficulty increases with level according to our 4-phase structure
-    let baseDifficulty: number
-    if (levelNumber <= 10) {
-      // Tutorial phase: 1.5-3.0 difficulty
-      baseDifficulty = 1.5 + (levelNumber - 1) * 0.167 // smooth progression to 3.0
-    } else if (levelNumber <= 25) {
-      // Skill building: 3.0-5.5 difficulty
-      const progress = (levelNumber - 10) / 15 // 0-1 through this phase
-      baseDifficulty = 3.0 + progress * 2.5
-    } else if (levelNumber <= 40) {
-      // Challenge ramp: 5.5-8.0 difficulty
-      const progress = (levelNumber - 25) / 15
-      baseDifficulty = 5.5 + progress * 2.5
-    } else {
-      // Master phase (41-50): 8.0-10.0 difficulty
-      const progress = (levelNumber - 40) / 10
-      baseDifficulty = 8.0 + progress * 2.0
-    }
+  static getMaxEnemiesPerFloor(levelNumber: number): number {
+    if (levelNumber <= 10) return 3      // 2-3 per floor
+    else if (levelNumber <= 20) return 4 // 3-4 per floor
+    else if (levelNumber <= 30) return 5 // 4-5 per floor
+    else if (levelNumber <= 40) return 6 // 5-6 per floor
+    else if (levelNumber <= 50) return 7 // 6-7 per floor
+    else return 8                        // 7-8 per floor (BEAST MODE)
+  }
 
-    // Add progressive difficulty within each level
-    const floorBonus = Math.floor(floorNumber / 4) * 0.3 // +0.3 every 4 floors
-    
-    return Math.round((baseDifficulty + floorBonus) * 10) / 10 // Round to 1 decimal
+  /**
+   * Get speed scaling multiplier based on level
+   */
+  static getSpeedMultiplier(levelNumber: number): number {
+    if (levelNumber <= 10) {
+      // 1.0x → 1.05x
+      const progress = (levelNumber - 1) / 9
+      return 1.0 + (progress * 0.05)
+    } else if (levelNumber <= 20) {
+      // 1.05x → 1.10x
+      const progress = (levelNumber - 10) / 10
+      return 1.05 + (progress * 0.05)
+    } else if (levelNumber <= 30) {
+      // 1.10x → 1.15x
+      const progress = (levelNumber - 20) / 10
+      return 1.10 + (progress * 0.05)
+    } else if (levelNumber <= 40) {
+      // 1.15x → 1.20x
+      const progress = (levelNumber - 30) / 10
+      return 1.15 + (progress * 0.05)
+    } else if (levelNumber <= 50) {
+      // 1.20x → 1.25x
+      const progress = (levelNumber - 40) / 10
+      return 1.20 + (progress * 0.05)
+    } else {
+      // BEAST MODE: capped at 1.25x
+      return 1.25
+    }
+  }
+
+  /**
+   * Get BaseBlu max per floor based on level
+   */
+  static getBaseBluMaxPerFloor(levelNumber: number): number {
+    if (levelNumber <= 20) return 0      // No BaseBlu
+    else if (levelNumber <= 30) return 1 // Max 1 per floor
+    else if (levelNumber <= 40) return 2 // No specific limit stated, using 2
+    else return 2                        // Max 2 per floor (41+)
   }
 
   /**
@@ -132,66 +208,85 @@ export class EnemySpawningSystem {
   static getSpawnWeights(levelNumber: number): SpawnWeights {
     if (levelNumber <= 10) {
       return this.LEVEL_SPAWN_WEIGHTS['tutorial']
-    } else if (levelNumber <= 25) {
-      return this.LEVEL_SPAWN_WEIGHTS['skill_building']
+    } else if (levelNumber <= 20) {
+      return this.LEVEL_SPAWN_WEIGHTS['basic']
+    } else if (levelNumber <= 30) {
+      return this.LEVEL_SPAWN_WEIGHTS['speed']
     } else if (levelNumber <= 40) {
-      return this.LEVEL_SPAWN_WEIGHTS['challenge_ramp']
+      return this.LEVEL_SPAWN_WEIGHTS['advanced']
+    } else if (levelNumber <= 50) {
+      return this.LEVEL_SPAWN_WEIGHTS['expert']
     } else {
-      return this.LEVEL_SPAWN_WEIGHTS['master_phase']
+      return this.LEVEL_SPAWN_WEIGHTS['beast']
     }
   }
 
   /**
-   * Select enemies to spawn based on difficulty budget and weights
+   * Select enemies to spawn for a floor
    */
-  static selectEnemies(difficultyBudget: number, levelNumber: number): EnemyType[] {
+  static selectEnemiesForFloor(levelNumber: number, floorNumber: number): EnemyType[] {
     const weights = this.getSpawnWeights(levelNumber)
+    const maxEnemies = this.getMaxEnemiesPerFloor(levelNumber)
+    const baseBluMaxPerFloor = this.getBaseBluMaxPerFloor(levelNumber)
+    
     const selectedEnemies: EnemyType[] = []
-    let remainingBudget = difficultyBudget
-
-    // Convert weights to cumulative array for selection
-    const weightedTypes: { type: EnemyType, weight: number, difficulty: number }[] = []
-    for (const [typeStr, weight] of Object.entries(weights)) {
-      const type = typeStr as EnemyType
-      const definition = this.ENEMY_DEFINITIONS[type]
-      weightedTypes.push({
-        type,
-        weight,
-        difficulty: definition.difficultyScore
-      })
-    }
-
-    // Sort by difficulty (easier first) for better budget allocation
-    weightedTypes.sort((a, b) => a.difficulty - b.difficulty)
-
-    // Keep selecting enemies while we have budget
-    let attempts = 0
-    while (remainingBudget >= 0.5 && attempts < 20) { // Minimum 0.5 for caterpillar
-      attempts++
-
-      // Randomly select based on weights
-      const rand = Math.random()
+    let baseBluCount = 0
+    
+    // Randomly determine actual enemy count (e.g., 2-3 becomes random between 2 and 3)
+    const minEnemies = Math.max(1, maxEnemies - 1)
+    const actualEnemyCount = Math.floor(Math.random() * 2) + minEnemies
+    
+    // Keep selecting enemies up to the count
+    for (let i = 0; i < actualEnemyCount; i++) {
+      // Build weighted selection array, excluding enemies at 0% spawn rate
+      const availableTypes: { type: EnemyType, weight: number }[] = []
+      let totalWeight = 0
+      
+      for (const [typeStr, weight] of Object.entries(weights)) {
+        if (weight > 0) {
+          const type = typeStr as EnemyType
+          
+          // Check BaseBlu spawn limit
+          if (type === EnemyType.BASEBLU && baseBluCount >= baseBluMaxPerFloor) {
+            continue // Skip BaseBlu if we've hit the limit
+          }
+          
+          availableTypes.push({ type, weight })
+          totalWeight += weight
+        }
+      }
+      
+      if (availableTypes.length === 0) break
+      
+      // Select enemy based on weights
+      const rand = Math.random() * totalWeight
       let cumulativeWeight = 0
       let selectedType: EnemyType | null = null
-
-      for (const item of weightedTypes) {
+      
+      for (const item of availableTypes) {
         cumulativeWeight += item.weight
         if (rand <= cumulativeWeight) {
           selectedType = item.type
           break
         }
       }
-
+      
       if (selectedType) {
-        const difficulty = this.ENEMY_DEFINITIONS[selectedType].difficultyScore
-        if (difficulty <= remainingBudget) {
-          selectedEnemies.push(selectedType)
-          remainingBudget -= difficulty
+        selectedEnemies.push(selectedType)
+        if (selectedType === EnemyType.BASEBLU) {
+          baseBluCount++
         }
       }
     }
-
+    
     return selectedEnemies
+  }
+
+  /**
+   * @deprecated Use selectEnemiesForFloor instead
+   */
+  static selectEnemies(difficultyBudget: number, levelNumber: number): EnemyType[] {
+    return this.selectEnemiesForFloor(levelNumber, 0)
   }
 
   /**
@@ -213,6 +308,27 @@ export class EnemySpawningSystem {
    */
   static isStalkerType(type: EnemyType): boolean {
     return type === EnemyType.STALKER
+  }
+
+  /**
+   * Check if enemy type is BaseBlu (needs special spawning)
+   */
+  static isBaseBluType(type: EnemyType): boolean {
+    return type === EnemyType.BASEBLU
+  }
+
+  /**
+   * Check if enemy type is Beetle (needs special spawning)
+   */
+  static isBeetleType(type: EnemyType): boolean {
+    return type === EnemyType.BEETLE
+  }
+
+  /**
+   * Get point value for defeating an enemy type
+   */
+  static getPointValue(type: EnemyType): number {
+    return this.ENEMY_DEFINITIONS[type].pointValue
   }
 
   /**

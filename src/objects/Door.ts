@@ -4,15 +4,12 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
   private isFirstLevel: boolean
   
   constructor(scene: Phaser.Scene, x: number, y: number, isFirstLevel: boolean = false) {
-    console.log("🚪 DOOR CONSTRUCTOR: Creating door")
-    console.log(`   Position: (${x}, ${y})`)
-    console.log(`   Is first level: ${isFirstLevel}`)
+    // Door constructor
     
     // Use the preloaded door sprite (moved up 9 pixels total)
     super(scene, x, y - 9, 'door-sprite')
     
     this.isFirstLevel = isFirstLevel
-    console.log("🚪 DOOR CONSTRUCTOR: Base sprite created")
     
     // Add to scene
     scene.add.existing(this)

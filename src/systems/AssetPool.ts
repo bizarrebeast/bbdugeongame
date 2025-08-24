@@ -37,14 +37,7 @@ export class AssetPool {
     const loadPromises = this.loadQueue.map(asset => this.loadAsset(asset))
     await Promise.allSettled(loadPromises)
     
-    // Log loading results
-    console.log(`Asset Loading Complete:`)
-    console.log(`  - Loaded: ${this.loadedAssets.size} assets`)
-    console.log(`  - Failed: ${this.failedAssets.size} assets`)
-    
-    if (this.failedAssets.size > 0) {
-      console.warn('Failed to load assets:', Array.from(this.failedAssets))
-    }
+    // Asset loading complete - debug info removed
   }
 
   /**
@@ -83,7 +76,7 @@ export class AssetPool {
         currentRetry++
         this.retryCount.set(asset.key, currentRetry)
         
-        console.warn(`Failed to load ${asset.key} (attempt ${currentRetry}/${maxRetries}):`, error)
+        // Asset load failed - retry attempt
         
         if (currentRetry < maxRetries) {
           // Wait before retry with exponential backoff
@@ -94,7 +87,7 @@ export class AssetPool {
 
     // All retries failed, try fallback
     if (asset.fallback && this.scene.textures.exists(asset.fallback)) {
-      console.warn(`Using fallback for ${asset.key}: ${asset.fallback}`)
+      // Using fallback asset
       this.loadedAssets.add(asset.key)
       this.loadingPromises.delete(asset.key)
       return true

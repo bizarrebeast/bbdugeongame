@@ -49,6 +49,7 @@
 ### 5. Enhanced Gameplay Features 🎮
 **Goal:** Add depth and variety to gameplay
 **Tasks:**
+- **EVALUATE ENEMY SPAWNING LOGIC**: Review current enemy spawning patterns for more variation and fun gameplay
 - New enemy type: Spiders that climb ladders and follow vertical paths
 - Additional power-ups: speed boost, invincibility shield, double points
 - Enhanced difficulty scaling with level progression
@@ -93,8 +94,10 @@
 - Level progression: 10→15→20→25 floors (+5 every 5 levels)
 
 ## Current Todo List Status
-✅ 15/16 major tasks completed from Balance & Progression Sprint
-🔄 2 pending: High Score Persistence + Achievement System
+✅ Bonus level system implemented after levels 10, 20, 30, etc.
+✅ Invincibility speed boost (1.5x) and collectible collision fixes completed
+🔄 Next priorities: High Score Persistence + Achievement System
+📝 Production reminder: Evaluate enemy spawning logic for more variation and fun
 
 ---
 *Created: [Current Date] - Ready for next development phase*

@@ -185,11 +185,7 @@ export class TreasureChest {
         break
     }
     
-    console.log(`🏴󠁧󠁢󠁳󠁣󠁴󠁿 CHEST REWARDS (${tier.toUpperCase()} tier):`)
-    console.log(`   Regular coins: ${rewards.coins}`)
-    console.log(`   Blue coins: ${rewards.blueCoins}`) 
-    console.log(`   Diamonds: ${rewards.diamonds}`)
-    console.log(`   Free lives: ${rewards.freeLifes}`)
+    // Chest rewards calculated based on tier
     
     return rewards
   }

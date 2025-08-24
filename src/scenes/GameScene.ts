@@ -2,6 +2,7 @@ import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
 import { Cat } from "../objects/Cat"
 import { BaseBlu } from "../objects/BaseBlu"
+import { Beetle } from "../objects/Beetle"
 import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
@@ -24,6 +25,7 @@ export class GameScene extends Phaser.Scene {
   private cats!: Phaser.Physics.Arcade.Group
   private stalkerCats!: Phaser.Physics.Arcade.Group
   private baseBlus!: Phaser.Physics.Arcade.Group
+  private beetles!: Phaser.Physics.Arcade.Group
   private coins: Coin[] = []
   private blueCoins: BlueCoin[] = []
   private diamonds: Diamond[] = []
@@ -500,6 +502,12 @@ export class GameScene extends Phaser.Scene {
       classType: BaseBlu,
       runChildUpdate: true
     })
+
+    // Create beetles group
+    this.beetles = this.physics.add.group({
+      classType: Beetle,
+      runChildUpdate: true
+    })
     
     // Initialize collectibles arrays
     this.coins = []
@@ -596,6 +604,7 @@ export class GameScene extends Phaser.Scene {
     
     // Cats collide with platforms and FLOOR spikes only (floor spikes act like platforms for enemies)
     this.physics.add.collider(this.cats, this.platforms)
+    this.physics.add.collider(this.beetles, this.platforms)
     // Custom collision for spikes - only collide with floor spikes, not ceiling spikes
     this.physics.add.collider(
       this.cats, 
@@ -664,6 +673,15 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.stalkerCats,
       this.handlePlayerStalkerCatInteraction,
+      undefined,
+      this
+    )
+
+    // Player vs beetle collision - check for jump-to-kill vs damage  
+    this.physics.add.overlap(
+      this.player,
+      this.beetles,
+      this.handlePlayerBeetleInteraction,
       undefined,
       this
     )
@@ -2013,52 +2031,10 @@ export class GameScene extends Phaser.Scene {
       
       // Floor positioning info (replaced console.log)
       
-      // Randomly spawn BaseBlu on some floors (not every floor, max 1 per floor)
-      const currentLevel = this.levelManager.getCurrentLevel()
-      const baseBluChance = 0.15 + (currentLevel * 0.01) // Normal spawn rate: starts at 15%, increases by 1% per level
-      if (Math.random() < baseBluChance && floor % 3 !== 0) { // Skip every 3rd floor for variety
-        // Spawn BaseBlu on this floor
-        let baseBluX: number
-        let leftBound: number
-        let rightBound: number
-        
-        if (layout.gapStart === -1) {
-          // Complete floor - randomize spawn position and patrol area
-          const patrolAreaStart = 1 + Math.random() * 3 // Random start between tiles 1-4
-          const patrolAreaEnd = floorWidth - (1 + Math.random() * 3) // Random end leaving 1-4 tiles from edge
-          baseBluX = tileSize * (patrolAreaStart + (patrolAreaEnd - patrolAreaStart) * Math.random()) // Random position within patrol area
-          leftBound = tileSize * (patrolAreaStart + 0.5)
-          rightBound = tileSize * (patrolAreaEnd - 0.5)
-        } else {
-          // Floor with gap - choose the larger section for patrol
-          const leftSectionSize = layout.gapStart
-          const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
-          
-          if (rightSectionSize >= leftSectionSize && rightSectionSize > 3) {
-            // Use right section if it's larger
-            const rightStart = layout.gapStart + layout.gapSize
-            baseBluX = tileSize * (rightStart + rightSectionSize / 2)
-            leftBound = tileSize * (rightStart + 0.5)
-            rightBound = tileSize * (floorWidth - 0.5)
-          } else if (leftSectionSize > 3) {
-            // Use left section
-            baseBluX = tileSize * (leftSectionSize / 2)
-            leftBound = tileSize * 0.5
-            rightBound = tileSize * (layout.gapStart - 0.5)
-          } else {
-            // Skip this floor if both sections are too small
-            continue
-          }
-        }
-        
-        const baseBlu = new BaseBlu(this, baseBluX, y)
-        
-        baseBlu.setPlatformBounds(leftBound, rightBound)
-        this.baseBlus.add(baseBlu)
-      }
+      // BaseBlu spawning now handled by the EnemySpawningSystem
       
-      // Use new difficulty-based enemy spawning system
-      const selectedEnemies = this.levelManager.getEnemyTypesForFloor(this.levelManager.getCurrentLevel(), floor)
+      // Use new 6-tier enemy spawning system
+      const selectedEnemies = EnemySpawningSystem.selectEnemiesForFloor(this.levelManager.getCurrentLevel(), floor)
       
       // Selected enemies for floor (replaced console.log)
       
@@ -2115,10 +2091,32 @@ export class GameScene extends Phaser.Scene {
           }
         }
         
-        // Create the appropriate enemy type
-        // Creating enemy at position (replaced console.log)
-        
-        if (EnemySpawningSystem.isStalkerType(enemyType)) {
+        // Get speed multiplier for current level
+        const speedMultiplier = EnemySpawningSystem.getSpeedMultiplier(this.levelManager.getCurrentLevel())
+
+        // Create the appropriate enemy type based on type
+        if (EnemySpawningSystem.isBaseBluType(enemyType)) {
+          // Create BaseBlu enemy
+          const baseBlu = new BaseBlu(this, x, y)
+          baseBlu.setPlatformBounds(leftBound, rightBound)
+          // Apply speed multiplier to BaseBlu if it has a method for it
+          if (typeof (baseBlu as any).setSpeedMultiplier === 'function') {
+            (baseBlu as any).setSpeedMultiplier(speedMultiplier)
+          }
+          this.baseBlus.add(baseBlu)
+          enemiesCreated++
+          
+        } else if (EnemySpawningSystem.isBeetleType(enemyType)) {
+          // Create Beetle enemy
+          const beetle = new Beetle(this, x, y, leftBound, rightBound)
+          // Apply speed multiplier to Beetle if it has a method for it
+          if (typeof (beetle as any).setSpeedMultiplier === 'function') {
+            (beetle as any).setSpeedMultiplier(speedMultiplier)
+          }
+          this.beetles.add(beetle)
+          enemiesCreated++
+          
+        } else if (EnemySpawningSystem.isStalkerType(enemyType)) {
           // Create Stalker enemy as a regular Cat with stalker flag
           const stalkerCat = new Cat(
             this,
@@ -2130,12 +2128,18 @@ export class GameScene extends Phaser.Scene {
             true   // This is a stalker
           )
           stalkerCat.setPlayerReference(this.player)
+          // Smart directional assignment for stalker
+          this.setSmartEnemyDirection(stalkerCat, x, floorWidth * tileSize, enemyIndex, selectedEnemies.length)
+          // Apply speed multiplier to Stalker Cat
+          if (typeof (stalkerCat as any).setSpeedMultiplier === 'function') {
+            (stalkerCat as any).setSpeedMultiplier(speedMultiplier)
+          }
           this.stalkerCats.add(stalkerCat)
-          // Spawning stalker (replaced console.log)
+          enemiesCreated++
+          
         } else {
           // Create regular Cat enemy
           const color = EnemySpawningSystem.getColorForEnemyType(enemyType)
-          // Converting enemy type to color (replaced console.log)
           
           const cat = new Cat(
             this,
@@ -2146,13 +2150,15 @@ export class GameScene extends Phaser.Scene {
             color as any
           )
           
-          // Randomize initial direction (50/50 chance)
-          if (Math.random() < 0.5) {
-            cat.reverseDirection() // Start going opposite direction
+          // Smart directional assignment based on position and enemy type
+          this.setSmartEnemyDirection(cat, x, floorWidth * tileSize, enemyIndex, selectedEnemies.length)
+          
+          // Apply speed multiplier to regular Cat
+          if (typeof (cat as any).setSpeedMultiplier === 'function') {
+            (cat as any).setSpeedMultiplier(speedMultiplier)
           }
           
           this.cats.add(cat)
-          // Spawning enemy (replaced console.log)
           enemiesCreated++
         }
       }
@@ -2165,15 +2171,19 @@ export class GameScene extends Phaser.Scene {
    * Get a random spawn pattern for enemies on a floor
    */
   private getRandomSpawnPattern(enemyCount: number): string {
-    const patterns = ['spread', 'cluster', 'edges', 'random']
-    
-    // Some patterns work better with certain enemy counts
     if (enemyCount === 1) {
-      return Math.random() < 0.7 ? 'random' : 'center'
+      // Single enemy: favor random placement for variety
+      return Math.random() < 0.8 ? 'random' : 'center'
     } else if (enemyCount === 2) {
-      return Math.random() < 0.5 ? 'edges' : 'spread'
+      // Two enemies: heavily favor edges for separation
+      return Math.random() < 0.8 ? 'edges' : 'spread'
+    } else if (enemyCount === 3) {
+      // Three enemies: prefer spread to avoid clustering
+      const patterns = ['spread', 'spread', 'spread', 'edges', 'random'] // 60% spread
+      return patterns[Math.floor(Math.random() * patterns.length)]
     } else {
-      // 3+ enemies can use any pattern
+      // 4+ enemies: strongly favor spread and avoid clustering
+      const patterns = ['spread', 'spread', 'spread', 'spread', 'edges', 'random'] // 66% spread
       return patterns[Math.floor(Math.random() * patterns.length)]
     }
   }
@@ -2188,16 +2198,19 @@ export class GameScene extends Phaser.Scene {
     
     switch (pattern) {
       case 'spread':
-        // Evenly distribute across floor with slight randomization
+        // Evenly distribute across floor with intelligent randomization
         for (let i = 0; i < enemyCount; i++) {
           const basePosition = margin + (usableWidth / (enemyCount + 1)) * (i + 1)
-          const randomOffset = (Math.random() - 0.5) * 1.5 // ±0.75 tiles variance
+          // Reduce randomization for better spacing when there are more enemies
+          const maxOffset = enemyCount > 3 ? 1.0 : 1.5
+          const randomOffset = (Math.random() - 0.5) * maxOffset // Dynamic variance
           const x = Math.max(margin, Math.min(floorWidth - margin, basePosition + randomOffset))
           
-          // Give each enemy a section to patrol
+          // Give each enemy a section to patrol - larger sections for fewer enemies
           const sectionWidth = usableWidth / enemyCount
-          const leftBound = Math.max(0.5, margin + (i * sectionWidth))
-          const rightBound = Math.min(floorWidth - 0.5, margin + ((i + 1) * sectionWidth))
+          const overlap = enemyCount > 4 ? 0.5 : 1.0 // Reduce overlap when crowded
+          const leftBound = Math.max(0.5, margin + (i * sectionWidth) - overlap)
+          const rightBound = Math.min(floorWidth - 0.5, margin + ((i + 1) * sectionWidth) + overlap)
           
           positions.push({ x, leftBound, rightBound })
         }
@@ -2240,9 +2253,21 @@ export class GameScene extends Phaser.Scene {
         
       case 'random':
       default:
-        // Completely random positioning
+        // Smart random positioning with minimum separation
+        const placedPositions: number[] = []
+        const minSeparation = Math.max(2, usableWidth / (enemyCount + 1)) // Ensure minimum space between enemies
+        
         for (let i = 0; i < enemyCount; i++) {
-          const x = margin + Math.random() * usableWidth
+          let x: number
+          let attempts = 0
+          
+          // Try to find a position that's not too close to existing enemies
+          do {
+            x = margin + Math.random() * usableWidth
+            attempts++
+          } while (attempts < 10 && placedPositions.some(pos => Math.abs(pos - x) < minSeparation))
+          
+          placedPositions.push(x)
           
           // Random patrol area sizes
           const patrolRadius = 2 + Math.random() * 3 // 2-5 tiles radius
@@ -2255,6 +2280,45 @@ export class GameScene extends Phaser.Scene {
     }
     
     return positions
+  }
+
+  /**
+   * Set smart initial direction for enemy based on position and context
+   */
+  private setSmartEnemyDirection(enemy: any, x: number, floorWidth: number, enemyIndex: number, totalEnemies: number): void {
+    // Multiple factors determine initial direction
+    const centerX = floorWidth / 2
+    const distanceFromCenter = Math.abs(x - centerX)
+    const isNearEdge = x < floorWidth * 0.25 || x > floorWidth * 0.75
+    
+    let directionChance: number
+    
+    if (totalEnemies === 1) {
+      // Single enemy: random direction
+      directionChance = 0.5
+    } else if (totalEnemies === 2) {
+      // Two enemies: make them start moving toward center initially  
+      directionChance = x < centerX ? 0.7 : 0.3 // Left enemy goes right more, right enemy goes left more
+    } else {
+      // Multiple enemies: create varied movement patterns
+      if (isNearEdge) {
+        // Edge enemies tend to move inward initially
+        directionChance = x < centerX ? 0.75 : 0.25
+      } else {
+        // Center enemies more random, but with some alternating pattern
+        directionChance = enemyIndex % 2 === 0 ? 0.3 : 0.7
+      }
+    }
+    
+    // Add some true randomness
+    directionChance += (Math.random() - 0.5) * 0.3 // ±15% variation
+    directionChance = Math.max(0.1, Math.min(0.9, directionChance)) // Clamp to reasonable range
+    
+    if (Math.random() < directionChance) {
+      if (typeof enemy.reverseDirection === 'function') {
+        enemy.reverseDirection()
+      }
+    }
   }
   
   private createTemporaryFloorGrid(): void {
@@ -3591,6 +3655,40 @@ export class GameScene extends Phaser.Scene {
       playerBody.setVelocityX(pushDirection * 100)
     }
   }
+
+  private handlePlayerBeetleInteraction(
+    player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    beetle: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    if (this.isGameOver || this.justKilledCat) return
+    
+    const playerObj = player as Player
+    const beetleObj = beetle as Beetle
+    
+    // Check if player is falling down onto the beetle (jump-to-kill)
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const beetleBody = beetleObj.body as Phaser.Physics.Arcade.Body
+    
+    const playerFalling = playerBody.velocity.y > 0 // Moving downward
+    const playerAboveBeetle = playerBody.bottom <= beetleBody.top + 5 // Player's bottom is near beetle's top
+    
+    if (playerFalling && playerAboveBeetle) {
+      // Jump-to-kill beetle!
+      this.justKilledCat = true
+      this.handleBeetleKill(playerObj, beetleObj)
+      
+      // Reset flag after a short delay to allow for physics processing
+      this.time.delayedCall(100, () => {
+        this.justKilledCat = false
+      })
+      return
+    }
+    
+    // Side collision - damage player if not invincible
+    if (!this.invincibilityActive) {
+      this.takeDamage()
+    }
+  }
   
   private handlePlayerStalkerCatInteraction(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
@@ -3706,8 +3804,17 @@ export class GameScene extends Phaser.Scene {
     
     // Don't allow combo while climbing ladders
     if (player.getIsClimbing()) {
-      // Just award base points without combo
-      const basePoints = 200
+      // Just award base points without combo using cat color
+      const catColor = cat.getCatColor()
+      let enemyType: EnemyType
+      switch(catColor) {
+        case 'yellow': enemyType = EnemyType.CATERPILLAR; break
+        case 'blue': enemyType = EnemyType.CHOMPER; break
+        case 'red': enemyType = EnemyType.SNAIL; break  // Note: could be stalker but we'll use snail points for now
+        case 'green': enemyType = EnemyType.JUMPER; break
+        default: enemyType = EnemyType.CHOMPER; break
+      }
+      const basePoints = EnemySpawningSystem.getPointValue(enemyType)
       this.score += basePoints
       this.updateScoreDisplay()
       
@@ -3724,7 +3831,16 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Calculate points with current combo multiplier (before incrementing)
-    const basePoints = 200
+    const catColor = cat.getCatColor()
+    let enemyType: EnemyType
+    switch(catColor) {
+      case 'yellow': enemyType = EnemyType.CATERPILLAR; break
+      case 'blue': enemyType = EnemyType.CHOMPER; break
+      case 'red': enemyType = EnemyType.SNAIL; break  // Note: could be stalker but we'll use snail points for now
+      case 'green': enemyType = EnemyType.JUMPER; break
+      default: enemyType = EnemyType.CHOMPER; break
+    }
+    const basePoints = EnemySpawningSystem.getPointValue(enemyType)
     const comboMultiplier = Math.max(1, this.comboCount) // Current combo count (minimum 1)
     const points = basePoints * comboMultiplier
     
@@ -3757,6 +3873,66 @@ export class GameScene extends Phaser.Scene {
     // Show point popup at cat position
     this.showPointPopup(cat.x, cat.y - 20, points)
     
+  }
+
+  private handleBeetleKill(player: Player, beetle: Beetle): void {
+    // Check if beetle is already squished to prevent multiple kills
+    if ((beetle as any).isSquished) return
+    
+    // Don't allow combo while climbing ladders
+    if (player.getIsClimbing()) {
+      // Just award base points without combo
+      const basePoints = EnemySpawningSystem.getPointValue(EnemyType.BEETLE)
+      this.score += basePoints
+      this.updateScoreDisplay()
+      
+      // Make player bounce up (slightly less than normal jump)
+      player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+      
+      // Destroy the beetle
+      this.beetles.remove(beetle)
+      beetle.destroy()
+      
+      // Show point popup at beetle position
+      this.showPointPopup(beetle.x, beetle.y - 20, basePoints)
+      
+      return
+    }
+    
+    // Calculate points with current combo multiplier (before incrementing)
+    const basePoints = EnemySpawningSystem.getPointValue(EnemyType.BEETLE)
+    const comboMultiplier = Math.max(1, this.comboCount) // Current combo count (minimum 1)
+    const points = basePoints * comboMultiplier
+    
+    // Award points
+    this.score += points
+    this.updateScoreDisplay()
+    
+    // Now increment combo for next kill
+    this.comboCount++
+    
+    // Update combo display
+    this.updateComboDisplay()
+    
+    // Reset combo timer
+    if (this.comboTimer) {
+      this.comboTimer.destroy()
+    }
+    
+    // Set new combo timer (1 second to maintain combo)
+    this.comboTimer = this.time.delayedCall(1000, () => {
+      this.resetCombo()
+    })
+    
+    // Make player bounce up (slightly less than normal jump)
+    player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+    
+    // Destroy the beetle
+    this.beetles.remove(beetle)
+    beetle.destroy()
+    
+    // Show point popup at beetle position
+    this.showPointPopup(beetle.x, beetle.y - 20, points)
   }
   
   private handleInvincibilityEnemyKill(player: Player, enemy: any): void {
@@ -4333,6 +4509,11 @@ export class GameScene extends Phaser.Scene {
     // Update all BaseBlu enemies
     this.baseBlus.children.entries.forEach(baseBlu => {
       (baseBlu as BaseBlu).update(this.time.now, this.game.loop.delta)
+    })
+
+    // Update all Beetle enemies
+    this.beetles.children.entries.forEach(beetle => {
+      (beetle as Beetle).update()
     })
     
     // Check if player is no longer overlapping any ladder while climbing
