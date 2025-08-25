@@ -194,6 +194,21 @@ export class GameScene extends Phaser.Scene {
         retries: 3,
         fallback: 'defaultPlayer'
       },
+      // Long idle animation (booty shaking after 30 seconds)
+      {
+        key: 'playerIdleBootyLeft',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/booty%20shaking%20left%20cheek-c4bJ5CnHbeRJc6LN3OSetpPvTNby88.png?zEph',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
+      {
+        key: 'playerIdleBootyRight',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/booty%20shaking%20right%20cheek-7eORz1b8ditvsXDolmHCEUlk7Wmvvd.png?UT5w',
+        type: 'image',
+        retries: 3,
+        fallback: 'defaultPlayer'
+      },
       // Climbing animations
       {
         key: 'playerClimbLeftFoot',

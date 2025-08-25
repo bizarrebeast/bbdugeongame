@@ -62,6 +62,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private onBubbleTrigger: (() => void) | null = null
   private onMovementStart: (() => void) | null = null
   
+  // Long idle animation (booty shaking)
+  private longIdleTimer: number = 0
+  private readonly LONG_IDLE_THRESHOLD: number = 30000 // 30 seconds in milliseconds
+  private isPlayingLongIdle: boolean = false
+  private longIdleFrame: 'left' | 'right' = 'left'
+  private longIdleAnimationTimer: number = 0
+  
   // Two-layer running animation system
   private runBodySprite: Phaser.GameObjects.Image | null = null
   private runLegsSprite: Phaser.GameObjects.Image | null = null
@@ -575,6 +582,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
       this.idleTimer = 0
     }
+    
+    // Track long idle timer for booty shake animation
+    if (playerIsIdle) {
+      this.longIdleTimer += deltaTime
+      
+      if (this.longIdleTimer >= this.LONG_IDLE_THRESHOLD && !this.isPlayingLongIdle) {
+        // Start long idle animation after 30 seconds
+        this.isPlayingLongIdle = true
+        this.longIdleFrame = 'left'
+        this.longIdleAnimationTimer = 0
+      }
+    } else {
+      // Reset long idle when player moves
+      if (this.isPlayingLongIdle) {
+        this.isPlayingLongIdle = false
+        // Return to normal idle sprite
+        this.currentFrame = 'idle'
+        this.currentIdleState = 'eye1'
+        this.changePlayerTexture('playerIdleEye1')
+      }
+      this.longIdleTimer = 0
+      this.longIdleAnimationTimer = 0
+    }
   }
   
   private updateSmartAnimations(): void {
@@ -722,6 +752,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private handleIdleAnimation(deltaTime: number): void {
+    // Check if we're playing the long idle animation (booty shake)
+    if (this.isPlayingLongIdle) {
+      this.handleLongIdleAnimation(deltaTime)
+      return
+    }
+    
     this.idleAnimationTimer += deltaTime
     
     // Reset to idle state when stopping movement
@@ -895,6 +931,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           break
       }
       this.idleAnimationTimer = 0
+    }
+  }
+  
+  private handleLongIdleAnimation(deltaTime: number): void {
+    this.longIdleAnimationTimer += deltaTime
+    
+    // Use same animation speed as climbing (400ms per frame)
+    const animationSpeed = 400
+    
+    // Hide two-layer running system during booty shake
+    this.showTwoLayerRunning(false)
+    
+    if (this.longIdleAnimationTimer >= animationSpeed) {
+      // Alternate between left and right cheek animations
+      if (this.longIdleFrame === 'left') {
+        this.longIdleFrame = 'right'
+        this.changePlayerTexture('playerIdleBootyRight')
+      } else {
+        this.longIdleFrame = 'left'
+        this.changePlayerTexture('playerIdleBootyLeft')
+      }
+      this.longIdleAnimationTimer = 0
     }
   }
   
