@@ -5,6 +5,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private isClimbing: boolean = false
   private currentLadder: Phaser.GameObjects.GameObject | null = null
+  private nearbyLadder: Phaser.GameObjects.GameObject | null = null // Track ladder we're overlapping
   private touchControls: TouchControls | null = null
   private walkAnimationTimer: number = 0
   private climbAnimationTimer: number = 0
@@ -331,8 +332,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityX(0)
       }
       
-      // Scaleable jumping system
-      if (jumpJustPressed && onGround && !this.isAirborne) {
+      // Scaleable jumping system - but not if we're trying to climb
+      // Check if player is overlapping a ladder and pressing up (prioritize climbing over jumping)
+      const nearLadder = this.nearbyLadder !== null || this.currentLadder !== null
+      let tryingToClimb = nearLadder && upPressed
+      
+      // Additional check: if already climbing, never jump
+      if (this.isClimbing) {
+        tryingToClimb = true
+      }
+      
+      if (jumpJustPressed && onGround && !this.isAirborne && !tryingToClimb && !this.isClimbing) {
         // Start jump with initial velocity
         this.jumpButtonDown = true
         this.jumpHoldTime = 0
@@ -430,8 +440,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       }
       
-      // Exit climbing with jump (always full jump from ladder)
-      if (jumpJustPressed) {
+      // Exit climbing with jump only if not trying to climb up
+      // This prevents accidental jumps when trying to climb
+      if (jumpJustPressed && !upPressed) {
         this.exitClimbing()
         this.setVelocityY(this.MAX_JUMP_VELOCITY)
       }
@@ -464,8 +475,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   startClimbing(ladder: Phaser.GameObjects.GameObject): void {
     this.isClimbing = true
     this.currentLadder = ladder
+    
+    // Cancel all jump-related states when starting to climb
+    this.isAirborne = false
+    this.isJumping = false
+    this.jumpButtonDown = false
+    this.jumpReleased = false
+    this.jumpHoldTime = 0
+    
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
       this.body.setAllowGravity(false)
+      // Stop any vertical velocity from jumping
+      this.body.setVelocityY(0)
     }
     // Center player on ladder
     const ladderSprite = ladder as Phaser.GameObjects.Rectangle
@@ -494,6 +515,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   checkLadderProximity(ladder: Phaser.GameObjects.GameObject): boolean {
+    // Track that we're near this ladder (for jump prevention)
+    this.nearbyLadder = ladder
+    
     // Check if player is pressing up or down near a ladder
     const wKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W)
     const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
@@ -507,6 +531,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       return distance < 20 // Within 20 pixels of ladder center
     }
     return false
+  }
+  
+  // Clear nearby ladder reference when not overlapping
+  clearNearbyLadder(): void {
+    // Only clear if we're not currently climbing
+    if (!this.isClimbing) {
+      this.nearbyLadder = null
+    }
   }
   
   getIsClimbing(): boolean {

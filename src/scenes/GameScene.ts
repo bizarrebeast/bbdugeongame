@@ -4989,18 +4989,22 @@ export class GameScene extends Phaser.Scene {
       (beetle as Beetle).update(time, deltaTime)
     })
     
-    // Check if player is no longer overlapping any ladder while climbing
-    if (this.player.getIsClimbing()) {
-      let stillOnLadder = false
-      this.ladders.children.entries.forEach(ladder => {
-        if (this.physics.world.overlap(this.player, ladder)) {
-          stillOnLadder = true
-        }
-      })
-      
-      if (!stillOnLadder) {
-        this.player.exitClimbing()
+    // Check ladder overlaps
+    let overlappingAnyLadder = false
+    this.ladders.children.entries.forEach(ladder => {
+      if (this.physics.world.overlap(this.player, ladder)) {
+        overlappingAnyLadder = true
       }
+    })
+    
+    // Clear nearby ladder reference if not overlapping any ladder
+    if (!overlappingAnyLadder) {
+      this.player.clearNearbyLadder()
+    }
+    
+    // Check if player is no longer overlapping any ladder while climbing
+    if (this.player.getIsClimbing() && !overlappingAnyLadder) {
+      this.player.exitClimbing()
     }
     
     // Update current floor based on player position

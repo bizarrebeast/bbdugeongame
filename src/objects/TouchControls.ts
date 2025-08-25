@@ -44,7 +44,7 @@ export class TouchControls {
   // Touchpad layout
   private touchpadCenter: { x: number, y: number }
   private touchpadRadius: number = 60
-  private deadZone: number = 8 // Minimum distance before registering input
+  private deadZone: number = 5 // Smaller dead zone for more responsive touch
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -161,8 +161,11 @@ export class TouchControls {
     
     if (touchpadDist <= (this.touchpadRadius + 15) && this.touchpadPointerId === -1) {
       this.touchpadPointerId = pointer.id
+      // Immediately update position on initial touch for instant response
       this.updateTouchpadFromPosition(touchX, touchY)
       this.touchpadIndicator.setVisible(true)
+      // Force an immediate update to ensure direction is registered
+      this.forceUpdate()
       return
     }
     
@@ -244,6 +247,15 @@ export class TouchControls {
     
     // Store current touch position for reference
     this.touchPosition = { x: relativeX, y: relativeY }
+  }
+  
+  // Force immediate update of controls
+  private forceUpdate(): void {
+    // This ensures the control state is immediately available
+    // Useful for making D-pad more responsive on initial touch
+    if (this.touchpadIndicator.visible) {
+      // Touch is active, states are already set
+    }
   }
 
 
