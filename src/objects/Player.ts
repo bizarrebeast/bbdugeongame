@@ -317,12 +317,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Track jumping state - immediate transition when landing
     const wasJumping = this.isJumping
     // Jump sprite only when in air AND moving up/down significantly
-    // Immediately false when on ground (prioritize ground detection)
-    this.isJumping = !onGround && Math.abs(this.body!.velocity.y) > 10
+    // Immediately false when on ground OR when climbing (climbing takes priority)
+    this.isJumping = !onGround && Math.abs(this.body!.velocity.y) > 10 && !this.isClimbing
     
-    // Force immediate sprite change when landing
-    if (wasJumping && onGround) {
-      // Player just landed - force immediate transition away from jump sprite
+    // Force immediate sprite change when landing or climbing
+    if (wasJumping && (onGround || this.isClimbing)) {
+      // Player just landed or started climbing - force immediate transition away from jump sprite
       this.isJumping = false
     }
     
@@ -420,23 +420,28 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Check if player is at ladder bottom
       const atLadderBottom = this.y >= ladderBottom - 10 // Small buffer at bottom
       
+      // Track if we're moving vertically on the ladder
+      let climbingMovement = false
+      
       if (upPressed) {
         // Always allow climbing up - player can exit at top
         this.setVelocityY(-GameSettings.game.climbSpeed)
-        // Track climbing movement for animation
-        this.isMoving = true
+        climbingMovement = true
       } else if (downPressed && !atLadderBottom) {
         // Allow climbing down but stop at ladder bottom
         this.setVelocityY(GameSettings.game.climbSpeed)
-        // Track climbing movement for animation
-        this.isMoving = true
+        climbingMovement = true
       } else {
         // Stop movement when not pressing or at ladder bottom
         this.setVelocityY(0)
       }
       
-      // Allow horizontal movement to exit ladder
-      if (leftPressed || rightPressed) {
+      // Track climbing movement for animation (only vertical movement counts as "moving" on ladder)
+      this.isMoving = climbingMovement
+      
+      // Allow horizontal movement to exit ladder ONLY if not moving vertically
+      // This prevents diagonal input from exiting the ladder
+      if ((leftPressed || rightPressed) && !upPressed && !downPressed) {
         this.exitClimbing()
         // Apply horizontal movement immediately after exiting
         const currentSpeed = GameSettings.game.playerSpeed * this.speedMultiplier
@@ -611,8 +616,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const deltaTime = this.scene.game.loop.delta
     const onGround = this.body!.blocked.down
     
-    // Priority 1: Climbing animations (climbing overrides jumping)
+    // Priority 1: Climbing animations (climbing overrides EVERYTHING else)
     if (this.isClimbing) {
+      // Force ensure we're not in jump state while climbing
+      this.isJumping = false
+      
       if (this.isMoving) {
         this.handleClimbingAnimation(deltaTime)
       } else {
@@ -620,9 +628,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.changePlayerTexture('playerClimbLeftFoot')
         this.resetAnimationTimers()
       }
+      
+      // Hide two-layer running system when climbing
+      this.showTwoLayerRunning(false)
+      return // Exit early - no other animations should play
     }
-    // Priority 2: Jumping animations (only when actually in air)
-    else if (!onGround && this.isJumping) {
+    // Priority 2: Jumping animations (only when actually in air and NOT climbing)
+    else if (!onGround && this.isJumping && !this.isClimbing) {
       this.handleJumpingAnimation()
     }
     // Priority 3: Running/walking animations (immediate when moving on ground)
