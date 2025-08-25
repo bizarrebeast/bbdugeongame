@@ -23,10 +23,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private jumpHoldTime: number = 0
   private isAirborne: boolean = false
   private jumpReleased: boolean = false
-  private readonly MIN_JUMP_VELOCITY: number = -250 // Small hop - just enough to be useful
-  private readonly MAX_JUMP_VELOCITY: number = -350 // Full jump (current value)
-  private readonly MAX_JUMP_HOLD_TIME: number = 300 // milliseconds to reach max height
-  private readonly MIN_HOLD_TIME: number = 50 // Minimum time before boost starts
+  private readonly MIN_JUMP_VELOCITY: number = -280 // Small hop - slightly higher for smoother transition
+  private readonly MAX_JUMP_VELOCITY: number = -360 // Full jump - slightly higher for better feel
+  private readonly MAX_JUMP_HOLD_TIME: number = 250 // milliseconds to reach max height - faster response
   
   // Speed multiplier for power-ups (like invincibility)
   private speedMultiplier: number = 1.0
@@ -366,30 +365,32 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         if (jumpButtonHeld) {
           this.jumpHoldTime += delta
           
-          // Only start boosting after minimum hold time
-          if (this.jumpHoldTime > this.MIN_HOLD_TIME && 
-              this.jumpHoldTime < this.MAX_JUMP_HOLD_TIME && 
-              this.body?.velocity.y! < 0) {
+          // Only boost if we're still ascending and within hold time
+          if (this.jumpHoldTime < this.MAX_JUMP_HOLD_TIME && this.body?.velocity.y! < 0) {
+            // Smooth interpolation from min to max jump velocity based on hold time
+            const holdProgress = Math.min(this.jumpHoldTime / this.MAX_JUMP_HOLD_TIME, 1.0)
             
-            // Calculate boost based on how long held (ramp up over time)
-            const holdProgress = (this.jumpHoldTime - this.MIN_HOLD_TIME) / (this.MAX_JUMP_HOLD_TIME - this.MIN_HOLD_TIME)
-            const boostForce = -5 - (holdProgress * 10) // Starts at -5, ramps to -15
-            const oldVelocity = this.body!.velocity.y
-            this.setVelocityY(this.body!.velocity.y + boostForce)
+            // Use a smooth easing function for more natural feel
+            const easedProgress = 1 - Math.pow(1 - holdProgress, 2) // Quadratic ease-out
             
-            // Cap at max velocity
-            if (this.body!.velocity.y < this.MAX_JUMP_VELOCITY) {
-              this.setVelocityY(this.MAX_JUMP_VELOCITY)
-              // Reached maximum jump velocity
-            } else {
-              // Jump velocity boosted while holding button
+            // Interpolate between min and max jump velocities
+            const targetVelocity = this.MIN_JUMP_VELOCITY + 
+              (this.MAX_JUMP_VELOCITY - this.MIN_JUMP_VELOCITY) * easedProgress
+            
+            // Only apply if it would make us jump higher (more negative)
+            if (targetVelocity < this.body!.velocity.y) {
+              this.setVelocityY(targetVelocity)
             }
           }
         } else {
-          // Button released
+          // Button released - apply a gentle velocity reduction for smoother arc
           this.jumpButtonDown = false
           this.jumpReleased = true
-          // Jump button released
+          
+          // Slightly reduce upward velocity when button is released early
+          if (this.body!.velocity.y < 0) {
+            this.setVelocityY(this.body!.velocity.y * 0.85)
+          }
         }
       }
       
