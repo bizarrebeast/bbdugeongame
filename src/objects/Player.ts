@@ -30,6 +30,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // Speed multiplier for power-ups (like invincibility)
   private speedMultiplier: number = 1.0
   
+  // Crystal Ball power-up
+  private crystalBallActive: boolean = false
+  private crystalBallTimer: number = 0
+  private readonly CRYSTAL_BALL_DURATION: number = 10000 // 10 seconds in milliseconds
+  
   // Speech/Thought bubble system
   private idleTimer: number = 0
   private readonly IDLE_THRESHOLD: number = 5000 // 5 seconds in milliseconds
@@ -376,6 +381,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Handle bubble system timing
     this.updateBubbleSystem()
+    
+    // Handle crystal ball power-up timer
+    this.updateCrystalBallTimer(delta)
     
     // Handle smart animation system
     this.updateSmartAnimations()
@@ -856,6 +864,54 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const gameScene = this.scene as any
     if (gameScene && gameScene.triggerFarcadeHapticFeedback) {
       gameScene.triggerFarcadeHapticFeedback()
+    }
+  }
+  
+  // Crystal Ball power-up methods
+  activateCrystalBall(): void {
+    this.crystalBallActive = true
+    this.crystalBallTimer = this.CRYSTAL_BALL_DURATION
+    
+    // Notify scene to update HUD
+    const gameScene = this.scene as any
+    if (gameScene && gameScene.updateCrystalBallTimer) {
+      gameScene.updateCrystalBallTimer(this.crystalBallTimer, this.CRYSTAL_BALL_DURATION)
+    }
+  }
+  
+  private updateCrystalBallTimer(delta: number): void {
+    if (this.crystalBallActive) {
+      this.crystalBallTimer -= delta
+      
+      if (this.crystalBallTimer <= 0) {
+        this.crystalBallActive = false
+        this.crystalBallTimer = 0
+      }
+      
+      // Update HUD timer
+      const gameScene = this.scene as any
+      if (gameScene && gameScene.updateCrystalBallTimer) {
+        gameScene.updateCrystalBallTimer(this.crystalBallTimer, this.CRYSTAL_BALL_DURATION)
+      }
+    }
+  }
+  
+  getCrystalBallActive(): boolean {
+    return this.crystalBallActive
+  }
+  
+  getCrystalBallTimeRemaining(): number {
+    return this.crystalBallTimer
+  }
+  
+  fireCrystalBall(): void {
+    if (!this.crystalBallActive || this.isClimbing) return
+    
+    // Notify scene to create projectile
+    const gameScene = this.scene as any
+    if (gameScene && gameScene.createCrystalBallProjectile) {
+      const direction = this.flipX ? -1 : 1
+      gameScene.createCrystalBallProjectile(this.x, this.y, direction)
     }
   }
 }

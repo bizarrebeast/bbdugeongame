@@ -10,6 +10,8 @@ import { FreeLife } from "../objects/FreeLife"
 import { InvincibilityPendant } from "../objects/InvincibilityPendant"
 import { TreasureChest } from "../objects/TreasureChest"
 import { FlashPowerUp } from "../objects/FlashPowerUp"
+import { CrystalBall } from "../objects/CrystalBall"
+import { CrystalBallProjectile } from "../objects/CrystalBallProjectile"
 import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
 import { EnemySpawningSystem, EnemyType } from "../systems/EnemySpawningSystem"
@@ -33,6 +35,9 @@ export class GameScene extends Phaser.Scene {
   private invincibilityPendants: InvincibilityPendant[] = []
   private treasureChests: TreasureChest[] = []
   private flashPowerUps: FlashPowerUp[] = []
+  private crystalBalls: CrystalBall[] = []
+  private crystalBallProjectiles: CrystalBallProjectile[] = []
+  private levelHasCrystalBall: boolean = false
   private isGameOver: boolean = false
   private floorLayouts: { gapStart: number, gapSize: number }[] = []
   private ladderPositions: Map<number, number[]> = new Map() // floor -> ladder x positions
@@ -312,6 +317,11 @@ export class GameScene extends Phaser.Scene {
     this.load.image('teal-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/teal%20chest-FpKKXWv5XWlb5H19IHW0G49DAm7Adb.png?Odul')
     this.load.image('yellow-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20chest-QMRMmVk9i7S0qkLteaXfhjqQBI351B.png?sE5u')
     
+    // Load Crystal Ball power-up sprites
+    this.load.image('crystalBallCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20collectible-BYMW8D53PB5JZUqKCfjKdI59qi0Yk8.png?rzg5')
+    this.load.image('crystalBallProjectile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20projectile-QkeBoHO54mfY60cWKyQZ0mCtWCJeW2.png?4jgH')
+    this.load.image('crystalBallTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20timer-DXFxS1g5ICpECl1vorurI4vQgShlfI.png?VWVq')
+    
     // Load new door sprite
     this.load.image('door-sprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20door-SX8un6qHvlx4mzlRYUC77dJ4lpBmOT.png?548U')
     
@@ -523,8 +533,10 @@ export class GameScene extends Phaser.Scene {
     this.diamonds = []
     this.treasureChests = []
     this.flashPowerUps = []
+    this.crystalBalls = []
     this.freeLifs = []
     this.invincibilityPendants = []
+    this.levelHasCrystalBall = false
     
     // Create mining theme background - DISABLED (using custom background image instead)
     // this.createMiningThemeBackground()
@@ -2574,13 +2586,19 @@ export class GameScene extends Phaser.Scene {
       if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
         this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
       }
+      
+      // Crystal Ball power-up: One per level starting from level 6
+      if (currentLevel >= 6 && !this.levelHasCrystalBall && floor >= 2 && Math.random() < 0.3) {
+        this.placeCollectiblesOfType(validPositions, 1, 'crystalBall', collectibleY, floor, floorUsedPositions)
+        this.levelHasCrystalBall = true // Mark that this level has its crystal ball
+      }
     }
   }
   
   private placeCollectiblesOfType(
     validPositions: number[], 
     count: number, 
-    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'flashPowerUp',
+    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'flashPowerUp' | 'crystalBall',
     y: number,
     floor: number,
     floorUsedPositions: Array<{x: number, type: string}>
@@ -2694,6 +2712,18 @@ export class GameScene extends Phaser.Scene {
             this.player,
             flashPowerUp.sprite,
             () => this.handleFlashPowerUpCollection(flashPowerUp),
+            undefined,
+            this
+          )
+          break
+          
+        case 'crystalBall':
+          const crystalBall = new CrystalBall(this, x, y)
+          this.crystalBalls.push(crystalBall)
+          this.physics.add.overlap(
+            this.player,
+            crystalBall.sprite,
+            () => this.handleCrystalBallCollection(crystalBall),
             undefined,
             this
           )
@@ -3260,6 +3290,28 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private handleCrystalBallCollection(crystalBall: CrystalBall): void {
+    // Don't collect during intro animation
+    if (this.isLevelStarting || crystalBall.isCollected()) return
+    
+    // Activate crystal ball power-up on player
+    this.player.activateCrystalBall()
+    
+    // Play collection animation
+    crystalBall.collect()
+    
+    // Remove from array
+    const index = this.crystalBalls.indexOf(crystalBall)
+    if (index > -1) {
+      this.crystalBalls.splice(index, 1)
+    }
+    
+    // Haptic feedback if available
+    if (window.FarcadeSDK?.singlePlayer?.actions?.hapticFeedback) {
+      window.FarcadeSDK.singlePlayer.actions.hapticFeedback()
+    }
+  }
+  
   private activateFlashPowerUp(): void {
     this.flashPowerUpActive = true
     
@@ -3287,6 +3339,77 @@ export class GameScene extends Phaser.Scene {
       this.visibilityMask.setScale(1, 1) // Instant scale back to normal
       this.visibilityMask.setAlpha(1) // Instant fade back to visible
     })
+  }
+  
+  createCrystalBallProjectile(x: number, y: number, direction: number): void {
+    const projectile = new CrystalBallProjectile(this, x, y, direction)
+    this.crystalBallProjectiles.push(projectile)
+    
+    // Add collision with enemies
+    this.enemyGroups.forEach(group => {
+      this.physics.add.overlap(
+        projectile,
+        group,
+        (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
+        undefined,
+        this
+      )
+    })
+    
+    // Add collision with platforms
+    this.physics.add.collider(projectile, this.platforms)
+  }
+  
+  private updateCrystalBallProjectiles(time: number, delta: number): void {
+    // Update and clean up projectiles
+    for (let i = this.crystalBallProjectiles.length - 1; i >= 0; i--) {
+      const projectile = this.crystalBallProjectiles[i]
+      
+      if (!projectile || !projectile.scene) {
+        // Remove destroyed projectiles
+        this.crystalBallProjectiles.splice(i, 1)
+      } else {
+        projectile.update(time, delta)
+      }
+    }
+  }
+  
+  private handleProjectileEnemyCollision(projectile: CrystalBallProjectile, enemy: any): void {
+    // Defeat enemy
+    if (enemy.defeat) {
+      enemy.defeat()
+    } else if (enemy.destroy) {
+      enemy.destroy()
+    }
+    
+    // Award points
+    const basePoints = enemy.getPointValue ? enemy.getPointValue() : 100
+    this.addToScore(basePoints)
+    
+    // Create score popup
+    this.createFloatingScore(basePoints, enemy.x, enemy.y - 20)
+    
+    // Burst the projectile
+    projectile.hitEnemy()
+    
+    // Remove from array
+    const index = this.crystalBallProjectiles.indexOf(projectile)
+    if (index > -1) {
+      this.crystalBallProjectiles.splice(index, 1)
+    }
+    
+    // Haptic feedback
+    if (window.FarcadeSDK?.singlePlayer?.actions?.hapticFeedback) {
+      window.FarcadeSDK.singlePlayer.actions.hapticFeedback()
+    }
+  }
+  
+  updateCrystalBallTimer(timeRemaining: number, maxTime: number): void {
+    // This will be implemented in Phase 4 when we add the HUD timer
+    // For now, just log it
+    if (timeRemaining <= 0) {
+      // Timer expired, could add visual/audio feedback here
+    }
   }
   
   private activateInvincibility(): void {
@@ -4485,6 +4608,9 @@ export class GameScene extends Phaser.Scene {
     
     // Update player
     this.player.update(time, deltaTime)
+    
+    // Update crystal ball projectiles
+    this.updateCrystalBallProjectiles(time, deltaTime)
     
     // Update golden aura position if invincible
     if (this.playerGoldenAura && this.invincibilityActive) {
