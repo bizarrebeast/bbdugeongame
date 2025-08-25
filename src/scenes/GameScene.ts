@@ -3397,6 +3397,15 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
+    // Add collision with stalker cats
+    this.physics.add.overlap(
+      projectile,
+      this.stalkerCats,
+      (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
+      undefined,
+      this
+    )
+    
     // Add collision with platforms
     this.physics.add.collider(projectile, this.platforms)
     
@@ -3454,14 +3463,13 @@ export class GameScene extends Phaser.Scene {
   }
   
   updateCrystalBallTimer(timeRemaining: number, maxTime: number): void {
-    // Show/hide timer based on whether power-up is active
-    const isActive = timeRemaining > 0
-    this.crystalBallTimerImage.setVisible(isActive)
+    // Keep timer always visible (don't hide when expired)
+    this.crystalBallTimerImage.setVisible(true)
     
     // TESTING: Log to see if this method is being called
-    console.log('Crystal ball timer update:', timeRemaining, 'ms remaining, active:', isActive)
+    console.log('Crystal ball timer update:', timeRemaining, 'ms remaining')
     
-    if (isActive) {
+    if (timeRemaining > 0) {
       // Calculate progress (0 to 1, where 1 is full time, 0 is expired)
       const progress = timeRemaining / maxTime
       
@@ -4384,6 +4392,15 @@ export class GameScene extends Phaser.Scene {
     
     // Reset combo on hit
     this.resetCombo()
+    
+    // Shut off crystal ball power-up when player takes damage
+    if (player.getCrystalBallActive && player.getCrystalBallActive()) {
+      console.log('🔮 Player died - shutting off Crystal Ball power-up')
+      // Force stop the crystal ball power-up on the player
+      player.stopCrystalBallParticles && player.stopCrystalBallParticles()
+      // Update HUD to hide timer
+      this.updateCrystalBallTimer(0, 10000)
+    }
     
     // Lose a life
     this.lives--
