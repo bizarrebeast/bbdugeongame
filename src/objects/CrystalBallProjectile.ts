@@ -86,22 +86,34 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   update(time: number, delta: number): void {
     super.update(time, delta)
     
+    // Check if body exists
+    if (!this.body) {
+      console.log('🔫 Crystal Ball projectile body missing - destroying')
+      this.burst()
+      return
+    }
+    
+    const body = this.body as Phaser.Physics.Arcade.Body
+    
     // Track distance traveled
-    this.distanceTraveled += Math.abs(this.body!.velocity.x) * delta / 1000
+    this.distanceTraveled += Math.abs(body.velocity.x) * delta / 1000
     
     // Check if we've hit max distance
     if (this.distanceTraveled >= this.MAX_DISTANCE) {
+      console.log('🔫 Crystal Ball projectile hit max distance - bursting')
       this.burst()
       return
     }
     
     // Check for floor collision (bouncing)
-    if (this.body!.blocked.down) {
+    if (body.blocked.down) {
+      console.log('🔫 Crystal Ball projectile hit floor - bouncing')
       this.handleBounce()
     }
     
     // Check for wall collision
-    if (this.body!.blocked.left || this.body!.blocked.right) {
+    if (body.blocked.left || body.blocked.right) {
+      console.log('🔫 Crystal Ball projectile hit wall - bursting')
       this.burst()
     }
   }
@@ -110,13 +122,22 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     this.bounceCount++
     
     if (this.bounceCount >= this.MAX_BOUNCES) {
+      console.log('🔫 Crystal Ball projectile max bounces reached - bursting')
       this.burst()
       return
     }
     
+    if (!this.body) {
+      console.log('🔫 Crystal Ball projectile body missing during bounce - bursting')
+      this.burst()
+      return
+    }
+    
+    const body = this.body as Phaser.Physics.Arcade.Body
+    
     // Calculate bounce velocity to reach consistent height
     // Using physics: v = sqrt(2 * g * h)
-    const gravity = this.body!.gravity.y || 400
+    const gravity = body.gravity.y || 400
     const bounceVelocity = -Math.sqrt(2 * gravity * this.BOUNCE_HEIGHT)
     
     // Apply bounce
@@ -127,6 +148,8 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     
     // Create bounce effect
     this.createBounceEffect()
+    
+    console.log('🔫 Crystal Ball projectile bounced', this.bounceCount, 'times')
   }
   
   private createBounceEffect(): void {

@@ -3418,6 +3418,8 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleProjectileEnemyCollision(projectile: CrystalBallProjectile, enemy: any): void {
+    console.log('💥 Crystal Ball projectile hit enemy!')
+    
     // Defeat enemy
     if (enemy.defeat) {
       enemy.defeat()
@@ -3427,10 +3429,13 @@ export class GameScene extends Phaser.Scene {
     
     // Award points
     const basePoints = enemy.getPointValue ? enemy.getPointValue() : 100
-    this.addToScore(basePoints)
+    this.score += basePoints
+    this.updateScoreDisplay()
     
     // Create score popup
-    this.createFloatingScore(basePoints, enemy.x, enemy.y - 20)
+    this.showPointPopup(enemy.x, enemy.y - 20, basePoints)
+    
+    console.log('💥 Enemy defeated by crystal ball, awarded', basePoints, 'points')
     
     // Burst the projectile
     projectile.hitEnemy()
@@ -3439,6 +3444,7 @@ export class GameScene extends Phaser.Scene {
     const index = this.crystalBallProjectiles.indexOf(projectile)
     if (index > -1) {
       this.crystalBallProjectiles.splice(index, 1)
+      console.log('💥 Projectile removed, remaining:', this.crystalBallProjectiles.length)
     }
     
     // Haptic feedback
