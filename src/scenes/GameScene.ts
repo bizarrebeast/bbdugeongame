@@ -316,8 +316,15 @@ export class GameScene extends Phaser.Scene {
     this.load.image('playerRunLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20left%20foot%20forward%20new-aH3WiqHkbYLeW14yketC7EdmowlQ02.png?jLLJ')
     this.load.image('playerRunRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Running%20right%20foot%20forward%202-aGnWjaFUNnYXwTfNKfSCfCLppOHzDU.png?mXmE')
     
-    // Load new two-layer running sprites
+    // Load new two-layer running sprites with eye variations
     this.load.image('playerRunBody', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body-bM1vl3T1vsaGXNpy1aSdQTw7y8yJWK.png?laFZ')
+    this.load.image('playerRunBodyEyes2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%202-RdbQz9dbHYM8AMsZxEE7BLRbMD4rUT.png?AhxN')
+    this.load.image('playerRunBodyEyes3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%203-L2mDyCxbHwvlp6DEq6gxihPbgctDYV.png?tasV')
+    this.load.image('playerRunBodyEyes4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%204-ZfdYFT0Njqb5scTp0hVEzTo9Z9b2Cp.png?QE3U')
+    this.load.image('playerRunBodyEyes5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%205-ukOG4fy50XhZTYC6nSIg466Fi8rS1I.png?Oeos')
+    this.load.image('playerRunBodyEyes6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%206-Ce3qtFJFdtq95juwg15T9jLnK7kkWb.png?Gg1B')
+    this.load.image('playerRunBodyEyes7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%207-QPAzARJE1Zzu1uOpV808LTO0Kaeoqo.png?7N69')
+    this.load.image('playerRunBodyBlink', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%20blinking-tpJuDG5352O6gg9GHvj0owyZ7Vo4sy.png?eKh3')
     this.load.image('playerRunLegsBothDown', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/both%20feet%20down-Df4cKPxtG04wJmnzY3QzaUeW22F1BN.png?Iekl')
     this.load.image('playerRunLegsLeftMid', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/left%20foot%20up%20mid-DpJL6NyL9T7l7vzP8e2jfvpTJwvofR.png?rZfI')
     this.load.image('playerRunLegsLeftHigh', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/left%20foot%20up%20high-jcTqik4ucIuoIwjkuG5a8cmOe9vrDu.png?wU6d')

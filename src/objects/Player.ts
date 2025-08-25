@@ -69,6 +69,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private legAnimationStep: number = 0 // 0-7 for the 8-step animation cycle
   private bodyAnimationTimer: number = 0 // Separate timer for body expressions
   private legAnimationTimer: number = 0 // Separate timer for legs
+  private runningEyeTimer: number = 0 // Timer for eye movement while running
+  private currentRunningEye: string = 'playerRunBody' // Current eye sprite
+  private isFiringProjectile: boolean = false // Track if player is throwing
   
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Use the new player idle sprite or fallback to placeholder
@@ -229,14 +232,32 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private updateBodyExpression(): void {
     if (!this.runBodySprite || !this.useTwoLayerRunning) return
     
-    // Future: Add random facial expressions here when more body sprites are available
-    // Example for when you have multiple body sprites:
-    // const bodyExpressions = ['playerRunBody', 'playerRunBodySmile', 'playerRunBodyFocus', 'playerRunBodyTired']
-    // const randomExpression = bodyExpressions[Math.floor(Math.random() * bodyExpressions.length)]
-    // this.runBodySprite.setTexture(randomExpression)
+    // If firing projectile, use eyes 7 (throwing expression)
+    if (this.isFiringProjectile) {
+      this.runBodySprite.setTexture('playerRunBodyEyes7')
+      return
+    }
     
-    // For now, do NOTHING - let the body sprite remain completely static and clean
-    // The texture was already set once when the sprite was created
+    // Random eye selection with occasional blinking for natural movement
+    const rand = Math.random()
+    if (rand < 0.05) {
+      // 5% chance to blink
+      this.runBodySprite.setTexture('playerRunBodyBlink')
+      // Quick blink - reset after 100ms
+      this.scene.time.delayedCall(100, () => {
+        if (this.runBodySprite && !this.isFiringProjectile) {
+          this.runBodySprite.setTexture(this.currentRunningEye)
+        }
+      })
+    } else if (rand < 0.8) {
+      // 75% chance to change eye position (excluding eyes 7 which is for throwing)
+      const eyePositions = ['playerRunBody', 'playerRunBodyEyes2', 'playerRunBodyEyes3', 
+                           'playerRunBodyEyes4', 'playerRunBodyEyes5', 'playerRunBodyEyes6']
+      const randomEye = Phaser.Utils.Array.GetRandom(eyePositions)
+      this.currentRunningEye = randomEye
+      this.runBodySprite.setTexture(randomEye)
+    }
+    // 20% chance to keep current eye position (no change)
   }
   
   notifyBubbleActive(isActive: boolean): void {
@@ -623,9 +644,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.legAnimationTimer = 0
       }
       
-      // Only update body expression when we actually want to change it
-      // For now, don't call updateBodyExpression() at all since we're using a single sprite
-      // The body will remain perfectly still and clean
+      // Update body expression (eyes) at slower rate for natural movement
+      if (this.bodyAnimationTimer >= 300) {  // Update eyes every 300ms
+        this.updateBodyExpression()
+        this.bodyAnimationTimer = 0
+      }
       
       // Future: Only update when you want random expressions
       // if (this.bodyAnimationTimer >= bodyAnimationSpeed) {
@@ -976,6 +999,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       console.log('❌ Cannot fire - Player is climbing')
       return
     }
+    
+    // Set firing flag for eye animation (eyes 7)
+    this.isFiringProjectile = true
+    this.scene.time.delayedCall(400, () => {
+      this.isFiringProjectile = false
+      // Reset to current eye position
+      if (this.runBodySprite && this.useTwoLayerRunning && this.isRunning) {
+        this.runBodySprite.setTexture(this.currentRunningEye)
+      }
+    })
     
     // Notify scene to create projectile
     const gameScene = this.scene as any
