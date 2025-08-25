@@ -249,16 +249,19 @@ export class InstructionsScene extends Phaser.Scene {
     const itemBg = this.add.graphics()
     itemBg.fillStyle(0x008080, 0.7) // Teal background, 70% opacity
     itemBg.lineStyle(2, 0x20B2AA) // Light sea green border
-    itemBg.fillRoundedRect(60, startY, screenWidth - 120, 110, 10)
-    itemBg.strokeRoundedRect(60, startY, screenWidth - 120, 110, 10)
+    
+    // Increase height for throw box to match proper padding
+    const boxHeight = item.sprite === 'playerThrow' ? 130 : 110
+    itemBg.fillRoundedRect(60, startY, screenWidth - 120, boxHeight, 10)
+    itemBg.strokeRoundedRect(60, startY, screenWidth - 120, boxHeight, 10)
     this.scrollContainer.add(itemBg)
     
     // Sprite visual reference with special handling
     if (item.sprite === 'playerThrow') {
       // Special handling for throw animation - combine two sprites
       if (this.textures.exists('playerThrowingGem') && this.textures.exists('playerBothFeetDown')) {
-        // Create container for two-layer sprite
-        const throwContainer = this.add.container(100, startY + 55)
+        // Create container for two-layer sprite - adjust position for better spacing
+        const throwContainer = this.add.container(100, startY + 60)
         
         // Add legs sprite (bottom layer - both feet down)
         const legsSprite = this.add.image(0, 0, 'playerBothFeetDown')
@@ -291,8 +294,9 @@ export class InstructionsScene extends Phaser.Scene {
       this.scrollContainer.add(sprite)
     }
     
-    // Item title
-    const titleText = this.add.text(140, startY + 20, item.title, {
+    // Item title - adjust position for throw box
+    const titleY = item.sprite === 'playerThrow' ? startY + 25 : startY + 20
+    const titleText = this.add.text(140, titleY, item.title, {
       fontSize: '12px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFD700', // Gold text
@@ -301,8 +305,9 @@ export class InstructionsScene extends Phaser.Scene {
     titleText.setOrigin(0, 0.5)
     this.scrollContainer.add(titleText)
     
-    // Item description (with even more padding from title)
-    const descText = this.add.text(140, startY + 65, item.description, {
+    // Item description - adjust position for throw box with more padding
+    const descY = item.sprite === 'playerThrow' ? startY + 75 : startY + 65
+    const descText = this.add.text(140, descY, item.description, {
       fontSize: '12px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFFFFF', // White text
@@ -312,7 +317,9 @@ export class InstructionsScene extends Phaser.Scene {
     descText.setOrigin(0, 0.5)
     this.scrollContainer.add(descText)
     
-    return startY + 120
+    // Return appropriate next Y position based on box height
+    const nextY = item.sprite === 'playerThrow' ? startY + 140 : startY + 120
+    return nextY
   }
 
   private createSkipButton(): void {
