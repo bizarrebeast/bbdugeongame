@@ -44,6 +44,9 @@ const config: Phaser.Types.Core.GameConfig = {
 // Create the game instance
 const game = new Phaser.Game(config)
 
+// Initialize game state - this is NOT a replay on first start
+game.registry.set('isReplay', false)
+
 // Initialize Farcade SDK
 game.events.once("ready", () => {
   initializeFarcadeSDK(game)

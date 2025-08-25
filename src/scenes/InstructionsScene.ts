@@ -40,6 +40,9 @@ export class InstructionsScene extends Phaser.Scene {
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerJumpRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20right%20foot%20forward-3clf2KnwfbN3O6BsrtaeHSTAviNbnF.png?xx8e')
     this.load.image('playerClimbInstructions', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20instructions%20sprite-1DYkU3H7zBfBhzSDEkjgUSCrDXYBRW.png?v0Zt')
+    // Player throwing sprites
+    this.load.image('playerThrowingGem', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/running%20body%20eyes%20throwing%20gem-7trW3lxLa5cH2ASj5SX3nkwO6dDh6z.png?uNG0')
+    this.load.image('playerBothFeetDown', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/both%20feet%20down-Df4cKPxtG04wJmnzY3QzaUeW22F1BN.png?Iekl')
     
     // Collectibles
     this.load.image('crystal-hud-icon', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20hud%20icon-6cCEP7jp90eqI7W9LeBp7v4s3OgCPX.png?nMJm')
@@ -154,46 +157,46 @@ export class InstructionsScene extends Phaser.Scene {
       {
         title: 'MOVEMENT & CONTROLS',
         items: [
-          { sprite: 'playerIdleEye1', title: 'Move', description: 'Use WASD/arrow keys or pink crystal D-pad to move', spriteSize: { width: 32, height: 48 }},
-          { sprite: 'playerJumpRightFoot', title: 'Jump', description: 'Press SPACE or E to jump (or use pink crystal button)', spriteSize: { width: 32, height: 48 }},
-          { sprite: 'playerClimbInstructions', title: 'Climb', description: 'Use UP/DOWN arrows or D-pad to climb ladders', spriteSize: { width: 32, height: 48 }},
-          { sprite: 'crystalBallCollectible', title: 'Throw', description: 'Press Q, V, or M to throw crystal balls (or yellow crystal button)', spriteSize: { width: 20, height: 20 }}
+          { sprite: 'playerIdleEye1', title: 'Move', description: 'Use WASD/arrow keys or pink crystal D-pad to move', spriteSize: { width: 38, height: 58 }},
+          { sprite: 'playerJumpRightFoot', title: 'Jump', description: 'Press SPACE or E to jump (or use pink crystal button)', spriteSize: { width: 38, height: 58 }},
+          { sprite: 'playerClimbInstructions', title: 'Climb', description: 'Use UP/DOWN arrows or D-pad to climb ladders', spriteSize: { width: 38, height: 58 }},
+          { sprite: 'playerThrow', title: 'Throw', description: 'Press Q, V, or M to throw crystal balls (or yellow crystal button)', spriteSize: { width: 38, height: 58 }}
         ]
       },
       {
         title: 'COLLECTIBLES & ITEMS',
         items: [
-          { sprite: 'crystal-hud-icon', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 16, height: 16 }},
-          { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 22, height: 22 }},
-          { sprite: 'diamond', title: 'Diamonds', description: 'Valuable gems worth 1000 points each', spriteSize: { width: 29, height: 29 }},
-          { sprite: 'heart-crystal', title: 'Heart Crystal', description: 'Gain an extra life worth 2000 points', spriteSize: { width: 29, height: 29 }},
-          { sprite: 'pendant', title: 'Pendant', description: 'Invincibility power-up worth 300 points', spriteSize: { width: 20, height: 20 }},
-          { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Shoot crystal balls for 20 seconds', spriteSize: { width: 20, height: 20 }},
-          { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Power-up: Darkness effect for 10 seconds', spriteSize: { width: 20, height: 20 }},
-          { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Power-up: Controls reversed for 10 seconds', spriteSize: { width: 20, height: 20 }},
-          { sprite: 'yellow-chest', title: 'Treasure Chest', description: 'Contains random rewards (2500 points + items)', spriteSize: { width: 30, height: 30 }}
+          { sprite: 'crystal-hud-icon', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 19, height: 19 }},
+          { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 26, height: 26 }},
+          { sprite: 'diamond', title: 'Diamonds', description: 'Valuable gems worth 1000 points each', spriteSize: { width: 35, height: 35 }},
+          { sprite: 'heart-crystal', title: 'Heart Crystal', description: 'Gain an extra life worth 2000 points', spriteSize: { width: 35, height: 35 }},
+          { sprite: 'pendant', title: 'Pendant', description: 'Invincibility power-up worth 300 points', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Shoot crystal balls for 20 seconds', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Power-up: Darkness effect for 10 seconds', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Power-up: Controls reversed for 10 seconds', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'yellow-chest', title: 'Treasure Chest', description: 'Contains random rewards (2500 points + items)', spriteSize: { width: 36, height: 36 }}
         ]
       },
       {
         title: 'ENEMIES & HAZARDS',
         items: [
-          { sprite: 'blueEnemy', title: 'Chomper', description: 'Standard patrol enemy (100 points)', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'yellowEnemy', title: 'Caterpillar', description: 'Slow random movement (50 points)', spriteSize: { width: 54, height: 22 }},
-          { sprite: 'redEnemy', title: 'Snail', description: 'Faster patrol movement (150 points)', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'greenEnemy', title: 'Bouncer', description: 'Fast bouncing movement (200 points)', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'stalkerEnemy', title: 'Stalker', description: 'Activates and chases you (300 points)', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'beetle', title: 'Rollz', description: 'Simple patrol beetle (75 points)', spriteSize: { width: 45, height: 45 }},
-          { sprite: 'baseblue-eyes-center', title: 'Blu', description: 'Immovable blocker (1000 points when invincible)', spriteSize: { width: 48, height: 48 }}
+          { sprite: 'yellowEnemy', title: 'Caterpillar', description: 'Slow random movement (50 points)', spriteSize: { width: 65, height: 26 }},
+          { sprite: 'beetle', title: 'Rollz', description: 'Simple patrol enemy (75 points)', spriteSize: { width: 54, height: 54 }},
+          { sprite: 'blueEnemy', title: 'Chomper', description: 'Standard patrol enemy (100 points)', spriteSize: { width: 58, height: 58 }},
+          { sprite: 'redEnemy', title: 'Snail', description: 'Faster patrol movement (150 points)', spriteSize: { width: 58, height: 58 }},
+          { sprite: 'greenEnemy', title: 'Bouncer', description: 'Fast bouncing movement (200 points)', spriteSize: { width: 58, height: 58 }},
+          { sprite: 'stalkerEnemy', title: 'Stalker', description: 'Activates and chases you (300 points)', spriteSize: { width: 58, height: 58 }},
+          { sprite: 'baseblue-eyes-center', title: 'Blu', description: 'Immovable blocker (1000 points when invincible)', spriteSize: { width: 58, height: 58 }}
         ]
       },
       {
         title: 'ENVIRONMENT & NAVIGATION',
         items: [
-          { sprite: 'ladderInstructions', title: 'Ladders', description: 'Climb up and down between floors', spriteSize: { width: 40, height: 60 }},
-          { sprite: 'floor-tile-1', title: 'Platforms', description: 'Solid ground you can walk and jump on', spriteSize: { width: 32, height: 32 }},
-          { sprite: 'pink-floor-spike-tile', title: 'Floor Spikes', description: 'Sharp floor hazards that damage you', spriteSize: { width: 32, height: 32 }},
-          { sprite: 'yellow-ceiling-spike-tile', title: 'Ceiling Spikes', description: 'Sharp ceiling hazards that damage you', spriteSize: { width: 32, height: 32 }},
-          { sprite: 'doorClosed', title: 'Exit Door', description: 'Reach the door at the top to complete the level', spriteSize: { width: 30, height: 40 }}
+          { sprite: 'ladderInstructions', title: 'Ladders', description: 'Climb up and down between floors', spriteSize: { width: 48, height: 72 }},
+          { sprite: 'floor-tile-1', title: 'Platforms', description: 'Solid ground you can walk and jump on', spriteSize: { width: 38, height: 38 }},
+          { sprite: 'pink-floor-spike-tile', title: 'Floor Spikes', description: 'Sharp floor hazards that damage you', spriteSize: { width: 38, height: 38 }},
+          { sprite: 'yellow-ceiling-spike-tile', title: 'Ceiling Spikes', description: 'Sharp ceiling hazards that damage you', spriteSize: { width: 38, height: 38 }},
+          { sprite: 'doorClosed', title: 'Exit Door', description: 'Reach the door at the top to complete the level', spriteSize: { width: 36, height: 48 }}
         ]
       }
     ]
@@ -220,7 +223,7 @@ export class InstructionsScene extends Phaser.Scene {
     this.scrollContainer.add(headerBg)
     
     const headerText = this.add.text(screenWidth / 2, currentY + 20, title, {
-      fontSize: '14px',
+      fontSize: '15px', // Reduced by 15% from 18px
       fontFamily: '"Press Start 2P", system-ui',
       color: '#000000', // Black text on pink
       fontStyle: 'bold'
@@ -242,17 +245,35 @@ export class InstructionsScene extends Phaser.Scene {
   private createInstructionItem(item: InstructionItem, startY: number): number {
     const screenWidth = GameSettings.canvas.width
     
-    // Item background
+    // Item background (increased height to accommodate text with better padding)
     const itemBg = this.add.graphics()
     itemBg.fillStyle(0x008080, 0.7) // Teal background, 70% opacity
     itemBg.lineStyle(2, 0x20B2AA) // Light sea green border
-    itemBg.fillRoundedRect(60, startY, screenWidth - 120, 80, 10)
-    itemBg.strokeRoundedRect(60, startY, screenWidth - 120, 80, 10)
+    itemBg.fillRoundedRect(60, startY, screenWidth - 120, 110, 10)
+    itemBg.strokeRoundedRect(60, startY, screenWidth - 120, 110, 10)
     this.scrollContainer.add(itemBg)
     
-    // Sprite visual reference with cropping for spikes
-    if (this.textures.exists(item.sprite)) {
-      const sprite = this.add.image(100, startY + 40, item.sprite)
+    // Sprite visual reference with special handling
+    if (item.sprite === 'playerThrow') {
+      // Special handling for throw animation - combine two sprites
+      if (this.textures.exists('playerThrowingGem') && this.textures.exists('playerBothFeetDown')) {
+        // Create container for two-layer sprite
+        const throwContainer = this.add.container(100, startY + 55)
+        
+        // Add legs sprite (bottom layer - both feet down)
+        const legsSprite = this.add.image(0, 0, 'playerBothFeetDown')
+        legsSprite.setDisplaySize(item.spriteSize.width, item.spriteSize.height)
+        throwContainer.add(legsSprite)
+        
+        // Add body sprite with gem throwing face (top layer)
+        const bodySprite = this.add.image(0, 0, 'playerThrowingGem')
+        bodySprite.setDisplaySize(item.spriteSize.width, item.spriteSize.height)
+        throwContainer.add(bodySprite)
+        
+        this.scrollContainer.add(throwContainer)
+      }
+    } else if (this.textures.exists(item.sprite)) {
+      const sprite = this.add.image(100, startY + 55, item.sprite)
       
       // Apply cropping for spike sprites
       if (item.sprite === 'pink-floor-spike-tile') {
@@ -271,7 +292,7 @@ export class InstructionsScene extends Phaser.Scene {
     }
     
     // Item title
-    const titleText = this.add.text(140, startY + 25, item.title, {
+    const titleText = this.add.text(140, startY + 20, item.title, {
       fontSize: '12px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFD700', // Gold text
@@ -280,17 +301,18 @@ export class InstructionsScene extends Phaser.Scene {
     titleText.setOrigin(0, 0.5)
     this.scrollContainer.add(titleText)
     
-    // Item description
-    const descText = this.add.text(140, startY + 50, item.description, {
-      fontSize: '10px',
+    // Item description (with even more padding from title)
+    const descText = this.add.text(140, startY + 65, item.description, {
+      fontSize: '12px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFFFFF', // White text
-      wordWrap: { width: screenWidth - 200 }
+      wordWrap: { width: screenWidth - 200 },
+      lineSpacing: 4 // Increased line spacing by ~10%
     })
     descText.setOrigin(0, 0.5)
     this.scrollContainer.add(descText)
     
-    return startY + 90
+    return startY + 120
   }
 
   private createSkipButton(): void {

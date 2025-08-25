@@ -443,6 +443,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Reset the replay flag after using it
+    // This ensures that if player manually restarts (not through SDK), they see splash screen again
+    if (this.game.registry.get('isReplay')) {
+      this.game.registry.set('isReplay', false)
+    }
+    
     // Select background based on current level
     this.currentBackground = this.getBackgroundForLevel(this.levelManager?.getCurrentLevel() || 1)
     
