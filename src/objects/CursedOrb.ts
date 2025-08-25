@@ -15,7 +15,7 @@ export class CursedOrb {
     this.orbType = orbType
     
     // Set colors based on orb type
-    this.glowColor = orbType === 'cursed' ? 0x22112d : 0x4ba3a6 // Dark purple or teal
+    this.glowColor = orbType === 'cursed' ? 0x580641 : 0x4ba3a6 // Dark purple or teal
     
     // Move up by 5 pixels for better positioning
     const adjustedY = y - 5

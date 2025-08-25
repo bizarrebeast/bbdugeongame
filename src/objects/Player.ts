@@ -1236,9 +1236,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     const particle = this.scene.add.graphics()
     // Dark purple glowing particle
-    particle.fillStyle(0x22112d, 0.4)
+    particle.fillStyle(0x580641, 0.4)
     particle.fillCircle(0, 0, 3) // Outer glow
-    particle.fillStyle(0x22112d, 0.8)
+    particle.fillStyle(0x580641, 0.8)
     particle.fillCircle(0, 0, 1) // Core
     
     const angle = Math.random() * Math.PI * 2
@@ -1312,7 +1312,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.cursedOrbGlow || !this.cursedOrbActive) return
     
     this.cursedOrbGlow.clear()
-    const glowColor = 0x22112d // Dark purple
+    const glowColor = 0x580641 // Dark purple
     
     this.cursedOrbGlow.x = this.x
     this.cursedOrbGlow.y = this.y

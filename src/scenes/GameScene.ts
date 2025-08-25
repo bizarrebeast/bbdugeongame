@@ -81,7 +81,7 @@ export class GameScene extends Phaser.Scene {
   private cursedOrbTimerMask!: Phaser.GameObjects.Graphics
   private cursedTealOrbTimerImage!: Phaser.GameObjects.Image
   private cursedTealOrbTimerMask!: Phaser.GameObjects.Graphics
-  private darknessOverlay!: Phaser.GameObjects.Rectangle
+  private darknessOverlay!: Phaser.GameObjects.Image
   private playerGoldenAura: Phaser.GameObjects.Arc | null = null
   private playerParticleTrail: Phaser.GameObjects.Graphics[] = []
   private playerSpikeOverlap: Phaser.Physics.Arcade.Collider | null = null
@@ -2648,16 +2648,16 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
       }
       
-      // Crystal Ball power-up: One per level starting from level 1 (TESTING)
-      if (currentLevel >= 1 && !this.levelHasCrystalBall && floor >= 2 && Math.random() < 0.8) { // 80% chance for testing
+      // Crystal Ball power-up: One per level starting from level 3
+      if (currentLevel >= 3 && !this.levelHasCrystalBall && floor >= 2 && Math.random() < 0.3) { // 30% chance
         console.log('🔮 TRYING to spawn Crystal Ball - Level:', currentLevel, 'Floor:', floor, 'HasCrystalBall:', this.levelHasCrystalBall)
         this.placeCollectiblesOfType(validPositions, 1, 'crystalBall', collectibleY, floor, floorUsedPositions)
         this.levelHasCrystalBall = true // Mark that this level has its crystal ball
         console.log('🔮 Crystal Ball spawn attempted, levelHasCrystalBall now:', this.levelHasCrystalBall)
       }
       
-      // Cursed Orb power-up: One per level starting from level 11
-      if (currentLevel >= 11 && !this.levelHasCursedOrb && floor >= 2 && Math.random() < 0.2) { // 20% chance
+      // Cursed Orb power-up: One per level starting from level 1 (FOR TESTING)
+      if (currentLevel >= 1 && !this.levelHasCursedOrb && floor >= 2 && Math.random() < 0.8) { // 80% chance for testing
         console.log('💀 TRYING to spawn Cursed Orb - Level:', currentLevel, 'Floor:', floor, 'HasCursedOrb:', this.levelHasCursedOrb)
         this.placeCollectiblesOfType(validPositions, 1, 'cursedOrb', collectibleY, floor, floorUsedPositions)
         this.levelHasCursedOrb = true // Mark that this level has its cursed orb
@@ -3526,18 +3526,16 @@ export class GameScene extends Phaser.Scene {
   
   activateDarknessEffect(): void {
     console.log('💀 Activating darkness effect!')
-    // Create or update darkness overlay
+    // Create or update darkness overlay using existing visibilityOverlay image
     if (!this.darknessOverlay) {
-      this.darknessOverlay = this.add.rectangle(
+      this.darknessOverlay = this.add.image(
         GameSettings.canvas.width / 2,
-        GameSettings.canvas.height / 2,
-        GameSettings.canvas.width,
-        GameSettings.canvas.height,
-        0x000000,
-        0.8 // 80% black opacity for darkness
+        GameSettings.canvas.height / 2 - 50, // Shift up 50 pixels
+        'visibilityOverlay'
       )
       this.darknessOverlay.setScrollFactor(0)
       this.darknessOverlay.setDepth(150) // Above most game elements but below HUD
+      this.darknessOverlay.setOrigin(0.5, 0.5)
     } else {
       this.darknessOverlay.setVisible(true)
     }
@@ -3546,7 +3544,7 @@ export class GameScene extends Phaser.Scene {
     this.darknessOverlay.setAlpha(0)
     this.tweens.add({
       targets: this.darknessOverlay,
-      alpha: 0.8,
+      alpha: 1.0, // 100% opacity
       duration: 500,
       ease: 'Power2.easeIn'
     })
@@ -3725,7 +3723,7 @@ export class GameScene extends Phaser.Scene {
       
       // Clear and redraw the mask
       this.cursedOrbTimerMask.clear()
-      this.cursedOrbTimerMask.fillStyle(0x22112d, 0.7) // Dark purple overlay
+      this.cursedOrbTimerMask.fillStyle(0x580641, 0.7) // Dark purple overlay
       this.cursedOrbTimerMask.beginPath()
       this.cursedOrbTimerMask.moveTo(16, 16) // Center of the 32x32 image
       this.cursedOrbTimerMask.arc(16, 16, 16, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
