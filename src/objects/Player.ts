@@ -38,6 +38,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private crystalBallParticleTimer?: Phaser.Time.TimerEvent
   private crystalBallGlow?: Phaser.GameObjects.Graphics
   
+  // Cursed Orb power-up (darkness effect)
+  private cursedOrbActive: boolean = false
+  private cursedOrbTimer: number = 0
+  private readonly CURSED_ORB_DURATION: number = 10000 // 10 seconds in milliseconds
+  private cursedOrbParticles: Phaser.GameObjects.Graphics[] = []
+  private cursedOrbParticleTimer?: Phaser.Time.TimerEvent
+  private cursedOrbGlow?: Phaser.GameObjects.Graphics
+  
+  // Cursed Teal Orb power-up (control reversal)
+  private cursedTealOrbActive: boolean = false
+  private cursedTealOrbTimer: number = 0
+  private readonly CURSED_TEAL_ORB_DURATION: number = 10000 // 10 seconds in milliseconds
+  private cursedTealOrbParticles: Phaser.GameObjects.Graphics[] = []
+  private cursedTealOrbParticleTimer?: Phaser.Time.TimerEvent
+  private cursedTealOrbGlow?: Phaser.GameObjects.Graphics
+  
   // Speech/Thought bubble system
   private idleTimer: number = 0
   private readonly IDLE_THRESHOLD: number = 5000 // 5 seconds in milliseconds
@@ -247,10 +263,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const mKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M)
     
     // Get input from keyboard (arrows or WASD) or touch controls (now discrete D-pad)
-    const leftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.leftPressed || false)
-    const rightPressed = this.cursors.right.isDown || dKey.isDown || (this.touchControls?.rightPressed || false)
-    const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.upPressed || false)
-    const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.downPressed || false)
+    // Apply control reversal if cursed teal orb is active
+    const reversalActive = this.cursedTealOrbActive
+    
+    const rawLeftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.leftPressed || false)
+    const rawRightPressed = this.cursors.right.isDown || dKey.isDown || (this.touchControls?.rightPressed || false)
+    const rawUpPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.upPressed || false)
+    const rawDownPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.downPressed || false)
+    
+    // Reverse controls if cursed
+    const leftPressed = reversalActive ? rawRightPressed : rawLeftPressed
+    const rightPressed = reversalActive ? rawLeftPressed : rawRightPressed
+    const upPressed = reversalActive ? rawDownPressed : rawUpPressed
+    const downPressed = reversalActive ? rawUpPressed : rawDownPressed
     const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || Phaser.Input.Keyboard.JustDown(eKey) || (this.touchControls?.isJumpJustPressed() || false)
     const jumpButtonHeld = spaceKey.isDown || eKey.isDown || (this.touchControls?.jumpPressed || false)
     
@@ -401,6 +426,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     // Handle crystal ball power-up timer
     this.updateCrystalBallTimer(delta)
+    
+    // Handle cursed orb power-up timers
+    this.updateCursedOrbTimer(delta)
+    this.updateCursedTealOrbTimer(delta)
     
     // Handle smart animation system
     this.updateSmartAnimations()
@@ -1066,5 +1095,310 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       repeat: -1,
       ease: 'Sine.easeInOut'
     })
+  }
+
+  // Cursed Orb power-up methods
+  activateCursedOrb(): void {
+    console.log('💀 ACTIVATING Cursed Orb power-up for 10 seconds!')
+    this.cursedOrbActive = true
+    this.cursedOrbTimer = this.CURSED_ORB_DURATION
+    
+    // Start dark purple particle effect around player
+    this.startCursedOrbParticles()
+    
+    // Notify scene to update HUD and activate darkness
+    const gameScene = this.scene as any
+    if (gameScene && gameScene.updateCursedOrbTimer) {
+      console.log('💀 Updating HUD timer with', this.cursedOrbTimer, 'ms')
+      gameScene.updateCursedOrbTimer(this.cursedOrbTimer, this.CURSED_ORB_DURATION)
+    }
+    if (gameScene && gameScene.activateDarknessEffect) {
+      gameScene.activateDarknessEffect()
+    }
+  }
+  
+  activateCursedTealOrb(): void {
+    console.log('🌀 ACTIVATING Cursed Teal Orb power-up for 10 seconds!')
+    this.cursedTealOrbActive = true
+    this.cursedTealOrbTimer = this.CURSED_TEAL_ORB_DURATION
+    
+    // Start teal particle effect around player
+    this.startCursedTealOrbParticles()
+    
+    // Notify scene to update HUD
+    const gameScene = this.scene as any
+    if (gameScene && gameScene.updateCursedTealOrbTimer) {
+      console.log('🌀 Updating HUD timer with', this.cursedTealOrbTimer, 'ms')
+      gameScene.updateCursedTealOrbTimer(this.cursedTealOrbTimer, this.CURSED_TEAL_ORB_DURATION)
+    }
+  }
+  
+  // Getter methods for cursed power-ups
+  getCursedOrbActive(): boolean {
+    return this.cursedOrbActive
+  }
+  
+  getCursedTealOrbActive(): boolean {
+    return this.cursedTealOrbActive
+  }
+
+  private updateCursedOrbTimer(delta: number): void {
+    if (this.cursedOrbActive) {
+      this.cursedOrbTimer -= delta
+      
+      // Update glow position to follow player
+      if (this.cursedOrbGlow) {
+        this.cursedOrbGlow.x = this.x
+        this.cursedOrbGlow.y = this.y
+      }
+      
+      if (this.cursedOrbTimer <= 0) {
+        this.cursedOrbActive = false
+        this.cursedOrbTimer = 0
+        
+        // Stop particle effect when power-up expires
+        this.stopCursedOrbParticles()
+        
+        // Notify scene to deactivate darkness
+        const gameScene = this.scene as any
+        if (gameScene && gameScene.deactivateDarknessEffect) {
+          gameScene.deactivateDarknessEffect()
+        }
+      }
+      
+      // Update HUD timer
+      const gameScene = this.scene as any
+      if (gameScene && gameScene.updateCursedOrbTimer) {
+        gameScene.updateCursedOrbTimer(this.cursedOrbTimer, this.CURSED_ORB_DURATION)
+      }
+    }
+  }
+  
+  private updateCursedTealOrbTimer(delta: number): void {
+    if (this.cursedTealOrbActive) {
+      this.cursedTealOrbTimer -= delta
+      
+      // Update glow position to follow player
+      if (this.cursedTealOrbGlow) {
+        this.cursedTealOrbGlow.x = this.x
+        this.cursedTealOrbGlow.y = this.y
+      }
+      
+      if (this.cursedTealOrbTimer <= 0) {
+        this.cursedTealOrbActive = false
+        this.cursedTealOrbTimer = 0
+        
+        // Stop particle effect when power-up expires
+        this.stopCursedTealOrbParticles()
+      }
+      
+      // Update HUD timer
+      const gameScene = this.scene as any
+      if (gameScene && gameScene.updateCursedTealOrbTimer) {
+        gameScene.updateCursedTealOrbTimer(this.cursedTealOrbTimer, this.CURSED_TEAL_ORB_DURATION)
+      }
+    }
+  }
+  
+  // Particle methods for cursed orbs (similar structure to crystal ball)
+  private startCursedOrbParticles(): void {
+    this.stopCursedOrbParticles()
+    
+    // Create glow effect around player
+    this.cursedOrbGlow = this.scene.add.graphics()
+    this.cursedOrbGlow.setDepth(18)
+    this.createCursedOrbPlayerGlow()
+    
+    this.cursedOrbParticleTimer = this.scene.time.addEvent({
+      delay: 200, // Slightly slower than crystal ball
+      callback: () => this.createCursedOrbParticle(),
+      loop: true
+    })
+  }
+  
+  private startCursedTealOrbParticles(): void {
+    this.stopCursedTealOrbParticles()
+    
+    // Create glow effect around player
+    this.cursedTealOrbGlow = this.scene.add.graphics()
+    this.cursedTealOrbGlow.setDepth(18)
+    this.createCursedTealOrbPlayerGlow()
+    
+    this.cursedTealOrbParticleTimer = this.scene.time.addEvent({
+      delay: 180, // Faster than cursed orb
+      callback: () => this.createCursedTealOrbParticle(),
+      loop: true
+    })
+  }
+  
+  private createCursedOrbParticle(): void {
+    if (!this.cursedOrbActive || !this.scene) return
+    
+    const particle = this.scene.add.graphics()
+    // Dark purple glowing particle
+    particle.fillStyle(0x22112d, 0.4)
+    particle.fillCircle(0, 0, 3) // Outer glow
+    particle.fillStyle(0x22112d, 0.8)
+    particle.fillCircle(0, 0, 1) // Core
+    
+    const angle = Math.random() * Math.PI * 2
+    const distance = 30 + Math.random() * 15
+    const startX = this.x + Math.cos(angle) * distance
+    const startY = this.y + Math.sin(angle) * distance
+    
+    particle.x = startX
+    particle.y = startY
+    particle.setDepth(19)
+    
+    this.cursedOrbParticles.push(particle)
+    
+    // Animate particle floating downward (cursed effect)
+    this.scene.tweens.add({
+      targets: particle,
+      y: startY + 25,
+      alpha: 0,
+      duration: 1500,
+      ease: 'Power2.easeOut',
+      onComplete: () => {
+        const index = this.cursedOrbParticles.indexOf(particle)
+        if (index > -1) {
+          this.cursedOrbParticles.splice(index, 1)
+        }
+        particle.destroy()
+      }
+    })
+  }
+  
+  private createCursedTealOrbParticle(): void {
+    if (!this.cursedTealOrbActive || !this.scene) return
+    
+    const particle = this.scene.add.graphics()
+    // Teal glowing particle
+    particle.fillStyle(0x4ba3a6, 0.4)
+    particle.fillCircle(0, 0, 3)
+    particle.fillStyle(0x4ba3a6, 0.8)
+    particle.fillCircle(0, 0, 1)
+    
+    const angle = Math.random() * Math.PI * 2
+    const distance = 25 + Math.random() * 20
+    const startX = this.x + Math.cos(angle) * distance
+    const startY = this.y + Math.sin(angle) * distance
+    
+    particle.x = startX
+    particle.y = startY
+    particle.setDepth(19)
+    
+    this.cursedTealOrbParticles.push(particle)
+    
+    // Animate particle in chaotic spiral (control reversal theme)
+    this.scene.tweens.add({
+      targets: particle,
+      x: startX + Math.sin(angle) * 30, // Spiral motion
+      y: startY - 20,
+      alpha: 0,
+      duration: 1300,
+      ease: 'Power2.easeOut',
+      onComplete: () => {
+        const index = this.cursedTealOrbParticles.indexOf(particle)
+        if (index > -1) {
+          this.cursedTealOrbParticles.splice(index, 1)
+        }
+        particle.destroy()
+      }
+    })
+  }
+  
+  private createCursedOrbPlayerGlow(): void {
+    if (!this.cursedOrbGlow || !this.cursedOrbActive) return
+    
+    this.cursedOrbGlow.clear()
+    const glowColor = 0x22112d // Dark purple
+    
+    this.cursedOrbGlow.x = this.x
+    this.cursedOrbGlow.y = this.y
+    
+    // Dark, ominous glow
+    this.cursedOrbGlow.fillStyle(glowColor, 0.15)
+    this.cursedOrbGlow.fillCircle(0, 0, 40)
+    this.cursedOrbGlow.fillStyle(glowColor, 0.25)
+    this.cursedOrbGlow.fillCircle(0, 0, 25)
+    
+    this.scene.tweens.add({
+      targets: this.cursedOrbGlow,
+      scaleX: 1.3,
+      scaleY: 1.3,
+      alpha: 0.6,
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+  }
+  
+  private createCursedTealOrbPlayerGlow(): void {
+    if (!this.cursedTealOrbGlow || !this.cursedTealOrbActive) return
+    
+    this.cursedTealOrbGlow.clear()
+    const glowColor = 0x4ba3a6 // Teal
+    
+    this.cursedTealOrbGlow.x = this.x
+    this.cursedTealOrbGlow.y = this.y
+    
+    // Chaotic, swirling glow
+    this.cursedTealOrbGlow.fillStyle(glowColor, 0.12)
+    this.cursedTealOrbGlow.fillCircle(0, 0, 38)
+    this.cursedTealOrbGlow.fillStyle(glowColor, 0.22)
+    this.cursedTealOrbGlow.fillCircle(0, 0, 22)
+    
+    this.scene.tweens.add({
+      targets: this.cursedTealOrbGlow,
+      rotation: Math.PI * 2,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      alpha: 0.7,
+      duration: 900, // Faster than cursed orb
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+  }
+  
+  private stopCursedOrbParticles(): void {
+    if (this.cursedOrbParticleTimer) {
+      this.cursedOrbParticleTimer.destroy()
+      this.cursedOrbParticleTimer = undefined
+    }
+    
+    this.cursedOrbParticles.forEach(particle => particle.destroy())
+    this.cursedOrbParticles = []
+    
+    if (this.cursedOrbGlow) {
+      this.cursedOrbGlow.destroy()
+      this.cursedOrbGlow = undefined
+    }
+  }
+  
+  private stopCursedTealOrbParticles(): void {
+    if (this.cursedTealOrbParticleTimer) {
+      this.cursedTealOrbParticleTimer.destroy()
+      this.cursedTealOrbParticleTimer = undefined
+    }
+    
+    this.cursedTealOrbParticles.forEach(particle => particle.destroy())
+    this.cursedTealOrbParticles = []
+    
+    if (this.cursedTealOrbGlow) {
+      this.cursedTealOrbGlow.destroy()
+      this.cursedTealOrbGlow = undefined
+    }
+  }
+  
+  // Public methods to stop cursed orb particles (called from GameScene)
+  public stopAllCursedOrbParticles(): void {
+    this.stopCursedOrbParticles()
+  }
+  
+  public stopAllCursedTealOrbParticles(): void {
+    this.stopCursedTealOrbParticles()
   }
 }

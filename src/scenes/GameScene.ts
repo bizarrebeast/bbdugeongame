@@ -12,6 +12,7 @@ import { TreasureChest } from "../objects/TreasureChest"
 import { FlashPowerUp } from "../objects/FlashPowerUp"
 import { CrystalBall } from "../objects/CrystalBall"
 import { CrystalBallProjectile } from "../objects/CrystalBallProjectile"
+import { CursedOrb } from "../objects/CursedOrb"
 import { TouchControls } from "../objects/TouchControls"
 import { LevelManager } from "../systems/LevelManager"
 import { EnemySpawningSystem, EnemyType } from "../systems/EnemySpawningSystem"
@@ -38,6 +39,10 @@ export class GameScene extends Phaser.Scene {
   private crystalBalls: CrystalBall[] = []
   private crystalBallProjectiles: CrystalBallProjectile[] = []
   private levelHasCrystalBall: boolean = false
+  private cursedOrbs: CursedOrb[] = []
+  private cursedTealOrbs: CursedOrb[] = []
+  private levelHasCursedOrb: boolean = false
+  private levelHasCursedTealOrb: boolean = false
   private isGameOver: boolean = false
   private floorLayouts: { gapStart: number, gapSize: number }[] = []
   private ladderPositions: Map<number, number[]> = new Map() // floor -> ladder x positions
@@ -72,6 +77,11 @@ export class GameScene extends Phaser.Scene {
   private invincibilityTimerSparkleTimer: Phaser.Time.TimerEvent | null = null
   private crystalBallTimerImage!: Phaser.GameObjects.Image
   private crystalBallTimerMask!: Phaser.GameObjects.Graphics
+  private cursedOrbTimerImage!: Phaser.GameObjects.Image
+  private cursedOrbTimerMask!: Phaser.GameObjects.Graphics
+  private cursedTealOrbTimerImage!: Phaser.GameObjects.Image
+  private cursedTealOrbTimerMask!: Phaser.GameObjects.Graphics
+  private darknessOverlay!: Phaser.GameObjects.Rectangle
   private playerGoldenAura: Phaser.GameObjects.Arc | null = null
   private playerParticleTrail: Phaser.GameObjects.Graphics[] = []
   private playerSpikeOverlap: Phaser.Physics.Arcade.Collider | null = null
@@ -323,6 +333,11 @@ export class GameScene extends Phaser.Scene {
     this.load.image('crystalBallCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20collectible-BYMW8D53PB5JZUqKCfjKdI59qi0Yk8.png?rzg5')
     this.load.image('crystalBallProjectile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20collectible-BYMW8D53PB5JZUqKCfjKdI59qi0Yk8.png?rzg5')
     this.load.image('crystalBallTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20timer-DXFxS1g5ICpECl1vorurI4vQgShlfI.png?VWVq')
+    
+    // Load Cursed Power-up sprites
+    this.load.image('cursedOrbCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb-rHogWhnYUk2xThrTWajfHqMSfxeyfd.png?0wr6')
+    this.load.image('cursedOrbTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb%20timer-E1IF8Nn8NGfI6l1yrsmD2cPpOel6H9.png?z9aG')
+    this.load.image('cursedTealOrbTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20teal%20orb%20timer-FAoT2eYLkUGfQRCCfS5qwZOkMvFBTg.png?FMZ7')
     
     // Load new door sprite
     this.load.image('door-sprite', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20door-SX8un6qHvlx4mzlRYUC77dJ4lpBmOT.png?548U')
@@ -922,27 +937,14 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Timer container - both timers centered as a group under score
+    // Timer container - all 4 timers centered as a group under score
     const timerY = 105 // 50px below score
-    const timerSpacing = 50 // Space between timers
+    const timerSpacing = 45 // Space between timers (reduced for 4 timers)
+    const totalWidth = timerSpacing * 3 // 3 gaps between 4 timers
+    const startX = screenWidth / 2 - totalWidth / 2
     
-    // Crystal Ball Timer (left) - check if texture exists, use fallback if not
-    const crystalTimerTexture = this.textures.exists('crystalBallTimer') ? 'crystalBallTimer' : 'invincibility-timer'
-    this.crystalBallTimerImage = this.add.image(screenWidth / 2 - timerSpacing / 2, timerY, crystalTimerTexture)
-    this.crystalBallTimerImage.setDisplaySize(36, 36)
-    this.crystalBallTimerImage.setDepth(101)
-    this.crystalBallTimerImage.setScrollFactor(0)
-    this.crystalBallTimerImage.setVisible(true) // TESTING: Make visible to debug positioning
-    // Remove tint - let the original icon show clearly
-    console.log('🔮 Crystal Ball timer created at position:', this.crystalBallTimerImage.x, this.crystalBallTimerImage.y)
-    
-    // Crystal ball timer mask for countdown
-    this.crystalBallTimerMask = this.add.graphics()
-    this.crystalBallTimerMask.setDepth(102)
-    this.crystalBallTimerMask.setScrollFactor(0)
-    
-    // Invincibility Timer (right)
-    this.invincibilityTimerImage = this.add.image(screenWidth / 2 + timerSpacing / 2, timerY, 'invincibility-timer')
+    // Invincibility Timer (pendant) - position 1
+    this.invincibilityTimerImage = this.add.image(startX, timerY, 'invincibility-timer')
     this.invincibilityTimerImage.setDisplaySize(36, 36)
     this.invincibilityTimerImage.setDepth(101)
     this.invincibilityTimerImage.setScrollFactor(0)
@@ -952,6 +954,45 @@ export class GameScene extends Phaser.Scene {
     this.invincibilityTimerMask = this.add.graphics()
     this.invincibilityTimerMask.setDepth(102)
     this.invincibilityTimerMask.setScrollFactor(0)
+    
+    // Crystal Ball Timer - position 2
+    const crystalTimerTexture = this.textures.exists('crystalBallTimer') ? 'crystalBallTimer' : 'invincibility-timer'
+    this.crystalBallTimerImage = this.add.image(startX + timerSpacing, timerY, crystalTimerTexture)
+    this.crystalBallTimerImage.setDisplaySize(36, 36)
+    this.crystalBallTimerImage.setDepth(101)
+    this.crystalBallTimerImage.setScrollFactor(0)
+    this.crystalBallTimerImage.setVisible(true) // Always visible
+    
+    // Crystal ball timer mask for countdown
+    this.crystalBallTimerMask = this.add.graphics()
+    this.crystalBallTimerMask.setDepth(102)
+    this.crystalBallTimerMask.setScrollFactor(0)
+    
+    // Cursed Orb Timer - position 3
+    const cursedOrbTexture = this.textures.exists('cursedOrbTimer') ? 'cursedOrbTimer' : 'invincibility-timer'
+    this.cursedOrbTimerImage = this.add.image(startX + timerSpacing * 2, timerY, cursedOrbTexture)
+    this.cursedOrbTimerImage.setDisplaySize(36, 36)
+    this.cursedOrbTimerImage.setDepth(101)
+    this.cursedOrbTimerImage.setScrollFactor(0)
+    this.cursedOrbTimerImage.setVisible(true) // Always visible
+    
+    // Cursed orb timer mask for countdown
+    this.cursedOrbTimerMask = this.add.graphics()
+    this.cursedOrbTimerMask.setDepth(102)
+    this.cursedOrbTimerMask.setScrollFactor(0)
+    
+    // Cursed Teal Orb Timer - position 4
+    const cursedTealOrbTexture = this.textures.exists('cursedTealOrbTimer') ? 'cursedTealOrbTimer' : 'invincibility-timer'
+    this.cursedTealOrbTimerImage = this.add.image(startX + timerSpacing * 3, timerY, cursedTealOrbTexture)
+    this.cursedTealOrbTimerImage.setDisplaySize(36, 36)
+    this.cursedTealOrbTimerImage.setDepth(101)
+    this.cursedTealOrbTimerImage.setScrollFactor(0)
+    this.cursedTealOrbTimerImage.setVisible(true) // Always visible
+    
+    // Cursed teal orb timer mask for countdown
+    this.cursedTealOrbTimerMask = this.add.graphics()
+    this.cursedTealOrbTimerMask.setDepth(102)
+    this.cursedTealOrbTimerMask.setScrollFactor(0)
     
     // RIGHT SIDE: Hamburger menu
     this.hamburgerMenuButton = this.add.text(screenWidth - 30, 78, '☰', {  // Moved up 10px from 88 to 78
@@ -2614,13 +2655,29 @@ export class GameScene extends Phaser.Scene {
         this.levelHasCrystalBall = true // Mark that this level has its crystal ball
         console.log('🔮 Crystal Ball spawn attempted, levelHasCrystalBall now:', this.levelHasCrystalBall)
       }
+      
+      // Cursed Orb power-up: One per level starting from level 11
+      if (currentLevel >= 11 && !this.levelHasCursedOrb && floor >= 2 && Math.random() < 0.2) { // 20% chance
+        console.log('💀 TRYING to spawn Cursed Orb - Level:', currentLevel, 'Floor:', floor, 'HasCursedOrb:', this.levelHasCursedOrb)
+        this.placeCollectiblesOfType(validPositions, 1, 'cursedOrb', collectibleY, floor, floorUsedPositions)
+        this.levelHasCursedOrb = true // Mark that this level has its cursed orb
+        console.log('💀 Cursed Orb spawn attempted, levelHasCursedOrb now:', this.levelHasCursedOrb)
+      }
+      
+      // Cursed Teal Orb power-up: One per level starting from level 21
+      if (currentLevel >= 21 && !this.levelHasCursedTealOrb && floor >= 2 && Math.random() < 0.15) { // 15% chance
+        console.log('🌀 TRYING to spawn Cursed Teal Orb - Level:', currentLevel, 'Floor:', floor, 'HasCursedTealOrb:', this.levelHasCursedTealOrb)
+        this.placeCollectiblesOfType(validPositions, 1, 'cursedTealOrb', collectibleY, floor, floorUsedPositions)
+        this.levelHasCursedTealOrb = true // Mark that this level has its cursed teal orb
+        console.log('🌀 Cursed Teal Orb spawn attempted, levelHasCursedTealOrb now:', this.levelHasCursedTealOrb)
+      }
     }
   }
   
   private placeCollectiblesOfType(
     validPositions: number[], 
     count: number, 
-    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'flashPowerUp' | 'crystalBall',
+    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'flashPowerUp' | 'crystalBall' | 'cursedOrb' | 'cursedTealOrb',
     y: number,
     floor: number,
     floorUsedPositions: Array<{x: number, type: string}>
@@ -2748,6 +2805,34 @@ export class GameScene extends Phaser.Scene {
             this.player,
             crystalBall.sprite,
             () => this.handleCrystalBallCollection(crystalBall),
+            undefined,
+            this
+          )
+          break
+          
+        case 'cursedOrb':
+          console.log('💀 SPAWNING Cursed Orb at', x, y, 'floor:', floor)
+          const cursedOrb = new CursedOrb(this, x, y, 'cursed')
+          this.cursedOrbs.push(cursedOrb)
+          console.log('💀 Cursed Orb created, total cursed orbs:', this.cursedOrbs.length)
+          this.physics.add.overlap(
+            this.player,
+            cursedOrb.sprite,
+            () => this.handleCursedOrbCollection(cursedOrb),
+            undefined,
+            this
+          )
+          break
+          
+        case 'cursedTealOrb':
+          console.log('🌀 SPAWNING Cursed Teal Orb at', x, y, 'floor:', floor)
+          const cursedTealOrb = new CursedOrb(this, x, y, 'cursedTeal')
+          this.cursedTealOrbs.push(cursedTealOrb)
+          console.log('🌀 Cursed Teal Orb created, total cursed teal orbs:', this.cursedTealOrbs.length)
+          this.physics.add.overlap(
+            this.player,
+            cursedTealOrb.sprite,
+            () => this.handleCursedTealOrbCollection(cursedTealOrb),
             undefined,
             this
           )
@@ -3346,6 +3431,70 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private handleCursedOrbCollection(cursedOrb: CursedOrb): void {
+    console.log('💀 CURSED ORB COLLISION DETECTED!')
+    // Don't collect during intro animation
+    if (this.isLevelStarting) {
+      console.log('❌ Cannot collect - level is starting')
+      return
+    }
+    if (cursedOrb.isCollected()) {
+      console.log('❌ Cannot collect - already collected')
+      return
+    }
+    
+    console.log('💀 COLLECTING Cursed Orb - activating darkness power-up!')
+    // Activate cursed orb power-up on player
+    this.player.activateCursedOrb()
+    
+    // Play collection animation
+    cursedOrb.collect()
+    
+    // Remove from array
+    const index = this.cursedOrbs.indexOf(cursedOrb)
+    if (index > -1) {
+      this.cursedOrbs.splice(index, 1)
+      console.log('💀 Cursed Orb removed from array, remaining:', this.cursedOrbs.length)
+    }
+    
+    // Haptic feedback if available
+    if (window.FarcadeSDK?.singlePlayer?.actions?.hapticFeedback) {
+      window.FarcadeSDK.singlePlayer.actions.hapticFeedback()
+    }
+  }
+  
+  private handleCursedTealOrbCollection(cursedTealOrb: CursedOrb): void {
+    console.log('🌀 CURSED TEAL ORB COLLISION DETECTED!')
+    // Don't collect during intro animation
+    if (this.isLevelStarting) {
+      console.log('❌ Cannot collect - level is starting')
+      return
+    }
+    if (cursedTealOrb.isCollected()) {
+      console.log('❌ Cannot collect - already collected')
+      return
+    }
+    
+    console.log('🌀 COLLECTING Cursed Teal Orb - activating control reversal power-up!')
+    // Activate cursed teal orb power-up on player
+    this.player.activateCursedTealOrb()
+    
+    // Play collection animation
+    cursedTealOrb.collect()
+    
+    // Remove from array
+    const index = this.cursedTealOrbs.indexOf(cursedTealOrb)
+    if (index > -1) {
+      this.cursedTealOrbs.splice(index, 1)
+      console.log('🌀 Cursed Teal Orb removed from array, remaining:', this.cursedTealOrbs.length)
+    }
+    
+    // Haptic feedback if available
+    if (window.FarcadeSDK?.singlePlayer?.actions?.hapticFeedback) {
+      window.FarcadeSDK.singlePlayer.actions.hapticFeedback()
+    }
+  }
+  
   private activateFlashPowerUp(): void {
     this.flashPowerUpActive = true
     
@@ -3373,6 +3522,52 @@ export class GameScene extends Phaser.Scene {
       this.visibilityMask.setScale(1, 1) // Instant scale back to normal
       this.visibilityMask.setAlpha(1) // Instant fade back to visible
     })
+  }
+  
+  activateDarknessEffect(): void {
+    console.log('💀 Activating darkness effect!')
+    // Create or update darkness overlay
+    if (!this.darknessOverlay) {
+      this.darknessOverlay = this.add.rectangle(
+        GameSettings.canvas.width / 2,
+        GameSettings.canvas.height / 2,
+        GameSettings.canvas.width,
+        GameSettings.canvas.height,
+        0x000000,
+        0.8 // 80% black opacity for darkness
+      )
+      this.darknessOverlay.setScrollFactor(0)
+      this.darknessOverlay.setDepth(150) // Above most game elements but below HUD
+    } else {
+      this.darknessOverlay.setVisible(true)
+    }
+    
+    // Fade in the darkness
+    this.darknessOverlay.setAlpha(0)
+    this.tweens.add({
+      targets: this.darknessOverlay,
+      alpha: 0.8,
+      duration: 500,
+      ease: 'Power2.easeIn'
+    })
+  }
+  
+  deactivateDarknessEffect(): void {
+    console.log('💀 Deactivating darkness effect!')
+    if (this.darknessOverlay) {
+      // Fade out the darkness
+      this.tweens.add({
+        targets: this.darknessOverlay,
+        alpha: 0,
+        duration: 500,
+        ease: 'Power2.easeOut',
+        onComplete: () => {
+          if (this.darknessOverlay) {
+            this.darknessOverlay.setVisible(false)
+          }
+        }
+      })
+    }
   }
   
   createCrystalBallProjectile(x: number, y: number, direction: number, playerVelocityX: number = 0): void {
@@ -3518,6 +3713,72 @@ export class GameScene extends Phaser.Scene {
       this.crystalBallTimerMask.clear()
       this.crystalBallTimerImage.setAlpha(1.0)
       console.log('Crystal ball timer - power-up expired, hiding timer')
+    }
+  }
+  
+  updateCursedOrbTimer(timeRemaining: number, maxTime: number): void {
+    if (timeRemaining > 0) {
+      this.cursedOrbTimerImage.setVisible(true)
+      
+      // Calculate progress (0 to 1)
+      const progress = timeRemaining / maxTime
+      
+      // Clear and redraw the mask
+      this.cursedOrbTimerMask.clear()
+      this.cursedOrbTimerMask.fillStyle(0x22112d, 0.7) // Dark purple overlay
+      this.cursedOrbTimerMask.beginPath()
+      this.cursedOrbTimerMask.moveTo(16, 16) // Center of the 32x32 image
+      this.cursedOrbTimerMask.arc(16, 16, 16, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
+      this.cursedOrbTimerMask.lineTo(16, 16) // Line back to center
+      this.cursedOrbTimerMask.closePath()
+      this.cursedOrbTimerMask.fillPath()
+      
+      // Add warning flash when 2 seconds or less remain
+      if (timeRemaining <= 2000) {
+        const flashAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5 // Oscillate between 0 and 1
+        this.cursedOrbTimerImage.setAlpha(0.5 + flashAlpha * 0.5) // Flash between 0.5 and 1.0
+        console.log('Cursed orb timer WARNING - flashing')
+      } else {
+        this.cursedOrbTimerImage.setAlpha(1.0)
+      }
+    } else {
+      // Clear mask when inactive
+      this.cursedOrbTimerMask.clear()
+      this.cursedOrbTimerImage.setAlpha(1.0)
+      console.log('Cursed orb timer - power-up expired, hiding timer')
+    }
+  }
+  
+  updateCursedTealOrbTimer(timeRemaining: number, maxTime: number): void {
+    if (timeRemaining > 0) {
+      this.cursedTealOrbTimerImage.setVisible(true)
+      
+      // Calculate progress (0 to 1)
+      const progress = timeRemaining / maxTime
+      
+      // Clear and redraw the mask
+      this.cursedTealOrbTimerMask.clear()
+      this.cursedTealOrbTimerMask.fillStyle(0x4ba3a6, 0.7) // Teal overlay
+      this.cursedTealOrbTimerMask.beginPath()
+      this.cursedTealOrbTimerMask.moveTo(16, 16) // Center of the 32x32 image
+      this.cursedTealOrbTimerMask.arc(16, 16, 16, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
+      this.cursedTealOrbTimerMask.lineTo(16, 16) // Line back to center
+      this.cursedTealOrbTimerMask.closePath()
+      this.cursedTealOrbTimerMask.fillPath()
+      
+      // Add warning flash when 2 seconds or less remain
+      if (timeRemaining <= 2000) {
+        const flashAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5 // Oscillate between 0 and 1
+        this.cursedTealOrbTimerImage.setAlpha(0.5 + flashAlpha * 0.5) // Flash between 0.5 and 1.0
+        console.log('Cursed teal orb timer WARNING - flashing')
+      } else {
+        this.cursedTealOrbTimerImage.setAlpha(1.0)
+      }
+    } else {
+      // Clear mask when inactive
+      this.cursedTealOrbTimerMask.clear()
+      this.cursedTealOrbTimerImage.setAlpha(1.0)
+      console.log('Cursed teal orb timer - power-up expired, hiding timer')
     }
   }
   
