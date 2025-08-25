@@ -28,20 +28,27 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   preload(): void {
+    console.log('🎮 InstructionsScene: PRELOAD started')
+    
     // Load background image
     this.load.image('instructionsBg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Treasure%20Quest%20BG%205-pVHhUmXIAvnZT4aFVRFgYvljKibVS0.png?qco1')
+    console.log('🎮 InstructionsScene: Background image loading...')
     
     // Load game sprites for visual references
     this.loadGameSprites()
     
-    console.log('🎮 InstructionsScene: Loading assets')
+    console.log('🎮 InstructionsScene: All assets loading...')
   }
 
   private loadGameSprites(): void {
+    console.log('🎮 InstructionsScene: Loading player sprites...')
+    
     // Player sprites
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerJumpRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20right%20foot%20forward-3clf2KnwfbN3O6BsrtaeHSTAviNbnF.png?xx8e')
     this.load.image('playerClimbLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20ladder%20left%20foot%20up-HkXPep0kpt9he1WtndEXsXRVHQBdlq.png?ncVM')
+    
+    console.log('🎮 InstructionsScene: Loading collectible sprites...')
     
     // Collectibles
     this.load.image('coin', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20round-E2EKGSTZHnnCdW0QkFmTDRKY7ERfw7.png?izQh')
@@ -53,10 +60,13 @@ export class InstructionsScene extends Phaser.Scene {
     this.load.image('pendant', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendant-cJISby3d7EEREasbi0gRZkn2u3rNrG.png?xf9m')
     this.load.image('heart-crystal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/free%20life%20heart%20crystal-2EJMsIvSQKzdgrqytakBZcDbGf7Jpf.png?E1JG')
     
+    console.log('🎮 InstructionsScene: Loading enemy sprites...')
+    
     // Enemies
     this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-HUXqx9HBdotEhJE2LBgzK8Z4kA7e2H.png?AVKZ')
     this.load.image('yellowEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20eye%20open-4dEmp2gPrn80UE2QOE1uSSovKJjcCe.png?SLUI')
     this.load.image('redEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%201-RKF3p3F7fxdBSfen8UD9UGqIzf8zlv.png?xRpM')
+    this.load.image('greenEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/green%20test-0I8rDwYn5lbuPQTEUiYrg8ctBccIAC.png?IBFc')
     this.load.image('stalkerEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%201-Xt3Vtu2FiWWLT9l2wfeakBAqVSZet8.png?gS6O')
     this.load.image('beetle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle-wEGgkZjC08EeQiAyHJGr9J9G3ZWVJF.png?G9xM')
     
@@ -66,27 +76,48 @@ export class InstructionsScene extends Phaser.Scene {
     this.load.image('pink-floor-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20spikes%20floor%20tile-ncAVgIHazwYlznCBP4H6LWLiIhN7OF.png?n27v')
     this.load.image('yellow-ceiling-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20spikes%20ceiling%20tile-8vq9W1Y2e1RSpgUfMl9sTp0ZILFHL3.png?mUEb')
     this.load.image('doorClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20door-SX8un6qHvlx4mzlRYUC77dJ4lpBmOT.png?548U')
+    
+    console.log('🎮 InstructionsScene: All sprites queued for loading!')
   }
 
   create(): void {
-    console.log('🎮 InstructionsScene: Creating instructions screen')
+    console.log('🎮 InstructionsScene: CREATE started - building UI components')
     
+    console.log('🎮 InstructionsScene: Setting up background...')
     this.setupBackground()
+    
+    console.log('🎮 InstructionsScene: Creating title...')
     this.createTitle()
+    
+    console.log('🎮 InstructionsScene: Creating scrollable container...')
     this.createScrollableContainer()
+    
+    console.log('🎮 InstructionsScene: Creating instruction categories...')
     this.createInstructionCategories()
+    
+    console.log('🎮 InstructionsScene: Creating skip button...')
     this.createSkipButton()
+    
+    console.log('🎮 InstructionsScene: Creating scroll indicator...')
     this.createScrollIndicator()
+    
+    console.log('🎮 InstructionsScene: Setting up scrolling controls...')
     this.setupScrolling()
+    
+    console.log('🎮 InstructionsScene: ✅ SCENE READY - Instructions displayed!')
   }
 
   private setupBackground(): void {
     const screenWidth = GameSettings.canvas.width
     const screenHeight = GameSettings.canvas.height
     
+    console.log(`🎮 InstructionsScene: Screen size: ${screenWidth}x${screenHeight}`)
+    
     // Create background image
     this.bgImage = this.add.image(screenWidth / 2, screenHeight / 2, 'instructionsBg')
     this.bgImage.setDepth(0)
+    
+    console.log(`🎮 InstructionsScene: Background image size: ${this.bgImage.width}x${this.bgImage.height}`)
     
     // Scale to fill screen
     const scaleX = screenWidth / this.bgImage.width
@@ -94,7 +125,8 @@ export class InstructionsScene extends Phaser.Scene {
     const scale = Math.max(scaleX, scaleY)
     this.bgImage.setScale(scale)
     
-    console.log('🎮 InstructionsScene: Background setup complete')
+    console.log(`🎮 InstructionsScene: Background scaled by ${scale}`)
+    console.log('🎮 InstructionsScene: ✅ Background setup complete')
   }
 
   private createTitle(): void {
@@ -113,8 +145,8 @@ export class InstructionsScene extends Phaser.Scene {
     
     // Add background box for title
     const titleBg = this.add.graphics()
-    titleBg.fillStyle(0x4B0082, 0.8) // Purple with transparency
-    titleBg.lineStyle(2, 0xFFD700) // Gold border
+    titleBg.fillStyle(0x4B0082, 0.6) // Purple background, 60% opacity
+    titleBg.lineStyle(2, 0xFF00FF) // Magenta border
     const titleBounds = this.titleText.getBounds()
     titleBg.fillRoundedRect(titleBounds.x - 20, titleBounds.y - 10, titleBounds.width + 40, titleBounds.height + 20, 10)
     titleBg.strokeRoundedRect(titleBounds.x - 20, titleBounds.y - 10, titleBounds.width + 40, titleBounds.height + 20, 10)
@@ -125,14 +157,25 @@ export class InstructionsScene extends Phaser.Scene {
     const screenWidth = GameSettings.canvas.width
     const screenHeight = GameSettings.canvas.height
     
+    // Create purple background rectangle with magenta border and rounded corners
+    console.log('🎮 InstructionsScene: Creating purple background rectangle...')
+    const backgroundRect = this.add.graphics()
+    backgroundRect.fillStyle(0x4B0082, 0.6) // Purple background, 60% opacity
+    backgroundRect.lineStyle(2, 0xFF00FF) // Magenta border
+    backgroundRect.fillRoundedRect(20, 100, screenWidth - 40, screenHeight - 200, 15)
+    backgroundRect.strokeRoundedRect(20, 100, screenWidth - 40, screenHeight - 200, 15)
+    backgroundRect.setDepth(5)
+    console.log('🎮 InstructionsScene: ✅ Purple background rectangle created!')
+    
     // Create scrollable container
     this.scrollContainer = this.add.container(0, 0)
     this.scrollContainer.setDepth(10)
     
-    // Create mask for scrollable area (leave space for title and skip button)
+    // Create invisible mask for scrollable area (leave space for title and skip button)
     this.maskGraphics = this.add.graphics()
     this.maskGraphics.fillStyle(0xffffff)
     this.maskGraphics.fillRect(20, 100, screenWidth - 40, screenHeight - 200)
+    this.maskGraphics.setVisible(false) // Hide the white mask rectangle
     
     const mask = this.maskGraphics.createGeometryMask()
     this.scrollContainer.setMask(mask)
@@ -144,7 +187,7 @@ export class InstructionsScene extends Phaser.Scene {
     // Define instruction categories with expanded content
     const categories = [
       {
-        title: '🎮 MOVEMENT & CONTROLS',
+        title: 'MOVEMENT & CONTROLS',
         items: [
           { sprite: 'playerIdleEye1', title: 'Move', description: 'Use WASD keys or arrow keys to move left and right', spriteSize: { width: 32, height: 48 }},
           { sprite: 'playerJumpRightFoot', title: 'Jump', description: 'Press SPACE or W/UP to jump over gaps and enemies', spriteSize: { width: 32, height: 48 }},
@@ -152,7 +195,7 @@ export class InstructionsScene extends Phaser.Scene {
         ]
       },
       {
-        title: '💎 COLLECTIBLES & ITEMS',
+        title: 'COLLECTIBLES & ITEMS',
         items: [
           { sprite: 'coin', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 16, height: 16 }},
           { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 22, height: 22 }},
@@ -165,11 +208,12 @@ export class InstructionsScene extends Phaser.Scene {
         ]
       },
       {
-        title: '👹 ENEMIES & HAZARDS',
+        title: 'ENEMIES & HAZARDS',
         items: [
           { sprite: 'blueEnemy', title: 'Blue Enemy', description: 'Animated enemies that move and can hurt you', spriteSize: { width: 48, height: 48 }},
           { sprite: 'yellowEnemy', title: 'Yellow Enemy', description: 'Patrol enemies that move back and forth', spriteSize: { width: 54, height: 22 }},
           { sprite: 'redEnemy', title: 'Red Enemy', description: 'Aggressive enemies with multiple animations', spriteSize: { width: 48, height: 48 }},
+          { sprite: 'greenEnemy', title: 'Green Enemy', description: 'Bouncing enemies that hop around levels', spriteSize: { width: 48, height: 48 }},
           { sprite: 'stalkerEnemy', title: 'Stalker Enemy', description: 'Advanced enemies that track your movement', spriteSize: { width: 48, height: 48 }},
           { sprite: 'beetle', title: 'Beetle', description: 'Small crawling enemies - jump over them', spriteSize: { width: 18, height: 14 }},
           { sprite: 'pink-floor-spike-tile', title: 'Floor Spikes', description: 'Sharp floor hazards that damage you', spriteSize: { width: 32, height: 32 }},
@@ -177,7 +221,7 @@ export class InstructionsScene extends Phaser.Scene {
         ]
       },
       {
-        title: '🏗️ ENVIRONMENT & NAVIGATION',
+        title: 'ENVIRONMENT & NAVIGATION',
         items: [
           { sprite: 'tealLadder', title: 'Ladders', description: 'Climb up and down between floors', spriteSize: { width: 20, height: 60 }},
           { sprite: 'floor-tile-1', title: 'Platforms', description: 'Solid ground you can walk and jump on', spriteSize: { width: 32, height: 32 }},
@@ -201,16 +245,16 @@ export class InstructionsScene extends Phaser.Scene {
     
     // Category header
     const headerBg = this.add.graphics()
-    headerBg.fillStyle(0x32CD32, 0.9) // Green background
-    headerBg.lineStyle(2, 0xFFD700) // Gold border
-    headerBg.fillRoundedRect(40, currentY, screenWidth - 80, 40, 8)
-    headerBg.strokeRoundedRect(40, currentY, screenWidth - 80, 40, 8)
+    headerBg.fillStyle(0xFFC0CB, 0.6) // Pink background, 60% opacity
+    headerBg.lineStyle(2, 0xFF00FF) // Magenta border
+    headerBg.fillRoundedRect(40, currentY, screenWidth - 80, 40, 10)
+    headerBg.strokeRoundedRect(40, currentY, screenWidth - 80, 40, 10)
     this.scrollContainer.add(headerBg)
     
     const headerText = this.add.text(screenWidth / 2, currentY + 20, title, {
       fontSize: '14px',
       fontFamily: '"Press Start 2P", system-ui',
-      color: '#000000', // Black text on green
+      color: '#000000', // Black text on pink
       fontStyle: 'bold'
     })
     headerText.setOrigin(0.5, 0.5)
@@ -232,8 +276,8 @@ export class InstructionsScene extends Phaser.Scene {
     
     // Item background
     const itemBg = this.add.graphics()
-    itemBg.fillStyle(0xFFC0CB, 0.6) // Pink background, 60% opacity
-    itemBg.lineStyle(2, 0xFF00FF) // Magenta border
+    itemBg.fillStyle(0x008080, 0.7) // Teal background, 70% opacity
+    itemBg.lineStyle(2, 0x20B2AA) // Light sea green border
     itemBg.fillRoundedRect(60, startY, screenWidth - 120, 80, 10)
     itemBg.strokeRoundedRect(60, startY, screenWidth - 120, 80, 10)
     this.scrollContainer.add(itemBg)
@@ -392,12 +436,13 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   private transitionToGame(): void {
-    console.log('🎮 InstructionsScene: Transitioning to game')
+    console.log('🎮 InstructionsScene: ⚡ User skipped - transitioning to game!')
     
     // Quick fade out
     this.cameras.main.fadeOut(300, 0, 0, 0)
     
     this.cameras.main.once('camerafadeoutcomplete', () => {
+      console.log('🎮 InstructionsScene: 🚀 Starting GameScene...')
       this.scene.start('GameScene')
     })
   }
