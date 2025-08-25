@@ -61,6 +61,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private nextRedBlinkTime: number = 0
   private redBiteFrameIndex: number = 0
   
+  // Green enemy (Bouncer) animation system
+  private greenEnemyAnimationState: 'eyeRight' | 'eyeCenter' | 'eyeLeft' | 'blinking' = 'eyeRight'
+  private greenEyeTimer: number = 0
+  private greenBlinkTimer: number = 0
+  private nextGreenEyeTime: number = 0
+  private nextGreenBlinkTime: number = 0
+  
   // Stalker properties (special type of red enemy)
   private isStalker: boolean = false
   private stalkerState: 'hidden' | 'activated' | 'chasing' = 'hidden'
@@ -316,6 +323,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
       case CatColor.GREEN:
         this.updateGreenBounce(delta)
+        this.updateGreenEnemyAnimations(delta)
         break
       case CatColor.RED:
         this.updateRedPatrol()
@@ -1104,5 +1112,78 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   getIsStalker(): boolean {
     return this.isStalker
+  }
+  
+  private updateGreenEnemyAnimations(delta: number): void {
+    // Update timers
+    this.greenEyeTimer += delta
+    this.greenBlinkTimer += delta
+    
+    // Initialize next times if not set
+    if (this.nextGreenEyeTime === 0) {
+      this.nextGreenEyeTime = 1000 + Math.random() * 2000 // 1-3 seconds for eye movement
+    }
+    if (this.nextGreenBlinkTime === 0) {
+      this.nextGreenBlinkTime = 3000 + Math.random() * 4000 // 3-7 seconds between blinks
+    }
+    
+    // Check for blinking (has priority over eye movement)
+    if (this.greenBlinkTimer >= this.nextGreenBlinkTime) {
+      this.greenEnemyAnimationState = 'blinking'
+      this.setTexture('greenEnemyBlink')
+      
+      // Schedule end of blink (100-150ms)
+      setTimeout(() => {
+        if (this.greenEnemyAnimationState === 'blinking') {
+          // Return to random eye position after blink
+          const states: Array<'eyeRight' | 'eyeCenter' | 'eyeLeft'> = ['eyeRight', 'eyeCenter', 'eyeLeft']
+          this.greenEnemyAnimationState = states[Math.floor(Math.random() * states.length)]
+          this.updateGreenEnemyTexture()
+        }
+      }, 100 + Math.random() * 50)
+      
+      // Reset blink timer
+      this.greenBlinkTimer = 0
+      this.nextGreenBlinkTime = 3000 + Math.random() * 4000
+      return
+    }
+    
+    // Check for eye movement (only if not blinking)
+    if (this.greenEnemyAnimationState !== 'blinking' && this.greenEyeTimer >= this.nextGreenEyeTime) {
+      // Choose a different eye position
+      const currentState = this.greenEnemyAnimationState
+      const states: Array<'eyeRight' | 'eyeCenter' | 'eyeLeft'> = ['eyeRight', 'eyeCenter', 'eyeLeft']
+      const availableStates = states.filter(s => s !== currentState)
+      
+      this.greenEnemyAnimationState = availableStates[Math.floor(Math.random() * availableStates.length)]
+      this.updateGreenEnemyTexture()
+      
+      // Reset eye timer
+      this.greenEyeTimer = 0
+      this.nextGreenEyeTime = 800 + Math.random() * 1500 // 0.8-2.3 seconds
+    }
+  }
+  
+  private updateGreenEnemyTexture(): void {
+    let textureKey = 'greenEnemy' // Default
+    
+    switch (this.greenEnemyAnimationState) {
+      case 'eyeRight':
+        textureKey = 'greenEnemy' // Default sprite has eye right
+        break
+      case 'eyeCenter':
+        textureKey = 'greenEnemyEyeCenter'
+        break
+      case 'eyeLeft':
+        textureKey = 'greenEnemyEyeLeft'
+        break
+      case 'blinking':
+        textureKey = 'greenEnemyBlink'
+        break
+    }
+    
+    if (this.scene.textures.exists(textureKey)) {
+      this.setTexture(textureKey)
+    }
   }
 }
