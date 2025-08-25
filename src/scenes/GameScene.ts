@@ -2316,19 +2316,24 @@ export class GameScene extends Phaser.Scene {
     
     switch (pattern) {
       case 'spread':
-        // Evenly distribute across floor with intelligent randomization
+        // Evenly distribute across floor with better spacing
+        const minSpacing = 2.5 // Minimum 2.5 tiles between enemies
+        const actualSpacing = Math.max(minSpacing, usableWidth / enemyCount)
+        
         for (let i = 0; i < enemyCount; i++) {
-          const basePosition = margin + (usableWidth / (enemyCount + 1)) * (i + 1)
-          // Reduce randomization for better spacing when there are more enemies
-          const maxOffset = enemyCount > 3 ? 1.0 : 1.5
-          const randomOffset = (Math.random() - 0.5) * maxOffset // Dynamic variance
+          // Calculate base position with guaranteed minimum spacing
+          const basePosition = margin + actualSpacing * (i + 0.5)
+          
+          // Add small random offset but maintain minimum distance
+          const maxOffset = Math.min(0.5, (actualSpacing - minSpacing) / 2)
+          const randomOffset = (Math.random() - 0.5) * maxOffset
           const x = Math.max(margin, Math.min(floorWidth - margin, basePosition + randomOffset))
           
-          // Give each enemy a section to patrol - larger sections for fewer enemies
-          const sectionWidth = usableWidth / enemyCount
-          const overlap = enemyCount > 4 ? 0.5 : 1.0 // Reduce overlap when crowded
-          const leftBound = Math.max(0.5, margin + (i * sectionWidth) - overlap)
-          const rightBound = Math.min(floorWidth - 0.5, margin + ((i + 1) * sectionWidth) + overlap)
+          // Give each enemy distinct patrol zones with minimal overlap
+          const zoneWidth = actualSpacing * 0.8 // 80% of spacing for patrol zone
+          const zoneCenter = margin + actualSpacing * (i + 0.5)
+          const leftBound = Math.max(0.5, zoneCenter - zoneWidth / 2)
+          const rightBound = Math.min(floorWidth - 0.5, zoneCenter + zoneWidth / 2)
           
           positions.push({ x, leftBound, rightBound })
         }
@@ -2354,15 +2359,29 @@ export class GameScene extends Phaser.Scene {
         break
         
       case 'edges':
-        // Place enemies near edges of platform
-        for (let i = 0; i < enemyCount; i++) {
-          const isLeftSide = i % 2 === 0
-          const x = isLeftSide ? 
-            margin + Math.random() * 2 : // Left side (tiles 1.5-3.5)
-            floorWidth - margin - Math.random() * 2 // Right side
+        // Place enemies near edges with staggered positions
+        const leftEnemies = Math.ceil(enemyCount / 2)
+        const rightEnemies = Math.floor(enemyCount / 2)
+        
+        // Distribute enemies on left edge with spacing
+        for (let i = 0; i < leftEnemies; i++) {
+          const verticalOffset = i * 0.8 // Stagger positions slightly
+          const x = margin + verticalOffset + Math.random() * 1.5
           
-          // Give edge enemies wider patrol areas
+          // Left edge enemies patrol left half
           const leftBound = 0.5
+          const rightBound = floorWidth / 2 - 1
+          
+          positions.push({ x, leftBound, rightBound })
+        }
+        
+        // Distribute enemies on right edge with spacing
+        for (let i = 0; i < rightEnemies; i++) {
+          const verticalOffset = i * 0.8 // Stagger positions slightly
+          const x = floorWidth - margin - verticalOffset - Math.random() * 1.5
+          
+          // Right edge enemies patrol right half
+          const leftBound = floorWidth / 2 + 1
           const rightBound = floorWidth - 0.5
           
           positions.push({ x, leftBound, rightBound })
@@ -2371,26 +2390,50 @@ export class GameScene extends Phaser.Scene {
         
       case 'random':
       default:
-        // Smart random positioning with minimum separation
+        // Smart random positioning with enforced minimum separation
         const placedPositions: number[] = []
-        const minSeparation = Math.max(2, usableWidth / (enemyCount + 1)) // Ensure minimum space between enemies
+        const minSeparation = 2.5 // Minimum 2.5 tiles between any two enemies
         
         for (let i = 0; i < enemyCount; i++) {
           let x: number
           let attempts = 0
+          const maxAttempts = 20
           
-          // Try to find a position that's not too close to existing enemies
+          // Try to find a position with proper spacing
           do {
             x = margin + Math.random() * usableWidth
             attempts++
-          } while (attempts < 10 && placedPositions.some(pos => Math.abs(pos - x) < minSeparation))
+            
+            // If we can't find a good position, use evenly spaced fallback
+            if (attempts >= maxAttempts) {
+              x = margin + (usableWidth / (enemyCount + 1)) * (i + 1)
+              break
+            }
+          } while (placedPositions.some(pos => Math.abs(pos - x) < minSeparation))
           
           placedPositions.push(x)
           
-          // Random patrol area sizes
-          const patrolRadius = 2 + Math.random() * 3 // 2-5 tiles radius
-          const leftBound = Math.max(0.5, x - patrolRadius)
-          const rightBound = Math.min(floorWidth - 0.5, x + patrolRadius)
+          // Varied patrol zones that don't overlap too much
+          const baseRadius = 2.5
+          const radiusVariation = Math.random() * 1.5 // 2.5-4 tiles radius
+          const patrolRadius = baseRadius + radiusVariation
+          
+          // Ensure patrol zones don't overlap with nearby enemies
+          let leftBound = Math.max(0.5, x - patrolRadius)
+          let rightBound = Math.min(floorWidth - 0.5, x + patrolRadius)
+          
+          // Check for overlap with existing patrol zones and adjust
+          for (let j = 0; j < i; j++) {
+            const otherPos = positions[j]
+            const otherX = placedPositions[j]
+            
+            // If patrol zones would overlap, shrink them
+            if (x < otherX && rightBound > otherPos.leftBound) {
+              rightBound = Math.min(rightBound, otherPos.leftBound - 0.5)
+            } else if (x > otherX && leftBound < otherPos.rightBound) {
+              leftBound = Math.max(leftBound, otherPos.rightBound + 0.5)
+            }
+          }
           
           positions.push({ x, leftBound, rightBound })
         }

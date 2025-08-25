@@ -1,8 +1,8 @@
 import GameSettings from '../config/GameSettings'
 
 export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
-  private movementSpeed: number = 20 // Very slow patrol speed
-  private direction: number = 1 // 1 for right, -1 for left
+  private movementSpeed: number // Very slow patrol speed
+  private direction: number // 1 for right, -1 for left
   private isPushing: boolean = false // Whether currently pushing/blocking player
   private platform: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody | null = null
   private platformLeft: number = 0
@@ -61,8 +61,12 @@ export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
     // Offset y: 8 (visual shift up) + 5 (center vertically) + 3 + 3 (shift down again) = 19
     this.setOffset(20, 19) // Compensate for visual shifts with hitbox
     
-    // Set initial direction (start going left since sprites face left)
-    this.direction = -1
+    // Set random speed variation (90-110% of base 20)
+    const speedVariation = 0.9 + Math.random() * 0.2
+    this.movementSpeed = 20 * speedVariation
+    
+    // Random initial direction
+    this.direction = Math.random() < 0.5 ? -1 : 1
     // Note: We'll handle movement manually since body.moves = false
     
     // Initialize eye animation timers

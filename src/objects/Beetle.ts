@@ -1,8 +1,8 @@
 import GameSettings from "../config/GameSettings"
 
 export class Beetle extends Phaser.Physics.Arcade.Sprite {
-  private moveSpeed: number = 80
-  private direction: number = 1 // 1 for right, -1 for left
+  private moveSpeed: number
+  private direction: number // 1 for right, -1 for left
   private platformBounds: { left: number; right: number }
   private animationTimer: number = 0
   private currentFrame: number = 0
@@ -65,6 +65,13 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
       left: platformLeft,
       right: platformRight
     }
+    
+    // Set random speed variation (90-110% of base)
+    const speedVariation = 0.9 + Math.random() * 0.2
+    this.moveSpeed = 80 * speedVariation
+    
+    // Random initial direction
+    this.direction = Math.random() < 0.5 ? -1 : 1
     
     // Start moving
     this.setVelocityX(this.moveSpeed * this.direction)

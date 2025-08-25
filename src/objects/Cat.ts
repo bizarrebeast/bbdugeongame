@@ -29,7 +29,7 @@ export enum CatColor {
 export class Cat extends Phaser.Physics.Arcade.Sprite {
   private baseSpeed: number = 80
   private moveSpeed: number
-  private direction: number = 1
+  private direction: number
   public platformBounds: { left: number; right: number }
   private catColor: CatColor
   private bounceTimer: number = 0
@@ -282,20 +282,26 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private setupBehavior(): void {
+    // Add 10-20% random speed variation to each enemy
+    const speedVariation = 0.9 + Math.random() * 0.2 // 90% to 110% of base
+    
     switch (this.catColor) {
       case CatColor.BLUE:
-        this.moveSpeed = this.baseSpeed
+        this.moveSpeed = this.baseSpeed * speedVariation
         break
       case CatColor.YELLOW:
-        this.moveSpeed = this.baseSpeed * 0.6
+        this.moveSpeed = this.baseSpeed * 0.6 * speedVariation
         break
       case CatColor.GREEN:
-        this.moveSpeed = this.baseSpeed * 1.5
+        this.moveSpeed = this.baseSpeed * 1.5 * speedVariation
         break
       case CatColor.RED:
-        this.moveSpeed = this.baseSpeed * 1.2 // Fast but not as fast as green
+        this.moveSpeed = this.baseSpeed * 1.2 * speedVariation // Fast but not as fast as green
         break
     }
+    
+    // Random initial direction - 50/50 chance left or right
+    this.direction = Math.random() < 0.5 ? -1 : 1
   }
   
   update(time: number, delta: number): void {
