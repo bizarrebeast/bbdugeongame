@@ -56,13 +56,13 @@ export class SplashScene extends Phaser.Scene {
     if (this.transitionComplete) return
     
     this.transitionComplete = true
-    console.log('🎮 SplashScene: Auto-transitioning to game after 1 second')
+    console.log('🎮 SplashScene: Auto-transitioning to instructions after 1 second')
 
-    // Quick fade out (0.3s) then transition to game
+    // Quick fade out (0.3s) then transition to instructions
     this.cameras.main.fadeOut(300, 0, 0, 0)
     
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('GameScene')
+      this.scene.start('InstructionsScene')
     })
   }
 

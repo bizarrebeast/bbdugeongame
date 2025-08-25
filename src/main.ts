@@ -1,4 +1,5 @@
 import { SplashScene } from "./scenes/SplashScene"
+import { InstructionsScene } from "./scenes/InstructionsScene"
 import { GameScene } from "./scenes/GameScene"
 import { initializeFarcadeSDK } from "./utils/RemixUtils"
 import GameSettings from "./config/GameSettings"
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   canvas: canvas,
   backgroundColor: "#1a0f2e", // Dark underground purple
-  scene: [SplashScene, GameScene],
+  scene: [SplashScene, InstructionsScene, GameScene],
   physics: {
     default: "arcade",
     arcade: {
