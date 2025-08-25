@@ -23,7 +23,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private jumpHoldTime: number = 0
   private isAirborne: boolean = false
   private jumpReleased: boolean = false
-  private readonly MIN_JUMP_VELOCITY: number = -280 // Small hop - slightly higher for smoother transition
+  private readonly MIN_JUMP_VELOCITY: number = -200 // Small hop - much smaller for tap jumps
   private readonly MAX_JUMP_VELOCITY: number = -360 // Full jump - slightly higher for better feel
   private readonly MAX_JUMP_HOLD_TIME: number = 250 // milliseconds to reach max height - faster response
   
@@ -388,8 +388,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.jumpReleased = true
           
           // Slightly reduce upward velocity when button is released early
+          // Less reduction for smaller jumps to maintain control
           if (this.body!.velocity.y < 0) {
-            this.setVelocityY(this.body!.velocity.y * 0.85)
+            const reductionFactor = this.body!.velocity.y < -250 ? 0.85 : 0.92
+            this.setVelocityY(this.body!.velocity.y * reductionFactor)
           }
         }
       }
