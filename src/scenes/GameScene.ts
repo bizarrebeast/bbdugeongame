@@ -336,7 +336,8 @@ export class GameScene extends Phaser.Scene {
     
     // Load Cursed Power-up sprites
     this.load.image('cursedOrbCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb-rHogWhnYUk2xThrTWajfHqMSfxeyfd.png?0wr6')
-    this.load.image('cursedOrbTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb%20timer-E1IF8Nn8NGfI6l1yrsmD2cPpOel6H9.png?z9aG')
+    this.load.image('cursedTealOrbCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20teal%20orb-wupZvLrfiaRIZZyP4TbIOq5HLiVsXz.png?i2qV')
+    this.load.image('cursedOrbTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb%20timer-5VBMFlHiVp24NkCpIhkDD4dc6fKiHK.png?hHIh')
     this.load.image('cursedTealOrbTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20teal%20orb%20timer-FAoT2eYLkUGfQRCCfS5qwZOkMvFBTg.png?FMZ7')
     
     // Load new door sprite
@@ -2656,20 +2657,16 @@ export class GameScene extends Phaser.Scene {
         console.log('🔮 Crystal Ball spawn attempted, levelHasCrystalBall now:', this.levelHasCrystalBall)
       }
       
-      // Cursed Orb power-up: One per level starting from level 1 (FOR TESTING)
-      if (currentLevel >= 1 && !this.levelHasCursedOrb && floor >= 2 && Math.random() < 0.8) { // 80% chance for testing
-        console.log('💀 TRYING to spawn Cursed Orb - Level:', currentLevel, 'Floor:', floor, 'HasCursedOrb:', this.levelHasCursedOrb)
+      // Cursed Orb power-up: One per level starting from level 11
+      if (currentLevel >= 11 && !this.levelHasCursedOrb && floor >= 2 && Math.random() < 0.2) { // 20% chance
         this.placeCollectiblesOfType(validPositions, 1, 'cursedOrb', collectibleY, floor, floorUsedPositions)
         this.levelHasCursedOrb = true // Mark that this level has its cursed orb
-        console.log('💀 Cursed Orb spawn attempted, levelHasCursedOrb now:', this.levelHasCursedOrb)
       }
       
       // Cursed Teal Orb power-up: One per level starting from level 21
       if (currentLevel >= 21 && !this.levelHasCursedTealOrb && floor >= 2 && Math.random() < 0.15) { // 15% chance
-        console.log('🌀 TRYING to spawn Cursed Teal Orb - Level:', currentLevel, 'Floor:', floor, 'HasCursedTealOrb:', this.levelHasCursedTealOrb)
         this.placeCollectiblesOfType(validPositions, 1, 'cursedTealOrb', collectibleY, floor, floorUsedPositions)
         this.levelHasCursedTealOrb = true // Mark that this level has its cursed teal orb
-        console.log('🌀 Cursed Teal Orb spawn attempted, levelHasCursedTealOrb now:', this.levelHasCursedTealOrb)
       }
     }
   }
@@ -2811,10 +2808,8 @@ export class GameScene extends Phaser.Scene {
           break
           
         case 'cursedOrb':
-          console.log('💀 SPAWNING Cursed Orb at', x, y, 'floor:', floor)
           const cursedOrb = new CursedOrb(this, x, y, 'cursed')
           this.cursedOrbs.push(cursedOrb)
-          console.log('💀 Cursed Orb created, total cursed orbs:', this.cursedOrbs.length)
           this.physics.add.overlap(
             this.player,
             cursedOrb.sprite,
@@ -2825,10 +2820,8 @@ export class GameScene extends Phaser.Scene {
           break
           
         case 'cursedTealOrb':
-          console.log('🌀 SPAWNING Cursed Teal Orb at', x, y, 'floor:', floor)
           const cursedTealOrb = new CursedOrb(this, x, y, 'cursedTeal')
           this.cursedTealOrbs.push(cursedTealOrb)
-          console.log('🌀 Cursed Teal Orb created, total cursed teal orbs:', this.cursedTealOrbs.length)
           this.physics.add.overlap(
             this.player,
             cursedTealOrb.sprite,
@@ -3443,7 +3436,6 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
-    console.log('💀 COLLECTING Cursed Orb - activating darkness power-up!')
     // Activate cursed orb power-up on player
     this.player.activateCursedOrb()
     
@@ -3454,7 +3446,6 @@ export class GameScene extends Phaser.Scene {
     const index = this.cursedOrbs.indexOf(cursedOrb)
     if (index > -1) {
       this.cursedOrbs.splice(index, 1)
-      console.log('💀 Cursed Orb removed from array, remaining:', this.cursedOrbs.length)
     }
     
     // Haptic feedback if available
@@ -3475,7 +3466,6 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
-    console.log('🌀 COLLECTING Cursed Teal Orb - activating control reversal power-up!')
     // Activate cursed teal orb power-up on player
     this.player.activateCursedTealOrb()
     
@@ -3486,7 +3476,6 @@ export class GameScene extends Phaser.Scene {
     const index = this.cursedTealOrbs.indexOf(cursedTealOrb)
     if (index > -1) {
       this.cursedTealOrbs.splice(index, 1)
-      console.log('🌀 Cursed Teal Orb removed from array, remaining:', this.cursedTealOrbs.length)
     }
     
     // Haptic feedback if available
@@ -3667,34 +3656,17 @@ export class GameScene extends Phaser.Scene {
       // Calculate progress (0 to 1, where 1 is full time, 0 is expired)
       const progress = timeRemaining / maxTime
       
-      // Clear and redraw mask (like pendant timer)
+      // Position overlay at timer image location
+      this.crystalBallTimerMask.x = this.crystalBallTimerImage.x
+      this.crystalBallTimerMask.y = this.crystalBallTimerImage.y
+      
+      // Clear and redraw the overlay
       this.crystalBallTimerMask.clear()
-      
-      const centerX = this.crystalBallTimerImage.x
-      const centerY = this.crystalBallTimerImage.y
-      const radius = 18 // Half of 36px display size
-      
-      // Calculate end angle for the countdown (starts from top, goes clockwise)
-      const startAngle = -Math.PI / 2 // Top of circle
-      const endAngle = startAngle + (progress * Math.PI * 2) // How much of circle to show
-      
-      // Draw green overlay pie slice (like pendant timer)
-      this.crystalBallTimerMask.fillStyle(0x44d0a7, 0.6) // Green with 60% opacity
+      this.crystalBallTimerMask.fillStyle(0x44d0a7, 0.6) // Green overlay
       this.crystalBallTimerMask.beginPath()
-      this.crystalBallTimerMask.moveTo(centerX, centerY)
-      
-      // Draw arc clockwise from top (same as pendant timer logic)
-      const steps = 32
-      for (let i = 0; i <= steps; i++) {
-        const stepAngle = startAngle + (endAngle - startAngle) * (i / steps)
-        const x = centerX + Math.cos(stepAngle) * radius
-        const y = centerY + Math.sin(stepAngle) * radius
-        if (i === 0) {
-          this.crystalBallTimerMask.lineTo(x, y)
-        } else {
-          this.crystalBallTimerMask.lineTo(x, y)
-        }
-      }
+      this.crystalBallTimerMask.moveTo(0, 0) // Center relative to positioned graphics
+      this.crystalBallTimerMask.arc(0, 0, 18, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
+      this.crystalBallTimerMask.lineTo(0, 0) // Line back to center
       this.crystalBallTimerMask.closePath()
       this.crystalBallTimerMask.fillPath()
       
@@ -3721,13 +3693,17 @@ export class GameScene extends Phaser.Scene {
       // Calculate progress (0 to 1)
       const progress = timeRemaining / maxTime
       
-      // Clear and redraw the mask
+      // Position overlay at timer image location
+      this.cursedOrbTimerMask.x = this.cursedOrbTimerImage.x
+      this.cursedOrbTimerMask.y = this.cursedOrbTimerImage.y
+      
+      // Clear and redraw the overlay
       this.cursedOrbTimerMask.clear()
       this.cursedOrbTimerMask.fillStyle(0x580641, 0.7) // Dark purple overlay
       this.cursedOrbTimerMask.beginPath()
-      this.cursedOrbTimerMask.moveTo(16, 16) // Center of the 32x32 image
-      this.cursedOrbTimerMask.arc(16, 16, 16, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
-      this.cursedOrbTimerMask.lineTo(16, 16) // Line back to center
+      this.cursedOrbTimerMask.moveTo(0, 0) // Center relative to positioned graphics
+      this.cursedOrbTimerMask.arc(0, 0, 18, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
+      this.cursedOrbTimerMask.lineTo(0, 0) // Line back to center
       this.cursedOrbTimerMask.closePath()
       this.cursedOrbTimerMask.fillPath()
       
@@ -3735,7 +3711,6 @@ export class GameScene extends Phaser.Scene {
       if (timeRemaining <= 2000) {
         const flashAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5 // Oscillate between 0 and 1
         this.cursedOrbTimerImage.setAlpha(0.5 + flashAlpha * 0.5) // Flash between 0.5 and 1.0
-        console.log('Cursed orb timer WARNING - flashing')
       } else {
         this.cursedOrbTimerImage.setAlpha(1.0)
       }
@@ -3743,7 +3718,6 @@ export class GameScene extends Phaser.Scene {
       // Clear mask when inactive
       this.cursedOrbTimerMask.clear()
       this.cursedOrbTimerImage.setAlpha(1.0)
-      console.log('Cursed orb timer - power-up expired, hiding timer')
     }
   }
   
@@ -3754,13 +3728,17 @@ export class GameScene extends Phaser.Scene {
       // Calculate progress (0 to 1)
       const progress = timeRemaining / maxTime
       
-      // Clear and redraw the mask
+      // Position overlay at timer image location
+      this.cursedTealOrbTimerMask.x = this.cursedTealOrbTimerImage.x
+      this.cursedTealOrbTimerMask.y = this.cursedTealOrbTimerImage.y
+      
+      // Clear and redraw the overlay
       this.cursedTealOrbTimerMask.clear()
-      this.cursedTealOrbTimerMask.fillStyle(0x4ba3a6, 0.7) // Teal overlay
+      this.cursedTealOrbTimerMask.fillStyle(0x49a79c, 0.7) // Teal overlay
       this.cursedTealOrbTimerMask.beginPath()
-      this.cursedTealOrbTimerMask.moveTo(16, 16) // Center of the 32x32 image
-      this.cursedTealOrbTimerMask.arc(16, 16, 16, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
-      this.cursedTealOrbTimerMask.lineTo(16, 16) // Line back to center
+      this.cursedTealOrbTimerMask.moveTo(0, 0) // Center relative to positioned graphics
+      this.cursedTealOrbTimerMask.arc(0, 0, 18, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
+      this.cursedTealOrbTimerMask.lineTo(0, 0) // Line back to center
       this.cursedTealOrbTimerMask.closePath()
       this.cursedTealOrbTimerMask.fillPath()
       
@@ -3768,7 +3746,6 @@ export class GameScene extends Phaser.Scene {
       if (timeRemaining <= 2000) {
         const flashAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5 // Oscillate between 0 and 1
         this.cursedTealOrbTimerImage.setAlpha(0.5 + flashAlpha * 0.5) // Flash between 0.5 and 1.0
-        console.log('Cursed teal orb timer WARNING - flashing')
       } else {
         this.cursedTealOrbTimerImage.setAlpha(1.0)
       }
@@ -3776,7 +3753,6 @@ export class GameScene extends Phaser.Scene {
       // Clear mask when inactive
       this.cursedTealOrbTimerMask.clear()
       this.cursedTealOrbTimerImage.setAlpha(1.0)
-      console.log('Cursed teal orb timer - power-up expired, hiding timer')
     }
   }
   
@@ -3851,42 +3827,23 @@ export class GameScene extends Phaser.Scene {
   }
   
   private updateInvincibilityMask(): void {
-    const centerX = this.cameras.main.width / 2
-    const centerY = 95  // Updated to match new timer position
-    const radius = 18 // Half of 36px timer size
+    // Position overlay at timer image location
+    this.invincibilityTimerMask.x = this.invincibilityTimerImage.x
+    this.invincibilityTimerMask.y = this.invincibilityTimerImage.y
     
-    // Calculate angle for clockwise countdown (starts at top, goes clockwise)
+    // Calculate progress for countdown
     const progress = this.invincibilityTimeRemaining / 10 // 0 to 1
-    const angle = (1 - progress) * Math.PI * 2 - Math.PI / 2 // Start from top
     
-    // Clear and redraw mask
+    // Clear and redraw the overlay
     this.invincibilityTimerMask.clear()
-    
-    // Draw pie slice mask - this will mask the full-color timer sprite to show countdown
-    this.invincibilityTimerMask.fillStyle(0xc0c0c0, 0.5) // Light grey with 50% opacity
+    this.invincibilityTimerMask.fillStyle(0xffd700, 0.6) // Golden overlay
     this.invincibilityTimerMask.beginPath()
-    this.invincibilityTimerMask.moveTo(centerX, centerY)
-    
-    // Draw arc clockwise from top
-    const steps = 32
-    const startAngle = -Math.PI / 2
-    for (let i = 0; i <= steps; i++) {
-      const stepAngle = startAngle + (angle - startAngle) * (i / steps)
-      const x = centerX + Math.cos(stepAngle) * radius
-      const y = centerY + Math.sin(stepAngle) * radius
-      if (i === 0) {
-        this.invincibilityTimerMask.lineTo(x, y)
-      } else {
-        this.invincibilityTimerMask.lineTo(x, y)
-      }
-    }
-    
+    this.invincibilityTimerMask.moveTo(0, 0) // Center relative to positioned graphics
+    this.invincibilityTimerMask.arc(0, 0, 18, -Math.PI / 2, -Math.PI / 2 + (2 * Math.PI * (1 - progress)), false)
+    this.invincibilityTimerMask.lineTo(0, 0) // Line back to center
     this.invincibilityTimerMask.closePath()
     this.invincibilityTimerMask.fillPath()
-    
-    // Apply mask to timer image to show countdown progress
-    const mask = this.invincibilityTimerMask.createGeometryMask()
-    this.invincibilityTimerImage.setMask(mask)
+    // Note: No mask applied - this draws a visible overlay on top of the timer
   }
   
   private addPlayerGoldenAura(): void {

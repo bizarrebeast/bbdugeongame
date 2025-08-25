@@ -15,7 +15,7 @@ export class CursedOrb {
     this.orbType = orbType
     
     // Set colors based on orb type
-    this.glowColor = orbType === 'cursed' ? 0x580641 : 0x4ba3a6 // Dark purple or teal
+    this.glowColor = orbType === 'cursed' ? 0x580641 : 0x49a79c // Dark purple or teal
     
     // Move up by 5 pixels for better positioning
     const adjustedY = y - 5
@@ -28,8 +28,9 @@ export class CursedOrb {
     this.createGlowEffect()
     this.sprite.add(this.glowGraphics)
     
-    // Create cursed orb sprite
-    const cursedOrbSprite = scene.add.image(0, 0, 'cursedOrbCollectible')
+    // Create cursed orb sprite with correct image based on type
+    const spriteKey = orbType === 'cursed' ? 'cursedOrbCollectible' : 'cursedTealOrbCollectible'
+    const cursedOrbSprite = scene.add.image(0, 0, spriteKey)
     cursedOrbSprite.setDisplaySize(20, 20) // Same size as crystal ball
     this.sprite.add(cursedOrbSprite)
     
@@ -137,7 +138,6 @@ export class CursedOrb {
     if (this.collected) return
     this.collected = true
     
-    console.log(`💀 Collecting cursed orb type: ${this.orbType}`)
     
     // Stop particle generation
     if (this.particleTimer) {

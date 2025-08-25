@@ -1099,7 +1099,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // Cursed Orb power-up methods
   activateCursedOrb(): void {
-    console.log('💀 ACTIVATING Cursed Orb power-up for 10 seconds!')
     this.cursedOrbActive = true
     this.cursedOrbTimer = this.CURSED_ORB_DURATION
     
@@ -1109,7 +1108,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Notify scene to update HUD and activate darkness
     const gameScene = this.scene as any
     if (gameScene && gameScene.updateCursedOrbTimer) {
-      console.log('💀 Updating HUD timer with', this.cursedOrbTimer, 'ms')
       gameScene.updateCursedOrbTimer(this.cursedOrbTimer, this.CURSED_ORB_DURATION)
     }
     if (gameScene && gameScene.activateDarknessEffect) {
@@ -1118,7 +1116,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   activateCursedTealOrb(): void {
-    console.log('🌀 ACTIVATING Cursed Teal Orb power-up for 10 seconds!')
     this.cursedTealOrbActive = true
     this.cursedTealOrbTimer = this.CURSED_TEAL_ORB_DURATION
     
@@ -1128,7 +1125,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Notify scene to update HUD
     const gameScene = this.scene as any
     if (gameScene && gameScene.updateCursedTealOrbTimer) {
-      console.log('🌀 Updating HUD timer with', this.cursedTealOrbTimer, 'ms')
       gameScene.updateCursedTealOrbTimer(this.cursedTealOrbTimer, this.CURSED_TEAL_ORB_DURATION)
     }
   }
@@ -1274,9 +1270,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     
     const particle = this.scene.add.graphics()
     // Teal glowing particle
-    particle.fillStyle(0x4ba3a6, 0.4)
+    particle.fillStyle(0x49a79c, 0.4)
     particle.fillCircle(0, 0, 3)
-    particle.fillStyle(0x4ba3a6, 0.8)
+    particle.fillStyle(0x49a79c, 0.8)
     particle.fillCircle(0, 0, 1)
     
     const angle = Math.random() * Math.PI * 2
@@ -1339,7 +1335,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.cursedTealOrbGlow || !this.cursedTealOrbActive) return
     
     this.cursedTealOrbGlow.clear()
-    const glowColor = 0x4ba3a6 // Teal
+    const glowColor = 0x49a79c // Teal
     
     this.cursedTealOrbGlow.x = this.x
     this.cursedTealOrbGlow.y = this.y
