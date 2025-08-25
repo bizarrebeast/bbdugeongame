@@ -1790,7 +1790,7 @@ export class GameScene extends Phaser.Scene {
       const centerY = (topY + bottomY) / 2 - tileSize * 0.5 + 3 // Adjust center for extension, move down 3px
       
       // Create ladder sprite
-      const ladderSprite = this.add.image(ladderX, centerY, 'tealLadder')
+      const ladderSprite = this.add.image(ladderX + 1, centerY, 'tealLadder')  // Moved 1 pixel to the right
       // Scale to proper height while maintaining aspect ratio
       ladderSprite.setDisplaySize(ladderSprite.width * (totalHeight / ladderSprite.height), totalHeight)
       ladderSprite.setDepth(11)
@@ -4793,8 +4793,9 @@ export class GameScene extends Phaser.Scene {
     if (this.textures.exists('tealLadder')) {
       // Use new teal ladder sprite with same scaling method as gameplay ladders
       const totalHeight = ladderHeight + tileSize * 1.0 // Include extension height like gameplay ladders
-      entranceLadder = this.add.image(ladderX, ladderCenterY, 'tealLadder')
-      entranceLadder.setDisplaySize(entranceLadder.width * (totalHeight / entranceLadder.height), totalHeight)
+      entranceLadder = this.add.image(ladderX + 1, ladderCenterY, 'tealLadder')  // Moved 1 pixel to the right
+      const scaledWidth = entranceLadder.width * (totalHeight / entranceLadder.height)
+      entranceLadder.setDisplaySize(scaledWidth - 4, totalHeight)  // 4 pixels smaller in width
       entranceLadder.setDepth(5)
     } else {
       // Fallback to graphics ladder
