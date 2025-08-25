@@ -70,6 +70,8 @@ export class GameScene extends Phaser.Scene {
   private invincibilityTimerMask!: Phaser.GameObjects.Graphics
   private invincibilityTimeRemaining: number = 0
   private invincibilityTimerSparkleTimer: Phaser.Time.TimerEvent | null = null
+  private crystalBallTimerImage!: Phaser.GameObjects.Image
+  private crystalBallTimerMask!: Phaser.GameObjects.Graphics
   private playerGoldenAura: Phaser.GameObjects.Arc | null = null
   private playerParticleTrail: Phaser.GameObjects.Graphics[] = []
   private playerSpikeOverlap: Phaser.Physics.Arcade.Collider | null = null
@@ -920,9 +922,24 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.comboText.setScrollFactor(0)
     
-    // Invincibility Timer (center, bottom) - always full color
-    // NOTE: In Phaser, Y increases DOWNWARD. "negative offset" means LOWER on screen = HIGHER Y value
-    this.invincibilityTimerImage = this.add.image(screenWidth / 2, 105, 'invincibility-timer')
+    // Timer container - both timers centered as a group under score
+    const timerY = 105 // 50px below score
+    const timerSpacing = 50 // Space between timers
+    
+    // Crystal Ball Timer (left)
+    this.crystalBallTimerImage = this.add.image(screenWidth / 2 - timerSpacing / 2, timerY, 'crystalBallTimer')
+    this.crystalBallTimerImage.setDisplaySize(36, 36)
+    this.crystalBallTimerImage.setDepth(101)
+    this.crystalBallTimerImage.setScrollFactor(0)
+    this.crystalBallTimerImage.setVisible(false) // Hidden until power-up collected
+    
+    // Crystal ball timer mask for countdown
+    this.crystalBallTimerMask = this.add.graphics()
+    this.crystalBallTimerMask.setDepth(102)
+    this.crystalBallTimerMask.setScrollFactor(0)
+    
+    // Invincibility Timer (right)
+    this.invincibilityTimerImage = this.add.image(screenWidth / 2 + timerSpacing / 2, timerY, 'invincibility-timer')
     this.invincibilityTimerImage.setDisplaySize(36, 36)
     this.invincibilityTimerImage.setDepth(101)
     this.invincibilityTimerImage.setScrollFactor(0)
@@ -3405,10 +3422,44 @@ export class GameScene extends Phaser.Scene {
   }
   
   updateCrystalBallTimer(timeRemaining: number, maxTime: number): void {
-    // This will be implemented in Phase 4 when we add the HUD timer
-    // For now, just log it
-    if (timeRemaining <= 0) {
-      // Timer expired, could add visual/audio feedback here
+    // Show/hide timer based on whether power-up is active
+    const isActive = timeRemaining > 0
+    this.crystalBallTimerImage.setVisible(isActive)
+    
+    if (isActive) {
+      // Clear previous mask
+      this.crystalBallTimerMask.clear()
+      
+      // Calculate progress (0 to 1, where 1 is full time)
+      const progress = timeRemaining / maxTime
+      
+      // Create circular countdown mask (green color #44d0a7)
+      const centerX = this.crystalBallTimerImage.x
+      const centerY = this.crystalBallTimerImage.y
+      const radius = 18 // Half of 36px display size
+      
+      // Fill with green color that gets darker as time runs out
+      const alpha = Math.max(0.3, progress) // Fade from 1.0 to 0.3
+      this.crystalBallTimerMask.fillStyle(0x44d0a7, alpha)
+      
+      // Draw pie slice showing remaining time (starts at top, goes clockwise)
+      this.crystalBallTimerMask.beginPath()
+      this.crystalBallTimerMask.moveTo(centerX, centerY)
+      this.crystalBallTimerMask.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + (progress * Math.PI * 2), false)
+      this.crystalBallTimerMask.closePath()
+      this.crystalBallTimerMask.fillPath()
+      
+      // Add warning flash when 2 seconds or less remain
+      if (timeRemaining <= 2000) {
+        const flashAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5 // Oscillate between 0 and 1
+        this.crystalBallTimerImage.setAlpha(0.5 + flashAlpha * 0.5) // Flash between 0.5 and 1.0
+      } else {
+        this.crystalBallTimerImage.setAlpha(1.0)
+      }
+    } else {
+      // Clear mask when inactive
+      this.crystalBallTimerMask.clear()
+      this.crystalBallTimerImage.setAlpha(1.0)
     }
   }
   

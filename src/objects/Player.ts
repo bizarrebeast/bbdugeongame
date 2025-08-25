@@ -34,6 +34,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private crystalBallActive: boolean = false
   private crystalBallTimer: number = 0
   private readonly CRYSTAL_BALL_DURATION: number = 10000 // 10 seconds in milliseconds
+  private crystalBallParticles: Phaser.GameObjects.Graphics[] = []
+  private crystalBallParticleTimer?: Phaser.Time.TimerEvent
   
   // Speech/Thought bubble system
   private idleTimer: number = 0
@@ -885,6 +887,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.crystalBallActive = true
     this.crystalBallTimer = this.CRYSTAL_BALL_DURATION
     
+    // Start green particle effect around player
+    this.startCrystalBallParticles()
+    
     // Notify scene to update HUD
     const gameScene = this.scene as any
     if (gameScene && gameScene.updateCrystalBallTimer) {
@@ -899,6 +904,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.crystalBallTimer <= 0) {
         this.crystalBallActive = false
         this.crystalBallTimer = 0
+        
+        // Stop particle effect when power-up expires
+        this.stopCrystalBallParticles()
       }
       
       // Update HUD timer
@@ -926,5 +934,67 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const direction = this.flipX ? -1 : 1
       gameScene.createCrystalBallProjectile(this.x, this.y, direction)
     }
+  }
+  
+  private startCrystalBallParticles(): void {
+    // Stop any existing particle timer
+    this.stopCrystalBallParticles()
+    
+    // Start particle generation
+    this.crystalBallParticleTimer = this.scene.time.addEvent({
+      delay: 150, // Create particle every 150ms
+      callback: () => this.createCrystalBallParticle(),
+      loop: true
+    })
+  }
+  
+  private createCrystalBallParticle(): void {
+    if (!this.crystalBallActive || !this.scene) return
+    
+    // Create green pixel particle
+    const particle = this.scene.add.graphics()
+    particle.fillStyle(0x44d0a7, 1)
+    particle.fillRect(0, 0, 2, 2)
+    
+    // Random position around the player (orbiting effect)
+    const angle = Math.random() * Math.PI * 2
+    const distance = 25 + Math.random() * 15 // 25-40 pixels from player
+    const startX = this.x + Math.cos(angle) * distance
+    const startY = this.y + Math.sin(angle) * distance
+    
+    particle.x = startX
+    particle.y = startY
+    particle.setDepth(19) // Just below player (player is depth 20)
+    
+    this.crystalBallParticles.push(particle)
+    
+    // Animate particle orbiting and fading
+    this.scene.tweens.add({
+      targets: particle,
+      x: this.x + Math.cos(angle + 1) * (distance + 10), // Continue orbit
+      y: startY - 20, // Float upward
+      alpha: 0,
+      duration: 1200,
+      ease: 'Power2.easeOut',
+      onComplete: () => {
+        const index = this.crystalBallParticles.indexOf(particle)
+        if (index > -1) {
+          this.crystalBallParticles.splice(index, 1)
+        }
+        particle.destroy()
+      }
+    })
+  }
+  
+  private stopCrystalBallParticles(): void {
+    // Stop particle generation
+    if (this.crystalBallParticleTimer) {
+      this.crystalBallParticleTimer.destroy()
+      this.crystalBallParticleTimer = undefined
+    }
+    
+    // Clean up existing particles
+    this.crystalBallParticles.forEach(particle => particle.destroy())
+    this.crystalBallParticles = []
   }
 }
