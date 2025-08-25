@@ -12,6 +12,16 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     'beetle-mouth-open-70',
     'beetle-mouth-open-30'
   ]
+  private totalRotation: number = 0 // Track total rotation for smooth rolling
+  private readonly rotationFactor: number = 0.004 // Rotation factor based on movement speed (slowed by 50%)
+  
+  // New behavior states
+  private isRolling: boolean = true
+  private isBiting: boolean = false
+  private nextActionDistance: number = 0
+  private distanceTraveled: number = 0
+  private biteAnimationTimer: number = 0
+  private biteDuration: number = 1200 // How long to stop and bite (1.2 seconds)
   
   constructor(scene: Phaser.Scene, x: number, y: number, platformLeft: number, platformRight: number) {
     // Use beetle sprite or create placeholder if not loaded
@@ -58,24 +68,80 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     
     // Start moving
     this.setVelocityX(this.moveSpeed * this.direction)
+    
+    // Set initial random distance before first bite
+    this.nextActionDistance = 100 + Math.random() * 200 // Roll 100-300 pixels before first bite
   }
   
   update(time?: number, delta?: number): void {
-    // Patrol back and forth on the platform
+    if (!delta) return
+    
+    // Check platform bounds
     if (this.x <= this.platformBounds.left + 10) {
       this.direction = 1
-      this.setFlipX(false)
     } else if (this.x >= this.platformBounds.right - 10) {
       this.direction = -1
-      this.setFlipX(true)
     }
     
-    // Always maintain velocity
-    this.setVelocityX(this.moveSpeed * this.direction)
+    if (this.isRolling) {
+      // Rolling state - beetle moves and rotates
+      this.setVelocityX(this.moveSpeed * this.direction)
+      
+      // Track distance traveled
+      this.distanceTraveled += Math.abs(this.moveSpeed * this.direction * (delta / 1000))
+      
+      // Apply rolling animation
+      const rotationSpeed = this.moveSpeed * this.rotationFactor
+      this.totalRotation += rotationSpeed * this.direction
+      this.setRotation(this.totalRotation)
+      
+      // Always show mouth closed while rolling
+      if (this.scene.textures.exists('beetle-mouth-closed')) {
+        this.setTexture('beetle-mouth-closed')
+      }
+      
+      // Check if it's time to stop and bite
+      if (this.distanceTraveled >= this.nextActionDistance) {
+        this.startBiting()
+      }
+    } else if (this.isBiting) {
+      // Biting state - beetle stops and animates mouth
+      this.setVelocityX(0)
+      this.biteAnimationTimer += delta
+      
+      // Animate biting
+      if (this.scene.textures.exists('beetle-mouth-closed')) {
+        this.animateBiting(delta)
+      }
+      
+      // Check if biting duration is over
+      if (this.biteAnimationTimer >= this.biteDuration) {
+        this.startRolling()
+      }
+    }
+  }
+  
+  private startBiting(): void {
+    this.isRolling = false
+    this.isBiting = true
+    this.biteAnimationTimer = 0
+    this.currentFrame = 0
+    this.animationTimer = 0
     
-    // Animate biting if sprites are available
-    if (this.scene.textures.exists('beetle-mouth-closed') && delta) {
-      this.animateBiting(delta)
+    // Reset rotation to upright position for normal biting appearance
+    this.setRotation(0)
+    this.totalRotation = 0 // Reset total rotation so it starts fresh when rolling resumes
+  }
+  
+  private startRolling(): void {
+    this.isRolling = true
+    this.isBiting = false
+    this.distanceTraveled = 0
+    // Set random distance for next bite (50-250 pixels)
+    this.nextActionDistance = 50 + Math.random() * 200
+    // Reset to closed mouth
+    if (this.scene.textures.exists('beetle-mouth-closed')) {
+      this.setTexture('beetle-mouth-closed')
     }
   }
   
@@ -100,8 +166,10 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
   // Method to reverse direction when hitting another beetle
   reverseDirection(): void {
     this.direction *= -1
-    this.setVelocityX(this.moveSpeed * this.direction)
-    this.setFlipX(this.direction < 0)
+    // Only update velocity if currently rolling
+    if (this.isRolling) {
+      this.setVelocityX(this.moveSpeed * this.direction)
+    }
   }
   
   getDirection(): number {
