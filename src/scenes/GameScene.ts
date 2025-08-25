@@ -926,12 +926,15 @@ export class GameScene extends Phaser.Scene {
     const timerY = 105 // 50px below score
     const timerSpacing = 50 // Space between timers
     
-    // Crystal Ball Timer (left)
-    this.crystalBallTimerImage = this.add.image(screenWidth / 2 - timerSpacing / 2, timerY, 'crystalBallTimer')
+    // Crystal Ball Timer (left) - check if texture exists, use fallback if not
+    const crystalTimerTexture = this.textures.exists('crystalBallTimer') ? 'crystalBallTimer' : 'invincibility-timer'
+    this.crystalBallTimerImage = this.add.image(screenWidth / 2 - timerSpacing / 2, timerY, crystalTimerTexture)
     this.crystalBallTimerImage.setDisplaySize(36, 36)
     this.crystalBallTimerImage.setDepth(101)
     this.crystalBallTimerImage.setScrollFactor(0)
-    this.crystalBallTimerImage.setVisible(false) // Hidden until power-up collected
+    this.crystalBallTimerImage.setVisible(true) // TESTING: Make visible to debug positioning
+    // Remove tint - let the original icon show clearly
+    console.log('🔮 Crystal Ball timer created at position:', this.crystalBallTimerImage.x, this.crystalBallTimerImage.y)
     
     // Crystal ball timer mask for countdown
     this.crystalBallTimerMask = this.add.graphics()
@@ -2604,10 +2607,12 @@ export class GameScene extends Phaser.Scene {
         this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
       }
       
-      // Crystal Ball power-up: One per level starting from level 6
-      if (currentLevel >= 6 && !this.levelHasCrystalBall && floor >= 2 && Math.random() < 0.3) {
+      // Crystal Ball power-up: One per level starting from level 1 (TESTING)
+      if (currentLevel >= 1 && !this.levelHasCrystalBall && floor >= 2 && Math.random() < 0.8) { // 80% chance for testing
+        console.log('🔮 TRYING to spawn Crystal Ball - Level:', currentLevel, 'Floor:', floor, 'HasCrystalBall:', this.levelHasCrystalBall)
         this.placeCollectiblesOfType(validPositions, 1, 'crystalBall', collectibleY, floor, floorUsedPositions)
         this.levelHasCrystalBall = true // Mark that this level has its crystal ball
+        console.log('🔮 Crystal Ball spawn attempted, levelHasCrystalBall now:', this.levelHasCrystalBall)
       }
     }
   }
@@ -2735,8 +2740,10 @@ export class GameScene extends Phaser.Scene {
           break
           
         case 'crystalBall':
+          console.log('🔮 SPAWNING Crystal Ball at', x, y, 'floor:', floor)
           const crystalBall = new CrystalBall(this, x, y)
           this.crystalBalls.push(crystalBall)
+          console.log('🔮 Crystal Ball created, total crystal balls:', this.crystalBalls.length)
           this.physics.add.overlap(
             this.player,
             crystalBall.sprite,
@@ -3308,9 +3315,18 @@ export class GameScene extends Phaser.Scene {
   }
   
   private handleCrystalBallCollection(crystalBall: CrystalBall): void {
+    console.log('🔮 CRYSTAL BALL COLLISION DETECTED!')
     // Don't collect during intro animation
-    if (this.isLevelStarting || crystalBall.isCollected()) return
+    if (this.isLevelStarting) {
+      console.log('❌ Cannot collect - level is starting')
+      return
+    }
+    if (crystalBall.isCollected()) {
+      console.log('❌ Cannot collect - already collected')
+      return
+    }
     
+    console.log('🔮 COLLECTING Crystal Ball - activating power-up!')
     // Activate crystal ball power-up on player
     this.player.activateCrystalBall()
     
@@ -3321,6 +3337,7 @@ export class GameScene extends Phaser.Scene {
     const index = this.crystalBalls.indexOf(crystalBall)
     if (index > -1) {
       this.crystalBalls.splice(index, 1)
+      console.log('🔮 Crystal Ball removed from array, remaining:', this.crystalBalls.length)
     }
     
     // Haptic feedback if available
@@ -3359,22 +3376,31 @@ export class GameScene extends Phaser.Scene {
   }
   
   createCrystalBallProjectile(x: number, y: number, direction: number): void {
+    console.log('Creating crystal ball projectile at', x, y, 'direction:', direction)
     const projectile = new CrystalBallProjectile(this, x, y, direction)
     this.crystalBallProjectiles.push(projectile)
     
-    // Add collision with enemies
-    this.enemyGroups.forEach(group => {
-      this.physics.add.overlap(
-        projectile,
-        group,
-        (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
-        undefined,
-        this
-      )
-    })
+    // Add collision with all enemy types
+    this.physics.add.overlap(
+      projectile,
+      this.cats,
+      (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
+      undefined,
+      this
+    )
+    
+    this.physics.add.overlap(
+      projectile,
+      this.beetles,
+      (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
+      undefined,
+      this
+    )
     
     // Add collision with platforms
     this.physics.add.collider(projectile, this.platforms)
+    
+    console.log('Crystal ball projectile created, total projectiles:', this.crystalBallProjectiles.length)
   }
   
   private updateCrystalBallProjectiles(time: number, delta: number): void {
@@ -3426,26 +3452,41 @@ export class GameScene extends Phaser.Scene {
     const isActive = timeRemaining > 0
     this.crystalBallTimerImage.setVisible(isActive)
     
+    // TESTING: Log to see if this method is being called
+    console.log('Crystal ball timer update:', timeRemaining, 'ms remaining, active:', isActive)
+    
     if (isActive) {
-      // Clear previous mask
-      this.crystalBallTimerMask.clear()
-      
-      // Calculate progress (0 to 1, where 1 is full time)
+      // Calculate progress (0 to 1, where 1 is full time, 0 is expired)
       const progress = timeRemaining / maxTime
       
-      // Create circular countdown mask (green color #44d0a7)
+      // Clear and redraw mask (like pendant timer)
+      this.crystalBallTimerMask.clear()
+      
       const centerX = this.crystalBallTimerImage.x
       const centerY = this.crystalBallTimerImage.y
       const radius = 18 // Half of 36px display size
       
-      // Fill with green color that gets darker as time runs out
-      const alpha = Math.max(0.3, progress) // Fade from 1.0 to 0.3
-      this.crystalBallTimerMask.fillStyle(0x44d0a7, alpha)
+      // Calculate end angle for the countdown (starts from top, goes clockwise)
+      const startAngle = -Math.PI / 2 // Top of circle
+      const endAngle = startAngle + (progress * Math.PI * 2) // How much of circle to show
       
-      // Draw pie slice showing remaining time (starts at top, goes clockwise)
+      // Draw green overlay pie slice (like pendant timer)
+      this.crystalBallTimerMask.fillStyle(0x44d0a7, 0.6) // Green with 60% opacity
       this.crystalBallTimerMask.beginPath()
       this.crystalBallTimerMask.moveTo(centerX, centerY)
-      this.crystalBallTimerMask.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + (progress * Math.PI * 2), false)
+      
+      // Draw arc clockwise from top (same as pendant timer logic)
+      const steps = 32
+      for (let i = 0; i <= steps; i++) {
+        const stepAngle = startAngle + (endAngle - startAngle) * (i / steps)
+        const x = centerX + Math.cos(stepAngle) * radius
+        const y = centerY + Math.sin(stepAngle) * radius
+        if (i === 0) {
+          this.crystalBallTimerMask.lineTo(x, y)
+        } else {
+          this.crystalBallTimerMask.lineTo(x, y)
+        }
+      }
       this.crystalBallTimerMask.closePath()
       this.crystalBallTimerMask.fillPath()
       
@@ -3453,6 +3494,7 @@ export class GameScene extends Phaser.Scene {
       if (timeRemaining <= 2000) {
         const flashAlpha = Math.sin(Date.now() / 100) * 0.5 + 0.5 // Oscillate between 0 and 1
         this.crystalBallTimerImage.setAlpha(0.5 + flashAlpha * 0.5) // Flash between 0.5 and 1.0
+        console.log('Crystal ball timer WARNING - flashing')
       } else {
         this.crystalBallTimerImage.setAlpha(1.0)
       }
@@ -3460,6 +3502,7 @@ export class GameScene extends Phaser.Scene {
       // Clear mask when inactive
       this.crystalBallTimerMask.clear()
       this.crystalBallTimerImage.setAlpha(1.0)
+      console.log('Crystal ball timer - power-up expired, hiding timer')
     }
   }
   
@@ -3861,7 +3904,7 @@ export class GameScene extends Phaser.Scene {
     
     // Side collision - damage player if not invincible
     if (!this.invincibilityActive) {
-      this.takeDamage()
+      this.handlePlayerDamage(playerObj, beetleObj)
     }
   }
   

@@ -239,10 +239,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
     const dKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
     
-    // Add E key for jump and Q/V keys for crystal ball firing
+    // Add E key for jump and Q/V/M keys for crystal ball firing
     const eKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E)
     const qKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Q)
     const vKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V)
+    const mKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M)
     
     // Get input from keyboard (arrows or WASD) or touch controls (now discrete D-pad)
     const leftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.leftPressed || false)
@@ -252,8 +253,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || Phaser.Input.Keyboard.JustDown(eKey) || (this.touchControls?.isJumpJustPressed() || false)
     const jumpButtonHeld = spaceKey.isDown || eKey.isDown || (this.touchControls?.jumpPressed || false)
     
-    // Crystal ball firing (Q or V keys, or action button on mobile)
-    const fireJustPressed = Phaser.Input.Keyboard.JustDown(qKey) || Phaser.Input.Keyboard.JustDown(vKey) || (this.touchControls?.isActionJustPressed() || false)
+    // Crystal ball firing (Q, V, or M keys, or action button on mobile)
+    const fireJustPressed = Phaser.Input.Keyboard.JustDown(qKey) || Phaser.Input.Keyboard.JustDown(vKey) || Phaser.Input.Keyboard.JustDown(mKey) || (this.touchControls?.isActionJustPressed() || false)
     
     // Track if player is moving horizontally
     this.isMoving = (leftPressed || rightPressed) && !this.isClimbing
@@ -884,6 +885,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   // Crystal Ball power-up methods
   activateCrystalBall(): void {
+    console.log('🔮 ACTIVATING Crystal Ball power-up for 10 seconds!')
     this.crystalBallActive = true
     this.crystalBallTimer = this.CRYSTAL_BALL_DURATION
     
@@ -893,7 +895,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Notify scene to update HUD
     const gameScene = this.scene as any
     if (gameScene && gameScene.updateCrystalBallTimer) {
+      console.log('🔮 Updating HUD timer with', this.crystalBallTimer, 'ms')
       gameScene.updateCrystalBallTimer(this.crystalBallTimer, this.CRYSTAL_BALL_DURATION)
+    } else {
+      console.log('❌ Could not update HUD timer - scene method not found')
     }
   }
   
@@ -926,13 +931,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   fireCrystalBall(): void {
-    if (!this.crystalBallActive || this.isClimbing) return
+    console.log('🔫 Fire button pressed! Active:', this.crystalBallActive, 'Climbing:', this.isClimbing)
+    if (!this.crystalBallActive) {
+      console.log('❌ Cannot fire - Crystal Ball power-up not active')
+      return
+    }
+    if (this.isClimbing) {
+      console.log('❌ Cannot fire - Player is climbing')
+      return
+    }
     
     // Notify scene to create projectile
     const gameScene = this.scene as any
     if (gameScene && gameScene.createCrystalBallProjectile) {
       const direction = this.flipX ? -1 : 1
+      console.log('🔫 FIRING Crystal Ball projectile! Direction:', direction)
       gameScene.createCrystalBallProjectile(this.x, this.y, direction)
+    } else {
+      console.log('❌ Could not fire - scene method not found')
     }
   }
   
