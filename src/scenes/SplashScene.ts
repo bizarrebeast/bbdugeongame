@@ -10,7 +10,7 @@ export class SplashScene extends Phaser.Scene {
 
   preload(): void {
     // Load title background image
-    this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/BizarreBeasts%20Treasure%20Quest%20Title%20page-vusJcO3xppbepNJe5afWyCDlKanyG7.png?QpHp')
+    this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST%20BizarreBeasts%20Splash%20page-sinFx2OAwChYVqeKq55S7b2wcbJqkM.png?6jrX')
     
     console.log('🎮 SplashScene: Loading title background')
   }
