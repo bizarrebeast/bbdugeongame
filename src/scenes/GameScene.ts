@@ -392,6 +392,11 @@ export class GameScene extends Phaser.Scene {
     this.load.image('baseblue-eyes-down-left', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20down%20left-8txJQ9OPVkMTkW0eaWprmvS5igTbqZ.png?hOzV')
     this.load.image('baseblue-eyes-blinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20blinking-nZFjSjOXa1RAYpXPefApbKEET49sRr.png?96YM')
 
+    // Load beetle sprites for biting animation
+    this.load.image('beetle-mouth-closed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20closed-6ScuNGGsBgifOGHCCMext3ghafhXlB.png?XErn')
+    this.load.image('beetle-mouth-open-30', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2030-HXSFqNWDpvxFnv2l35lrddto2TAyCk.png?sdgg')
+    this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
+
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
     this.load.image('floor-tile-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%202-EuITFMsdSDebMUmfcikeKCDLqDupml.png?C2mi')
@@ -4979,9 +4984,9 @@ export class GameScene extends Phaser.Scene {
       (baseBlu as BaseBlu).update(this.time.now, this.game.loop.delta)
     })
 
-    // Update all Beetle enemies
+    // Update all Beetle enemies with time and delta for animation
     this.beetles.children.entries.forEach(beetle => {
-      (beetle as Beetle).update()
+      (beetle as Beetle).update(time, deltaTime)
     })
     
     // Check if player is no longer overlapping any ladder while climbing
