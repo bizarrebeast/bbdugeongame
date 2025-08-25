@@ -28,30 +28,21 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   preload(): void {
-    console.log('🎮 InstructionsScene: PRELOAD started')
-    
     // Load background image
     this.load.image('instructionsBg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Treasure%20Quest%20BG%205-pVHhUmXIAvnZT4aFVRFgYvljKibVS0.png?qco1')
-    console.log('🎮 InstructionsScene: Background image loading...')
     
     // Load game sprites for visual references
     this.loadGameSprites()
-    
-    console.log('🎮 InstructionsScene: All assets loading...')
   }
 
   private loadGameSprites(): void {
-    console.log('🎮 InstructionsScene: Loading player sprites...')
-    
     // Player sprites
     this.load.image('playerIdleEye1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Idle%20eye%20position%201-aD6V48lNdWK5R1x5CPNs4XLX869cmI.png?0XJy')
     this.load.image('playerJumpRightFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/jumping%20right%20foot%20forward-3clf2KnwfbN3O6BsrtaeHSTAviNbnF.png?xx8e')
-    this.load.image('playerClimbLeftFoot', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20ladder%20left%20foot%20up-HkXPep0kpt9he1WtndEXsXRVHQBdlq.png?ncVM')
-    
-    console.log('🎮 InstructionsScene: Loading collectible sprites...')
+    this.load.image('playerClimbInstructions', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/climbing%20instructions%20sprite-1DYkU3H7zBfBhzSDEkjgUSCrDXYBRW.png?v0Zt')
     
     // Collectibles
-    this.load.image('coin', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20round-E2EKGSTZHnnCdW0QkFmTDRKY7ERfw7.png?izQh')
+    this.load.image('crystal-hud-icon', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20hud%20icon-6cCEP7jp90eqI7W9LeBp7v4s3OgCPX.png?nMJm')
     this.load.image('blueCoin', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/big%20blue%20gem-GzKKZKUsDMh3CXMEIV4OmMl4ksrqqm.png?sill')
     this.load.image('diamond', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond-LB22Ijoji8erIrMFMvtSwd5Y9rDDwS.png?LlEv')
     this.load.image('crystalBallCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20collectible-BYMW8D53PB5JZUqKCfjKdI59qi0Yk8.png?rzg5')
@@ -59,8 +50,7 @@ export class InstructionsScene extends Phaser.Scene {
     this.load.image('tealOrbCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20teal%20orb-wupZvLrfiaRIZZyP4TbIOq5HLiVsXz.png?i2qV')
     this.load.image('pendant', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendant-cJISby3d7EEREasbi0gRZkn2u3rNrG.png?xf9m')
     this.load.image('heart-crystal', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/free%20life%20heart%20crystal-2EJMsIvSQKzdgrqytakBZcDbGf7Jpf.png?E1JG')
-    
-    console.log('🎮 InstructionsScene: Loading enemy sprites...')
+    this.load.image('yellow-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20chest-QMRMmVk9i7S0qkLteaXfhjqQBI351B.png?sE5u')
     
     // Enemies
     this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-HUXqx9HBdotEhJE2LBgzK8Z4kA7e2H.png?AVKZ')
@@ -68,65 +58,42 @@ export class InstructionsScene extends Phaser.Scene {
     this.load.image('redEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%201-RKF3p3F7fxdBSfen8UD9UGqIzf8zlv.png?xRpM')
     this.load.image('greenEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/green%20test-0I8rDwYn5lbuPQTEUiYrg8ctBccIAC.png?IBFc')
     this.load.image('stalkerEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%201-Xt3Vtu2FiWWLT9l2wfeakBAqVSZet8.png?gS6O')
-    this.load.image('beetle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle-wEGgkZjC08EeQiAyHJGr9J9G3ZWVJF.png?G9xM')
+    this.load.image('beetle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
+    
+    // BaseBlu enemy (was missing)
+    this.load.image('baseblue-eyes-center', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20center-BWjYc09iCwYsTuEB3TEsa7GdmDc4Nj.png?NZtQ')
     
     // Environmental
-    this.load.image('tealLadder', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/new%20ladder-ULDbdT9I4h8apxhpJI6WT1PzmaMzLo.png?okOd')
+    this.load.image('ladderInstructions', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/ladder%20for%20instructions-G7U9VNDZ8e7krygwL64remh9sNOppw.png?i8q2')
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
     this.load.image('pink-floor-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pink%20spikes%20floor%20tile-ncAVgIHazwYlznCBP4H6LWLiIhN7OF.png?n27v')
     this.load.image('yellow-ceiling-spike-tile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20spikes%20ceiling%20tile-8vq9W1Y2e1RSpgUfMl9sTp0ZILFHL3.png?mUEb')
     this.load.image('doorClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20door-SX8un6qHvlx4mzlRYUC77dJ4lpBmOT.png?548U')
-    
-    console.log('🎮 InstructionsScene: All sprites queued for loading!')
   }
 
   create(): void {
-    console.log('🎮 InstructionsScene: CREATE started - building UI components')
-    
-    console.log('🎮 InstructionsScene: Setting up background...')
     this.setupBackground()
-    
-    console.log('🎮 InstructionsScene: Creating title...')
     this.createTitle()
-    
-    console.log('🎮 InstructionsScene: Creating scrollable container...')
     this.createScrollableContainer()
-    
-    console.log('🎮 InstructionsScene: Creating instruction categories...')
     this.createInstructionCategories()
-    
-    console.log('🎮 InstructionsScene: Creating skip button...')
     this.createSkipButton()
-    
-    console.log('🎮 InstructionsScene: Creating scroll indicator...')
     this.createScrollIndicator()
-    
-    console.log('🎮 InstructionsScene: Setting up scrolling controls...')
     this.setupScrolling()
-    
-    console.log('🎮 InstructionsScene: ✅ SCENE READY - Instructions displayed!')
   }
 
   private setupBackground(): void {
     const screenWidth = GameSettings.canvas.width
     const screenHeight = GameSettings.canvas.height
     
-    console.log(`🎮 InstructionsScene: Screen size: ${screenWidth}x${screenHeight}`)
-    
     // Create background image
     this.bgImage = this.add.image(screenWidth / 2, screenHeight / 2, 'instructionsBg')
     this.bgImage.setDepth(0)
-    
-    console.log(`🎮 InstructionsScene: Background image size: ${this.bgImage.width}x${this.bgImage.height}`)
     
     // Scale to fill screen
     const scaleX = screenWidth / this.bgImage.width
     const scaleY = screenHeight / this.bgImage.height
     const scale = Math.max(scaleX, scaleY)
     this.bgImage.setScale(scale)
-    
-    console.log(`🎮 InstructionsScene: Background scaled by ${scale}`)
-    console.log('🎮 InstructionsScene: ✅ Background setup complete')
   }
 
   private createTitle(): void {
@@ -158,14 +125,12 @@ export class InstructionsScene extends Phaser.Scene {
     const screenHeight = GameSettings.canvas.height
     
     // Create purple background rectangle with magenta border and rounded corners
-    console.log('🎮 InstructionsScene: Creating purple background rectangle...')
     const backgroundRect = this.add.graphics()
     backgroundRect.fillStyle(0x4B0082, 0.6) // Purple background, 60% opacity
     backgroundRect.lineStyle(2, 0xFF00FF) // Magenta border
     backgroundRect.fillRoundedRect(20, 100, screenWidth - 40, screenHeight - 200, 15)
     backgroundRect.strokeRoundedRect(20, 100, screenWidth - 40, screenHeight - 200, 15)
     backgroundRect.setDepth(5)
-    console.log('🎮 InstructionsScene: ✅ Purple background rectangle created!')
     
     // Create scrollable container
     this.scrollContainer = this.add.container(0, 0)
@@ -189,42 +154,45 @@ export class InstructionsScene extends Phaser.Scene {
       {
         title: 'MOVEMENT & CONTROLS',
         items: [
-          { sprite: 'playerIdleEye1', title: 'Move', description: 'Use WASD keys or arrow keys to move left and right', spriteSize: { width: 32, height: 48 }},
-          { sprite: 'playerJumpRightFoot', title: 'Jump', description: 'Press SPACE or W/UP to jump over gaps and enemies', spriteSize: { width: 32, height: 48 }},
-          { sprite: 'playerClimbLeftFoot', title: 'Climb', description: 'Use ladders to move between floors - press W/UP near ladder', spriteSize: { width: 32, height: 48 }}
+          { sprite: 'playerIdleEye1', title: 'Move', description: 'Use WASD/arrow keys or pink crystal D-pad to move', spriteSize: { width: 32, height: 48 }},
+          { sprite: 'playerJumpRightFoot', title: 'Jump', description: 'Press SPACE or E to jump (or use pink crystal button)', spriteSize: { width: 32, height: 48 }},
+          { sprite: 'playerClimbInstructions', title: 'Climb', description: 'Use UP/DOWN arrows or D-pad to climb ladders', spriteSize: { width: 32, height: 48 }},
+          { sprite: 'crystalBallCollectible', title: 'Throw', description: 'Press Q, V, or M to throw crystal balls (or yellow crystal button)', spriteSize: { width: 20, height: 20 }}
         ]
       },
       {
         title: 'COLLECTIBLES & ITEMS',
         items: [
-          { sprite: 'coin', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 16, height: 16 }},
+          { sprite: 'crystal-hud-icon', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 16, height: 16 }},
           { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 22, height: 22 }},
           { sprite: 'diamond', title: 'Diamonds', description: 'Valuable gems worth 1000 points each', spriteSize: { width: 29, height: 29 }},
+          { sprite: 'heart-crystal', title: 'Heart Crystal', description: 'Gain an extra life worth 2000 points', spriteSize: { width: 29, height: 29 }},
+          { sprite: 'pendant', title: 'Pendant', description: 'Invincibility power-up worth 300 points', spriteSize: { width: 20, height: 20 }},
           { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Shoot crystal balls for 20 seconds', spriteSize: { width: 20, height: 20 }},
           { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Power-up: Darkness effect for 10 seconds', spriteSize: { width: 20, height: 20 }},
           { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Power-up: Controls reversed for 10 seconds', spriteSize: { width: 20, height: 20 }},
-          { sprite: 'pendant', title: 'Pendant', description: 'Invincibility power-up worth 300 points', spriteSize: { width: 20, height: 20 }},
-          { sprite: 'heart-crystal', title: 'Heart Crystal', description: 'Gain an extra life worth 2000 points', spriteSize: { width: 29, height: 29 }}
+          { sprite: 'yellow-chest', title: 'Treasure Chest', description: 'Contains random rewards (2500 points + items)', spriteSize: { width: 30, height: 30 }}
         ]
       },
       {
         title: 'ENEMIES & HAZARDS',
         items: [
-          { sprite: 'blueEnemy', title: 'Blue Enemy', description: 'Animated enemies that move and can hurt you', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'yellowEnemy', title: 'Yellow Enemy', description: 'Patrol enemies that move back and forth', spriteSize: { width: 54, height: 22 }},
-          { sprite: 'redEnemy', title: 'Red Enemy', description: 'Aggressive enemies with multiple animations', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'greenEnemy', title: 'Green Enemy', description: 'Bouncing enemies that hop around levels', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'stalkerEnemy', title: 'Stalker Enemy', description: 'Advanced enemies that track your movement', spriteSize: { width: 48, height: 48 }},
-          { sprite: 'beetle', title: 'Beetle', description: 'Small crawling enemies - jump over them', spriteSize: { width: 18, height: 14 }},
-          { sprite: 'pink-floor-spike-tile', title: 'Floor Spikes', description: 'Sharp floor hazards that damage you', spriteSize: { width: 32, height: 32 }},
-          { sprite: 'yellow-ceiling-spike-tile', title: 'Ceiling Spikes', description: 'Sharp ceiling hazards that damage you', spriteSize: { width: 32, height: 32 }}
+          { sprite: 'blueEnemy', title: 'Chomper', description: 'Standard patrol enemy (100 points)', spriteSize: { width: 48, height: 48 }},
+          { sprite: 'yellowEnemy', title: 'Caterpillar', description: 'Slow random movement (50 points)', spriteSize: { width: 54, height: 22 }},
+          { sprite: 'redEnemy', title: 'Snail', description: 'Faster patrol movement (150 points)', spriteSize: { width: 48, height: 48 }},
+          { sprite: 'greenEnemy', title: 'Bouncer', description: 'Fast bouncing movement (200 points)', spriteSize: { width: 48, height: 48 }},
+          { sprite: 'stalkerEnemy', title: 'Stalker', description: 'Activates and chases you (300 points)', spriteSize: { width: 48, height: 48 }},
+          { sprite: 'beetle', title: 'Rollz', description: 'Simple patrol beetle (75 points)', spriteSize: { width: 45, height: 45 }},
+          { sprite: 'baseblue-eyes-center', title: 'Blu', description: 'Immovable blocker (1000 points when invincible)', spriteSize: { width: 48, height: 48 }}
         ]
       },
       {
         title: 'ENVIRONMENT & NAVIGATION',
         items: [
-          { sprite: 'tealLadder', title: 'Ladders', description: 'Climb up and down between floors', spriteSize: { width: 20, height: 60 }},
+          { sprite: 'ladderInstructions', title: 'Ladders', description: 'Climb up and down between floors', spriteSize: { width: 40, height: 60 }},
           { sprite: 'floor-tile-1', title: 'Platforms', description: 'Solid ground you can walk and jump on', spriteSize: { width: 32, height: 32 }},
+          { sprite: 'pink-floor-spike-tile', title: 'Floor Spikes', description: 'Sharp floor hazards that damage you', spriteSize: { width: 32, height: 32 }},
+          { sprite: 'yellow-ceiling-spike-tile', title: 'Ceiling Spikes', description: 'Sharp ceiling hazards that damage you', spriteSize: { width: 32, height: 32 }},
           { sprite: 'doorClosed', title: 'Exit Door', description: 'Reach the door at the top to complete the level', spriteSize: { width: 30, height: 40 }}
         ]
       }
@@ -282,10 +250,23 @@ export class InstructionsScene extends Phaser.Scene {
     itemBg.strokeRoundedRect(60, startY, screenWidth - 120, 80, 10)
     this.scrollContainer.add(itemBg)
     
-    // Sprite visual reference
+    // Sprite visual reference with cropping for spikes
     if (this.textures.exists(item.sprite)) {
       const sprite = this.add.image(100, startY + 40, item.sprite)
-      sprite.setDisplaySize(item.spriteSize.width, item.spriteSize.height)
+      
+      // Apply cropping for spike sprites
+      if (item.sprite === 'pink-floor-spike-tile') {
+        // Crop 1 pixel from top
+        sprite.setCrop(0, 1, sprite.width, sprite.height - 1)
+        sprite.setDisplaySize(item.spriteSize.width, item.spriteSize.height - 1)
+      } else if (item.sprite === 'yellow-ceiling-spike-tile') {
+        // Crop 1 pixel from bottom  
+        sprite.setCrop(0, 0, sprite.width, sprite.height - 1)
+        sprite.setDisplaySize(item.spriteSize.width, item.spriteSize.height - 1)
+      } else {
+        sprite.setDisplaySize(item.spriteSize.width, item.spriteSize.height)
+      }
+      
       this.scrollContainer.add(sprite)
     }
     
@@ -436,13 +417,10 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   private transitionToGame(): void {
-    console.log('🎮 InstructionsScene: ⚡ User skipped - transitioning to game!')
-    
     // Quick fade out
     this.cameras.main.fadeOut(300, 0, 0, 0)
     
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      console.log('🎮 InstructionsScene: 🚀 Starting GameScene...')
       this.scene.start('GameScene')
     })
   }
