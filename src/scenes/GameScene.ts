@@ -694,6 +694,21 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
+    // Beetles also need to collide with floor spikes to walk across them
+    this.physics.add.collider(
+      this.beetles,
+      this.spikes,
+      undefined, // No callback needed
+      (beetle, spike) => {
+        // Process callback - return true to collide, false to pass through
+        const spikeObj = spike as Phaser.GameObjects.Rectangle
+        const isFloorSpike = spikeObj.getData('isFloorSpike')
+        // Only collide with floor spikes, pass through ceiling spikes
+        return isFloorSpike === true
+      },
+      this
+    )
+    
     // Stalker cats collide with platforms and floor spikes (after dropping)
     this.physics.add.collider(this.stalkerCats, this.platforms)
     // Stalker cats also only collide with floor spikes, not ceiling spikes
@@ -762,7 +777,20 @@ export class GameScene extends Phaser.Scene {
     
     // BaseBlu collisions
     this.physics.add.collider(this.baseBlus, this.platforms)
-    // BaseBlu can walk on spikes - no spike collision
+    // BaseBlu also needs to collide with floor spikes to walk across them
+    this.physics.add.collider(
+      this.baseBlus,
+      this.spikes,
+      undefined, // No callback needed
+      (baseBlu, spike) => {
+        // Process callback - return true to collide, false to pass through
+        const spikeObj = spike as Phaser.GameObjects.Rectangle
+        const isFloorSpike = spikeObj.getData('isFloorSpike')
+        // Only collide with floor spikes, pass through ceiling spikes
+        return isFloorSpike === true
+      },
+      this
+    )
     
     // Player vs BaseBlu collision - solid obstacle with special interactions
     this.physics.add.collider(
@@ -2183,29 +2211,40 @@ export class GameScene extends Phaser.Scene {
           leftBound = tileSize * position.leftBound
           rightBound = tileSize * position.rightBound
         } else {
-          // Floor with gap - randomly assign to left or right section
+          // Floor with gap - decide if enemy can cross spikes or stays on one side
           const leftSectionSize = layout.gapStart
           const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
           
-          // Randomly choose section (not just alternating)
-          const useLeftSection = Math.random() < 0.5 && leftSectionSize > 4
+          // 40% chance for enemies to patrol across spikes (full floor width)
+          const canCrossSpikes = Math.random() < 0.4 && enemyType !== EnemyType.BASEBLU
           
-          if (useLeftSection && leftSectionSize > 4) {
-            // Place on left section with random positioning
-            const randomOffset = 1 + Math.random() * (leftSectionSize - 2)
+          if (canCrossSpikes) {
+            // Enemy can patrol across the entire floor including spikes
+            const randomX = 1 + Math.random() * (floorWidth - 2)
+            x = tileSize * randomX
             leftBound = tileSize * 0.5
-            rightBound = tileSize * (leftSectionSize - 0.5)
-            x = tileSize * randomOffset
-          } else if (rightSectionSize > 4) {
-            // Place on right section with random positioning
-            const rightStart = layout.gapStart + layout.gapSize
-            const randomOffset = rightStart + 1 + Math.random() * (rightSectionSize - 2)
-            leftBound = tileSize * (rightStart + 0.5)
             rightBound = tileSize * (floorWidth - 0.5)
-            x = tileSize * randomOffset
           } else {
-            // Skip if no valid section
-            continue
+            // Enemy stays on one side of the gap
+            const useLeftSection = Math.random() < 0.5 && leftSectionSize > 4
+            
+            if (useLeftSection && leftSectionSize > 4) {
+              // Place on left section
+              const randomOffset = 1 + Math.random() * (leftSectionSize - 2)
+              leftBound = tileSize * 0.5
+              rightBound = tileSize * (layout.gapStart - 0.5)
+              x = tileSize * randomOffset
+            } else if (rightSectionSize > 4) {
+              // Place on right section
+              const rightStart = layout.gapStart + layout.gapSize
+              const randomOffset = rightStart + 1 + Math.random() * (rightSectionSize - 2)
+              leftBound = tileSize * (rightStart + 0.5)
+              rightBound = tileSize * (floorWidth - 0.5)
+              x = tileSize * randomOffset
+            } else {
+              // Skip if no valid section
+              continue
+            }
           }
         }
         
