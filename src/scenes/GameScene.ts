@@ -3375,9 +3375,9 @@ export class GameScene extends Phaser.Scene {
     })
   }
   
-  createCrystalBallProjectile(x: number, y: number, direction: number): void {
-    console.log('Creating crystal ball projectile at', x, y, 'direction:', direction)
-    const projectile = new CrystalBallProjectile(this, x, y, direction)
+  createCrystalBallProjectile(x: number, y: number, direction: number, playerVelocityX: number = 0): void {
+    console.log('Creating crystal ball projectile at', x, y, 'direction:', direction, 'player velocity:', playerVelocityX)
+    const projectile = new CrystalBallProjectile(this, x, y, direction, playerVelocityX)
     this.crystalBallProjectiles.push(projectile)
     
     // Add collision with all enemy types
@@ -4400,7 +4400,7 @@ export class GameScene extends Phaser.Scene {
       // Force stop the crystal ball power-up on the player
       player.stopCrystalBallParticles && player.stopCrystalBallParticles()
       // Update HUD to hide timer
-      this.updateCrystalBallTimer(0, 10000)
+      this.updateCrystalBallTimer(0, 20000)
     }
     
     // Lose a life

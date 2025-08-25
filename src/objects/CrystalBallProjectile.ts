@@ -2,14 +2,14 @@ import GameSettings from "../config/GameSettings"
 
 export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   private bounceCount: number = 0
-  private readonly MAX_BOUNCES: number = 4
-  private readonly BOUNCE_HEIGHT: number = 32 // Consistent bounce height in pixels
+  private readonly MAX_BOUNCES: number = 5
+  private readonly BASE_BOUNCE_HEIGHT: number = 32 // Starting bounce height in pixels
   private distanceTraveled: number = 0
   private readonly MAX_DISTANCE: number = 5 * GameSettings.game.tileSize // 5 tiles
   private direction: number = 1 // 1 for right, -1 for left
   private glowGraphics?: Phaser.GameObjects.Graphics
   
-  constructor(scene: Phaser.Scene, x: number, y: number, direction: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number, direction: number, playerVelocityX: number = 0) {
     super(scene, x, y, 'crystalBallProjectile')
     
     this.direction = direction
@@ -22,9 +22,14 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(15)
     
     // Set initial velocity with slight upward arc
-    const horizontalSpeed = 250 * direction // Faster than player
+    // Compensate for player movement to maintain consistent projectile range
+    const baseSpeed = 250
+    const compensatedSpeed = baseSpeed + Math.abs(playerVelocityX * 0.8) // Add 80% of player velocity
+    const horizontalSpeed = compensatedSpeed * direction
     const initialVerticalSpeed = -120 // Slight upward arc
     this.setVelocity(horizontalSpeed, initialVerticalSpeed)
+    
+    console.log('🔫 Projectile velocity compensation: base =', baseSpeed, 'player =', playerVelocityX, 'final =', horizontalSpeed)
     
     // Apply gravity for natural arc
     this.setGravityY(400)
@@ -122,10 +127,16 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     
     const body = this.body as Phaser.Physics.Arcade.Body
     
-    // Calculate bounce velocity to reach consistent height
+    // Calculate bounce velocity with descending height
+    // Each bounce gets 80% of the previous height
+    const heightReduction = Math.pow(0.8, this.bounceCount - 1)
+    const currentBounceHeight = this.BASE_BOUNCE_HEIGHT * heightReduction
+    
     // Using physics: v = sqrt(2 * g * h)
     const gravity = body.gravity.y || 400
-    const bounceVelocity = -Math.sqrt(2 * gravity * this.BOUNCE_HEIGHT)
+    const bounceVelocity = -Math.sqrt(2 * gravity * currentBounceHeight)
+    
+    console.log('🔫 Bounce', this.bounceCount, 'height:', currentBounceHeight.toFixed(1), 'velocity:', bounceVelocity.toFixed(1))
     
     // Apply bounce
     this.setVelocityY(bounceVelocity)

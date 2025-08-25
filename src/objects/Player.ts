@@ -33,7 +33,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // Crystal Ball power-up
   private crystalBallActive: boolean = false
   private crystalBallTimer: number = 0
-  private readonly CRYSTAL_BALL_DURATION: number = 10000 // 10 seconds in milliseconds
+  private readonly CRYSTAL_BALL_DURATION: number = 20000 // 20 seconds in milliseconds
   private crystalBallParticles: Phaser.GameObjects.Graphics[] = []
   private crystalBallParticleTimer?: Phaser.Time.TimerEvent
   private crystalBallGlow?: Phaser.GameObjects.Graphics
@@ -952,8 +952,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const gameScene = this.scene as any
     if (gameScene && gameScene.createCrystalBallProjectile) {
       const direction = this.flipX ? -1 : 1
-      console.log('🔫 FIRING Crystal Ball projectile! Direction:', direction)
-      gameScene.createCrystalBallProjectile(this.x, this.y, direction)
+      // Pass player velocity to compensate for movement
+      const playerVelocityX = this.body ? (this.body as Phaser.Physics.Arcade.Body).velocity.x : 0
+      console.log('🔫 FIRING Crystal Ball projectile! Direction:', direction, 'Player velocity:', playerVelocityX)
+      gameScene.createCrystalBallProjectile(this.x, this.y, direction, playerVelocityX)
     } else {
       console.log('❌ Could not fire - scene method not found')
     }
