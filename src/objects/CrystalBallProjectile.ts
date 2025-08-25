@@ -2,14 +2,12 @@ import GameSettings from "../config/GameSettings"
 
 export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   private bounceCount: number = 0
-  private readonly MAX_BOUNCES: number = 3
+  private readonly MAX_BOUNCES: number = 4
   private readonly BOUNCE_HEIGHT: number = 32 // Consistent bounce height in pixels
   private distanceTraveled: number = 0
   private readonly MAX_DISTANCE: number = 5 * GameSettings.game.tileSize // 5 tiles
   private direction: number = 1 // 1 for right, -1 for left
-  private trailGraphics: Phaser.GameObjects.Graphics
-  private particles: Phaser.GameObjects.Graphics[] = []
-  private particleTimer?: Phaser.Time.TimerEvent
+  private glowGraphics?: Phaser.GameObjects.Graphics
   
   constructor(scene: Phaser.Scene, x: number, y: number, direction: number) {
     super(scene, x, y, 'crystalBallProjectile')
@@ -18,9 +16,9 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
     scene.physics.add.existing(this)
     
-    // Set size and physics properties
-    this.setDisplaySize(12, 12)
-    this.setSize(10, 10)
+    // Set size and physics properties to match the crystal ball sprite
+    this.setDisplaySize(16, 16) // Slightly larger for better visibility
+    this.setSize(12, 12) // Hitbox size
     this.setDepth(15)
     
     // Set initial velocity with slight upward arc
@@ -35,15 +33,30 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true)
     this.body!.onWorldBounds = true
     
-    // Create trail effect
-    this.trailGraphics = scene.add.graphics()
-    this.trailGraphics.setDepth(14)
+    // Add subtle glow around the crystal ball sprite
+    this.glowGraphics = scene.add.graphics()
+    this.glowGraphics.setDepth(14)
+    this.glowGraphics.fillStyle(0x44d0a7, 0.3)
+    this.glowGraphics.fillCircle(x, y, 12) // Glow around the ball
+    this.glowGraphics.fillStyle(0x44d0a7, 0.2) 
+    this.glowGraphics.fillCircle(x, y, 18) // Outer glow
     
-    // Start particle trail
-    this.particleTimer = scene.time.addEvent({
-      delay: 50,
-      callback: () => this.createTrailParticle(),
-      loop: true
+    // Make glow follow the projectile
+    scene.tweens.add({
+      targets: this.glowGraphics,
+      x: { from: x, to: x + (direction * 300) },
+      duration: 2000,
+      onUpdate: () => {
+        if (this.active && this.glowGraphics) {
+          this.glowGraphics.x = this.x
+          this.glowGraphics.y = this.y
+        }
+      },
+      onComplete: () => {
+        if (this.glowGraphics) {
+          this.glowGraphics.destroy()
+        }
+      }
     })
     
     // Add rotation animation
@@ -56,32 +69,6 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     })
   }
   
-  private createTrailParticle(): void {
-    if (!this.scene) return
-    
-    const particle = this.scene.add.graphics()
-    particle.fillStyle(0x44d0a7, 0.8)
-    particle.fillCircle(0, 0, 2)
-    particle.x = this.x
-    particle.y = this.y
-    particle.setDepth(14)
-    
-    this.particles.push(particle)
-    
-    // Fade out trail particle
-    this.scene.tweens.add({
-      targets: particle,
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        const index = this.particles.indexOf(particle)
-        if (index > -1) {
-          this.particles.splice(index, 1)
-        }
-        particle.destroy()
-      }
-    })
-  }
   
   update(time: number, delta: number): void {
     super.update(time, delta)
@@ -180,10 +167,6 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   burst(): void {
     if (!this.scene) return
     
-    // Stop particle generation
-    if (this.particleTimer) {
-      this.particleTimer.destroy()
-    }
     
     // Create burst effect
     for (let i = 0; i < 8; i++) {
@@ -209,12 +192,10 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
       })
     }
     
-    // Clean up trail particles
-    this.particles.forEach(particle => particle.destroy())
-    this.particles = []
-    
-    // Clean up trail graphics
-    this.trailGraphics.destroy()
+    // Clean up glow graphics
+    if (this.glowGraphics) {
+      this.glowGraphics.destroy()
+    }
     
     // Destroy projectile
     this.destroy()

@@ -36,6 +36,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private readonly CRYSTAL_BALL_DURATION: number = 10000 // 10 seconds in milliseconds
   private crystalBallParticles: Phaser.GameObjects.Graphics[] = []
   private crystalBallParticleTimer?: Phaser.Time.TimerEvent
+  private crystalBallGlow?: Phaser.GameObjects.Graphics
   
   // Speech/Thought bubble system
   private idleTimer: number = 0
@@ -906,6 +907,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.crystalBallActive) {
       this.crystalBallTimer -= delta
       
+      // Update glow position to follow player
+      if (this.crystalBallGlow) {
+        this.crystalBallGlow.x = this.x
+        this.crystalBallGlow.y = this.y
+      }
+      
       if (this.crystalBallTimer <= 0) {
         this.crystalBallActive = false
         this.crystalBallTimer = 0
@@ -967,10 +974,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private createCrystalBallParticle(): void {
     if (!this.crystalBallActive || !this.scene) return
     
-    // Create green pixel particle
+    // Create glowing green pixel particle
     const particle = this.scene.add.graphics()
+    // Add glow effect with multiple layers
+    particle.fillStyle(0x44d0a7, 0.3)
+    particle.fillCircle(0, 0, 4) // Outer glow
+    particle.fillStyle(0x44d0a7, 0.6)
+    particle.fillCircle(0, 0, 2) // Middle glow
     particle.fillStyle(0x44d0a7, 1)
-    particle.fillRect(0, 0, 2, 2)
+    particle.fillRect(-1, -1, 2, 2) // Core pixel
     
     // Random position around the player (orbiting effect)
     const angle = Math.random() * Math.PI * 2
@@ -1012,5 +1024,45 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Clean up existing particles
     this.crystalBallParticles.forEach(particle => particle.destroy())
     this.crystalBallParticles = []
+    
+    // Clean up glow effect
+    if (this.crystalBallGlow) {
+      this.crystalBallGlow.destroy()
+      this.crystalBallGlow = undefined
+    }
+  }
+
+  private createPlayerGlow(): void {
+    if (!this.crystalBallGlow || !this.crystalBallActive) return
+    
+    // Clear previous glow
+    this.crystalBallGlow.clear()
+    
+    // Create subtle green glow around player
+    const glowColor = 0x44d0a7
+    
+    // Position glow at player center
+    this.crystalBallGlow.x = this.x
+    this.crystalBallGlow.y = this.y
+    
+    // Multiple layered circles for soft glow effect
+    this.crystalBallGlow.fillStyle(glowColor, 0.1)
+    this.crystalBallGlow.fillCircle(0, 0, 35) // Outer glow
+    this.crystalBallGlow.fillStyle(glowColor, 0.2)
+    this.crystalBallGlow.fillCircle(0, 0, 25) // Middle glow  
+    this.crystalBallGlow.fillStyle(glowColor, 0.3)
+    this.crystalBallGlow.fillCircle(0, 0, 15) // Inner glow
+    
+    // Add pulsing animation
+    this.scene.tweens.add({
+      targets: this.crystalBallGlow,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      alpha: 0.7,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
   }
 }

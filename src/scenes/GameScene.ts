@@ -321,7 +321,7 @@ export class GameScene extends Phaser.Scene {
     
     // Load Crystal Ball power-up sprites
     this.load.image('crystalBallCollectible', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20collectible-BYMW8D53PB5JZUqKCfjKdI59qi0Yk8.png?rzg5')
-    this.load.image('crystalBallProjectile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20projectile-QkeBoHO54mfY60cWKyQZ0mCtWCJeW2.png?4jgH')
+    this.load.image('crystalBallProjectile', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20collectible-BYMW8D53PB5JZUqKCfjKdI59qi0Yk8.png?rzg5')
     this.load.image('crystalBallTimer', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20timer-DXFxS1g5ICpECl1vorurI4vQgShlfI.png?VWVq')
     
     // Load new door sprite
@@ -3406,8 +3406,9 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
-    // Add collision with platforms
+    // Add collision with platforms and spikes (for bouncing)
     this.physics.add.collider(projectile, this.platforms)
+    this.physics.add.collider(projectile, this.spikes)
     
     console.log('Crystal ball projectile created, total projectiles:', this.crystalBallProjectiles.length)
   }
