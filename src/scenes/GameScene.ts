@@ -90,7 +90,6 @@ export class GameScene extends Phaser.Scene {
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
   private menuOverlay!: MenuOverlay
-  private menuButton!: Phaser.GameObjects.Container
   
   // Background management
   private currentBackground: string = 'background-treasure-quest-5'
@@ -1080,13 +1079,6 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(1, 0.5).setDepth(100)  // Right-aligned and vertically centered
     this.hamburgerMenuButton.setScrollFactor(0)
     
-    // Make hamburger menu interactive (for future use)
-    this.hamburgerMenuButton.setInteractive({ useHandCursor: true })
-    this.hamburgerMenuButton.on('pointerdown', () => {
-      // Future: Open settings/menu
-      // Hamburger menu clicked (replaced console.log)
-    })
-    
     // Initialize displays
     this.updateLivesDisplay()
     this.updateCoinCounterDisplay()
@@ -1098,11 +1090,25 @@ export class GameScene extends Phaser.Scene {
     // Connect touch controls to player
     this.player.setTouchControls(this.touchControls)
     
-    // Create menu overlay
+    // Create menu overlay (after HUD is created)
     this.menuOverlay = new MenuOverlay(this)
     
-    // Create menu button
-    this.createMenuButton()
+    // Connect hamburger button to menu
+    this.hamburgerMenuButton.removeAllListeners() // Clear any old listeners
+    this.hamburgerMenuButton.on('pointerdown', () => {
+      this.menuOverlay.toggle()
+    })
+    
+    // Add hover effect for hamburger
+    this.hamburgerMenuButton.on('pointerover', () => {
+      this.hamburgerMenuButton.setScale(1.1)
+      this.hamburgerMenuButton.setColor('#b8e60a') // Brighter green on hover
+    })
+    
+    this.hamburgerMenuButton.on('pointerout', () => {
+      this.hamburgerMenuButton.setScale(1.0)
+      this.hamburgerMenuButton.setColor('#9acf07') // Original green
+    })
     
     // Set up ESC key for menu
     const escKey = this.input.keyboard?.addKey('ESC')
@@ -6173,50 +6179,6 @@ export class GameScene extends Phaser.Scene {
     if (this.livesIcon) {
       this.livesIcon.setVisible(livesToShow > 0)
     }
-  }
-
-  private createMenuButton(): void {
-    // Create menu button in top-right corner
-    const btnX = GameSettings.canvas.width - 40
-    const btnY = 40
-    
-    this.menuButton = this.add.container(btnX, btnY)
-    this.menuButton.setDepth(100)
-    this.menuButton.setScrollFactor(0) // Fixed position on screen
-    
-    // Background circle
-    const bg = this.add.circle(0, 0, 20, 0x008080, 0.8)
-    bg.setStrokeStyle(2, 0x20B2AA)
-    
-    // Hamburger menu lines
-    const graphics = this.add.graphics()
-    graphics.lineStyle(2, 0xFFFFFF)
-    graphics.moveTo(-10, -6)
-    graphics.lineTo(10, -6)
-    graphics.moveTo(-10, 0)
-    graphics.lineTo(10, 0)
-    graphics.moveTo(-10, 6)
-    graphics.lineTo(10, 6)
-    
-    this.menuButton.add([bg, graphics])
-    
-    // Make interactive
-    bg.setInteractive()
-    
-    bg.on('pointerdown', () => {
-      this.menuOverlay.toggle()
-    })
-    
-    // Hover effects
-    bg.on('pointerover', () => {
-      bg.setFillStyle(0x20B2AA, 0.9)
-      this.menuButton.setScale(1.1)
-    })
-    
-    bg.on('pointerout', () => {
-      bg.setFillStyle(0x008080, 0.8)
-      this.menuButton.setScale(1.0)
-    })
   }
 
   private checkForExtraLife(): void {
