@@ -237,13 +237,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const sKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S)
     const dKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
     
+    // Add E key for jump and Q/V keys for crystal ball firing
+    const eKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E)
+    const qKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Q)
+    const vKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V)
+    
     // Get input from keyboard (arrows or WASD) or touch controls (now discrete D-pad)
     const leftPressed = this.cursors.left.isDown || aKey.isDown || (this.touchControls?.leftPressed || false)
     const rightPressed = this.cursors.right.isDown || dKey.isDown || (this.touchControls?.rightPressed || false)
     const upPressed = this.cursors.up.isDown || wKey.isDown || (this.touchControls?.upPressed || false)
     const downPressed = this.cursors.down.isDown || sKey.isDown || (this.touchControls?.downPressed || false)
-    const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || (this.touchControls?.isJumpJustPressed() || false)
-    const jumpButtonHeld = spaceKey.isDown || (this.touchControls?.jumpPressed || false)
+    const jumpJustPressed = Phaser.Input.Keyboard.JustDown(spaceKey) || Phaser.Input.Keyboard.JustDown(eKey) || (this.touchControls?.isJumpJustPressed() || false)
+    const jumpButtonHeld = spaceKey.isDown || eKey.isDown || (this.touchControls?.jumpPressed || false)
+    
+    // Crystal ball firing (Q or V keys, or action button on mobile)
+    const fireJustPressed = Phaser.Input.Keyboard.JustDown(qKey) || Phaser.Input.Keyboard.JustDown(vKey) || (this.touchControls?.isActionJustPressed() || false)
     
     // Track if player is moving horizontally
     this.isMoving = (leftPressed || rightPressed) && !this.isClimbing
@@ -377,6 +385,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.exitClimbing()
         this.setVelocityY(this.MAX_JUMP_VELOCITY)
       }
+    }
+    
+    // Handle crystal ball firing
+    if (fireJustPressed) {
+      this.fireCrystalBall()
     }
     
     // Handle bubble system timing
