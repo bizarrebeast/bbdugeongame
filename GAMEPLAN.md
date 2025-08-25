@@ -7,6 +7,22 @@ A retro simplified Donkey Kong style game where the player climbs levels on ladd
 
 ## Game Details
 
+### Scene Flow & User Experience ✅ FULLY IMPLEMENTED
+- ✅ **Splash Screen:** 1-second branded title display with automatic progression
+- ✅ **Instructions Scene:** Comprehensive scrollable tutorial with visual demonstrations
+- ✅ **Game Scene:** Main gameplay with seamless transition from instructions
+- ✅ **Scene Transitions:** Smooth fade effects between all scenes (300ms transitions)
+
+### Instructions System ✅ COMPREHENSIVE IMPLEMENTATION
+- ✅ **Scrollable Interface:** Full vertical scrolling with mouse wheel and touch support
+- ✅ **Visual Demonstrations:** Real game sprites shown for all collectibles, enemies, and interactions
+- ✅ **Categorized Content:** 4 main sections (Movement/Controls, Collectibles/Items, Enemies/Hazards, Environment/Navigation)
+- ✅ **Accurate Game Data:** Point values, power-up durations, and mechanics match actual gameplay
+- ✅ **Professional Styling:** Purple backgrounds with teal info boxes, Press Start 2P font throughout
+- ✅ **Mobile Optimized:** Touch scrolling, responsive layout, and skip functionality
+- ✅ **Asset Integration:** Uses same Vercel blob storage URLs as main game for consistency
+- ✅ **Skip Option:** Prominent skip button for experienced players
+
 ### Genre & Visual Style
 - **Genre:** Vintage style arcade platformer
 - **Art Style:** Cartoonish/pixel art based on custom illustrations
@@ -32,6 +48,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 ### Controls ✅ FULLY IMPLEMENTED
 - **Mobile:** ✅ Virtual joystick for movement/climbing + jump button with multi-touch support
 - **Desktop:** ✅ Arrow keys + WASD for movement/climbing, spacebar for jump
+- **Power-up Controls:** ✅ Q/E keys for Crystal Ball projectile firing (desktop only)
 - **Dual Input:** ✅ All control schemes work simultaneously
 - **Interaction System:** ✅ Automatic contact-based treasure chest opening (simplified from ACTION button)
 - **Scaleable Jumping:** ✅ Hold jump button for higher jumps (50-350ms hold time)
@@ -154,11 +171,14 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - ✅ **Door Positioning:** Door sprite moved up 9 pixels for better visual alignment
 - ✅ **Responsive Layout:** Left (lives/crystals/level), center (score/timer), right (hamburger menu)
 
-### Flash Power-up System 🔄 TEMPORARILY DISABLED
-- 🔄 **Status:** System disabled for cleaner gameplay (code preserved for future re-enablement)
-- ✅ **Previous Implementation:** Professional overlay with 320×320px transparent window
-- ✅ **Architecture:** Complete system ready for re-activation when needed
-- 🔄 **Treasure Integration:** Flash power-ups removed from chest contents
+### Advanced Power-up System ✅ FULLY IMPLEMENTED
+- ✅ **Status:** Complete multi-power-up system with simultaneous effects and timer management
+- ✅ **Crystal Ball Power-up:** Projectile firing system with Q/E keys, 20-second duration, bouncing physics
+- ✅ **Cursed Orb Power-up:** Darkness overlay effect, 10-second duration, atmospheric lighting changes
+- ✅ **Cursed Teal Orb:** Control reversal mechanics, 10-second duration, left/right input inversion
+- ✅ **Invincibility Pendant:** Traditional invincibility with visual effects and collision immunity
+- ✅ **Multi-Timer HUD:** Sophisticated timer system supporting multiple simultaneous power-ups
+- ✅ **Treasure Integration:** All power-ups properly distributed through treasure chest system
 
 ## Difficulty Progression
 
