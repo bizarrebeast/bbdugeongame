@@ -4491,7 +4491,16 @@ export class GameScene extends Phaser.Scene {
     const beetleBody = beetleObj.body as Phaser.Physics.Arcade.Body
     
     const playerFalling = playerBody.velocity.y > 0 // Moving downward
-    const playerAboveBeetle = playerBody.bottom <= beetleBody.top + 5 // Player's bottom is near beetle's top
+    
+    // More forgiving collision detection for diagonal approaches
+    // Check if player's center is reasonably above beetle's center
+    const playerCenterY = playerBody.y + (playerBody.height / 2)
+    const beetleCenterY = beetleBody.y + (beetleBody.height / 2)
+    const verticalDifference = beetleCenterY - playerCenterY
+    
+    // Player is considered "above" if their center is higher than beetle's center by at least 5 pixels
+    // OR if their bottom is within 12 pixels of beetle's top (increased from 5 for more forgiveness)
+    const playerAboveBeetle = (verticalDifference > 5) || (playerBody.bottom <= beetleBody.top + 12)
     
     if (playerFalling && playerAboveBeetle) {
       // Jump-to-kill beetle!

@@ -116,8 +116,8 @@ export class InstructionsScene extends Phaser.Scene {
       fontSize: '28px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFD700', // Gold text
-      stroke: '#4B0082', // Purple stroke
-      strokeThickness: 2
+      stroke: '#000000', // Black stroke
+      strokeThickness: 3
     })
     this.titleText.setOrigin(0.5, 0.5)
     this.titleText.setDepth(100)
@@ -223,18 +223,18 @@ export class InstructionsScene extends Phaser.Scene {
     const screenWidth = GameSettings.canvas.width
     let currentY = startY
     
-    // Category header
-    const headerBg = this.add.graphics()
-    headerBg.fillStyle(0xFFC0CB, 0.6) // Pink background, 60% opacity
-    headerBg.lineStyle(2, 0xFF00FF) // Magenta border
-    headerBg.fillRoundedRect(40, currentY, screenWidth - 80, 40, 10)
-    headerBg.strokeRoundedRect(40, currentY, screenWidth - 80, 40, 10)
-    this.scrollContainer.add(headerBg)
+    // Category header - TEMPORARILY HIDDEN
+    // const headerBg = this.add.graphics()
+    // headerBg.fillStyle(0xFFC0CB, 0.6) // Pink background, 60% opacity
+    // headerBg.lineStyle(2, 0xFF00FF) // Magenta border
+    // headerBg.fillRoundedRect(40, currentY, screenWidth - 80, 40, 10)
+    // headerBg.strokeRoundedRect(40, currentY, screenWidth - 80, 40, 10)
+    // this.scrollContainer.add(headerBg)
     
     const headerText = this.add.text(screenWidth / 2, currentY + 20, title, {
       fontSize: '15px', // Reduced by 15% from 18px
       fontFamily: '"Press Start 2P", system-ui',
-      color: '#00FF00', // Green text on pink
+      color: '#FFFF00', // Yellow text on pink
       fontStyle: 'bold'
     })
     headerText.setOrigin(0.5, 0.5)
