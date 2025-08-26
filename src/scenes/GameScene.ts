@@ -65,7 +65,7 @@ export class GameScene extends Phaser.Scene {
   private readonly MAX_LIVES = 9
   private hamburgerMenuButton!: Phaser.GameObjects.Text // Hamburger menu button
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
-  private touchControls!: TouchControls
+  public touchControls!: TouchControls
   private justKilledCat: boolean = false
   private comboCount: number = 0
   private comboTimer: Phaser.Time.TimerEvent | null = null
