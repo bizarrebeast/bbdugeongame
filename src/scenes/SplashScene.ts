@@ -10,7 +10,7 @@ export class SplashScene extends Phaser.Scene {
 
   preload(): void {
     // Load title background image
-    this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST%20BizarreBeasts%20Splash%20page-sinFx2OAwChYVqeKq55S7b2wcbJqkM.png?6jrX')
+    this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST%20Bizarre%20Beasts%20BIZarcade%20splash%20page-ydgNu2S0haL0dzmlz4oZLjqZMXaiQo.png?j2A1')
     
     // Load splash page sound
     this.load.audio('splash-sound', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/splash%20page%20sfx-2Un9YwdWUGtqQ3ynYGocaBKgQmQTmD.wav?X7j7')
@@ -50,10 +50,10 @@ export class SplashScene extends Phaser.Scene {
   }
 
   private startTimer(): void {
-    console.log('🎮 SplashScene: Starting 1-second timer')
+    console.log('🎮 SplashScene: Starting 2-second timer')
     
-    // Automatically transition to game after 1 second
-    this.time.delayedCall(1000, () => {
+    // Automatically transition to game after 2 seconds
+    this.time.delayedCall(2000, () => {
       this.transitionToGame()
     })
   }
@@ -62,7 +62,7 @@ export class SplashScene extends Phaser.Scene {
     if (this.transitionComplete) return
     
     this.transitionComplete = true
-    console.log('🎮 SplashScene: Auto-transitioning to instructions after 1 second')
+    console.log('🎮 SplashScene: Auto-transitioning to instructions after 2 seconds')
 
     // Quick fade out (0.3s) then transition to instructions
     this.cameras.main.fadeOut(300, 0, 0, 0)

@@ -421,13 +421,25 @@ export class GameScene extends Phaser.Scene {
     this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
 
     // Load sound effects
-    // Gem collect sound
-    this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-WzBPpRwr17lykb68jA7Wxq3XddHB7h.wav?t5j4')
+    // Collection sounds
+    this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-OXLLrrAXWUz21oDTEuQPFb2fxRWxXh.wav?pH1V')
+    this.load.audio('diamond-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond%20collect%20sfx-V3aWJINX1e3OF5XZJFntg7WjpCup3Y.wav?A9QM')
+    this.load.audio('big-blue-gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/big%20blue%20gem%20collect%20sfx-nYAUNJtHLMfNwACb6CM42eSQVAW6XG.wav?f8N2')
+    this.load.audio('heart-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20collect%20heart%20sfx-7SPaWI2NI7kkVlgjjKbYXCDQuXI4sG.wav?N1rD')
+    this.load.audio('cursed-orb-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb%20or%20teal%20orb%20collect%20sfx-wRuhkR371OUxp8wLczDT4noqdawYff.wav?tIS8')
+    this.load.audio('powerup-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendadnt%20or%20crstyal%20ball%20powerup%20collect%20sfx-pX8FL5ofcA41q4D7QgUeOGgaNBFH6b.wav?vQp2')
+    this.load.audio('treasure-chest-open', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20chest%20opening%20sfx-qA8VU8UtwVC4fnaW67wfvM2IzTJRep.wav?WLuy')
     
-    // Jump sounds (3 variations to rotate between)
+    // Player movement sounds
     this.load.audio('jump-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%201%20sfx-Cfx219m2NwhVClkP67iebiwcV0HiF5.wav?GDjY')
     this.load.audio('jump-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%202%20sfx-UU3Gj2quONoFPk7SO3OI3koGgiSRGY.wav?4Zrt')
     this.load.audio('jump-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%203%20sfx-8h2X8f0XZJYeVB65fDYk4hth9h1G0O.wav?Wpvy')
+    this.load.audio('player-land', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20lands%20after%20jump%20sfx-OoLEu6v6m6Oy51qVDCknLhjlMC3Awy.wav?xPtL')
+    this.load.audio('footstep', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/foot%20step-XZmhUkf7XprYQzm2GbUVYaPZKeW6it.wav?3Vyp')
+    
+    // Crystal ball sounds
+    this.load.audio('crystal-ball-throw', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/throw%20crystal%20ball%20sfx-oZfZHRmRnqebRdw2YrcMLR7LlLCMRp.wav?aKDe')
+    this.load.audio('crystal-ball-bounce', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20bounce%20sfx-bOZrWB6YiMh6bedqvdLw3YaW63MZxO.wav?ORcs')
     
     // Player damage sounds
     this.load.audio('spike-hit', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20hits%20spikes%20sfx-Pt2SxNCgCXtyIz2jiBS3AYiCvYrp8X.wav?IM9a')
@@ -3564,6 +3576,9 @@ export class GameScene extends Phaser.Scene {
     const points = 500
     this.score += points
     
+    // Play blue gem collect sound effect
+    this.sound.play('big-blue-gem-collect', { volume: 0.5 })
+    
     // Blue coins count as 5 coins toward extra life
     this.totalCoinsCollected += 5
     this.totalBlueGemsCollected++ // Track blue gems
@@ -3601,6 +3616,9 @@ export class GameScene extends Phaser.Scene {
     const points = 1000
     this.score += points
     
+    // Play diamond collect sound effect
+    this.sound.play('diamond-collect', { volume: 0.5 })
+    
     // Diamonds count as 10 coins toward extra life
     this.totalCoinsCollected += 10
     this.totalDiamondsCollected++ // Track diamonds
@@ -3637,6 +3655,9 @@ export class GameScene extends Phaser.Scene {
     
     const points = 2000
     this.score += points
+    
+    // Play heart collect sound effect
+    this.sound.play('heart-collect', { volume: 0.5 })
     
     // Add extra life (if not at max)
     if (this.lives < this.MAX_LIVES) {
@@ -3676,6 +3697,9 @@ export class GameScene extends Phaser.Scene {
     
     const points = 300
     this.score += points
+    
+    // Play powerup collect sound effect
+    this.sound.play('powerup-collect', { volume: 0.5 })
     
     // Activate invincibility for 10 seconds
     this.activateInvincibility()
@@ -3726,6 +3750,10 @@ export class GameScene extends Phaser.Scene {
     }
     
     console.log('🔮 COLLECTING Crystal Ball - activating power-up!')
+    
+    // Play powerup collect sound effect
+    this.sound.play('powerup-collect', { volume: 0.5 })
+    
     // Activate crystal ball power-up on player
     this.player.activateCrystalBall()
     
@@ -3757,6 +3785,9 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
+    // Play cursed orb collect sound effect
+    this.sound.play('cursed-orb-collect', { volume: 0.5 })
+    
     // Activate cursed orb power-up on player
     this.player.activateCursedOrb()
     
@@ -3786,6 +3817,9 @@ export class GameScene extends Phaser.Scene {
       console.log('❌ Cannot collect - already collected')
       return
     }
+    
+    // Play cursed orb collect sound effect
+    this.sound.play('cursed-orb-collect', { volume: 0.5 })
     
     // Activate cursed teal orb power-up on player
     this.player.activateCursedTealOrb()
@@ -3880,6 +3914,10 @@ export class GameScene extends Phaser.Scene {
   
   createCrystalBallProjectile(x: number, y: number, direction: number, playerVelocityX: number = 0): void {
     console.log('Creating crystal ball projectile at', x, y, 'direction:', direction, 'player velocity:', playerVelocityX)
+    
+    // Play throw sound
+    this.sound.play('crystal-ball-throw', { volume: 0.5 })
+    
     const projectile = new CrystalBallProjectile(this, x, y, direction, playerVelocityX)
     this.crystalBallProjectiles.push(projectile)
     
@@ -5116,6 +5154,9 @@ export class GameScene extends Phaser.Scene {
     if (this.isLevelStarting) return
     
     const contents = chest.open()
+    
+    // Play treasure chest open sound effect
+    this.sound.play('treasure-chest-open', { volume: 0.5 })
     
     // Award base chest points (2500)
     this.score += 2500

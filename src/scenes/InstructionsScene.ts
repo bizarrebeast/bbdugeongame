@@ -169,7 +169,7 @@ export class InstructionsScene extends Phaser.Scene {
           { sprite: 'playerIdleEye1', title: 'Move', description: 'Use WASD/arrow keys or pink crystal D-pad to move', spriteSize: { width: 38, height: 58 }},
           { sprite: 'playerJumpRightFoot', title: 'Jump', description: 'Press SPACE or E to jump (or use pink crystal button)', spriteSize: { width: 38, height: 58 }},
           { sprite: 'playerClimbInstructions', title: 'Climb', description: 'Use UP/DOWN arrows or D-pad to climb ladders', spriteSize: { width: 38, height: 58 }},
-          { sprite: 'playerThrow', title: 'Throw', description: 'Press Q, V, or M to throw crystal balls (or yellow crystal button)', spriteSize: { width: 38, height: 58 }}
+          { sprite: 'playerThrow', title: 'Throw', description: 'Press Q, V, or M to throw crystal balls (use yellow crystal button)', spriteSize: { width: 38, height: 58 }}
         ]
       },
       {

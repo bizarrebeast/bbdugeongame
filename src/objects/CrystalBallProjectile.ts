@@ -113,6 +113,9 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   private handleBounce(): void {
     this.bounceCount++
     
+    // Play bounce sound
+    this.scene.sound.play('crystal-ball-bounce', { volume: 0.4 })
+    
     if (this.bounceCount >= this.MAX_BOUNCES) {
       console.log('🔫 Crystal Ball projectile max bounces reached - bursting')
       this.burst()
