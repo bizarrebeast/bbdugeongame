@@ -5239,30 +5239,7 @@ export class GameScene extends Phaser.Scene {
       }
     })
     
-    // Add particle effects
-    for (let i = 0; i < 8; i++) {
-      const particle = this.add.graphics()
-      particle.fillStyle(0xcc99ff, 1)
-      particle.fillRect(-2, -2, 4, 4)
-      particle.x = x
-      particle.y = y
-      particle.setDepth(27)
-      
-      const angle = (i * 45) * Math.PI / 180
-      const distance = 40
-      
-      this.tweens.add({
-        targets: particle,
-        x: x + Math.cos(angle) * distance,
-        y: y + Math.sin(angle) * distance,
-        alpha: 0,
-        duration: 600,
-        ease: 'Power2.easeOut',
-        onComplete: () => {
-          particle.destroy()
-        }
-      })
-    }
+    // Removed particle effects to keep animation clean
   }
   
   private showInvincibilityPointPopup(x: number, y: number, points: number): void {
