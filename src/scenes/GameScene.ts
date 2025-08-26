@@ -534,8 +534,8 @@ export class GameScene extends Phaser.Scene {
     this.load.audio('diamond-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/diamond%20collect%20sfx-V3aWJINX1e3OF5XZJFntg7WjpCup3Y.wav?A9QM')
     this.load.audio('big-blue-gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/big%20blue%20gem%20collect%20sfx-nYAUNJtHLMfNwACb6CM42eSQVAW6XG.wav?f8N2')
     this.load.audio('heart-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20collect%20heart%20sfx-7SPaWI2NI7kkVlgjjKbYXCDQuXI4sG.wav?N1rD')
-    this.load.audio('cursed-orb-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/cursed%20orb%20or%20teal%20orb%20collect%20sfx-wRuhkR371OUxp8wLczDT4noqdawYff.wav?tIS8')
-    this.load.audio('powerup-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/pendadnt%20or%20crstyal%20ball%20powerup%20collect%20sfx-pX8FL5ofcA41q4D7QgUeOGgaNBFH6b.wav?vQp2')
+    this.load.audio('cursed-orb-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/collect%20cursed%20orb%20or%20teal%20cursed%20orb-2KpSJv5Zd8lQ4OdgPtmn9YLlS0UqId.wav?ryTu')
+    this.load.audio('powerup-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/collect%20pendant%20or%20crystal%20ball-rEQiBqrl32yuqNts0U4A3Muol63Fxr.wav?eDiE')
     this.load.audio('treasure-chest-open', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20chest%20opening%20sfx-qA8VU8UtwVC4fnaW67wfvM2IzTJRep.wav?WLuy')
     
     // Player movement sounds
@@ -551,7 +551,7 @@ export class GameScene extends Phaser.Scene {
     
     // Level/UI sounds
     this.load.audio('continue-button', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%20complete%20continue%20button%20sfx-tKmarJUBWs3rQJhPDsv2IYj5oc8p5j.wav?V3lH')
-    this.load.audio('door-open', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door%20open%20sfx-ZXUAkiOX3bcDKzAbndKqXhZm9yXxFW.wav?wtyl')
+    this.load.audio('door-open', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door%20open%20sfx-LqGIt2ZSLGjCz0lSbuC6F6yusdC97e.wav?hCxN')
     this.load.audio('menu-toggle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/menu%20open%20and%20close-nUqXoXI4Du6a4mBgJmOcJZuJkGXAa2.wav?EOlm')
     
     // Player damage sounds
@@ -835,8 +835,8 @@ export class GameScene extends Phaser.Scene {
     this.createCats()
     // createCats() call completed (replaced console.log)
     
-    // Add stalker cats
-    this.createStalkerCats()
+    // Stalker cats are now created through the enemy spawning system
+    // No longer need separate stalker spawning - they're integrated into the main system
     
     // Add ceiling spikes
     this.createCeilingSpikes()
@@ -6340,6 +6340,9 @@ export class GameScene extends Phaser.Scene {
     if (this.isLevelComplete) return
     
     this.isLevelComplete = true
+    
+    // Play door open sound effect
+    this.playSoundEffect('door-open', 0.5)
     
     // Disable player controls
     this.player.body!.enable = false

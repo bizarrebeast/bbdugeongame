@@ -152,14 +152,15 @@ export class EnemySpawningSystem {
 
   /**
    * Get max enemies per floor based on level tier
+   * Reduced difficulty for better player experience
    */
   static getMaxEnemiesPerFloor(levelNumber: number): number {
-    if (levelNumber <= 10) return 3      // 2-3 per floor
-    else if (levelNumber <= 20) return 4 // 3-4 per floor
-    else if (levelNumber <= 30) return 5 // 4-5 per floor
-    else if (levelNumber <= 40) return 6 // 5-6 per floor
-    else if (levelNumber <= 50) return 7 // 6-7 per floor
-    else return 8                        // 7-8 per floor (BEAST MODE)
+    if (levelNumber <= 10) return 2      // 1-2 per floor (was 2-3)
+    else if (levelNumber <= 20) return 3 // 2-3 per floor (was 3-4)
+    else if (levelNumber <= 30) return 4 // 3-4 per floor (was 4-5)
+    else if (levelNumber <= 40) return 5 // 4-5 per floor (was 5-6)
+    else if (levelNumber <= 50) return 6 // 5-6 per floor (was 6-7)
+    else return 7                        // 6-7 per floor (was 7-8) BEAST MODE
   }
 
   /**
@@ -232,9 +233,16 @@ export class EnemySpawningSystem {
     const selectedEnemies: EnemyType[] = []
     let baseBluCount = 0
     
-    // Randomly determine actual enemy count (e.g., 2-3 becomes random between 2 and 3)
-    const minEnemies = Math.max(1, maxEnemies - 1)
-    const actualEnemyCount = Math.floor(Math.random() * 2) + minEnemies
+    // Special case for level 1: Start extra gentle with just 1 enemy guaranteed
+    let actualEnemyCount: number
+    if (levelNumber === 1) {
+      // Level 1: Always just 1 enemy per floor for a gentle introduction
+      actualEnemyCount = 1
+    } else {
+      // Randomly determine actual enemy count (e.g., 2 max becomes 1-2 random)
+      const minEnemies = Math.max(1, maxEnemies - 1)
+      actualEnemyCount = Math.floor(Math.random() * 2) + minEnemies
+    }
     
     // Keep selecting enemies up to the count
     for (let i = 0; i < actualEnemyCount; i++) {
