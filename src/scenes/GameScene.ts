@@ -421,7 +421,16 @@ export class GameScene extends Phaser.Scene {
     this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
 
     // Load sound effects
+    // Gem collect sound
     this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-GRPjYznU3dMUrNZta0nIA9Y3hYfuyd.wav?FgFr')
+    
+    // Jump sounds (3 variations to rotate between)
+    this.load.audio('jump-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%201%20sfx-Cfx219m2NwhVClkP67iebiwcV0HiF5.wav?GDjY')
+    this.load.audio('jump-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%202%20sfx-UU3Gj2quONoFPk7SO3OI3koGgiSRGY.wav?4Zrt')
+    this.load.audio('jump-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%203%20sfx-8h2X8f0XZJYeVB65fDYk4hth9h1G0O.wav?Wpvy')
+    
+    // Enemy squish sound
+    this.load.audio('enemy-squish', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%201%20sfx-MBkO4SrZ1IVUJ6jqjHWa5L0NURtkJH.wav?qytP')
     
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -3504,9 +3513,7 @@ export class GameScene extends Phaser.Scene {
     this.score += GameSettings.scoring.coinCollect
     
     // Play gem collect sound effect
-    if (this.sound.get('gem-collect')) {
-      this.sound.play('gem-collect', { volume: 0.5 })
-    }
+    this.sound.play('gem-collect', { volume: 0.5 })
     
     // Increment coin counter and check for extra life
     this.totalCoinsCollected++
@@ -4618,6 +4625,9 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
+    // Play enemy squish sound
+    this.sound.play('enemy-squish', { volume: 0.5 })
+    
     // Squish the cat
     cat.squish()
     
@@ -4677,6 +4687,9 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
+    // Play enemy squish sound
+    this.sound.play('enemy-squish', { volume: 0.5 })
+    
     // Squish the beetle with animation
     beetle.squish()
     
@@ -4696,6 +4709,9 @@ export class GameScene extends Phaser.Scene {
     
     // Make player bounce slightly (less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
+    
+    // Play enemy squish sound
+    this.sound.play('enemy-squish', { volume: 0.5 })
     
     // Squish the enemy with special golden effect
     enemy.squish()
@@ -4754,6 +4770,9 @@ export class GameScene extends Phaser.Scene {
     
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+    
+    // Play enemy squish sound
+    this.sound.play('enemy-squish', { volume: 0.5 })
     
     // Squish the stalker cat
     stalkerCat.squish()

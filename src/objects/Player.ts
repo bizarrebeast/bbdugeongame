@@ -6,6 +6,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isClimbing: boolean = false
   private currentLadder: Phaser.GameObjects.GameObject | null = null
   private nearbyLadder: Phaser.GameObjects.GameObject | null = null // Track ladder we're overlapping
+  private currentJumpSound: number = 1 // Track which jump sound to play next (1, 2, or 3)
   private touchControls: TouchControls | null = null
   private walkAnimationTimer: number = 0
   private climbAnimationTimer: number = 0
@@ -356,6 +357,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.jumpReleased = false
         // Apply initial jump velocity
         this.setVelocityY(this.MIN_JUMP_VELOCITY)
+        // Play rotating jump sound
+        this.playJumpSound()
         // Jump started with initial velocity
         this.triggerHapticFeedback() // Haptic feedback for jump start
       }
@@ -468,6 +471,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (jumpJustPressed && !upPressed && !atLadderBottom) {
         this.exitClimbing()
         this.setVelocityY(this.MAX_JUMP_VELOCITY)
+        this.playJumpSound() // Play jump sound when jumping off ladder
       }
     }
     
@@ -1542,5 +1546,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   
   public stopAllCursedTealOrbParticles(): void {
     this.stopCursedTealOrbParticles()
+  }
+  
+  private playJumpSound(): void {
+    // Play rotating jump sound
+    const soundKey = `jump-${this.currentJumpSound}`
+    this.scene.sound.play(soundKey, { volume: 0.4 })
+    
+    // Rotate to next sound (1, 2, 3, then back to 1)
+    this.currentJumpSound = this.currentJumpSound >= 3 ? 1 : this.currentJumpSound + 1
   }
 }
