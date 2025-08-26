@@ -548,6 +548,7 @@ export class GameScene extends Phaser.Scene {
     // Crystal ball sounds
     this.load.audio('crystal-ball-throw', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/throw%20crystal%20ball%20sfx-oZfZHRmRnqebRdw2YrcMLR7LlLCMRp.wav?aKDe')
     this.load.audio('crystal-ball-bounce', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20bounce%20sfx-bOZrWB6YiMh6bedqvdLw3YaW63MZxO.wav?ORcs')
+    this.load.audio('crystal-ball-hit-enemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20hits%20enemy-Rxq3kA6Q8rLBBb5PhGNdBhTI9AMo8W.wav?8sSG')
     
     // Level/UI sounds
     this.load.audio('continue-button', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%20complete%20continue%20button%20sfx-tKmarJUBWs3rQJhPDsv2IYj5oc8p5j.wav?V3lH')
@@ -1145,7 +1146,6 @@ export class GameScene extends Phaser.Scene {
     const levelDisplayText = isBonusLevel ? 'BONUS' : 
                              levelForHUD >= 51 ? `${levelForHUD}` : 
                              `${levelForHUD}`
-    const chapterInfo = this.backgroundManager.getCurrentChapterInfo()
     
     this.levelText = this.add.text(45, 111, levelDisplayText, {
       fontSize: '14px',
@@ -1163,18 +1163,6 @@ export class GameScene extends Phaser.Scene {
       }
     }).setOrigin(0, 0.5).setDepth(100)
     this.levelText.setScrollFactor(0)
-    
-    // Add subtle chapter name below level if past level 1 (including Beast Mode)
-    if (levelForHUD > 1 && !isBonusLevel) {
-      const chapterText = this.add.text(45, 128, chapterInfo.name.toUpperCase(), {
-        fontSize: '8px',
-        color: '#7b1fa2',  // Lighter purple
-        fontFamily: '"Press Start 2P", system-ui',
-        stroke: '#000000',
-        strokeThickness: 1
-      }).setOrigin(0, 0.5).setDepth(100)
-      chapterText.setScrollFactor(0)
-    }
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
@@ -4124,11 +4112,33 @@ export class GameScene extends Phaser.Scene {
   private handleProjectileEnemyCollision(projectile: CrystalBallProjectile, enemy: any): void {
     console.log('💥 Crystal Ball projectile hit enemy!')
     
-    // Defeat enemy
-    if (enemy.defeat) {
-      enemy.defeat()
-    } else if (enemy.destroy) {
-      enemy.destroy()
+    // Play crystal ball hit enemy sound
+    this.playSoundEffect('crystal-ball-hit-enemy', 0.5)
+    
+    // Create portal sucking animation before destroying enemy
+    this.createPortalSuckAnimation(enemy.x, enemy.y, () => {
+      // Defeat enemy after animation
+      if (enemy.defeat) {
+        enemy.defeat()
+      } else if (enemy.destroy) {
+        enemy.destroy()
+      }
+    })
+    
+    // Animate enemy being sucked into portal
+    if (enemy && enemy.body) {
+      enemy.body.enable = false // Disable physics during animation
+      this.tweens.add({
+        targets: enemy,
+        x: enemy.x,
+        y: enemy.y,
+        scaleX: 0,
+        scaleY: 0,
+        rotation: Math.PI * 2,
+        alpha: 0,
+        duration: 600,
+        ease: 'Power2.easeIn'
+      })
     }
     
     // Award points
@@ -5149,6 +5159,110 @@ export class GameScene extends Phaser.Scene {
         popupText.destroy()
       }
     })
+  }
+  
+  private createPortalSuckAnimation(x: number, y: number, onComplete: () => void): void {
+    // Create swirling portal effect
+    const portalGraphics = this.add.graphics()
+    portalGraphics.setDepth(25)
+    
+    // Create multiple spiral circles for portal effect
+    const spiralCount = 3
+    const spirals: Phaser.GameObjects.Graphics[] = []
+    
+    for (let i = 0; i < spiralCount; i++) {
+      const spiral = this.add.graphics()
+      spiral.setDepth(24 + i)
+      spirals.push(spiral)
+      
+      // Initial spiral setup
+      const startAngle = (i * 120) * Math.PI / 180
+      spiral.lineStyle(2, 0x9966ff, 0.8) // Purple portal color
+      
+      // Animate spiral rotation and scale
+      this.tweens.add({
+        targets: spiral,
+        rotation: startAngle + Math.PI * 4, // Multiple rotations
+        scaleX: { from: 2, to: 0 },
+        scaleY: { from: 2, to: 0 },
+        alpha: { from: 0.8, to: 0 },
+        duration: 800,
+        ease: 'Power2.easeIn',
+        onUpdate: () => {
+          spiral.clear()
+          spiral.lineStyle(3, 0x9966ff, spiral.alpha)
+          
+          // Draw spiral
+          const points: { x: number, y: number }[] = []
+          const spiralTurns = 3
+          const maxRadius = 30 * spiral.scaleX
+          
+          for (let angle = 0; angle < spiralTurns * Math.PI * 2; angle += 0.1) {
+            const radius = (angle / (spiralTurns * Math.PI * 2)) * maxRadius
+            const px = x + Math.cos(angle + spiral.rotation) * radius
+            const py = y + Math.sin(angle + spiral.rotation) * radius
+            points.push({ x: px, y: py })
+          }
+          
+          if (points.length > 1) {
+            spiral.beginPath()
+            spiral.moveTo(points[0].x, points[0].y)
+            for (let j = 1; j < points.length; j++) {
+              spiral.lineTo(points[j].x, points[j].y)
+            }
+            spiral.strokePath()
+          }
+        },
+        onComplete: () => {
+          spiral.destroy()
+        }
+      })
+    }
+    
+    // Create center vortex
+    const vortex = this.add.graphics()
+    vortex.setDepth(26)
+    vortex.fillStyle(0x000000, 0.8)
+    vortex.fillCircle(x, y, 5)
+    
+    // Animate vortex growth then shrink
+    this.tweens.add({
+      targets: vortex,
+      scaleX: { from: 0, to: 3, duration: 400 },
+      scaleY: { from: 0, to: 3, duration: 400 },
+      yoyo: true,
+      ease: 'Power2.easeInOut',
+      onComplete: () => {
+        vortex.destroy()
+        portalGraphics.destroy()
+        if (onComplete) onComplete()
+      }
+    })
+    
+    // Add particle effects
+    for (let i = 0; i < 8; i++) {
+      const particle = this.add.graphics()
+      particle.fillStyle(0xcc99ff, 1)
+      particle.fillRect(-2, -2, 4, 4)
+      particle.x = x
+      particle.y = y
+      particle.setDepth(27)
+      
+      const angle = (i * 45) * Math.PI / 180
+      const distance = 40
+      
+      this.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        duration: 600,
+        ease: 'Power2.easeOut',
+        onComplete: () => {
+          particle.destroy()
+        }
+      })
+    }
   }
   
   private showInvincibilityPointPopup(x: number, y: number, points: number): void {
