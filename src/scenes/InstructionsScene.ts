@@ -173,21 +173,26 @@ export class InstructionsScene extends Phaser.Scene {
         ]
       },
       {
-        title: 'COLLECTIBLES & ITEMS',
+        title: 'COLLECTIBLES',
         items: [
           { sprite: 'crystal-hud-icon', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 19, height: 19 }},
           { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 26, height: 26 }},
           { sprite: 'diamond', title: 'Diamonds', description: 'Valuable gems worth 1000 points each', spriteSize: { width: 35, height: 35 }},
           { sprite: 'heart-crystal', title: 'Heart Crystal', description: 'Gain an extra life worth 2000 points', spriteSize: { width: 35, height: 35 }},
-          { sprite: 'pendant', title: 'Pendant', description: 'Invincibility power-up worth 300 points', spriteSize: { width: 24, height: 24 }},
-          { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Shoot crystal balls for 20 seconds', spriteSize: { width: 24, height: 24 }},
-          { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Power-up: Darkness effect for 10 seconds', spriteSize: { width: 24, height: 24 }},
-          { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Power-up: Controls reversed for 10 seconds', spriteSize: { width: 24, height: 24 }},
           { sprite: 'yellow-chest', title: 'Treasure Chest', description: 'Contains random rewards (2500 points + items)', spriteSize: { width: 36, height: 36 }}
         ]
       },
       {
-        title: 'ENEMIES & HAZARDS',
+        title: 'POWER-UPS & CURSES',
+        items: [
+          { sprite: 'pendant', title: 'Pendant', description: 'Power-up: Invincibility for 10 seconds', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Throw crystal balls for 20 seconds', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Curse: Darkness effect for 10 seconds', spriteSize: { width: 24, height: 24 }},
+          { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Curse: Controls reversed for 10 seconds', spriteSize: { width: 24, height: 24 }}
+        ]
+      },
+      {
+        title: 'ENEMIES',
         items: [
           { sprite: 'yellowEnemy', title: 'Caterpillar', description: 'Slow random movement (50 points)', spriteSize: { width: 65, height: 26 }},
           { sprite: 'beetle', title: 'Rollz', description: 'Simple patrol enemy (75 points)', spriteSize: { width: 54, height: 54 }},
@@ -199,7 +204,7 @@ export class InstructionsScene extends Phaser.Scene {
         ]
       },
       {
-        title: 'ENVIRONMENT & NAVIGATION',
+        title: 'ENVIRONMENT & HAZARDS',
         items: [
           { sprite: 'ladderInstructions', title: 'Ladders', description: 'Climb up and down between floors', spriteSize: { width: 48, height: 72 }},
           { sprite: 'floor-tile-1', title: 'Platforms', description: 'Solid ground you can walk and jump on', spriteSize: { width: 38, height: 38 }},

@@ -1144,7 +1144,10 @@ export class GameScene extends Phaser.Scene {
     doorIcon.setScrollFactor(0)
     
     const levelForHUD = this.levelManager.getCurrentLevel()
-    const levelDisplayText = levelForHUD >= 51 ? 'BEAST MODE' : `${levelForHUD}`
+    const isBonusLevel = this.levelManager.isBonusLevel()
+    const levelDisplayText = isBonusLevel ? 'BONUS' : 
+                             levelForHUD >= 51 ? `${levelForHUD}` : 
+                             `${levelForHUD}`
     const chapterInfo = this.backgroundManager.getCurrentChapterInfo()
     
     this.levelText = this.add.text(45, 111, levelDisplayText, {
@@ -1164,8 +1167,8 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0, 0.5).setDepth(100)
     this.levelText.setScrollFactor(0)
     
-    // Add subtle chapter name below level if not in beast mode and past level 1
-    if (levelForHUD > 1 && levelForHUD <= 50) {
+    // Add subtle chapter name below level if past level 1 (including Beast Mode)
+    if (levelForHUD > 1 && !isBonusLevel) {
       const chapterText = this.add.text(45, 128, chapterInfo.name.toUpperCase(), {
         fontSize: '8px',
         color: '#7b1fa2',  // Lighter purple
@@ -6328,9 +6331,6 @@ export class GameScene extends Phaser.Scene {
     if (this.isLevelComplete) return
     
     this.isLevelComplete = true
-    
-    // Play door opening sound
-    this.sound.play('door-open', { volume: 0.5 })
     
     // Disable player controls
     this.player.body!.enable = false
