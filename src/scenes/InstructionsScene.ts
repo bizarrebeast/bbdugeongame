@@ -205,7 +205,7 @@ export class InstructionsScene extends Phaser.Scene {
           { sprite: 'floor-tile-1', title: 'Platforms', description: 'Solid ground you can walk and jump on', spriteSize: { width: 38, height: 38 }},
           { sprite: 'pink-floor-spike-tile', title: 'Floor Spikes', description: 'Sharp floor hazards that damage you', spriteSize: { width: 38, height: 38 }},
           { sprite: 'yellow-ceiling-spike-tile', title: 'Ceiling Spikes', description: 'Sharp ceiling hazards that damage you', spriteSize: { width: 38, height: 38 }},
-          { sprite: 'doorClosed', title: 'Exit Door', description: 'Reach the door at the top to complete the level', spriteSize: { width: 36, height: 48 }}
+          { sprite: 'doorClosed', title: 'Exit Door', description: 'Press UP at the door to complete the level', spriteSize: { width: 36, height: 48 }}
         ]
       }
     ]
@@ -234,7 +234,7 @@ export class InstructionsScene extends Phaser.Scene {
     const headerText = this.add.text(screenWidth / 2, currentY + 20, title, {
       fontSize: '15px', // Reduced by 15% from 18px
       fontFamily: '"Press Start 2P", system-ui',
-      color: '#000000', // Black text on pink
+      color: '#00FF00', // Green text on pink
       fontStyle: 'bold'
     })
     headerText.setOrigin(0.5, 0.5)

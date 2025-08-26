@@ -130,7 +130,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Phaser's built-in debug visualization will show the hitbox
     
     // Initialize two-layer running system if sprites are available
-    this.initializeTwoLayerRunning(scene)
+    this.initializeTwoLayerRunning(scene, x, y)
     
     // Create cursor keys for input
     this.cursors = scene.input.keyboard!.createCursorKeys()
@@ -151,20 +151,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.onMovementStart = callback
   }
   
-  private initializeTwoLayerRunning(scene: Phaser.Scene): void {
+  private initializeTwoLayerRunning(scene: Phaser.Scene, x: number, y: number): void {
     // Check if the new two-layer sprites are available
     const hasNewSprites = scene.textures.exists('playerRunBody') && 
                           scene.textures.exists('playerRunLegsBothDown')
     
     if (hasNewSprites && this.useTwoLayerRunning) {
+      // Use x,y parameters passed from constructor, which are guaranteed to be defined
+      const initX = x
+      const initY = y
+      
       // Create the body sprite (upper layer) - initially hidden
-      this.runBodySprite = scene.add.image(this.x, this.y, 'playerRunBody')
+      this.runBodySprite = scene.add.image(initX, initY, 'playerRunBody')
       this.runBodySprite.setDisplaySize(48, 64)
       this.runBodySprite.setDepth(21) // Above the main sprite
       this.runBodySprite.setVisible(false)
       
       // Create the legs sprite (lower layer) - initially hidden
-      this.runLegsSprite = scene.add.image(this.x, this.y, 'playerRunLegsBothDown')
+      this.runLegsSprite = scene.add.image(initX, initY, 'playerRunLegsBothDown')
       this.runLegsSprite.setDisplaySize(48, 64)
       this.runLegsSprite.setDepth(19) // Below the main sprite but above everything else
       this.runLegsSprite.setVisible(false)
