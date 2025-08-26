@@ -22,6 +22,7 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
   private distanceTraveled: number = 0
   private biteAnimationTimer: number = 0
   private biteDuration: number = 1200 // How long to stop and bite (1.2 seconds)
+  private isSquished: boolean = false
   
   constructor(scene: Phaser.Scene, x: number, y: number, platformLeft: number, platformRight: number) {
     // Use beetle sprite or create placeholder if not loaded
@@ -181,5 +182,36 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
   
   getDirection(): number {
     return this.direction
+  }
+  
+  squish(): void {
+    if (this.isSquished) return
+    
+    this.isSquished = true
+    this.setVelocity(0, 0)
+    
+    // Disable physics body immediately to prevent further collisions
+    if (this.body) {
+      this.body.enable = false
+    }
+    
+    // Reset rotation to upright for squish effect
+    this.setRotation(0)
+    
+    // Squish animation
+    this.scene.tweens.add({
+      targets: this,
+      scaleY: 0.2,
+      scaleX: 1.5,
+      duration: 200,
+      ease: 'Power2',
+      onComplete: () => {
+        // Make sure to remove from parent group before destroying
+        if (this.scene && (this.scene as any).beetles) {
+          (this.scene as any).beetles.remove(this)
+        }
+        this.destroy()
+      }
+    })
   }
 }

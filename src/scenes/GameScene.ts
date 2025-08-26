@@ -4511,9 +4511,8 @@ export class GameScene extends Phaser.Scene {
       // Make player bounce up (slightly less than normal jump)
       player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
       
-      // Destroy the beetle
-      this.beetles.remove(beetle)
-      beetle.destroy()
+      // Squish the beetle with animation
+      beetle.squish()
       
       // Show point popup at beetle position
       this.showPointPopup(beetle.x, beetle.y - 20, basePoints)
@@ -4549,9 +4548,8 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
-    // Destroy the beetle
-    this.beetles.remove(beetle)
-    beetle.destroy()
+    // Squish the beetle with animation
+    beetle.squish()
     
     // Show point popup at beetle position
     this.showPointPopup(beetle.x, beetle.y - 20, points)
