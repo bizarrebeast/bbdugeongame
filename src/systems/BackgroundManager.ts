@@ -65,7 +65,7 @@ export class BackgroundManager {
     })
 
     this.chapters.set('steampunk', {
-      name: 'Steampunk',
+      name: 'Steampunk Crystal Cavern',
       levelRange: [21, 30],
       backgrounds: [
         'steampunk-1',
@@ -83,20 +83,19 @@ export class BackgroundManager {
     })
 
     this.chapters.set('storm', {
-      name: 'Storm',
+      name: 'Electrified Crystal Cavern',
       levelRange: [31, 40],
       backgrounds: [
-        // Placeholder - reusing crystal cavern backgrounds for now
-        'crystal-cavern-1',
-        'crystal-cavern-2',
-        'crystal-cavern-3',
-        'crystal-cavern-4',
-        'crystal-cavern-5',
-        'crystal-cavern-6',
-        'crystal-cavern-7',
-        'crystal-cavern-8',
-        'crystal-cavern-9',
-        'crystal-cavern-10'
+        'electrified-1',
+        'electrified-2',
+        'electrified-3',
+        'electrified-4',
+        'electrified-5',
+        'electrified-6',
+        'electrified-7',
+        'electrified-8',
+        'electrified-9',
+        'electrified-10'
       ],
       theme: 'lightning, clouds, turbulent weather'
     })

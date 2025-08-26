@@ -437,6 +437,18 @@ export class GameScene extends Phaser.Scene {
     this.load.image('steampunk-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2029-metaGhO5uoqBktHCQnoqNmrXrancE4.png?XeH2')
     this.load.image('steampunk-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2030-qYeBT9cn6x3uAG4WvPeSa3clML1HpD.png?As4y')
     
+    // Load Electrified Crystal Cavern chapter backgrounds (levels 31-40)
+    this.load.image('electrified-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2031-O06tOHxb8b80yfdepBVLj3wJjNDMju.png?ILXr')
+    this.load.image('electrified-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2032-1YFN1MhcMfKXh149SshcFyW07KBHCG.png?PXOw')
+    this.load.image('electrified-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2033-ve4BB0Wu6RoMblkZbGmx2ST3IyfWHn.png?6pEl')
+    this.load.image('electrified-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2034-9DMyTcBY2QhKKTskDe6bzWXRZsgLlT.png?Hr6t')
+    this.load.image('electrified-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2035-qNc9FoZH60Awf13ISIvHpDNSNJifFq.png?Dagv')
+    this.load.image('electrified-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2036-365hGJnOHpzVyTOpa1618kVJMi6UlX.png?DkAI')
+    this.load.image('electrified-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2037-KOs54KffvnmZRGfkzDmk3GRvpjQ7mg.png?Edo8')
+    this.load.image('electrified-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2038-oU56rbW3kuE6MYNXgMgvasvWprLYu4.png?f0hH')
+    this.load.image('electrified-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2039-4xcZEcBBGlY6iMfY9CO5qh6CtjIbDe.png?otb6')
+    this.load.image('electrified-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2040-Dr5Q2cJ64opY0LX1D8wIyzMhKfcaEY.png?CbYG')
+    
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
