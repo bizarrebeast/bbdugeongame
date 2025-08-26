@@ -420,6 +420,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image('beetle-mouth-open-30', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2030-HXSFqNWDpvxFnv2l35lrddto2TAyCk.png?sdgg')
     this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
 
+    // Load sound effects
+    this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-GRPjYznU3dMUrNZta0nIA9Y3hYfuyd.wav?FgFr')
+    
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
     this.load.image('floor-tile-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%202-EuITFMsdSDebMUmfcikeKCDLqDupml.png?C2mi')
@@ -3499,6 +3502,11 @@ export class GameScene extends Phaser.Scene {
     
     // Add points
     this.score += GameSettings.scoring.coinCollect
+    
+    // Play gem collect sound effect
+    if (this.sound.get('gem-collect')) {
+      this.sound.play('gem-collect', { volume: 0.5 })
+    }
     
     // Increment coin counter and check for extra life
     this.totalCoinsCollected++
