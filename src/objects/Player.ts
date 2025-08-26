@@ -27,7 +27,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isAirborne: boolean = false
   private jumpReleased: boolean = false
   private readonly MIN_JUMP_VELOCITY: number = -120 // Very small hop - allows for tiny bounces
-  private readonly MAX_JUMP_VELOCITY: number = -360 // Full jump - unchanged for good height
+  private readonly MAX_JUMP_VELOCITY: number = -300 // Full jump - reduced for better game balance
   private readonly MAX_JUMP_HOLD_TIME: number = 400 // milliseconds to reach max height - more control over jump height
   
   // Speed multiplier for power-ups (like invincibility)
@@ -379,20 +379,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           
           // Only boost if we're still ascending and within hold time
           if (this.jumpHoldTime < this.MAX_JUMP_HOLD_TIME && this.body?.velocity.y! < 0) {
-            // Smooth interpolation from min to max jump velocity based on hold time
+            // Calculate boost force based on how long we've been holding
             const holdProgress = Math.min(this.jumpHoldTime / this.MAX_JUMP_HOLD_TIME, 1.0)
             
-            // Use a smooth easing function for more natural feel
-            const easedProgress = 1 - Math.pow(1 - holdProgress, 2) // Quadratic ease-out
+            // Use linear progression for smoother acceleration
+            const boostMultiplier = 1.0 - holdProgress // Stronger boost at start, weaker over time
             
-            // Interpolate between min and max jump velocities
-            const targetVelocity = this.MIN_JUMP_VELOCITY + 
-              (this.MAX_JUMP_VELOCITY - this.MIN_JUMP_VELOCITY) * easedProgress
+            // Apply incremental upward force instead of setting absolute velocity
+            // This creates a smoother jump arc without sudden velocity changes
+            const boostForce = -18 * boostMultiplier // Incremental boost per frame (tuned for proper height)
+            const currentVelocity = this.body!.velocity.y
+            const newVelocity = Math.max(currentVelocity + boostForce, this.MAX_JUMP_VELOCITY)
             
-            // Only apply if it would make us jump higher (more negative)
-            if (targetVelocity < this.body!.velocity.y) {
-              this.setVelocityY(targetVelocity)
-            }
+            // Apply the smoothed velocity
+            this.setVelocityY(newVelocity)
           }
         } else {
           // Button released - apply a gentle velocity reduction for smoother arc
