@@ -152,15 +152,13 @@ export class EnemySpawningSystem {
 
   /**
    * Get max enemies per floor based on level tier
-   * Reduced difficulty for better player experience
+   * Capped at 5 for balanced difficulty
    */
   static getMaxEnemiesPerFloor(levelNumber: number): number {
-    if (levelNumber <= 10) return 2      // 1-2 per floor (was 2-3)
-    else if (levelNumber <= 20) return 3 // 2-3 per floor (was 3-4)
-    else if (levelNumber <= 30) return 4 // 3-4 per floor (was 4-5)
-    else if (levelNumber <= 40) return 5 // 4-5 per floor (was 5-6)
-    else if (levelNumber <= 50) return 6 // 5-6 per floor (was 6-7)
-    else return 7                        // 6-7 per floor (was 7-8) BEAST MODE
+    if (levelNumber <= 10) return 2      // 1-2 per floor
+    else if (levelNumber <= 20) return 3 // 2-3 per floor
+    else if (levelNumber <= 30) return 4 // 3-4 per floor
+    else return 5                        // 4-5 per floor (max cap for all higher levels)
   }
 
   /**
