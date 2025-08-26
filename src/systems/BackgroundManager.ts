@@ -68,17 +68,16 @@ export class BackgroundManager {
       name: 'Steampunk',
       levelRange: [21, 30],
       backgrounds: [
-        // Placeholder - reusing crystal cavern backgrounds for now
-        'crystal-cavern-1',
-        'crystal-cavern-2',
-        'crystal-cavern-3',
-        'crystal-cavern-4',
-        'crystal-cavern-5',
-        'crystal-cavern-6',
-        'crystal-cavern-7',
-        'crystal-cavern-8',
-        'crystal-cavern-9',
-        'crystal-cavern-10'
+        'steampunk-1',
+        'steampunk-2',
+        'steampunk-3',
+        'steampunk-4',
+        'steampunk-5',
+        'steampunk-6',
+        'steampunk-7',
+        'steampunk-8',
+        'steampunk-9',
+        'steampunk-10'
       ],
       theme: 'industrial machinery, gears, steam pipes'
     })

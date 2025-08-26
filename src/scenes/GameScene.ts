@@ -425,6 +425,18 @@ export class GameScene extends Phaser.Scene {
     this.load.image('volcanic-crystal-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2019-ypt8lxgxyGduFRNsmei09BL2mKGIYH.png?ojyx')
     this.load.image('volcanic-crystal-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2020-VoCdHbTIAHWaULUuJAu1kL8TiARBUM.png?CK3z')
     
+    // Load Steampunk Crystal Cavern chapter backgrounds (levels 21-30)
+    this.load.image('steampunk-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2021-DPL9BM5HXEAbpVzWP2BTZAfO33f54v.png?1fKU')
+    this.load.image('steampunk-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2022-qDjjzq1C2FmwcHMYRZTzpaGej0yGwb.png?5CrH')
+    this.load.image('steampunk-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2023-lLNjfzk4mhhPURUbkfRTMNdLplNM22.png?uDB5')
+    this.load.image('steampunk-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2024-Krew0eCXapHP78qdwQrgTp7Pvy9IMQ.png?tp0E')
+    this.load.image('steampunk-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2025-bROe8HWWQGVwbIcF2TrA4E3jOprfVJ.png?Z70l')
+    this.load.image('steampunk-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2026-UTEcGMcuwl5X6QRJj3TEmJxuQMtAVB.png?YEJ9')
+    this.load.image('steampunk-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2027-QsWK3rAAwdnMlTzY0zQlIQlqYIeZoe.png?v371')
+    this.load.image('steampunk-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2028-qunz3jvjcvUy0scMr4b18HIWuEABkb.png?DG4r')
+    this.load.image('steampunk-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2029-metaGhO5uoqBktHCQnoqNmrXrancE4.png?XeH2')
+    this.load.image('steampunk-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2030-qYeBT9cn6x3uAG4WvPeSa3clML1HpD.png?As4y')
+    
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
