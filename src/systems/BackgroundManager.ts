@@ -101,20 +101,19 @@ export class BackgroundManager {
     })
 
     this.chapters.set('galactic', {
-      name: 'Galactic',
+      name: 'Galactic Crystal Cavern',
       levelRange: [41, 50],
       backgrounds: [
-        // Placeholder - reusing crystal cavern backgrounds for now
-        'crystal-cavern-1',
-        'crystal-cavern-2',
-        'crystal-cavern-3',
-        'crystal-cavern-4',
-        'crystal-cavern-5',
-        'crystal-cavern-6',
-        'crystal-cavern-7',
-        'crystal-cavern-8',
-        'crystal-cavern-9',
-        'crystal-cavern-10'
+        'galactic-1',
+        'galactic-2',
+        'galactic-3',
+        'galactic-4',
+        'galactic-5',
+        'galactic-6',
+        'galactic-7',
+        'galactic-8',
+        'galactic-9',
+        'galactic-10'
       ],
       theme: 'space, stars, nebulae, cosmic themes'
     })

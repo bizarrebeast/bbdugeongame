@@ -449,6 +449,18 @@ export class GameScene extends Phaser.Scene {
     this.load.image('electrified-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2039-4xcZEcBBGlY6iMfY9CO5qh6CtjIbDe.png?otb6')
     this.load.image('electrified-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2040-Dr5Q2cJ64opY0LX1D8wIyzMhKfcaEY.png?CbYG')
     
+    // Load Galactic Crystal Cavern chapter backgrounds (levels 41-50)
+    this.load.image('galactic-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2041-ojno2HZouD4Dt2V1Z8lPT8g9TkR4ie.png?zuLt')
+    this.load.image('galactic-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2042-zErQ0r8sKPMfgFQwVz0s3ZiGFbdWHA.png?Dppy')
+    this.load.image('galactic-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2043-RNzRiZW56aIS7iwgav4eUdiwLVjXeD.png?twVY')
+    this.load.image('galactic-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2044-gn593N3qTHsJT0UPP8gegOuTUMo1y5.png?oLhA')
+    this.load.image('galactic-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2045-eZS62LEmA5ziCPOdP2Q4F03IIqppAj.png?GGbK')
+    this.load.image('galactic-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2046-FblgXgSZg6UsQw0SjYc2kIiHh0KH2P.png?CjZV')
+    this.load.image('galactic-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2047-MZmOHh8GVZiGayV8U0klva12TlXzFq.png?0Irb')
+    this.load.image('galactic-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2048-4AZugPAFLnrLSulJNqKCiApLZwTYu6.png?3oKl')
+    this.load.image('galactic-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2049-MqGMDTShcuUgAj5bNZJITaKkhOjNhR.png?iYFP')
+    this.load.image('galactic-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2050-ff9za6km5crBBMDI3SCAAMmFudZq8E.png?s174')
+    
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
