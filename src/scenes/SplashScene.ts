@@ -21,9 +21,9 @@ export class SplashScene extends Phaser.Scene {
   create(): void {
     console.log('🎮 SplashScene: Creating splash screen')
     
-    // Play splash page sound if sound effects are enabled
+    // Play splash page sound if sound effects are enabled (SDK mute is handled by Phaser internally)
     const sfxEnabled = this.registry.get('sfxEnabled') !== false
-    if (sfxEnabled && !this.game.sound.mute) {
+    if (sfxEnabled) {
       this.sound.play('splash-sound', { volume: 0.5 })
     }
     

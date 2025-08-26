@@ -1592,9 +1592,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private playJumpSound(): void {
-    // Check if sound effects are enabled
+    // Check if sound effects are enabled (SDK mute is handled by Phaser internally)
     const sfxEnabled = this.scene.registry.get('sfxEnabled') !== false
-    if (sfxEnabled && !this.scene.game.sound.mute) {
+    if (sfxEnabled) {
       // Play rotating jump sound
       const soundKey = `jump-${this.currentJumpSound}`
       this.scene.sound.play(soundKey, { volume: 0.4 })

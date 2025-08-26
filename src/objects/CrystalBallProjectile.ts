@@ -113,9 +113,9 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   private handleBounce(): void {
     this.bounceCount++
     
-    // Play bounce sound if sound effects are enabled
+    // Play bounce sound if sound effects are enabled (SDK mute is handled by Phaser internally)
     const sfxEnabled = this.scene.registry.get('sfxEnabled') !== false
-    if (sfxEnabled && !this.scene.game.sound.mute) {
+    if (sfxEnabled) {
       this.scene.sound.play('crystal-ball-bounce', { volume: 0.4 })
     }
     

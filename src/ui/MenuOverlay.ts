@@ -29,7 +29,6 @@ export class MenuOverlay {
     const centerX = camera.width / 2
     const centerY = camera.height / 2
     
-    
     // Main container for entire menu - positioned at camera center
     this.container = this.scene.add.container(centerX, centerY)
     this.container.setDepth(5000)  // Very high depth to ensure it's above EVERYTHING
@@ -406,10 +405,8 @@ export class MenuOverlay {
     this.scene.registry.set('sfxEnabled', enabled)
     this.saveSettings()
     
-    // Update volume if SDK is not muted
-    if (!this.scene.game.sound.mute) {
-      this.scene.registry.set('sfxVolume', enabled ? 1.0 : 0)
-    }
+    // Don't modify volume here - let the playSoundEffect method handle it
+    // The SDK mute is handled by Phaser's sound system internally
     
     // Update the toggle UI if it exists
     if (this.soundToggle) {
@@ -425,13 +422,10 @@ export class MenuOverlay {
     this.scene.registry.set('musicEnabled', enabled)
     this.saveSettings()
     
-    // Update music volume if SDK is not muted
-    if (!this.scene.game.sound.mute) {
-      this.scene.registry.set('musicVolume', enabled ? 0.7 : 0)
-      // Update background music volume
-      if (this.scene.backgroundMusic) {
-        this.scene.backgroundMusic.setVolume(enabled ? 0.3 : 0)
-      }
+    // Update background music volume directly based on the enabled state
+    // The SDK mute is handled by Phaser's sound system internally
+    if (this.scene.backgroundMusic) {
+      this.scene.backgroundMusic.setVolume(enabled ? 0.3 : 0)
     }
     
     // Update the toggle UI if it exists

@@ -5529,8 +5529,9 @@ export class GameScene extends Phaser.Scene {
 
   // Helper method to play sound effects with respect to settings
   private playSoundEffect(key: string, volume: number = 0.5): void {
+    // Only check local sfxEnabled setting, Phaser handles SDK mute internally
     const sfxEnabled = this.registry.get('sfxEnabled') !== false
-    if (sfxEnabled && !this.game.sound.mute) {
+    if (sfxEnabled) {
       this.sound.play(key, { volume })
     }
   }
