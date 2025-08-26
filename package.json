@@ -1,7 +1,7 @@
 {
-  "name": "GAME_NAME",
+  "name": "treasure-quest",
   "version": "1.0.0",
-  "description": "GAME_NAME game for Farcade platform",
+  "description": "Treasure Quest - Retro endless climber game for Remix platform",
   "type": "module",
   "scripts": {
     "remix-setup": "node scripts/setup.js",
@@ -14,7 +14,10 @@
   "keywords": [
     "game",
     "phaser",
-    "farcade"
+    "remix",
+    "arcade",
+    "climber",
+    "retro"
   ],
   "author": "",
   "license": "ISC",

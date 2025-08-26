@@ -235,9 +235,9 @@ export class LevelManager {
     try {
       // Only track furthest level reached, don't save current level
       // (we always want to restart from Level 1)
-      const furthestLevel = parseInt(localStorage.getItem('bizarreUnderground_furthestLevel') || '1')
+      const furthestLevel = parseInt(localStorage.getItem('treasureQuest_furthestLevel') || '1')
       if (this.currentLevel > furthestLevel) {
-        localStorage.setItem('bizarreUnderground_furthestLevel', this.currentLevel.toString())
+        localStorage.setItem('treasureQuest_furthestLevel', this.currentLevel.toString())
       }
     } catch (e) {
       console.warn('Could not save progress to localStorage:', e)
@@ -258,7 +258,7 @@ export class LevelManager {
    */
   getFurthestLevel(): number {
     try {
-      return parseInt(localStorage.getItem('bizarreUnderground_furthestLevel') || '1')
+      return parseInt(localStorage.getItem('treasureQuest_furthestLevel') || '1')
     } catch (e) {
       return 1
     }

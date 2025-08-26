@@ -1,7 +1,7 @@
-# Bizarre Underground: Retro Endless Climber ✅ IMPLEMENTED
+# Treasure Quest: Retro Endless Climber ✅ IMPLEMENTED
 
 ## Core Concept
-A retro simplified Donkey Kong style game where the player climbs levels on ladders in an endless fashion to get more points, with player goals for bonuses and progressively increasing difficulty.
+A retro arcade climbing game where the player climbs levels on ladders in an endless fashion to get more points, with player goals for bonuses and progressively increasing difficulty.
 
 **🎮 GAME STATUS: FULLY PLAYABLE** - Complete with mobile touch controls, endless generation, and all core mechanics!
 

@@ -1,4 +1,4 @@
-# Bizarre Underground - Retro Endless Climber
+# Treasure Quest - Retro Endless Climber
 
 ## Overview
 
@@ -53,8 +53,8 @@ A retro-style endless climbing arcade game built with Phaser.js and TypeScript f
 ### Step 1: Clone and Install
 ```bash
 # Clone the repository
-git clone [repository-url] bizarre-underground
-cd bizarre-underground
+git clone [repository-url] treasure-quest
+cd treasure-quest
 
 # Install dependencies
 npm install

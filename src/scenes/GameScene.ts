@@ -662,7 +662,7 @@ export class GameScene extends Phaser.Scene {
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
     // Clear any cached level from localStorage and always start at level 1
-    localStorage.removeItem('bizarreUnderground_currentLevel')
+    localStorage.removeItem('treasureQuest_currentLevel')
     // Also sync the level manager to level 1 to override any testing values
     this.levelManager.setCurrentLevel(1)
     this.game.registry.set('currentLevel', 1)
