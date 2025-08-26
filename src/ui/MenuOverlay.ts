@@ -29,7 +29,6 @@ export class MenuOverlay {
     const centerX = camera.width / 2
     const centerY = camera.height / 2
     
-    console.log('Menu creating at position:', centerX, centerY)
     
     // Main container for entire menu - positioned at camera center
     this.container = this.scene.add.container(centerX, centerY)
@@ -189,22 +188,7 @@ export class MenuOverlay {
       this.scene.input.setTopOnly(false)  // Allow all objects to receive input
     }
     
-    // Debug: Check if interactive is set and position
-    console.log(`Button "${text}" created at:`, x, y, 'interactive:', bgRect.input !== null)
-    
-    // Add debug hitbox visualization
-    if (GameSettings.debug) {
-      const debugRect = this.scene.add.rectangle(0, 0, buttonWidth, buttonHeight, 0xFF0000, 0.2)
-      debugRect.setStrokeStyle(2, 0xFF0000)
-      container.add(debugRect)
-      
-      // Show button bounds in world coordinates
-      const worldPos = container.getWorldTransformMatrix()
-      console.log(`Button "${text}" world position:`, worldPos.tx, worldPos.ty)
-    }
-    
     bgRect.on('pointerover', () => {
-      console.log('Button hover:', text, 'at position:', x, y)
       bgRect.setFillStyle(0x20B2AA, 0.9)
     })
     
@@ -213,11 +197,6 @@ export class MenuOverlay {
     })
     
     bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      console.log('Button clicked:', text, 'pointer at:', pointer.x, pointer.y)
-      // Don't stop propagation - let the click go through
-      // if (pointer && pointer.event) {
-      //   pointer.event.stopPropagation()
-      // }
       onClick()
     })
     
@@ -254,8 +233,6 @@ export class MenuOverlay {
       trackX, 0, trackWidth, trackHeight, 0x000000, 0
     )
     trackHitArea.setInteractive({ useHandCursor: true })
-    
-    console.log(`Toggle "${label}" created at y:`, y, 'trackX:', trackX)
     
     // Visual track (graphics)
     const track = this.scene.add.graphics()
@@ -441,8 +418,6 @@ export class MenuOverlay {
         updateState(enabled)
       }
     }
-    
-    console.log('Sound effects set to:', enabled)
   }
   
   private setMusic(enabled: boolean): void {
@@ -466,8 +441,6 @@ export class MenuOverlay {
         updateState(enabled)
       }
     }
-    
-    console.log('Music set to:', enabled)
   }
   
   private loadSettings(): void {
@@ -508,9 +481,6 @@ export class MenuOverlay {
       if (updateFn) updateFn()
     })
     
-    // Debug: Show all interactive areas
-    this.debugShowHitboxes()
-    
     // IMPORTANT: Pause game AFTER setting up menu to ensure input isn't disabled
     this.pauseGame()
     
@@ -521,32 +491,18 @@ export class MenuOverlay {
     // Instead, manually enable each interactive child
     this.enableNestedInteractivity(this.container)
     
-    // Add global input debug listener
-    const debugPointer = (pointer: Phaser.Input.Pointer) => {
-      console.log('Global pointer down at:', pointer.x, pointer.y, 'worldX:', pointer.worldX, 'worldY:', pointer.worldY)
-      
-      // Get all interactive objects under the pointer
-      const hitObjects = this.scene.input.hitTestPointer(pointer)
-      console.log('Objects under pointer:', hitObjects.map((obj: any) => {
-        if (obj instanceof Phaser.GameObjects.Text) return `Text: "${obj.text}"`
-        if (obj instanceof Phaser.GameObjects.Rectangle) {
-          const parent = obj.parentContainer
-          return `Rectangle in ${parent ? 'container' : 'scene'} at ${obj.x},${obj.y}`
-        }
-        if (obj instanceof Phaser.GameObjects.Container) return `Container at ${obj.x},${obj.y}`
-        return obj.constructor.name
-      }))
-      
+    // Add input listener with manual hit testing for buttons
+    const pointerHandler = (pointer: Phaser.Input.Pointer) => {
       // Try manual hit testing for buttons
       this.manualHitTest(pointer)
     }
     
-    // Remove any existing debug listener and add new one
-    this.scene.input.off('pointerdown', debugPointer)
-    this.scene.input.on('pointerdown', debugPointer)
+    // Remove any existing listener and add new one
+    this.scene.input.off('pointerdown', pointerHandler)
+    this.scene.input.on('pointerdown', pointerHandler)
     
-    // Store the debug listener reference for cleanup
-    this.container.setData('debugPointerListener', debugPointer)
+    // Store the listener reference for cleanup
+    this.container.setData('pointerListener', pointerHandler)
     
     // Bring container to top for input
     this.scene.children.bringToTop(this.container)
@@ -556,9 +512,6 @@ export class MenuOverlay {
     
     // Just set it visible directly - the fade animation seems to break it
     this.container.setAlpha(1)
-    
-    console.log('Menu opened - input enabled:', this.scene.input.enabled)
-    console.log('Input top only:', this.scene.input.topOnly)
   }
   
   private enableNestedInteractivity(container: Phaser.GameObjects.Container): void {
@@ -569,7 +522,6 @@ export class MenuOverlay {
           child.setInteractive({ useHandCursor: true })
         }
         this.scene.input.enable(child)
-        console.log('Enabled interactivity for rectangle:', child)
       } else if (child instanceof Phaser.GameObjects.Container) {
         // Recursively enable for nested containers
         this.enableNestedInteractivity(child)
@@ -586,7 +538,6 @@ export class MenuOverlay {
     const resumeBtnX = containerX + 0
     const resumeBtnY = containerY + 210
     if (Math.abs(pointer.x - resumeBtnX) < 170 && Math.abs(pointer.y - resumeBtnY) < 25) {
-      console.log('MANUAL HIT: Resume button!')
       this.close()
     }
     
@@ -594,7 +545,6 @@ export class MenuOverlay {
     const instrBtnX = containerX + 0
     const instrBtnY = containerY + (-140)
     if (Math.abs(pointer.x - instrBtnX) < 170 && Math.abs(pointer.y - instrBtnY) < 25) {
-      console.log('MANUAL HIT: Instructions button!')
       this.openInstructionsScene()
     }
     
@@ -602,7 +552,6 @@ export class MenuOverlay {
     const soundToggleX = containerX + 80
     const soundToggleY = containerY + (-60)
     if (Math.abs(pointer.x - soundToggleX) < 30 && Math.abs(pointer.y - soundToggleY) < 15) {
-      console.log('MANUAL HIT: Sound toggle!')
       this.setSoundEffects(!this.soundEffectsEnabled)
     }
     
@@ -610,13 +559,11 @@ export class MenuOverlay {
     const musicToggleX = containerX + 80
     const musicToggleY = containerY + (-10)
     if (Math.abs(pointer.x - musicToggleX) < 30 && Math.abs(pointer.y - musicToggleY) < 15) {
-      console.log('MANUAL HIT: Music toggle!')
       this.setMusic(!this.musicEnabled)
     }
   }
   
   close(): void {
-    console.log('close() called, isOpen:', this.isOpen)
     if (!this.isOpen) {
       return
     }
@@ -624,180 +571,26 @@ export class MenuOverlay {
     // Set flag immediately
     this.isOpen = false
     
-    // Remove debug listener if it exists
-    const debugListener = this.container.getData('debugPointerListener')
-    if (debugListener) {
-      this.scene.input.off('pointerdown', debugListener)
-      this.container.setData('debugPointerListener', null)
+    // Remove pointer listener if it exists
+    const pointerListener = this.container.getData('pointerListener')
+    if (pointerListener) {
+      this.scene.input.off('pointerdown', pointerListener)
+      this.container.setData('pointerListener', null)
     }
     
     // Hide the container immediately
     this.container.setVisible(false)
     this.container.setAlpha(1) // Reset alpha for next open
-    console.log('Menu closed')
     
     // Resume game immediately
     this.resumeGame()
   }
   
-  private debugShowHitboxes(): void {
-    console.log('=== MENU DEBUG INFO ===')
-    console.log('Container visible:', this.container.visible)
-    console.log('Container position:', this.container.x, this.container.y)
-    console.log('Container depth:', this.container.depth)
-    console.log('Container children count:', this.container.list.length)
-    
-    // List all children and their positions
-    this.container.list.forEach((child: any, index: number) => {
-      if (child.x !== undefined && child.y !== undefined) {
-        const isInteractive = child.input !== null && child.input !== undefined
-        const name = child.text ? child.text : child.constructor.name
-        console.log(`Child ${index}: ${name} at (${child.x}, ${child.y}) interactive: ${isInteractive}`)
-        
-        // If it's a container, check its children too
-        if (child instanceof Phaser.GameObjects.Container) {
-          child.list.forEach((subchild: any, subindex: number) => {
-            if (subchild.input) {
-              const subname = subchild.text ? subchild.text : subchild.constructor.name
-              console.log(`  - Subchild ${subindex}: ${subname} interactive: true`)
-            }
-          })
-        }
-      }
-    })
-    
-    // Create debug overlay
-    const debugGraphics = this.scene.add.graphics()
-    debugGraphics.setDepth(2000) // Above everything
-    debugGraphics.setScrollFactor(0)
-    
-    // Draw container bounds in green
-    debugGraphics.lineStyle(3, 0x00FF00, 1)
-    const containerBounds = this.container.getBounds()
-    debugGraphics.strokeRect(
-      containerBounds.x, 
-      containerBounds.y, 
-      containerBounds.width, 
-      containerBounds.height
-    )
-    
-    // Draw panel bounds in yellow (menuPanel is a Graphics object, so we use hardcoded values)
-    if (this.menuPanel) {
-      debugGraphics.lineStyle(2, 0xFFFF00, 0.8)
-      // Panel dimensions from createMenuPanel method
-      const panelWidth = Math.min(400, this.scene.cameras.main.width - 40)
-      const panelHeight = Math.min(500, this.scene.cameras.main.height - 40)
-      const panelX = this.container.x - panelWidth / 2
-      const panelY = this.container.y - panelHeight / 2
-      debugGraphics.strokeRect(panelX, panelY, panelWidth, panelHeight)
-    }
-    
-    // Draw each interactive child's bounds in different colors
-    let colorIndex = 0
-    const colors = [0xFF0000, 0x00FFFF, 0xFF00FF, 0xFFA500, 0x00FF00]
-    
-    // Check all children and their sub-children
-    this.container.list.forEach((child: any, childIndex: number) => {
-      try {
-        if (child instanceof Phaser.GameObjects.Container) {
-          // Check container's children for interactive elements
-          child.list.forEach((subchild: any, subIndex: number) => {
-            if (subchild.input) {
-              const color = colors[colorIndex % colors.length]
-              debugGraphics.lineStyle(2, color, 0.8)
-              
-              try {
-                const bounds = subchild.getBounds()
-                debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
-                
-                // Add label
-                let label = 'Interactive'
-                if (subchild instanceof Phaser.GameObjects.Text) {
-                  label = subchild.text.substring(0, 15)
-                } else if (subchild instanceof Phaser.GameObjects.Rectangle) {
-                  // This might be a button background
-                  const parentContainer = child
-                  const textChild = parentContainer.list.find((c: any) => c instanceof Phaser.GameObjects.Text)
-                  if (textChild) {
-                    label = textChild.text.substring(0, 15)
-                  }
-                }
-                
-                const labelText = this.scene.add.text(bounds.x + 2, bounds.y + 2, label, {
-                  fontSize: '8px',
-                  color: '#' + color.toString(16).padStart(6, '0'),
-                  backgroundColor: '#000000'
-                })
-                labelText.setDepth(2001).setScrollFactor(0)
-                
-                console.log(`Interactive element ${childIndex}.${subIndex}: ${label} at`, bounds)
-                
-                colorIndex++
-              } catch (e) {
-                console.log(`Could not get bounds for subchild ${childIndex}.${subIndex}`)
-              }
-            }
-          })
-        } else if (child.input) {
-          const color = colors[colorIndex % colors.length]
-          debugGraphics.lineStyle(2, color, 0.8)
-          
-          try {
-            const bounds = child.getBounds()
-            debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
-            console.log(`Interactive child ${childIndex} at`, bounds)
-          } catch (e) {
-            console.log(`Could not get bounds for child ${childIndex}`)
-          }
-          
-          colorIndex++
-        }
-      } catch (e) {
-        console.log(`Error processing child ${childIndex}:`, e)
-      }
-    })
-    
-    // Add text label
-    const debugText = this.scene.add.text(
-      this.scene.cameras.main.width / 2, 
-      20, 
-      'DEBUG: Green=Container | Yellow=Panel | Colors=Interactive | Check console', 
-      {
-        fontSize: '10px',
-        color: '#00FF00',
-        backgroundColor: '#000000',
-        padding: { x: 5, y: 2 }
-      }
-    ).setOrigin(0.5).setDepth(2001).setScrollFactor(0)
-    
-    // Store debug elements for cleanup
-    const debugElements: any[] = [debugGraphics, debugText]
-    
-    // Collect all debug labels
-    this.scene.children.list.forEach((child: any) => {
-      if (child instanceof Phaser.GameObjects.Text && child.depth === 2001 && child !== debugText) {
-        debugElements.push(child)
-      }
-    })
-    
-    // Auto-remove debug visuals after 10 seconds
-    this.scene.time.delayedCall(10000, () => {
-      debugElements.forEach(element => {
-        if (element && !element.destroyed) {
-          element.destroy()
-        }
-      })
-    })
-    
-    console.log('Container bounds:', containerBounds)
-    console.log('Camera size:', this.scene.cameras.main.width, 'x', this.scene.cameras.main.height)
-    console.log('=== END DEBUG INFO ===')
-  }
+  // Debug method removed - no longer needed
   
   private pauseGame(): void {
     // IMPORTANT: Disable touch controls FIRST so they don't interfere with menu
     if (this.scene.touchControls) {
-      console.log('Disabling touch controls for menu')
       this.scene.touchControls.disable()
     }
     
@@ -818,7 +611,6 @@ export class MenuOverlay {
     
     // Ensure input remains active for menu
     this.scene.input.enabled = true
-    console.log('Game paused - menu input should work')
   }
   
   private resumeGame(): void {
@@ -839,7 +631,6 @@ export class MenuOverlay {
     
     // IMPORTANT: Re-enable touch controls after menu closes
     if (this.scene.touchControls) {
-      console.log('Re-enabling touch controls after menu close')
       this.scene.touchControls.enable()
     }
   }
@@ -944,7 +735,6 @@ export class MenuOverlay {
   }
   
   private openInstructionsScene(): void {
-    console.log('openInstructionsScene called')
     
     // Keep menu state but hide it
     this.container.setVisible(false)
@@ -953,7 +743,6 @@ export class MenuOverlay {
     // Sleep the game scene (preserves state better than pause)
     this.scene.scene.sleep('GameScene')
     
-    console.log('Launching InstructionsScene as overlay...')
     // Launch instructions as an overlay scene
     this.scene.scene.launch('InstructionsScene', { 
       returnScene: 'GameScene',
@@ -962,123 +751,7 @@ export class MenuOverlay {
     })
   }
   
-  private showDebugHitboxes(): void {
-    console.log('Drawing debug hitboxes...')
-    
-    // Skip the background overlay (index 0) and draw debug rectangles for all interactive elements
-    this.container.list.forEach((child: any, index) => {
-      // Skip the background overlay
-      if (index === 0) {
-        console.log('Skipping background overlay')
-        return
-      }
-      
-      if (child.type === 'Container') {
-        // Find interactive children in containers (buttons)
-        child.list?.forEach((subChild: any, subIndex) => {
-          if (subChild.type === 'Rectangle' && subChild.input) {
-            // This is a button rectangle
-            try {
-              // Calculate bounds manually for rectangles
-              const x = this.container.x + child.x + subChild.x
-              const y = this.container.y + child.y + subChild.y
-              const width = subChild.width
-              const height = subChild.height
-              
-              const debugRect = this.scene.add.rectangle(
-                x,
-                y,
-                width,
-                height,
-                0x00FF00, 0.3  // Green with transparency
-              )
-              debugRect.setStrokeStyle(3, 0x00FF00, 1)
-              debugRect.setScrollFactor(0)
-              debugRect.setDepth(2002)
-              
-              // Add label with button name
-              let buttonName = 'Unknown'
-              if (index === 3) buttonName = 'Instructions'
-              else if (index === 10) buttonName = 'Resume'
-              
-              const label = this.scene.add.text(
-                x,
-                y,
-                buttonName,
-                { fontSize: '12px', color: '#00FF00', backgroundColor: '#000000' }
-              )
-              label.setScrollFactor(0)
-              label.setDepth(2003)
-              label.setOrigin(0.5)
-              
-              console.log(`Button ${buttonName} (${index}): x=${x}, y=${y}, w=${width}, h=${height}`)
-            } catch (e) {
-              console.log(`Error getting bounds for ${index}:`, e)
-            }
-          }
-        })
-      }
-    })
-    
-    // Show the toggle switch hitboxes
-    if (this.soundToggle) {
-      const track = this.soundToggle.list.find((child: any) => child.type === 'Graphics')
-      if (track?.input) {
-        // Position relative to the container
-        const x = this.container.x + this.soundToggle.x + 80
-        const y = this.container.y + this.soundToggle.y
-        
-        const debugRect = this.scene.add.rectangle(
-          x, y,
-          60, 30,  // Toggle dimensions
-          0xFFFF00, 0.3  // Yellow
-        )
-        debugRect.setStrokeStyle(3, 0xFFFF00, 1)
-        debugRect.setScrollFactor(0)
-        debugRect.setDepth(2002)
-        
-        const label = this.scene.add.text(
-          x, y,
-          'Sound',
-          { fontSize: '10px', color: '#FFFF00', backgroundColor: '#000000' }
-        )
-        label.setScrollFactor(0)
-        label.setDepth(2003)
-        label.setOrigin(0.5)
-        
-        console.log(`Sound Toggle: x=${x}, y=${y}`)
-      }
-    }
-    
-    if (this.musicToggle) {
-      const track = this.musicToggle.list.find((child: any) => child.type === 'Graphics')
-      if (track?.input) {
-        // Position relative to the container
-        const x = this.container.x + this.musicToggle.x + 80
-        const y = this.container.y + this.musicToggle.y
-        
-        const debugRect = this.scene.add.rectangle(
-          x, y,
-          60, 30,  // Toggle dimensions
-          0xFFFF00, 0.3  // Yellow
-        )
-        debugRect.setStrokeStyle(3, 0xFFFF00, 1)
-        debugRect.setScrollFactor(0)
-        debugRect.setDepth(2002)
-        
-        const label = this.scene.add.text(
-          x, y,
-          'Music',
-          { fontSize: '10px', color: '#FFFF00', backgroundColor: '#000000' }
-        )
-        label.setScrollFactor(0)
-        label.setDepth(2003)
-        label.setOrigin(0.5)
-        
-        console.log(`Music Toggle: x=${x}, y=${y}`)
-      }
-    }
-  }
+  // Debug method removed - no longer needed
   
   getIsOpen(): boolean {
     return this.isOpen
