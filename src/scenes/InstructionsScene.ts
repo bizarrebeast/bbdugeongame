@@ -419,16 +419,6 @@ export class InstructionsScene extends Phaser.Scene {
     thumb.strokeRoundedRect(-6, -22, 12, 44, 6)
     this.scrollIndicator.add(thumb)
     
-    // Add "SCROLL" text above the track
-    const scrollText = this.add.text(0, -175, 'SCROLL', {
-      fontSize: '10px',
-      color: '#FFD700',
-      fontFamily: '"Press Start 2P", system-ui',
-      stroke: '#000000',
-      strokeThickness: 2
-    }).setOrigin(0.5)
-    this.scrollIndicator.add(scrollText)
-    
     // Add arrow indicators
     const arrowUp = this.add.text(0, -165, '▲', {
       fontSize: '12px',
@@ -451,15 +441,6 @@ export class InstructionsScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
-    })
-    
-    // Animate the scroll text for attention
-    this.tweens.add({
-      targets: scrollText,
-      alpha: 0.6,
-      duration: 1000,
-      yoyo: true,
-      repeat: -1
     })
     
     this.updateScrollIndicator()
@@ -510,9 +491,9 @@ export class InstructionsScene extends Phaser.Scene {
       thumbGlow.y = thumbY
       thumb.y = thumbY
       
-      // Pulse the arrows to draw attention
-      const arrowUp = this.scrollIndicator.list[5] as Phaser.GameObjects.Text
-      const arrowDown = this.scrollIndicator.list[6] as Phaser.GameObjects.Text
+      // Pulse the arrows to draw attention (now at indices 4 and 5 after removing scroll text)
+      const arrowUp = this.scrollIndicator.list[4] as Phaser.GameObjects.Text
+      const arrowDown = this.scrollIndicator.list[5] as Phaser.GameObjects.Text
       arrowUp.setAlpha(scrollPercent > 0 ? 0.5 : 1)
       arrowDown.setAlpha(scrollPercent < 1 ? 1 : 0.5)
       
