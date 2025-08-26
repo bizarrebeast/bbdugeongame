@@ -36,25 +36,18 @@ export class Door extends Phaser.Physics.Arcade.Sprite {
     this.playerNearby = true
     
     if (!this.promptText) {
-      if (this.isFirstLevel) {
-        // Show instruction popup for first level
-        this.createInstructionPopup()
-      } else {
-        // Show simple prompt for other levels
-        this.promptText = this.scene.add.text(
-          this.x,
-          this.y - 70,  // Position above door
-          'Press UP to enter',
-          {
-            fontSize: '16px',
-            color: '#ffffff',
-            backgroundColor: '#000000',
-            padding: { x: 6, y: 4 },
-            stroke: '#ffffff',
-            strokeThickness: 1
-          }
-        ).setOrigin(0.5).setDepth(100)
-      }
+      // Show simple prompt for all levels including first level
+      this.promptText = this.scene.add.text(
+        this.x,
+        this.y - 70,  // Position above door
+        'Press UP to enter',
+        {
+          fontSize: '16px',
+          color: '#ffff00',  // Yellow text
+          stroke: '#000000',  // Black stroke for visibility
+          strokeThickness: 2
+        }
+      ).setOrigin(0.5).setDepth(100)
     }
   }
   
