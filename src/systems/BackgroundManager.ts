@@ -27,13 +27,21 @@ export class BackgroundManager {
   }
 
   private initializeChapters(): void {
-    // Initialize chapter structure - URLs to be added later
+    // Initialize chapter structure
     this.chapters.set('crystal_cavern', {
       name: 'Crystal Cavern',
       levelRange: [1, 10],
       backgrounds: [
-        // For now, using the existing crystal cavern background
-        'crystal-cavern-bg'
+        'crystal-cavern-1',
+        'crystal-cavern-2',
+        'crystal-cavern-3',
+        'crystal-cavern-4',
+        'crystal-cavern-5',
+        'crystal-cavern-6',
+        'crystal-cavern-7',
+        'crystal-cavern-8',
+        'crystal-cavern-9',
+        'crystal-cavern-10'
       ],
       theme: 'underground crystal caves with glowing gems'
     })
@@ -42,8 +50,17 @@ export class BackgroundManager {
       name: 'Volcanic Crystal Cavern',
       levelRange: [11, 20],
       backgrounds: [
-        // Placeholder - will be populated with actual backgrounds
-        'crystal-cavern-bg' // Using same for now
+        // Placeholder - reusing crystal cavern backgrounds for now
+        'crystal-cavern-1',
+        'crystal-cavern-2',
+        'crystal-cavern-3',
+        'crystal-cavern-4',
+        'crystal-cavern-5',
+        'crystal-cavern-6',
+        'crystal-cavern-7',
+        'crystal-cavern-8',
+        'crystal-cavern-9',
+        'crystal-cavern-10'
       ],
       theme: 'lava-infused crystal formations, heat effects'
     })
@@ -52,8 +69,17 @@ export class BackgroundManager {
       name: 'Steampunk',
       levelRange: [21, 30],
       backgrounds: [
-        // Placeholder
-        'crystal-cavern-bg'
+        // Placeholder - reusing crystal cavern backgrounds for now
+        'crystal-cavern-1',
+        'crystal-cavern-2',
+        'crystal-cavern-3',
+        'crystal-cavern-4',
+        'crystal-cavern-5',
+        'crystal-cavern-6',
+        'crystal-cavern-7',
+        'crystal-cavern-8',
+        'crystal-cavern-9',
+        'crystal-cavern-10'
       ],
       theme: 'industrial machinery, gears, steam pipes'
     })
@@ -62,8 +88,17 @@ export class BackgroundManager {
       name: 'Storm',
       levelRange: [31, 40],
       backgrounds: [
-        // Placeholder
-        'crystal-cavern-bg'
+        // Placeholder - reusing crystal cavern backgrounds for now
+        'crystal-cavern-1',
+        'crystal-cavern-2',
+        'crystal-cavern-3',
+        'crystal-cavern-4',
+        'crystal-cavern-5',
+        'crystal-cavern-6',
+        'crystal-cavern-7',
+        'crystal-cavern-8',
+        'crystal-cavern-9',
+        'crystal-cavern-10'
       ],
       theme: 'lightning, clouds, turbulent weather'
     })
@@ -72,8 +107,17 @@ export class BackgroundManager {
       name: 'Galactic',
       levelRange: [41, 50],
       backgrounds: [
-        // Placeholder
-        'crystal-cavern-bg'
+        // Placeholder - reusing crystal cavern backgrounds for now
+        'crystal-cavern-1',
+        'crystal-cavern-2',
+        'crystal-cavern-3',
+        'crystal-cavern-4',
+        'crystal-cavern-5',
+        'crystal-cavern-6',
+        'crystal-cavern-7',
+        'crystal-cavern-8',
+        'crystal-cavern-9',
+        'crystal-cavern-10'
       ],
       theme: 'space, stars, nebulae, cosmic themes'
     })

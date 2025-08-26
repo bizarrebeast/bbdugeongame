@@ -401,7 +401,19 @@ export class GameScene extends Phaser.Scene {
     // Load talking bubble sprite
     this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
     
-    // Load crystal cavern background
+    // Load Crystal Cavern chapter backgrounds (levels 1-10)
+    this.load.image('crystal-cavern-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%201-o5M2rYkM5ffKmdp8pMw6QzmR87KA0k.png?4qbf')
+    this.load.image('crystal-cavern-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%202-Sdyqtq58gC1XVkllts47M2AzYOTgpX.png?0mX8')
+    this.load.image('crystal-cavern-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%203-iE9A520YoUrX7GIVwgKojzeC0JuMlg.png?R6UH')
+    this.load.image('crystal-cavern-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%204-oMun45XW8jHJAX8lWQ3HbOad2TL5gt.png?3ulH')
+    this.load.image('crystal-cavern-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%205-AQS3zCiGE8QOqamLmdoOJ7SjecHlW8.png?d4aM')
+    this.load.image('crystal-cavern-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%206-dqO5JRSPRzu4pkpC66pBTL416gw0iV.png?wGuc')
+    this.load.image('crystal-cavern-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%207-rPVZWuJSGouJJHwzx0PYjHIJ9AWeOG.png?3QAw')
+    this.load.image('crystal-cavern-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%208-AKdyp1OQa5qT20Wab5aCgnMKwpPEY9.png?ejNY')
+    this.load.image('crystal-cavern-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%209-s5weyP0mb0UngvFh3FP3FS4s4OuVCo.png?QS83')
+    this.load.image('crystal-cavern-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2010-HpLzzcMARGk4bAxftjkS7AcaLC3ljt.png?AETo')
+    
+    // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
     // Load yellow enemy animation sprites
