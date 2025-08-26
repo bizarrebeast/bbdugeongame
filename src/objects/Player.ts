@@ -10,6 +10,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private touchControls: TouchControls | null = null
   private walkAnimationTimer: number = 0
   private climbAnimationTimer: number = 0
+  private footstepTimer: number = 0
+  private readonly FOOTSTEP_INTERVAL: number = 300 // Time between footsteps in ms
   private idleAnimationTimer: number = 0
   private currentFrame: 'idle' | 'leftStep' | 'rightStep' | 'jumpLeftFoot' | 'jumpRightFoot' = 'idle'
   private currentIdleState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'eye5' | 'blink' = 'eye1'
@@ -38,6 +40,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private crystalBallParticles: Phaser.GameObjects.Graphics[] = []
   private crystalBallParticleTimer?: Phaser.Time.TimerEvent
   private crystalBallGlow?: Phaser.GameObjects.Graphics
+  private crystalBallWarningPlayed: boolean = false
   
   // Cursed Orb power-up (darkness effect)
   private cursedOrbActive: boolean = false
@@ -46,6 +49,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursedOrbParticles: Phaser.GameObjects.Graphics[] = []
   private cursedOrbParticleTimer?: Phaser.Time.TimerEvent
   private cursedOrbGlow?: Phaser.GameObjects.Graphics
+  private cursedOrbWarningPlayed: boolean = false
   
   // Cursed Teal Orb power-up (control reversal)
   private cursedTealOrbActive: boolean = false
@@ -54,6 +58,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursedTealOrbParticles: Phaser.GameObjects.Graphics[] = []
   private cursedTealOrbParticleTimer?: Phaser.Time.TimerEvent
   private cursedTealOrbGlow?: Phaser.GameObjects.Graphics
+  private cursedTealOrbWarningPlayed: boolean = false
   
   // Speech/Thought bubble system
   private idleTimer: number = 0
@@ -704,6 +709,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private handleRunningAnimation(deltaTime: number): void {
+    // Handle footstep sounds independently of animation speed
+    this.footstepTimer += deltaTime
+    if (this.footstepTimer >= this.FOOTSTEP_INTERVAL) {
+      // Play footstep sound at normal speed (no rate modification)
+      // this.scene.sound.play('footstep', { volume: 0.3 }) // MUTED for now
+      this.footstepTimer = 0 // Reset timer
+    }
+    
     // Check if we should use the new two-layer system
     if (this.useTwoLayerRunning && this.runBodySprite && this.runLegsSprite) {
       // 85% faster leg animation (35ms * 0.8 = 28ms)
@@ -719,6 +732,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.runningTiltTimer = 0
         this.lastFrameWasJump = false
         this.legAnimationStep = 0 // Reset leg animation to start
+        this.footstepTimer = 0 // Reset footstep timer when starting to run
         return
       }
       
@@ -780,6 +794,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private handleIdleAnimation(deltaTime: number): void {
+    // Reset footstep timer when idle
+    this.footstepTimer = 0
+    
     // Check if we're playing the long idle animation (booty shake)
     if (this.isPlayingLongIdle) {
       this.handleLongIdleAnimation(deltaTime)
@@ -1059,6 +1076,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     console.log('🔮 ACTIVATING Crystal Ball power-up for 10 seconds!')
     this.crystalBallActive = true
     this.crystalBallTimer = this.CRYSTAL_BALL_DURATION
+    this.crystalBallWarningPlayed = false // Reset warning flag
     
     // Start green particle effect around player
     this.startCrystalBallParticles()
@@ -1076,6 +1094,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private updateCrystalBallTimer(delta: number): void {
     if (this.crystalBallActive) {
       this.crystalBallTimer -= delta
+      
+      // Warning when 2 seconds remaining (sound removed)
+      if (!this.crystalBallWarningPlayed && this.crystalBallTimer <= 2000 && this.crystalBallTimer > 0) {
+        this.crystalBallWarningPlayed = true
+        console.log('⏰ Timer warning for crystal ball')
+      }
       
       // Update glow position to follow player
       if (this.crystalBallGlow) {
@@ -1252,6 +1276,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   activateCursedOrb(): void {
     this.cursedOrbActive = true
     this.cursedOrbTimer = this.CURSED_ORB_DURATION
+    this.cursedOrbWarningPlayed = false // Reset warning flag
     
     // Start dark purple particle effect around player
     this.startCursedOrbParticles()
@@ -1269,6 +1294,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   activateCursedTealOrb(): void {
     this.cursedTealOrbActive = true
     this.cursedTealOrbTimer = this.CURSED_TEAL_ORB_DURATION
+    this.cursedTealOrbWarningPlayed = false // Reset warning flag
     
     // Start teal particle effect around player
     this.startCursedTealOrbParticles()
@@ -1292,6 +1318,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private updateCursedOrbTimer(delta: number): void {
     if (this.cursedOrbActive) {
       this.cursedOrbTimer -= delta
+      
+      // Warning when 2 seconds remaining (sound removed)
+      if (!this.cursedOrbWarningPlayed && this.cursedOrbTimer <= 2000 && this.cursedOrbTimer > 0) {
+        this.cursedOrbWarningPlayed = true
+        console.log('⏰ Timer warning for cursed orb')
+      }
       
       // Update glow position to follow player
       if (this.cursedOrbGlow) {
@@ -1324,6 +1356,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private updateCursedTealOrbTimer(delta: number): void {
     if (this.cursedTealOrbActive) {
       this.cursedTealOrbTimer -= delta
+      
+      // Warning when 2 seconds remaining (sound removed)
+      if (!this.cursedTealOrbWarningPlayed && this.cursedTealOrbTimer <= 2000 && this.cursedTealOrbTimer > 0) {
+        this.cursedTealOrbWarningPlayed = true
+        console.log('⏰ Timer warning for cursed teal orb')
+      }
       
       // Update glow position to follow player
       if (this.cursedTealOrbGlow) {

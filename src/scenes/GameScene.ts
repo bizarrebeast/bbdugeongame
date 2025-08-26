@@ -79,6 +79,7 @@ export class GameScene extends Phaser.Scene {
   private invincibilityTimerMask!: Phaser.GameObjects.Graphics
   private invincibilityTimeRemaining: number = 0
   private invincibilityTimerSparkleTimer: Phaser.Time.TimerEvent | null = null
+  private invincibilityWarningPlayed: boolean = false
   private crystalBallTimerImage!: Phaser.GameObjects.Image
   private crystalBallTimerMask!: Phaser.GameObjects.Graphics
   private cursedOrbTimerImage!: Phaser.GameObjects.Image
@@ -440,6 +441,11 @@ export class GameScene extends Phaser.Scene {
     // Crystal ball sounds
     this.load.audio('crystal-ball-throw', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/throw%20crystal%20ball%20sfx-oZfZHRmRnqebRdw2YrcMLR7LlLCMRp.wav?aKDe')
     this.load.audio('crystal-ball-bounce', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20ball%20bounce%20sfx-bOZrWB6YiMh6bedqvdLw3YaW63MZxO.wav?ORcs')
+    
+    // Level/UI sounds
+    this.load.audio('continue-button', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%20complete%20continue%20button%20sfx-tKmarJUBWs3rQJhPDsv2IYj5oc8p5j.wav?V3lH')
+    this.load.audio('door-open', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/door%20open%20sfx-ZXUAkiOX3bcDKzAbndKqXhZm9yXxFW.wav?wtyl')
+    this.load.audio('menu-toggle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/menu%20open%20and%20close-nUqXoXI4Du6a4mBgJmOcJZuJkGXAa2.wav?EOlm')
     
     // Player damage sounds
     this.load.audio('spike-hit', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20hits%20spikes%20sfx-Pt2SxNCgCXtyIz2jiBS3AYiCvYrp8X.wav?IM9a')
@@ -1182,6 +1188,7 @@ export class GameScene extends Phaser.Scene {
     // Remove old pointerdown listener and add new one
     this.hamburgerMenuButton.off('pointerdown') // Remove only pointerdown
     this.hamburgerMenuButton.on('pointerdown', () => {
+      this.sound.play('menu-toggle', { volume: 0.4 })
       this.menuOverlay.toggle()
     })
     
@@ -4123,6 +4130,7 @@ export class GameScene extends Phaser.Scene {
     
     this.invincibilityActive = true
     this.invincibilityTimeRemaining = 10
+    this.invincibilityWarningPlayed = false // Reset warning flag
     
     // Activate speed boost for player during invincibility
     this.player.setSpeedMultiplier(1.5)
@@ -4147,6 +4155,11 @@ export class GameScene extends Phaser.Scene {
   private updateInvincibilityTimer(): void {
     this.invincibilityTimeRemaining -= 0.1
     
+    // Warning when 2 seconds remaining (sound removed)
+    if (!this.invincibilityWarningPlayed && this.invincibilityTimeRemaining <= 2 && this.invincibilityTimeRemaining > 0) {
+      this.invincibilityWarningPlayed = true
+      console.log('⏰ Timer warning for invincibility')
+    }
     
     if (this.invincibilityTimeRemaining <= 0) {
       // End invincibility
@@ -6148,6 +6161,9 @@ export class GameScene extends Phaser.Scene {
     
     this.isLevelComplete = true
     
+    // Play door opening sound
+    this.sound.play('door-open', { volume: 0.5 })
+    
     // Disable player controls
     this.player.body!.enable = false
     
@@ -6294,6 +6310,9 @@ export class GameScene extends Phaser.Scene {
     
     // Continue button handler
     continueBtn.on('pointerdown', () => {
+      // Play continue button sound
+      this.sound.play('continue-button', { volume: 0.5 })
+      
       // Save accumulated score and crystals before progressing
       const registry = this.game.registry
       registry.set('levelProgression', true)
@@ -6470,6 +6489,9 @@ export class GameScene extends Phaser.Scene {
         this.game.registry.set('playerLives', this.lives)  // Save to registry
         this.updateLivesDisplay()
         
+        // Play heart collect sound for earning extra life
+        this.sound.play('heart-collect', { volume: 0.5 })
+        
         // Show extra life popup
         this.showExtraLifePopup()
       }
@@ -6617,6 +6639,9 @@ export class GameScene extends Phaser.Scene {
     
     // Continue button handler - restart current level
     continueBtn.on('pointerdown', () => {
+      // Play continue button sound
+      this.sound.play('continue-button', { volume: 0.5 })
+      
       this.scene.restart() // This will keep current level and not reset lives/coins
     })
     
