@@ -190,6 +190,10 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     this.isSquished = true
     this.setVelocity(0, 0)
     
+    // Stop rolling behavior
+    this.isRolling = false
+    this.isBiting = false
+    
     // Disable physics body immediately to prevent further collisions
     if (this.body) {
       this.body.enable = false
@@ -197,6 +201,12 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     
     // Reset rotation to upright for squish effect
     this.setRotation(0)
+    this.totalRotation = 0
+    
+    // Set to closed mouth texture for clean squish
+    if (this.scene.textures.exists('beetle-mouth-closed')) {
+      this.setTexture('beetle-mouth-closed')
+    }
     
     // Squish animation
     this.scene.tweens.add({
