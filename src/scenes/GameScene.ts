@@ -661,11 +661,8 @@ export class GameScene extends Phaser.Scene {
     // Sync level manager with registry
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
-    // Clear any cached level from localStorage and always start at level 1
+    // Clear any cached level from localStorage
     localStorage.removeItem('treasureQuest_currentLevel')
-    // Also sync the level manager to level 1 to override any testing values
-    this.levelManager.setCurrentLevel(1)
-    this.game.registry.set('currentLevel', 1)
     
     // Reset game state
     this.isGameOver = false
@@ -6507,6 +6504,9 @@ export class GameScene extends Phaser.Scene {
       // Advance to next level
       const nextLevel = this.levelManager.nextLevel()
       
+      // Update the registry with the new level
+      registry.set('currentLevel', nextLevel)
+      
       // Check for chapter transition
       if (this.backgroundManager.isChapterTransition(nextLevel)) {
         // Preload next chapter backgrounds
@@ -7234,6 +7234,7 @@ export class GameScene extends Phaser.Scene {
     restartButton.on('pointerdown', () => {
       // Reset to level 1 and reset lives/coins
       this.levelManager.resetToStart()
+      this.game.registry.set('currentLevel', 1)  // Reset level in registry
       this.game.registry.set('playerLives', 3)
       this.game.registry.set('totalCoins', 0)
       this.scene.restart()
@@ -7251,6 +7252,7 @@ export class GameScene extends Phaser.Scene {
     // Keyboard support
     this.input.keyboard!.on('keydown-R', () => {
       this.levelManager.resetToStart()
+      this.game.registry.set('currentLevel', 1)  // Reset level in registry
       this.game.registry.set('playerLives', 3)
       this.game.registry.set('totalCoins', 0)
       this.scene.restart()
