@@ -50,17 +50,16 @@ export class BackgroundManager {
       name: 'Volcanic Crystal Cavern',
       levelRange: [11, 20],
       backgrounds: [
-        // Placeholder - reusing crystal cavern backgrounds for now
-        'crystal-cavern-1',
-        'crystal-cavern-2',
-        'crystal-cavern-3',
-        'crystal-cavern-4',
-        'crystal-cavern-5',
-        'crystal-cavern-6',
-        'crystal-cavern-7',
-        'crystal-cavern-8',
-        'crystal-cavern-9',
-        'crystal-cavern-10'
+        'volcanic-crystal-1',
+        'volcanic-crystal-2',
+        'volcanic-crystal-3',
+        'volcanic-crystal-4',
+        'volcanic-crystal-5',
+        'volcanic-crystal-6',
+        'volcanic-crystal-7',
+        'volcanic-crystal-8',
+        'volcanic-crystal-9',
+        'volcanic-crystal-10'
       ],
       theme: 'lava-infused crystal formations, heat effects'
     })

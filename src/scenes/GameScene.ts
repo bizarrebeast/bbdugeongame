@@ -413,6 +413,18 @@ export class GameScene extends Phaser.Scene {
     this.load.image('crystal-cavern-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%209-s5weyP0mb0UngvFh3FP3FS4s4OuVCo.png?QS83')
     this.load.image('crystal-cavern-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2010-HpLzzcMARGk4bAxftjkS7AcaLC3ljt.png?AETo')
     
+    // Load Volcanic Crystal Cavern chapter backgrounds (levels 11-20)
+    this.load.image('volcanic-crystal-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2011-GZe4EOiyQqMVmrL1suPvCfj2H7XRyU.png?h8lo')
+    this.load.image('volcanic-crystal-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2012-Xpfr4nKJX0JcfLlrjZxaw0UVKr3xRJ.png?VTjY')
+    this.load.image('volcanic-crystal-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2013-5VWrULlkLRSqGhIPYBKAGOlY7cvDJs.png?spcG')
+    this.load.image('volcanic-crystal-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2014-1gw8iVsW1NFUtTX9qkrCaOkzceXgZa.png?uJJ4')
+    this.load.image('volcanic-crystal-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2015-My6wxLCAKkrjp7DnRUhTTNzy4pGzNz.png?wogd')
+    this.load.image('volcanic-crystal-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2016-HvPApBdJnsvIKOHL12BVv7OOCRvtXl.png?JpAr')
+    this.load.image('volcanic-crystal-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2017-M4H2arE4cKPFCFnWvPKeO75XQhGeTr.png?aP8G')
+    this.load.image('volcanic-crystal-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2018-EaBUdUtkhdA9O7UPGhUzbCSufw5Id3.png?7XYw')
+    this.load.image('volcanic-crystal-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2019-ypt8lxgxyGduFRNsmei09BL2mKGIYH.png?ojyx')
+    this.load.image('volcanic-crystal-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2020-VoCdHbTIAHWaULUuJAu1kL8TiARBUM.png?CK3z')
+    
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
