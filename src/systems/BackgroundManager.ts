@@ -121,8 +121,22 @@ export class BackgroundManager {
     this.chapters.set('beast_mode', {
       name: 'Beast Mode',
       levelRange: [51, Infinity],
-      backgrounds: [],
-      theme: 'random pool from all chapters'
+      backgrounds: [
+        'beast-mode-1',
+        'beast-mode-2',
+        'beast-mode-3',
+        'beast-mode-4',
+        'beast-mode-5',
+        'beast-mode-6',
+        'beast-mode-7',
+        'beast-mode-8',
+        'beast-mode-9',
+        'beast-mode-10',
+        'beast-mode-11',
+        'beast-mode-12',
+        'beast-mode-13'
+      ],
+      theme: 'random pool from all chapters plus exclusive beast backgrounds'
     })
 
     this.chapters.set('bonus', {
@@ -133,7 +147,9 @@ export class BackgroundManager {
         'bonus-2',
         'bonus-3',
         'bonus-4',
-        'bonus-5'
+        'bonus-5',
+        'bonus-6',
+        'bonus-7'
       ],
       theme: 'unique backgrounds for bonus levels'
     })

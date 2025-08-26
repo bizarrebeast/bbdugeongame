@@ -467,6 +467,23 @@ export class GameScene extends Phaser.Scene {
     this.load.image('bonus-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%203-kn73QdXKclD3LrMf3BXOH4B3ujbuxN.png?t9Nv')
     this.load.image('bonus-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%204-opRR6rXctR8XkRkQIo5LfITdiyHhzq.png?Yubo')
     this.load.image('bonus-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%205-FOtt55z5rVDYStfszLrUJRnnpovVMb.png?RCnr')
+    this.load.image('bonus-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%206-mAMzjvs6bdoK8SLuFaztJphnDOLA9U.png?j0bG')
+    this.load.image('bonus-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%207-9aPLVTEEDFoFgelvBQTC9ISErnYBCj.png?Ongz')
+    
+    // Load Beast Mode exclusive backgrounds
+    this.load.image('beast-mode-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%201-sRb0H9ErQnF9lBm5DuUzqtpwbZkRVS.png?3q8c')
+    this.load.image('beast-mode-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%202-LUcNgytry1u8MpUxWVGimvuMvTIVAT.png?vxmF')
+    this.load.image('beast-mode-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%203-goZNWmCpFDdm6dGhQdNO7CkgPLwqME.png?ExJw')
+    this.load.image('beast-mode-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%204-d2C0xeqQEzBvpaqO7diW0kqqPLOsk6.png?xmRP')
+    this.load.image('beast-mode-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%205-dCQCUxMIvQGPsWXKVh8hzq3dX8M7TA.png?M3Hi')
+    this.load.image('beast-mode-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%206-eOFodTEiDxDZUN3E4wIMGwzxUJ8QIK.png?1gGD')
+    this.load.image('beast-mode-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%207-TmIgs4UZyBWqt2718z94QbOAdLdlcS.png?iWFS')
+    this.load.image('beast-mode-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%208-vkOQZUrtkY7OX8U7lF5G9QCnRGKYq0.png?26ru')
+    this.load.image('beast-mode-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%209-3U9nvV48tv4NvvdFgqprbv3HcVgGg1.png?tx2Q')
+    this.load.image('beast-mode-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2010-9N8a5M5G9wI0OVoSMXBhlHPqaLg2d2.png?mPP6')
+    this.load.image('beast-mode-11', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2011-ujFZSIcr0VPwhT4smr13EPziNY4kEa.png?Rnqv')
+    this.load.image('beast-mode-12', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2012-hjyMpMwqW5hKpVPAsFGPaxuD5RaC7B.png?A52X')
+    this.load.image('beast-mode-13', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2013-iekgQPJN2LYhyLP6LETjP8hkD2IlnD.png?3eMk')
     
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
