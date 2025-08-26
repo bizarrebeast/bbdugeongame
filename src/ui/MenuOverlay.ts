@@ -17,10 +17,6 @@ export class MenuOverlay {
   private musicToggle: Phaser.GameObjects.Container | null = null
   private instructionsOverlay: Phaser.GameObjects.Container | null = null
   
-  // Pause state tracking
-  private pausedTimers: Phaser.Time.TimerEvent[] = []
-  private pausedTweens: Phaser.Tweens.Tween[] = []
-  
   constructor(scene: GameScene) {
     this.scene = scene
     this.loadSettings()
@@ -28,49 +24,58 @@ export class MenuOverlay {
   }
   
   private create(): void {
-    // Main container for entire menu
-    this.container = this.scene.add.container(
-      GameSettings.canvas.width / 2,
-      GameSettings.canvas.height / 2
-    )
-    this.container.setDepth(1500)
+    // Get camera dimensions for proper centering
+    const camera = this.scene.cameras.main
+    const centerX = camera.width / 2
+    const centerY = camera.height / 2
     
-    // Semi-transparent background overlay
+    
+    // Main container for entire menu - positioned at camera center
+    this.container = this.scene.add.container(centerX, centerY)
+    this.container.setDepth(1500)
+    // Make the container fixed to camera so it doesn't move with the game world
+    this.container.setScrollFactor(0, 0)
+    
+    // Semi-transparent background overlay - covers entire camera view
     this.backgroundOverlay = this.scene.add.rectangle(
       0, 0,
-      GameSettings.canvas.width,
-      GameSettings.canvas.height,
+      camera.width * 2, // Make it extra wide to ensure full coverage
+      camera.height * 2, // Make it extra tall to ensure full coverage
       0x000000, 0.7
     )
-    this.backgroundOverlay.setInteractive() // Block game clicks
+    // Block all game clicks by consuming pointer events
+    this.backgroundOverlay.setInteractive()
+    this.backgroundOverlay.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event.stopPropagation()
+    })
     
-    // Main menu panel
+    // Main menu panel - positioned at center relative to container
     this.menuPanel = this.createMenuPanel()
     
     // Title
     const title = this.scene.add.text(0, -200, 'GAME MENU', {
       fontSize: '18px',
       fontFamily: '"Press Start 2P", system-ui',
-      color: '#FFD700',
+      color: '#FFD700', // Keep gold for title
       align: 'center'
     })
     title.setOrigin(0.5)
     
     // Instructions button
     const instructionsBtn = this.createButton(
-      0, -100, 
+      0, -140, 
       'VIEW INSTRUCTIONS',
-      () => this.showInstructions(),
-      0x008080
+      () => this.openInstructionsScene(),
+      0x4a148c // Purple
     )
     
     // Divider line
-    const divider1 = this.createDivider(-50)
+    const divider1 = this.createDivider(-100)
     
-    // Sound effects toggle
+    // Sound effects toggle (with line break)
     this.soundToggle = this.createToggleSwitch(
-      'Sound Effects',
-      0,
+      'Sound\nEffects',
+      -60,
       this.soundEffectsEnabled,
       (enabled) => this.setSoundEffects(enabled)
     )
@@ -78,26 +83,26 @@ export class MenuOverlay {
     // Music toggle
     this.musicToggle = this.createToggleSwitch(
       'Music',
-      60,
+      -10,
       this.musicEnabled,
       (enabled) => this.setMusic(enabled)
     )
     
     // Divider line
-    const divider2 = this.createDivider(120)
+    const divider2 = this.createDivider(30)
     
-    // SDK mute indicator (read-only)
-    const sdkIndicator = this.createSDKIndicator(160)
+    // BizarreBeasts info instead of SDK indicator
+    const bizarreInfo = this.createBizarreInfo(60)
     
     // Divider line
-    const divider3 = this.createDivider(200)
+    const divider3 = this.createDivider(170)
     
     // Resume button
     const resumeBtn = this.createButton(
-      0, 250,
+      0, 210,
       'RESUME GAME',
       () => this.close(),
-      0x32CD32
+      0x32CD32 // Keep green for resume
     )
     
     // Add all elements to container
@@ -110,10 +115,17 @@ export class MenuOverlay {
       this.soundToggle,
       this.musicToggle,
       divider2,
-      sdkIndicator,
+      bizarreInfo,
       divider3,
       resumeBtn
     ])
+    
+    // Set scroll factor for all children to match container
+    this.container.list.forEach((child: any) => {
+      if (child.setScrollFactor) {
+        child.setScrollFactor(0)
+      }
+    })
     
     // Initially hidden
     this.container.setVisible(false)
@@ -122,12 +134,19 @@ export class MenuOverlay {
   private createMenuPanel(): Phaser.GameObjects.Graphics {
     const panel = this.scene.add.graphics()
     
-    // Draw teal panel with border
-    panel.fillStyle(0x008080, 0.95)
-    panel.fillRoundedRect(-200, -300, 400, 600, 15)
+    // Draw purple panel with border - centered relative to container
+    const panelWidth = Math.min(400, this.scene.cameras.main.width - 40)
+    const panelHeight = Math.min(500, this.scene.cameras.main.height - 40)
+    const panelX = -panelWidth / 2
+    const panelY = -panelHeight / 2
     
-    panel.lineStyle(3, 0x20B2AA)
-    panel.strokeRoundedRect(-200, -300, 400, 600, 15)
+    
+    // Purple background with gold border
+    panel.fillStyle(0x4a148c, 0.95) // Purple background
+    panel.fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 15)
+    
+    panel.lineStyle(3, 0xFFD700) // Gold border
+    panel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 15)
     
     return panel
   }
@@ -137,47 +156,57 @@ export class MenuOverlay {
     y: number, 
     text: string, 
     onClick: () => void,
-    color: number = 0x008080
+    color: number = 0x4a148c
   ): Phaser.GameObjects.Container {
     const container = this.scene.add.container(x, y)
     
-    // Button background
-    const bg = this.scene.add.graphics()
-    bg.fillStyle(color, 0.8)
-    bg.fillRoundedRect(-170, -25, 340, 50, 10)
-    bg.lineStyle(2, 0x20B2AA)
-    bg.strokeRoundedRect(-170, -25, 340, 50, 10)
+    // Use a rectangle game object instead of graphics for better hit detection
+    const buttonWidth = 340
+    const buttonHeight = 50
+    
+    // Create visual background rectangle
+    const bgRect = this.scene.add.rectangle(0, 0, buttonWidth, buttonHeight, color, 0.8)
+    bgRect.setStrokeStyle(2, 0xFFD700)
     
     // Button text
     const btnText = this.scene.add.text(0, 0, text, {
       fontSize: '14px',
       fontFamily: '"Press Start 2P", system-ui',
-      color: '#FFFFFF'
+      color: '#FFD700' // Yellow text
     })
     btnText.setOrigin(0.5)
     
-    container.add([bg, btnText])
+    container.add([bgRect, btnText])
     
-    // Make interactive
-    bg.setInteractive(new Phaser.Geom.Rectangle(-170, -25, 340, 50), Phaser.Geom.Rectangle.Contains)
+    // Make the rectangle interactive (it will use its own bounds)
+    bgRect.setInteractive({ useHandCursor: true })
     
-    bg.on('pointerover', () => {
-      bg.clear()
-      bg.fillStyle(0x20B2AA, 0.9)
-      bg.fillRoundedRect(-170, -25, 340, 50, 10)
-      bg.lineStyle(2, 0xFFD700)
-      bg.strokeRoundedRect(-170, -25, 340, 50, 10)
+    // Debug: Check if interactive is set
+    console.log(`Button "${text}" interactive:`, bgRect.input !== null)
+    
+    bgRect.on('pointerover', () => {
+      console.log('Button hover:', text)
+      bgRect.setFillStyle(0x20B2AA, 0.9)
     })
     
-    bg.on('pointerout', () => {
-      bg.clear()
-      bg.fillStyle(color, 0.8)
-      bg.fillRoundedRect(-170, -25, 340, 50, 10)
-      bg.lineStyle(2, 0x20B2AA)
-      bg.strokeRoundedRect(-170, -25, 340, 50, 10)
+    bgRect.on('pointerout', () => {
+      bgRect.setFillStyle(color, 0.8)
     })
     
-    bg.on('pointerdown', onClick)
+    bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      console.log('Button clicked:', text)
+      if (pointer && pointer.event) {
+        pointer.event.stopPropagation()
+      }
+      onClick()
+    })
+    
+    // Also make the container itself interactive as a fallback
+    container.setInteractive(new Phaser.Geom.Rectangle(-buttonWidth/2, -buttonHeight/2, buttonWidth, buttonHeight), Phaser.Geom.Rectangle.Contains)
+    container.on('pointerdown', () => {
+      console.log('Container clicked:', text)
+      onClick()
+    })
     
     return container
   }
@@ -190,11 +219,13 @@ export class MenuOverlay {
   ): Phaser.GameObjects.Container {
     const container = this.scene.add.container(0, y)
     
-    // Label text
+    // Label text (supports multi-line)
     const labelText = this.scene.add.text(-90, 0, label, {
       fontSize: '12px',
       fontFamily: '"Press Start 2P", system-ui',
-      color: '#FFFFFF'
+      color: '#FFD700', // Yellow text
+      align: 'left',
+      lineSpacing: 5
     })
     labelText.setOrigin(0, 0.5)
     
@@ -208,7 +239,7 @@ export class MenuOverlay {
       track.clear()
       track.fillStyle(enabled ? 0x32CD32 : 0xFF6B6B, 1)
       track.fillRoundedRect(trackX - trackWidth/2, -trackHeight/2, trackWidth, trackHeight, 15)
-      track.lineStyle(2, 0x20B2AA)
+      track.lineStyle(2, 0xFFD700) // Gold border
       track.strokeRoundedRect(trackX - trackWidth/2, -trackHeight/2, trackWidth, trackHeight, 15)
     }
     
@@ -217,7 +248,7 @@ export class MenuOverlay {
     // Toggle knob
     const knobX = initialState ? trackX + 15 : trackX - 15
     const knob = this.scene.add.circle(knobX, 0, 13, 0xFFFFFF)
-    knob.setStrokeStyle(2, 0x20B2AA)
+    knob.setStrokeStyle(2, 0xFFD700) // Gold border
     
     container.add([labelText, track, knob])
     
@@ -228,7 +259,8 @@ export class MenuOverlay {
     
     let currentState = initialState
     
-    track.on('pointerdown', () => {
+    track.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event.stopPropagation()
       currentState = !currentState
       
       // Animate knob
@@ -259,11 +291,60 @@ export class MenuOverlay {
   
   private createDivider(y: number): Phaser.GameObjects.Graphics {
     const divider = this.scene.add.graphics()
-    divider.lineStyle(1, 0x20B2AA, 0.5)
+    divider.lineStyle(1, 0xFFD700, 0.3) // Gold divider
     divider.moveTo(-150, y)
     divider.lineTo(150, y)
     divider.strokePath()
     return divider
+  }
+  
+  private createBizarreInfo(y: number): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, y)
+    
+    // Project name
+    const projectName = this.scene.add.text(0, 0, 'BizarreBeasts ($BB)', {
+      fontSize: '12px',
+      fontFamily: '"Press Start 2P", system-ui',
+      color: '#FFD700' // Yellow text
+    })
+    projectName.setOrigin(0.5)
+    
+    // Contract address (same size as Created by)
+    const contractText = this.scene.add.text(0, 25, 'CA:', {
+      fontSize: '10px',
+      fontFamily: '"Press Start 2P", system-ui',
+      color: '#FFD700'
+    })
+    contractText.setOrigin(0.5)
+    
+    const contractAddress = this.scene.add.text(0, 45, 
+      '0x0520bf1d3cEE163407aDA79109333aB1599b4004', {
+      fontSize: '7px',
+      fontFamily: 'monospace',
+      color: '#FFD700',
+      wordWrap: { width: 320 }
+    })
+    contractAddress.setOrigin(0.5)
+    
+    // Creator info
+    const creatorText = this.scene.add.text(0, 70, 'Created by @bizarrebeast', {
+      fontSize: '10px',
+      fontFamily: '"Press Start 2P", system-ui',
+      color: '#FFD700'
+    })
+    creatorText.setOrigin(0.5)
+    
+    // Join info
+    const joinText = this.scene.add.text(0, 95, 'Join /bizarrebeasts', {
+      fontSize: '10px',
+      fontFamily: '"Press Start 2P", system-ui',
+      color: '#FFD700'
+    })
+    joinText.setOrigin(0.5)
+    
+    container.add([projectName, contractText, contractAddress, creatorText, joinText])
+    
+    return container
   }
   
   private createSDKIndicator(y: number): Phaser.GameObjects.Container {
@@ -350,7 +431,9 @@ export class MenuOverlay {
   }
   
   open(): void {
-    if (this.isOpen) return
+    if (this.isOpen) {
+      return
+    }
     
     this.isOpen = true
     this.container.setVisible(true)
@@ -367,33 +450,26 @@ export class MenuOverlay {
     // Pause game
     this.pauseGame()
     
-    // Fade in animation
-    this.container.setAlpha(0)
-    this.scene.tweens.add({
-      targets: this.container,
-      alpha: 1,
-      duration: 200,
-      ease: 'Power2'
-    })
+    // Just set it visible directly - the fade animation seems to break it
+    this.container.setAlpha(1)
   }
   
   close(): void {
-    if (!this.isOpen) return
+    console.log('close() called, isOpen:', this.isOpen)
+    if (!this.isOpen) {
+      return
+    }
     
-    // Fade out animation
-    this.scene.tweens.add({
-      targets: this.container,
-      alpha: 0,
-      duration: 200,
-      ease: 'Power2',
-      onComplete: () => {
-        this.container.setVisible(false)
-        this.isOpen = false
-        
-        // Resume game
-        this.resumeGame()
-      }
-    })
+    // Set flag immediately
+    this.isOpen = false
+    
+    // Hide the container immediately
+    this.container.setVisible(false)
+    this.container.setAlpha(1) // Reset alpha for next open
+    console.log('Menu closed')
+    
+    // Resume game immediately
+    this.resumeGame()
   }
   
   private pauseGame(): void {
@@ -403,20 +479,11 @@ export class MenuOverlay {
     // Pause all animations
     this.scene.anims.pauseAll()
     
-    // Store and pause active timers
-    this.pausedTimers = this.scene.time.getAllEvents()
+    // Pause timers
     this.scene.time.paused = true
     
-    // Store and pause active tweens (but not menu tweens)
-    const allTweens = this.scene.tweens.getAllTweens()
-    this.pausedTweens = allTweens.filter(tween => {
-      // Don't pause menu-related tweens
-      const targets = tween.targets
-      return !targets.some((target: any) => 
-        target === this.container || this.container.list.includes(target)
-      )
-    })
-    this.pausedTweens.forEach(tween => tween.pause())
+    // Pause all tweens in the scene
+    this.scene.tweens.pauseAll()
     
     // Set pause flag
     this.scene.registry.set('isPaused', true)
@@ -432,9 +499,8 @@ export class MenuOverlay {
     // Resume timers
     this.scene.time.paused = false
     
-    // Resume stored tweens
-    this.pausedTweens.forEach(tween => tween.resume())
-    this.pausedTweens = []
+    // Resume all tweens
+    this.scene.tweens.resumeAll()
     
     // Clear pause flag
     this.scene.registry.set('isPaused', false)
@@ -537,6 +603,143 @@ export class MenuOverlay {
         this.instructionsOverlay?.setVisible(false)
       }
     })
+  }
+  
+  private openInstructionsScene(): void {
+    console.log('openInstructionsScene called')
+    
+    // Keep menu state but hide it
+    this.container.setVisible(false)
+    // Don't change isOpen flag - we're still conceptually in the menu
+    
+    // Sleep the game scene (preserves state better than pause)
+    this.scene.scene.sleep('GameScene')
+    
+    console.log('Launching InstructionsScene as overlay...')
+    // Launch instructions as an overlay scene
+    this.scene.scene.launch('InstructionsScene', { 
+      returnScene: 'GameScene',
+      fromMenu: true,  // This tells InstructionsScene to show "Close" instead of "Skip All"
+      reopenMenu: true // This tells it to reopen the menu when closing
+    })
+  }
+  
+  private showDebugHitboxes(): void {
+    console.log('Drawing debug hitboxes...')
+    
+    // Skip the background overlay (index 0) and draw debug rectangles for all interactive elements
+    this.container.list.forEach((child: any, index) => {
+      // Skip the background overlay
+      if (index === 0) {
+        console.log('Skipping background overlay')
+        return
+      }
+      
+      if (child.type === 'Container') {
+        // Find interactive children in containers (buttons)
+        child.list?.forEach((subChild: any, subIndex) => {
+          if (subChild.type === 'Rectangle' && subChild.input) {
+            // This is a button rectangle
+            try {
+              // Calculate bounds manually for rectangles
+              const x = this.container.x + child.x + subChild.x
+              const y = this.container.y + child.y + subChild.y
+              const width = subChild.width
+              const height = subChild.height
+              
+              const debugRect = this.scene.add.rectangle(
+                x,
+                y,
+                width,
+                height,
+                0x00FF00, 0.3  // Green with transparency
+              )
+              debugRect.setStrokeStyle(3, 0x00FF00, 1)
+              debugRect.setScrollFactor(0)
+              debugRect.setDepth(2002)
+              
+              // Add label with button name
+              let buttonName = 'Unknown'
+              if (index === 3) buttonName = 'Instructions'
+              else if (index === 10) buttonName = 'Resume'
+              
+              const label = this.scene.add.text(
+                x,
+                y,
+                buttonName,
+                { fontSize: '12px', color: '#00FF00', backgroundColor: '#000000' }
+              )
+              label.setScrollFactor(0)
+              label.setDepth(2003)
+              label.setOrigin(0.5)
+              
+              console.log(`Button ${buttonName} (${index}): x=${x}, y=${y}, w=${width}, h=${height}`)
+            } catch (e) {
+              console.log(`Error getting bounds for ${index}:`, e)
+            }
+          }
+        })
+      }
+    })
+    
+    // Show the toggle switch hitboxes
+    if (this.soundToggle) {
+      const track = this.soundToggle.list.find((child: any) => child.type === 'Graphics')
+      if (track?.input) {
+        // Position relative to the container
+        const x = this.container.x + this.soundToggle.x + 80
+        const y = this.container.y + this.soundToggle.y
+        
+        const debugRect = this.scene.add.rectangle(
+          x, y,
+          60, 30,  // Toggle dimensions
+          0xFFFF00, 0.3  // Yellow
+        )
+        debugRect.setStrokeStyle(3, 0xFFFF00, 1)
+        debugRect.setScrollFactor(0)
+        debugRect.setDepth(2002)
+        
+        const label = this.scene.add.text(
+          x, y,
+          'Sound',
+          { fontSize: '10px', color: '#FFFF00', backgroundColor: '#000000' }
+        )
+        label.setScrollFactor(0)
+        label.setDepth(2003)
+        label.setOrigin(0.5)
+        
+        console.log(`Sound Toggle: x=${x}, y=${y}`)
+      }
+    }
+    
+    if (this.musicToggle) {
+      const track = this.musicToggle.list.find((child: any) => child.type === 'Graphics')
+      if (track?.input) {
+        // Position relative to the container
+        const x = this.container.x + this.musicToggle.x + 80
+        const y = this.container.y + this.musicToggle.y
+        
+        const debugRect = this.scene.add.rectangle(
+          x, y,
+          60, 30,  // Toggle dimensions
+          0xFFFF00, 0.3  // Yellow
+        )
+        debugRect.setStrokeStyle(3, 0xFFFF00, 1)
+        debugRect.setScrollFactor(0)
+        debugRect.setDepth(2002)
+        
+        const label = this.scene.add.text(
+          x, y,
+          'Music',
+          { fontSize: '10px', color: '#FFFF00', backgroundColor: '#000000' }
+        )
+        label.setScrollFactor(0)
+        label.setDepth(2003)
+        label.setOrigin(0.5)
+        
+        console.log(`Music Toggle: x=${x}, y=${y}`)
+      }
+    }
   }
   
   getIsOpen(): boolean {

@@ -23,8 +23,17 @@ export class InstructionsScene extends Phaser.Scene {
   private dragStartY: number = 0
   private scrollStartY: number = 0
 
+  private fromMenu: boolean = false
+  private reopenMenu: boolean = false
+  
   constructor() {
     super({ key: 'InstructionsScene' })
+  }
+
+  init(data?: any): void {
+    // Check if we came from the menu
+    this.fromMenu = data?.fromMenu || false
+    this.reopenMenu = data?.reopenMenu || false
   }
 
   preload(): void {
@@ -338,8 +347,9 @@ export class InstructionsScene extends Phaser.Scene {
     buttonBg.strokeRoundedRect(-60, -20, 120, 40, 8)
     this.skipButton.add(buttonBg)
     
-    // Button text
-    const buttonText = this.add.text(0, 0, 'SKIP ALL', {
+    // Button text - "CLOSE" if from menu, "SKIP ALL" if from game start
+    const buttonLabel = this.fromMenu ? 'CLOSE' : 'SKIP ALL'
+    const buttonText = this.add.text(0, 0, buttonLabel, {
       fontSize: '12px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#000000', // Black text
@@ -450,7 +460,22 @@ export class InstructionsScene extends Phaser.Scene {
     this.cameras.main.fadeOut(300, 0, 0, 0)
     
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('GameScene')
+      if (this.fromMenu && this.reopenMenu) {
+        // Stop the instructions scene
+        this.scene.stop('InstructionsScene')
+        // Wake up the game scene (it was sleeping)
+        this.scene.wake('GameScene')
+        
+        // Get the GameScene and reopen the menu
+        const gameScene = this.scene.get('GameScene') as any
+        if (gameScene && gameScene.menuOverlay) {
+          // Show the menu again
+          gameScene.menuOverlay.container.setVisible(true)
+        }
+      } else {
+        // Normal transition to game (starts fresh)
+        this.scene.start('GameScene')
+      }
     })
   }
 

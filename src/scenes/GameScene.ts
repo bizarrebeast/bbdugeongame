@@ -444,6 +444,13 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
+  init(data?: any): void {
+    // Store flag to reopen menu after scene is ready
+    this.reopenMenuAfterInit = data?.reopenMenu || false
+  }
+
+  private reopenMenuAfterInit: boolean = false
+
   create(): void {
     // Reset the replay flag after using it
     // This ensures that if player manually restarts (not through SDK), they see splash screen again
@@ -1093,19 +1100,51 @@ export class GameScene extends Phaser.Scene {
     // Create menu overlay (after HUD is created)
     this.menuOverlay = new MenuOverlay(this)
     
+    // Check if we need to reopen menu (from instructions)
+    if (this.reopenMenuAfterInit) {
+      this.time.delayedCall(100, () => {
+        this.menuOverlay.open()
+        this.reopenMenuAfterInit = false
+      })
+    }
+    
+    // Debug: Show hamburger button hitbox
+    console.log('Setting up hamburger button menu connection...')
+    console.log('Hamburger button exists?', !!this.hamburgerMenuButton)
+    console.log('Menu overlay exists?', !!this.menuOverlay)
+    console.log('Hamburger button input enabled?', this.hamburgerMenuButton.input?.enabled)
+    console.log('Hamburger button interactive?', !!this.hamburgerMenuButton.input)
+    
+    // Visualize hamburger button hitbox
+    const debugGraphics = this.add.graphics()
+    debugGraphics.lineStyle(2, 0xff0000, 0.5) // Red border
+    const bounds = this.hamburgerMenuButton.getBounds()
+    debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
+    debugGraphics.setDepth(101)
+    debugGraphics.setScrollFactor(0)
+    console.log('Hamburger hitbox bounds:', { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height })
+    
     // Connect hamburger button to menu
-    this.hamburgerMenuButton.removeAllListeners() // Clear any old listeners
+    // Make sure it's interactive (removeAllListeners might have removed this)
+    this.hamburgerMenuButton.setInteractive({ useHandCursor: true })
+    
+    // Remove old pointerdown listener and add new one
+    this.hamburgerMenuButton.off('pointerdown') // Remove only pointerdown
     this.hamburgerMenuButton.on('pointerdown', () => {
+      console.log('Hamburger clicked! Toggling menu...')
       this.menuOverlay.toggle()
+      console.log('Menu is open?', this.menuOverlay.getIsOpen())
     })
     
     // Add hover effect for hamburger
     this.hamburgerMenuButton.on('pointerover', () => {
+      console.log('Hamburger hover IN')
       this.hamburgerMenuButton.setScale(1.1)
       this.hamburgerMenuButton.setColor('#b8e60a') // Brighter green on hover
     })
     
     this.hamburgerMenuButton.on('pointerout', () => {
+      console.log('Hamburger hover OUT')
       this.hamburgerMenuButton.setScale(1.0)
       this.hamburgerMenuButton.setColor('#9acf07') // Original green
     })
