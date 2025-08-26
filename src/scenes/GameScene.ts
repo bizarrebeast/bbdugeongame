@@ -94,6 +94,7 @@ export class GameScene extends Phaser.Scene {
   private levelManager!: LevelManager
   private levelText!: Phaser.GameObjects.Text
   private menuOverlay!: MenuOverlay
+  private backgroundMusic!: Phaser.Sound.BaseSound
   
   // Background management
   private currentBackground: string = 'background-treasure-quest-5'
@@ -421,6 +422,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image('beetle-mouth-open-30', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2030-HXSFqNWDpvxFnv2l35lrddto2TAyCk.png?sdgg')
     this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
 
+    // Load background music
+    this.load.audio('background-music', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST-%20tester-3MZwOkk6M3TiTv0a6uOxlb2jCLF46N.mp3?Fg56')
+    
     // Load sound effects
     // Collection sounds
     this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-OXLLrrAXWUz21oDTEuQPFb2fxRWxXh.wav?pH1V')
@@ -1218,6 +1222,27 @@ export class GameScene extends Phaser.Scene {
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     if (levelConfig.isEndless) {
       this.showEndlessModePopup()
+    }
+    
+    // Play background music with looping (only if not already playing)
+    // Use game registry to track if music is already playing globally
+    const isMusicPlaying = this.game.registry.get('backgroundMusicPlaying')
+    
+    if (!isMusicPlaying) {
+      // Check if music is enabled from settings
+      const musicEnabled = this.registry.get('musicEnabled') !== false
+      this.backgroundMusic = this.sound.add('background-music', {
+        loop: true,
+        volume: musicEnabled ? 0.3 : 0
+      })
+      this.backgroundMusic.play()
+      // Mark that music is now playing
+      this.game.registry.set('backgroundMusicPlaying', true)
+      // Store reference in game registry so other scenes can access it
+      this.game.registry.set('backgroundMusicInstance', this.backgroundMusic)
+    } else {
+      // Music already playing, just get the reference
+      this.backgroundMusic = this.game.registry.get('backgroundMusicInstance')
     }
   }
 

@@ -415,8 +415,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.jumpReleased = false
         const totalHoldTime = this.jumpHoldTime
         this.jumpHoldTime = 0
-        // Player landed, jump complete - play landing sound
-        this.scene.sound.play('player-land', { volume: 0.4 })
+        // Player landed, jump complete - landing sound disabled for now
+        // this.scene.sound.play('player-land', { volume: 0.4 })
         this.triggerHapticFeedback() // Haptic feedback for landing
       }
     }

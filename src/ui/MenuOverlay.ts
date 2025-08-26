@@ -405,7 +405,10 @@ export class MenuOverlay {
     // Update music volume if SDK is not muted
     if (!this.scene.game.sound.mute) {
       this.scene.registry.set('musicVolume', enabled ? 0.7 : 0)
-      // TODO: Update current music volume when music system is implemented
+      // Update background music volume
+      if (this.scene.backgroundMusic) {
+        this.scene.backgroundMusic.setVolume(enabled ? 0.3 : 0)
+      }
     }
   }
   
