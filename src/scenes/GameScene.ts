@@ -7427,27 +7427,35 @@ export class GameScene extends Phaser.Scene {
     // With scrollFactor 0.05, the background moves at 5% of camera speed
     const parallaxOffset = cameraY * 0.05
     
-    // Calculate the effective background Y position
-    const currentBackgroundY = this.backgroundInitialY - parallaxOffset
+    // Calculate the desired background Y position
+    let desiredY = this.backgroundInitialY - parallaxOffset
     
-    // Define bounds for when we need to reposition
-    // We want to reposition before the background runs out of coverage
-    const repositionBuffer = this.backgroundHeight * 0.3 // 30% buffer
-    const topLimit = -this.backgroundHeight + repositionBuffer
-    const bottomLimit = GameSettings.canvas.height - repositionBuffer
+    // Get the screen height for boundary calculations
+    const screenHeight = GameSettings.canvas.height
     
-    // Check if background is approaching the limits
-    if (currentBackgroundY > bottomLimit) {
-      // Background is too low, move it up by one background height
-      this.backgroundInitialY -= this.backgroundHeight
-    } else if (currentBackgroundY < topLimit) {
-      // Background is too high, move it down by one background height  
-      this.backgroundInitialY += this.backgroundHeight
+    // Calculate the actual height of the scaled background
+    const bgHeight = this.backgroundHeight
+    
+    // Ensure the background never shows gray areas:
+    // - The top of the background should never go below Y = 0 (would show gray above)
+    // - The bottom of the background should never go above screenHeight (would show gray below)
+    const minY = 0 // Background top edge should not go below screen top
+    const maxY = screenHeight - bgHeight // Background should cover the entire screen
+    
+    // Clamp the Y position to stay within bounds
+    // Since backgrounds are typically taller than the screen (scaled 1.2x), 
+    // we mainly need to prevent it from moving too far down (showing gray at top)
+    if (bgHeight > screenHeight) {
+      // Background is taller than screen (normal case)
+      desiredY = Math.min(minY, desiredY) // Prevent moving too far down
+      desiredY = Math.max(maxY, desiredY) // Prevent moving too far up
+    } else {
+      // Background is shorter than screen (shouldn't happen but handle it)
+      desiredY = minY // Just pin to top
     }
     
-    // Update the background position with the new initial Y
-    const newParallaxOffset = cameraY * 0.05
-    this.backgroundSprite.setY(this.backgroundInitialY - newParallaxOffset)
+    // Update the background position with clamped value
+    this.backgroundSprite.setY(desiredY)
   }
 
   // Helper method to get enemy type name for stats tracking
