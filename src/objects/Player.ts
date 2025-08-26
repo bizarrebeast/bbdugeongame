@@ -420,8 +420,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const ladderRect = this.currentLadder as Phaser.GameObjects.Rectangle
       const ladderBottom = ladderRect.y + ladderRect.height / 2
       
-      // Check if player is at ladder bottom
+      // Check if player is at or below ladder bottom
       const atLadderBottom = this.y >= ladderBottom - 10 // Small buffer at bottom
+      
+      // If player is somehow below the ladder bottom, clamp them to the bottom
+      if (this.y > ladderBottom - 10) {
+        this.y = ladderBottom - 10
+        this.setVelocityY(0)
+      }
       
       // Track if we're moving vertically on the ladder
       let climbingMovement = false
@@ -442,9 +448,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Track climbing movement for animation (only vertical movement counts as "moving" on ladder)
       this.isMoving = climbingMovement
       
-      // Allow horizontal movement to exit ladder ONLY if not moving vertically
-      // This prevents diagonal input from exiting the ladder
-      if ((leftPressed || rightPressed) && !upPressed && !downPressed) {
+      // Allow horizontal movement to exit ladder ONLY if:
+      // 1. Not moving vertically (prevents diagonal input from exiting)
+      // 2. Not at or below the ladder bottom (prevents falling through bottom)
+      if ((leftPressed || rightPressed) && !upPressed && !downPressed && !atLadderBottom) {
         this.exitClimbing()
         // Apply horizontal movement immediately after exiting
         const currentSpeed = GameSettings.game.playerSpeed * this.speedMultiplier
@@ -455,9 +462,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
       }
       
-      // Exit climbing with jump only if not trying to climb up
-      // This prevents accidental jumps when trying to climb
-      if (jumpJustPressed && !upPressed) {
+      // Exit climbing with jump only if:
+      // 1. Not trying to climb up (prevents accidental jumps when trying to climb)
+      // 2. Not at or below the ladder bottom (prevents jumping off bottom)
+      if (jumpJustPressed && !upPressed && !atLadderBottom) {
         this.exitClimbing()
         this.setVelocityY(this.MAX_JUMP_VELOCITY)
       }
