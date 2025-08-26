@@ -525,8 +525,8 @@ export class GameScene extends Phaser.Scene {
     this.load.image('beetle-mouth-open-30', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2030-HXSFqNWDpvxFnv2l35lrddto2TAyCk.png?sdgg')
     this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
 
-    // Load background music
-    this.load.audio('background-music', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST-%20tester-3MZwOkk6M3TiTv0a6uOxlb2jCLF46N.mp3?Fg56')
+    // Load background music - Crystal Cavern theme
+    this.load.audio('background-music', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/CRYSTAL%20CAVERN%20-%20Treasure%20Quest%20-%20BizarreBeasts%20-%20MASTER%201-GnktEmoyUQQEEoFTBVrVAhEFyGRwL9.mp3?acKK')
     
     // Load sound effects
     // Collection sounds
