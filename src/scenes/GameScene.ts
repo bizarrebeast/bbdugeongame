@@ -2284,18 +2284,36 @@ export class GameScene extends Phaser.Scene {
             const useLeftSection = Math.random() < 0.5 && leftSectionSize > 4
             
             if (useLeftSection && leftSectionSize > 4) {
-              // Place on left section
+              // Place on left section with wider patrol area
               const randomOffset = 1 + Math.random() * (leftSectionSize - 2)
               leftBound = tileSize * 0.5
               rightBound = tileSize * (layout.gapStart - 0.5)
               x = tileSize * randomOffset
+              
+              // Ensure minimum patrol width of 6 tiles if section is large enough
+              const currentWidth = (rightBound - leftBound) / tileSize
+              if (currentWidth < 6 && leftSectionSize >= 6) {
+                // Section is large enough for minimum patrol width
+                const center = x
+                leftBound = Math.max(tileSize * 0.5, center - tileSize * 3)
+                rightBound = Math.min(tileSize * (layout.gapStart - 0.5), center + tileSize * 3)
+              }
             } else if (rightSectionSize > 4) {
-              // Place on right section
+              // Place on right section with wider patrol area
               const rightStart = layout.gapStart + layout.gapSize
               const randomOffset = rightStart + 1 + Math.random() * (rightSectionSize - 2)
               leftBound = tileSize * (rightStart + 0.5)
               rightBound = tileSize * (floorWidth - 0.5)
               x = tileSize * randomOffset
+              
+              // Ensure minimum patrol width of 6 tiles if section is large enough
+              const currentWidth = (rightBound - leftBound) / tileSize
+              if (currentWidth < 6 && rightSectionSize >= 6) {
+                // Section is large enough for minimum patrol width
+                const center = x
+                leftBound = Math.max(tileSize * (rightStart + 0.5), center - tileSize * 3)
+                rightBound = Math.min(tileSize * (floorWidth - 0.5), center + tileSize * 3)
+              }
             } else {
               // Skip if no valid section
               continue
@@ -2408,6 +2426,10 @@ export class GameScene extends Phaser.Scene {
     const margin = 1.5 // Tiles from edge
     const usableWidth = floorWidth - (margin * 2)
     
+    // Get ladder positions for this floor to avoid them
+    const floor = Math.floor(this.currentFloorY / (tileSize * 5)) // Calculate current floor from Y position
+    const ladderPositions = this.ladderPositions.get(floor) || []
+    
     switch (pattern) {
       case 'spread':
         // Evenly distribute across floor with better spacing
@@ -2423,11 +2445,26 @@ export class GameScene extends Phaser.Scene {
           const randomOffset = (Math.random() - 0.5) * maxOffset
           const x = Math.max(margin, Math.min(floorWidth - margin, basePosition + randomOffset))
           
-          // Give each enemy distinct patrol zones with minimal overlap
-          const zoneWidth = actualSpacing * 0.8 // 80% of spacing for patrol zone
+          // Give each enemy wider patrol zones (minimum 6 tiles)
+          const minPatrolWidth = 6 // Minimum patrol width in tiles
+          const zoneWidth = Math.max(minPatrolWidth, actualSpacing * 1.2) // 120% of spacing or minimum 6 tiles
           const zoneCenter = margin + actualSpacing * (i + 0.5)
-          const leftBound = Math.max(0.5, zoneCenter - zoneWidth / 2)
-          const rightBound = Math.min(floorWidth - 0.5, zoneCenter + zoneWidth / 2)
+          let leftBound = Math.max(0.5, zoneCenter - zoneWidth / 2)
+          let rightBound = Math.min(floorWidth - 0.5, zoneCenter + zoneWidth / 2)
+          
+          // Adjust bounds to avoid ladder positions (keep 2 tiles away from ladders)
+          for (const ladderX of ladderPositions) {
+            if (ladderX >= leftBound && ladderX <= rightBound) {
+              // Ladder is within patrol zone, adjust bounds to avoid it
+              if (ladderX - leftBound < rightBound - ladderX) {
+                // Ladder is closer to left bound, move left bound right
+                leftBound = Math.min(rightBound - minPatrolWidth, ladderX + 2)
+              } else {
+                // Ladder is closer to right bound, move right bound left  
+                rightBound = Math.max(leftBound + minPatrolWidth, ladderX - 2)
+              }
+            }
+          }
           
           positions.push({ x, leftBound, rightBound })
         }
@@ -2444,9 +2481,22 @@ export class GameScene extends Phaser.Scene {
           const x = Math.max(margin, Math.min(floorWidth - margin, 
             clusterCenter + Math.cos(angle) * radius))
           
-          // Shared patrol area for cluster
-          const leftBound = Math.max(0.5, clusterCenter - clusterRadius - 1)
-          const rightBound = Math.min(floorWidth - 0.5, clusterCenter + clusterRadius + 1)
+          // Shared patrol area for cluster (wider area)
+          const minPatrolWidth = 6 // Minimum patrol width
+          let leftBound = Math.max(0.5, clusterCenter - Math.max(clusterRadius + 2, minPatrolWidth/2))
+          let rightBound = Math.min(floorWidth - 0.5, clusterCenter + Math.max(clusterRadius + 2, minPatrolWidth/2))
+          
+          // Avoid ladders in cluster patrol area
+          for (const ladderX of ladderPositions) {
+            if (ladderX >= leftBound && ladderX <= rightBound) {
+              // Adjust bounds to avoid ladder
+              if (ladderX - leftBound < rightBound - ladderX) {
+                leftBound = Math.min(rightBound - minPatrolWidth, ladderX + 2)
+              } else {
+                rightBound = Math.max(leftBound + minPatrolWidth, ladderX - 2)
+              }
+            }
+          }
           
           positions.push({ x, leftBound, rightBound })
         }
@@ -2462,9 +2512,22 @@ export class GameScene extends Phaser.Scene {
           const verticalOffset = i * 0.8 // Stagger positions slightly
           const x = margin + verticalOffset + Math.random() * 1.5
           
-          // Left edge enemies patrol left half
-          const leftBound = 0.5
-          const rightBound = floorWidth / 2 - 1
+          // Left edge enemies patrol left half (with wider area)
+          let leftBound = 0.5
+          let rightBound = Math.min(floorWidth / 2 + 1, floorWidth - 0.5) // Extend slightly past center
+          
+          // Ensure minimum patrol width
+          const minPatrolWidth = 6
+          if (rightBound - leftBound < minPatrolWidth) {
+            rightBound = Math.min(leftBound + minPatrolWidth, floorWidth - 0.5)
+          }
+          
+          // Avoid ladders
+          for (const ladderX of ladderPositions) {
+            if (ladderX >= leftBound && ladderX <= rightBound) {
+              rightBound = Math.max(leftBound + minPatrolWidth, ladderX - 2)
+            }
+          }
           
           positions.push({ x, leftBound, rightBound })
         }
@@ -2474,9 +2537,22 @@ export class GameScene extends Phaser.Scene {
           const verticalOffset = i * 0.8 // Stagger positions slightly
           const x = floorWidth - margin - verticalOffset - Math.random() * 1.5
           
-          // Right edge enemies patrol right half
-          const leftBound = floorWidth / 2 + 1
-          const rightBound = floorWidth - 0.5
+          // Right edge enemies patrol right half (with wider area)
+          let leftBound = Math.max(floorWidth / 2 - 1, 0.5) // Start slightly before center
+          let rightBound = floorWidth - 0.5
+          
+          // Ensure minimum patrol width
+          const minPatrolWidth = 6
+          if (rightBound - leftBound < minPatrolWidth) {
+            leftBound = Math.max(rightBound - minPatrolWidth, 0.5)
+          }
+          
+          // Avoid ladders
+          for (const ladderX of ladderPositions) {
+            if (ladderX >= leftBound && ladderX <= rightBound) {
+              leftBound = Math.min(rightBound - minPatrolWidth, ladderX + 2)
+            }
+          }
           
           positions.push({ x, leftBound, rightBound })
         }
@@ -2507,14 +2583,22 @@ export class GameScene extends Phaser.Scene {
           
           placedPositions.push(x)
           
-          // Varied patrol zones that don't overlap too much
-          const baseRadius = 2.5
-          const radiusVariation = Math.random() * 1.5 // 2.5-4 tiles radius
-          const patrolRadius = baseRadius + radiusVariation
+          // Wider patrol zones (minimum 6 tiles)
+          const minPatrolWidth = 6
+          const baseRadius = 3.5
+          const radiusVariation = Math.random() * 2 // 3.5-5.5 tiles radius
+          const patrolRadius = Math.max(minPatrolWidth / 2, baseRadius + radiusVariation)
           
           // Ensure patrol zones don't overlap with nearby enemies
           let leftBound = Math.max(0.5, x - patrolRadius)
           let rightBound = Math.min(floorWidth - 0.5, x + patrolRadius)
+          
+          // Ensure minimum width
+          if (rightBound - leftBound < minPatrolWidth) {
+            const center = (leftBound + rightBound) / 2
+            leftBound = Math.max(0.5, center - minPatrolWidth / 2)
+            rightBound = Math.min(floorWidth - 0.5, center + minPatrolWidth / 2)
+          }
           
           // Check for overlap with existing patrol zones and adjust
           for (let j = 0; j < i; j++) {
@@ -2526,6 +2610,19 @@ export class GameScene extends Phaser.Scene {
               rightBound = Math.min(rightBound, otherPos.leftBound - 0.5)
             } else if (x > otherX && leftBound < otherPos.rightBound) {
               leftBound = Math.max(leftBound, otherPos.rightBound + 0.5)
+            }
+          }
+          
+          // Avoid ladder positions
+          for (const ladderX of ladderPositions) {
+            if (ladderX >= leftBound && ladderX <= rightBound) {
+              // Adjust bounds to avoid ladder (keep 2 tiles clearance)
+              const minPatrolWidth = 6
+              if (ladderX - leftBound < rightBound - ladderX) {
+                leftBound = Math.min(rightBound - minPatrolWidth, ladderX + 2)
+              } else {
+                rightBound = Math.max(leftBound + minPatrolWidth, ladderX - 2)
+              }
             }
           }
           
