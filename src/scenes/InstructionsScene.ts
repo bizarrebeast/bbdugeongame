@@ -387,21 +387,80 @@ export class InstructionsScene extends Phaser.Scene {
   private createScrollIndicator(): void {
     const screenHeight = GameSettings.canvas.height
     
-    // Scroll indicator container
-    this.scrollIndicator = this.add.container(GameSettings.canvas.width - 15, screenHeight / 2)
+    // Scroll indicator container - moved more to the left to be more visible
+    this.scrollIndicator = this.add.container(GameSettings.canvas.width - 20, screenHeight / 2)
     this.scrollIndicator.setDepth(101)
+    
+    // Scroll track background (darker for contrast)
+    const trackBg = this.add.graphics()
+    trackBg.fillStyle(0x000000, 0.7) // Black background
+    trackBg.fillRoundedRect(-8, -155, 16, 310, 8)
+    this.scrollIndicator.add(trackBg)
     
     // Scroll track
     const track = this.add.graphics()
-    track.fillStyle(0x4B0082, 0.5) // Purple
-    track.fillRoundedRect(-5, -150, 10, 300, 5)
+    track.lineStyle(2, 0xFFD700, 1) // Gold border
+    track.fillStyle(0x4B0082, 0.8) // More opaque purple
+    track.fillRoundedRect(-7, -153, 14, 306, 7)
+    track.strokeRoundedRect(-7, -153, 14, 306, 7)
     this.scrollIndicator.add(track)
+    
+    // Scroll thumb with glow effect
+    const thumbGlow = this.add.graphics()
+    thumbGlow.fillStyle(0xFFD700, 0.3) // Gold glow
+    thumbGlow.fillRoundedRect(-8, -25, 16, 50, 8)
+    this.scrollIndicator.add(thumbGlow)
     
     // Scroll thumb
     const thumb = this.add.graphics()
-    thumb.fillStyle(0xFFD700, 0.8) // Gold
-    thumb.fillRoundedRect(-4, -20, 8, 40, 4)
+    thumb.lineStyle(2, 0xFFFFFF, 1) // White border
+    thumb.fillStyle(0xFFD700, 1) // Bright gold, fully opaque
+    thumb.fillRoundedRect(-6, -22, 12, 44, 6)
+    thumb.strokeRoundedRect(-6, -22, 12, 44, 6)
     this.scrollIndicator.add(thumb)
+    
+    // Add "SCROLL" text above the track
+    const scrollText = this.add.text(0, -175, 'SCROLL', {
+      fontSize: '10px',
+      color: '#FFD700',
+      fontFamily: '"Press Start 2P", system-ui',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5)
+    this.scrollIndicator.add(scrollText)
+    
+    // Add arrow indicators
+    const arrowUp = this.add.text(0, -165, '▲', {
+      fontSize: '12px',
+      color: '#FFD700'
+    }).setOrigin(0.5)
+    this.scrollIndicator.add(arrowUp)
+    
+    const arrowDown = this.add.text(0, 165, '▼', {
+      fontSize: '12px',
+      color: '#FFD700'
+    }).setOrigin(0.5)
+    this.scrollIndicator.add(arrowDown)
+    
+    // Add pulsing animation to draw attention
+    this.tweens.add({
+      targets: [thumbGlow, thumb],
+      scaleX: 1.2,
+      scaleY: 1.1,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+    
+    // Animate the scroll text for attention
+    this.tweens.add({
+      targets: scrollText,
+      alpha: 0.6,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1
+    })
     
     this.updateScrollIndicator()
   }
@@ -445,9 +504,17 @@ export class InstructionsScene extends Phaser.Scene {
       const scrollPercent = this.scrollY / this.maxScrollY
       const thumbY = (scrollPercent - 0.5) * 260 // Move within track bounds
       
-      // Update thumb position
-      const thumb = this.scrollIndicator.list[1] as Phaser.GameObjects.Graphics
+      // Update thumb and glow positions (they are at indices 2 and 3)
+      const thumbGlow = this.scrollIndicator.list[2] as Phaser.GameObjects.Graphics
+      const thumb = this.scrollIndicator.list[3] as Phaser.GameObjects.Graphics
+      thumbGlow.y = thumbY
       thumb.y = thumbY
+      
+      // Pulse the arrows to draw attention
+      const arrowUp = this.scrollIndicator.list[5] as Phaser.GameObjects.Text
+      const arrowDown = this.scrollIndicator.list[6] as Phaser.GameObjects.Text
+      arrowUp.setAlpha(scrollPercent > 0 ? 0.5 : 1)
+      arrowDown.setAlpha(scrollPercent < 1 ? 1 : 0.5)
       
       this.scrollIndicator.setVisible(true)
     } else {
