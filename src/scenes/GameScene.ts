@@ -1108,43 +1108,36 @@ export class GameScene extends Phaser.Scene {
       })
     }
     
-    // Debug: Show hamburger button hitbox
-    console.log('Setting up hamburger button menu connection...')
-    console.log('Hamburger button exists?', !!this.hamburgerMenuButton)
-    console.log('Menu overlay exists?', !!this.menuOverlay)
-    console.log('Hamburger button input enabled?', this.hamburgerMenuButton.input?.enabled)
-    console.log('Hamburger button interactive?', !!this.hamburgerMenuButton.input)
-    
-    // Visualize hamburger button hitbox
-    const debugGraphics = this.add.graphics()
-    debugGraphics.lineStyle(2, 0xff0000, 0.5) // Red border
-    const bounds = this.hamburgerMenuButton.getBounds()
-    debugGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
-    debugGraphics.setDepth(101)
-    debugGraphics.setScrollFactor(0)
-    console.log('Hamburger hitbox bounds:', { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height })
+    // Define the hitbox padding (25 pixels larger)
+    const hitPadding = 25
     
     // Connect hamburger button to menu
-    // Make sure it's interactive (removeAllListeners might have removed this)
-    this.hamburgerMenuButton.setInteractive({ useHandCursor: true })
+    // Make sure it's interactive with a larger hitbox
+    const textBounds = this.hamburgerMenuButton.getBounds()
+    this.hamburgerMenuButton.setInteractive(
+      new Phaser.Geom.Rectangle(
+        -hitPadding, 
+        -hitPadding, 
+        textBounds.width + (hitPadding * 2), 
+        textBounds.height + (hitPadding * 2)
+      ),
+      Phaser.Geom.Rectangle.Contains
+    )
+    this.hamburgerMenuButton.input!.hitArea.setPosition(-hitPadding / 2, -hitPadding / 2)
     
     // Remove old pointerdown listener and add new one
     this.hamburgerMenuButton.off('pointerdown') // Remove only pointerdown
     this.hamburgerMenuButton.on('pointerdown', () => {
-      console.log('Hamburger clicked! Toggling menu...')
       this.menuOverlay.toggle()
-      console.log('Menu is open?', this.menuOverlay.getIsOpen())
     })
     
     // Add hover effect for hamburger
     this.hamburgerMenuButton.on('pointerover', () => {
-      console.log('Hamburger hover IN')
       this.hamburgerMenuButton.setScale(1.1)
       this.hamburgerMenuButton.setColor('#b8e60a') // Brighter green on hover
     })
     
     this.hamburgerMenuButton.on('pointerout', () => {
-      console.log('Hamburger hover OUT')
       this.hamburgerMenuButton.setScale(1.0)
       this.hamburgerMenuButton.setColor('#9acf07') // Original green
     })
