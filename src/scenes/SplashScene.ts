@@ -21,8 +21,11 @@ export class SplashScene extends Phaser.Scene {
   create(): void {
     console.log('🎮 SplashScene: Creating splash screen')
     
-    // Play splash page sound
-    this.sound.play('splash-sound', { volume: 0.5 })
+    // Play splash page sound if sound effects are enabled
+    const sfxEnabled = this.registry.get('sfxEnabled') !== false
+    if (sfxEnabled && !this.game.sound.mute) {
+      this.sound.play('splash-sound', { volume: 0.5 })
+    }
     
     // Create title background image
     this.setupTitleBackground()

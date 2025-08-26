@@ -1316,7 +1316,7 @@ export class GameScene extends Phaser.Scene {
     // Remove old pointerdown listener and add new one
     this.hamburgerMenuButton.off('pointerdown') // Remove only pointerdown
     this.hamburgerMenuButton.on('pointerdown', () => {
-      this.sound.play('menu-toggle', { volume: 0.4 })
+      this.playSoundEffect('menu-toggle', 0.4)
       this.menuOverlay.toggle()
     })
     
@@ -3693,7 +3693,7 @@ export class GameScene extends Phaser.Scene {
     this.score += GameSettings.scoring.coinCollect
     
     // Play gem collect sound effect
-    this.sound.play('gem-collect', { volume: 0.5 })
+    this.playSoundEffect('gem-collect', 0.5)
     
     // Increment coin counter and check for extra life
     this.totalCoinsCollected++
@@ -3733,7 +3733,7 @@ export class GameScene extends Phaser.Scene {
     this.score += points
     
     // Play blue gem collect sound effect
-    this.sound.play('big-blue-gem-collect', { volume: 0.5 })
+    this.playSoundEffect('big-blue-gem-collect', 0.5)
     
     // Blue coins count as 5 coins toward extra life
     this.totalCoinsCollected += 5
@@ -3773,7 +3773,7 @@ export class GameScene extends Phaser.Scene {
     this.score += points
     
     // Play diamond collect sound effect
-    this.sound.play('diamond-collect', { volume: 0.5 })
+    this.playSoundEffect('diamond-collect', 0.5)
     
     // Diamonds count as 10 coins toward extra life
     this.totalCoinsCollected += 10
@@ -3813,7 +3813,7 @@ export class GameScene extends Phaser.Scene {
     this.score += points
     
     // Play heart collect sound effect
-    this.sound.play('heart-collect', { volume: 0.5 })
+    this.playSoundEffect('heart-collect', 0.5)
     
     // Add extra life (if not at max)
     if (this.lives < this.MAX_LIVES) {
@@ -3855,7 +3855,7 @@ export class GameScene extends Phaser.Scene {
     this.score += points
     
     // Play powerup collect sound effect
-    this.sound.play('powerup-collect', { volume: 0.5 })
+    this.playSoundEffect('powerup-collect', 0.5)
     
     // Activate invincibility for 10 seconds
     this.activateInvincibility()
@@ -3908,7 +3908,7 @@ export class GameScene extends Phaser.Scene {
     console.log('🔮 COLLECTING Crystal Ball - activating power-up!')
     
     // Play powerup collect sound effect
-    this.sound.play('powerup-collect', { volume: 0.5 })
+    this.playSoundEffect('powerup-collect', 0.5)
     
     // Activate crystal ball power-up on player
     this.player.activateCrystalBall()
@@ -3942,7 +3942,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Play cursed orb collect sound effect
-    this.sound.play('cursed-orb-collect', { volume: 0.5 })
+    this.playSoundEffect('cursed-orb-collect', 0.5)
     
     // Activate cursed orb power-up on player
     this.player.activateCursedOrb()
@@ -3975,7 +3975,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Play cursed orb collect sound effect
-    this.sound.play('cursed-orb-collect', { volume: 0.5 })
+    this.playSoundEffect('cursed-orb-collect', 0.5)
     
     // Activate cursed teal orb power-up on player
     this.player.activateCursedTealOrb()
@@ -4072,7 +4072,7 @@ export class GameScene extends Phaser.Scene {
     console.log('Creating crystal ball projectile at', x, y, 'direction:', direction, 'player velocity:', playerVelocityX)
     
     // Play throw sound
-    this.sound.play('crystal-ball-throw', { volume: 0.5 })
+    this.playSoundEffect('crystal-ball-throw', 0.5)
     
     const projectile = new CrystalBallProjectile(this, x, y, direction, playerVelocityX)
     this.crystalBallProjectiles.push(projectile)
@@ -4875,7 +4875,7 @@ export class GameScene extends Phaser.Scene {
         squishSound = 'squish-jumper'
         break
     }
-    this.sound.play(squishSound, { volume: 0.5 })
+    this.playSoundEffect(squishSound, 0.5)
     
     // Squish the cat
     cat.squish()
@@ -4941,7 +4941,7 @@ export class GameScene extends Phaser.Scene {
     this.gameStats.totalEnemiesDefeated++
     
     // Play beetle-specific squish sound
-    this.sound.play('squish-beetle', { volume: 0.5 })
+    this.playSoundEffect('squish-beetle', 0.5)
     
     // Squish the beetle with animation
     beetle.squish()
@@ -4984,7 +4984,7 @@ export class GameScene extends Phaser.Scene {
           break
       }
     }
-    this.sound.play(squishSound, { volume: 0.5 })
+    this.playSoundEffect(squishSound, 0.5)
     
     // Squish the enemy with special golden effect
     enemy.squish()
@@ -5045,7 +5045,7 @@ export class GameScene extends Phaser.Scene {
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
     // Play stalker-specific squish sound
-    this.sound.play('squish-stalker', { volume: 0.5 })
+    this.playSoundEffect('squish-stalker', 0.5)
     
     // Squish the stalker cat
     stalkerCat.squish()
@@ -5200,7 +5200,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Play the same damage sound for both spikes and enemies
-    this.sound.play('player-dies-enemy', { volume: 0.5 })
+    this.playSoundEffect('player-dies-enemy', 0.5)
     
     // Reset combo on hit
     this.resetCombo()
@@ -5335,7 +5335,7 @@ export class GameScene extends Phaser.Scene {
     const contents = chest.open()
     
     // Play treasure chest open sound effect
-    this.sound.play('treasure-chest-open', { volume: 0.5 })
+    this.playSoundEffect('treasure-chest-open', 0.5)
     
     // Track treasure chest opened
     this.gameStats.treasureChestsOpened++
@@ -5524,6 +5524,14 @@ export class GameScene extends Phaser.Scene {
         ease: 'Back.easeOut',
         yoyo: true
       })
+    }
+  }
+
+  // Helper method to play sound effects with respect to settings
+  private playSoundEffect(key: string, volume: number = 0.5): void {
+    const sfxEnabled = this.registry.get('sfxEnabled') !== false
+    if (sfxEnabled && !this.game.sound.mute) {
+      this.sound.play(key, { volume })
     }
   }
 
@@ -6479,7 +6487,7 @@ export class GameScene extends Phaser.Scene {
     // Continue button handler
     continueBtn.on('pointerdown', () => {
       // Play continue button sound
-      this.sound.play('continue-button', { volume: 0.5 })
+      this.playSoundEffect('continue-button', 0.5)
       
       // Save accumulated score and crystals before progressing
       const registry = this.game.registry
@@ -6765,7 +6773,7 @@ export class GameScene extends Phaser.Scene {
         this.updateLivesDisplay()
         
         // Play heart collect sound for earning extra life
-        this.sound.play('heart-collect', { volume: 0.5 })
+        this.playSoundEffect('heart-collect', 0.5)
         
         // Show extra life popup
         this.showExtraLifePopup()
@@ -6915,7 +6923,7 @@ export class GameScene extends Phaser.Scene {
     // Continue button handler - restart current level
     continueBtn.on('pointerdown', () => {
       // Play continue button sound
-      this.sound.play('continue-button', { volume: 0.5 })
+      this.playSoundEffect('continue-button', 0.5)
       
       this.scene.restart() // This will keep current level and not reset lives/coins
     })
@@ -6932,7 +6940,7 @@ export class GameScene extends Phaser.Scene {
 
   private showGameOverScreen(): void {
     // Play game over sound
-    this.sound.play('game-over', { volume: 0.5 })
+    this.playSoundEffect('game-over', 0.5)
     
     // Notify Farcade SDK of game over with final score
     const finalScore = this.accumulatedScore + this.score

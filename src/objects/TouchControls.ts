@@ -2,6 +2,7 @@ import GameSettings from "../config/GameSettings"
 
 export class TouchControls {
   private scene: Phaser.Scene
+  private enabled: boolean = true  // Track if controls are enabled
   
   // Touchpad system (replaces D-pad buttons)
   private touchpadContainer: Phaser.GameObjects.Container
@@ -150,6 +151,8 @@ export class TouchControls {
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
+    if (!this.enabled) return  // Don't handle input if disabled
+    
     const touchX = pointer.x
     const touchY = pointer.y
     
@@ -260,6 +263,8 @@ export class TouchControls {
 
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
+    if (!this.enabled) return  // Don't handle input if disabled
+    
     // Check if this pointer is controlling the touchpad
     if (pointer.id === this.touchpadPointerId) {
       this.updateTouchpadFromPosition(pointer.x, pointer.y)
@@ -267,6 +272,8 @@ export class TouchControls {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
+    if (!this.enabled) return  // Don't handle input if disabled
+    
     // Check touchpad release
     if (pointer.id === this.touchpadPointerId) {
       this.touchpadPointerId = -1
@@ -344,6 +351,32 @@ export class TouchControls {
 
   public showActionButton(show: boolean): void {
     this.actionButton.setVisible(show)
+  }
+  
+  // Disable touch controls (for menu, etc.)
+  public disable(): void {
+    this.enabled = false
+    this.touchpadContainer.setVisible(false)
+    this.jumpButton.setVisible(false)
+    this.actionButton.setVisible(false)
+    // Reset all states
+    this.direction = { x: 0, y: 0 }
+    this.jumpPressed = false
+    this.jumpJustPressed = false
+    this.actionPressed = false
+    this.actionJustPressed = false
+    this.touchpadPointerId = -1
+    this.jumpPointerId = -1
+    this.actionPointerId = -1
+    this.touchpadIndicator.setVisible(false)
+  }
+  
+  // Re-enable touch controls
+  public enable(): void {
+    this.enabled = true
+    this.touchpadContainer.setVisible(true)
+    this.jumpButton.setVisible(true)
+    this.actionButton.setVisible(true)
   }
 
   public destroy(): void {
