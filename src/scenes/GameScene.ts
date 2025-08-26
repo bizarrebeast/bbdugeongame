@@ -96,6 +96,23 @@ export class GameScene extends Phaser.Scene {
   private menuOverlay!: MenuOverlay
   private backgroundMusic!: Phaser.Sound.BaseSound
   
+  // Game statistics tracking
+  private gameStats = {
+    treasureChestsOpened: 0,
+    enemyKills: {
+      caterpillar: 0,
+      rollz: 0,
+      chomper: 0,
+      snail: 0,
+      bouncer: 0,
+      stalker: 0,
+      blu: 0
+    },
+    totalEnemiesDefeated: 0,
+    highestFloor: 0,
+    livesLost: 0
+  }
+  
   // Background management
   private currentBackground: string = 'background-treasure-quest-5'
   private backgroundLibrary: string[] = [
@@ -4475,6 +4492,10 @@ export class GameScene extends Phaser.Scene {
       this.updateScoreDisplay()
       this.showPointPopup(baseBluObj.x, baseBluObj.y - 20, points)
       
+      // Track BaseBlu kill for stats
+      this.gameStats.enemyKills.blu++
+      this.gameStats.totalEnemiesDefeated++
+      
       // Make player bounce (same as other enemies killed by pendant)
       playerBody.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
       
@@ -4723,6 +4744,13 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
+    // Track enemy kill for stats
+    const enemyName = this.getEnemyTypeName(cat)
+    if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+      this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
+      this.gameStats.totalEnemiesDefeated++
+    }
+    
     // Play enemy-specific squish sound based on cat color
     // catColor already set above
     let squishSound = 'squish-chomper' // Default
@@ -4800,6 +4828,10 @@ export class GameScene extends Phaser.Scene {
     
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+    
+    // Track beetle kill for stats
+    this.gameStats.enemyKills.rollz++
+    this.gameStats.totalEnemiesDefeated++
     
     // Play beetle-specific squish sound
     this.sound.play('squish-beetle', { volume: 0.5 })
@@ -5060,16 +5092,8 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
-    // Play appropriate damage sound based on source
-    const isSpikeDamage = !damageSource || damageSource.texture?.key?.includes('spike')
-    
-    if (isSpikeDamage) {
-      // Spike damage or no source (assume spike)
-      this.sound.play('spike-hit', { volume: 0.5 })
-    } else {
-      // Enemy damage - play death sound
-      this.sound.play('player-dies-enemy', { volume: 0.5 })
-    }
+    // Play the same damage sound for both spikes and enemies
+    this.sound.play('player-dies-enemy', { volume: 0.5 })
     
     // Reset combo on hit
     this.resetCombo()
@@ -5085,6 +5109,7 @@ export class GameScene extends Phaser.Scene {
     
     // Lose a life
     this.lives--
+    this.gameStats.livesLost++  // Track lives lost for stats
     this.game.registry.set('playerLives', this.lives)  // Save to registry
     this.updateLivesDisplay()
     
@@ -5204,6 +5229,9 @@ export class GameScene extends Phaser.Scene {
     
     // Play treasure chest open sound effect
     this.sound.play('treasure-chest-open', { volume: 0.5 })
+    
+    // Track treasure chest opened
+    this.gameStats.treasureChestsOpened++
     
     // Award base chest points (2500)
     this.score += 2500
@@ -5470,6 +5498,8 @@ export class GameScene extends Phaser.Scene {
     if (playerFloor !== this.currentFloor) {
       // Floor changed - update tracking (no points awarded)
       this.currentFloor = playerFloor
+      // Track highest floor for stats
+      this.gameStats.highestFloor = Math.max(this.gameStats.highestFloor, playerFloor)
       // No floor text to update anymore - we show coins instead
     }
     
@@ -6707,9 +6737,9 @@ export class GameScene extends Phaser.Scene {
       0.7
     ).setDepth(199).setScrollFactor(0)
     
-    // Create popup background (larger to fit more info)
-    const popupWidth = 340
-    const popupHeight = 320
+    // Create popup background (much larger for enhanced stats)
+    const popupWidth = 380
+    const popupHeight = 450
     const popupX = this.cameras.main.width / 2
     const popupY = this.cameras.main.height / 2
     
@@ -6736,7 +6766,7 @@ export class GameScene extends Phaser.Scene {
     // Game over title
     const gameOverTitle = this.add.text(
       popupX,
-      popupY - 120,
+      popupY - 190,
       'GAME OVER!',
       {
         fontSize: '24px',
@@ -6758,8 +6788,8 @@ export class GameScene extends Phaser.Scene {
     // Display final score
     const scoreText = this.add.text(
       popupX,
-      popupY - 80,
-      `Final Score: ${this.accumulatedScore + this.score}`,
+      popupY - 155,
+      `Score: ${this.accumulatedScore + this.score}`,
       {
         fontSize: '16px',
         color: '#ffd700',  // Gold color to match HUD score text
@@ -6777,98 +6807,178 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Display level reached
+    // PERFORMANCE STATS Section Header
+    const perfHeader = this.add.text(
+      popupX,
+      popupY - 125,
+      '📊 PERFORMANCE STATS',
+      {
+        fontSize: '12px',
+        color: '#ffd700',  // Gold color
+        fontFamily: '"Press Start 2P", system-ui',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Floors Climbed
+    const floorsText = this.add.text(
+      popupX,
+      popupY - 100,
+      `Floors Climbed: ${this.gameStats.highestFloor}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Level Reached
     const levelText = this.add.text(
       popupX,
-      popupY - 50,
+      popupY - 80,
       `Level Reached: ${this.levelManager.getCurrentLevel()}`,
       {
-        fontSize: '14px',
-        color: '#ffd700',  // Gold color
-        fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold',
-        stroke: '#4a148c',
-        strokeThickness: 1,
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000000',
-          blur: 3,
-          fill: true
-        }
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Display gems collected
+    // Gems Collected
     const gemsText = this.add.text(
       popupX,
-      popupY - 15,
-      `Gems Collected: ${this.totalGemsCollected}`,
+      popupY - 60,
+      `Gems Collected: ${this.totalGemsCollected + this.totalBlueGemsCollected + this.totalDiamondsCollected}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Treasure Chests
+    const chestsText = this.add.text(
+      popupX,
+      popupY - 40,
+      `Treasure Chests: ${this.gameStats.treasureChestsOpened}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // COMBAT STATS Section Header
+    const combatHeader = this.add.text(
+      popupX,
+      popupY - 10,
+      '⚔️ ENEMIES DEFEATED',
       {
         fontSize: '12px',
         color: '#ffd700',  // Gold color
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold',
-        stroke: '#4a148c',
-        strokeThickness: 1,
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000000',
-          blur: 3,
-          fill: true
-        }
+        fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Display blue gems collected
-    const blueGemsText = this.add.text(
+    // Enemy stats in single vertical column with proper spacing
+    let enemyY = popupY + 15
+    
+    // All enemies in center
+    const caterpillarText = this.add.text(
       popupX,
-      popupY + 10,
-      `Big Blue Gems: ${this.totalBlueGemsCollected}`,
+      enemyY,
+      `Caterpillar: ${this.gameStats.enemyKills.caterpillar}`,
       {
-        fontSize: '12px',
-        color: '#40e0d0',  // Turquoise color for blue gems
-        fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold',
-        stroke: '#4a148c',
-        strokeThickness: 1,
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000000',
-          blur: 3,
-          fill: true
-        }
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Display diamonds collected
-    const diamondsText = this.add.text(
+    const rollzText = this.add.text(
       popupX,
-      popupY + 35,
-      `Diamonds: ${this.totalDiamondsCollected}`,
+      enemyY + 18,
+      `Rollz: ${this.gameStats.enemyKills.rollz}`,
       {
-        fontSize: '12px',
-        color: '#ff69b4',  // Pink color for diamonds
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    const chomperText = this.add.text(
+      popupX,
+      enemyY + 36,
+      `Chomper: ${this.gameStats.enemyKills.chomper}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    const snailText = this.add.text(
+      popupX,
+      enemyY + 54,
+      `Snail: ${this.gameStats.enemyKills.snail}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    const bouncerText = this.add.text(
+      popupX,
+      enemyY + 72,
+      `Bouncer: ${this.gameStats.enemyKills.bouncer}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    const stalkerText = this.add.text(
+      popupX,
+      enemyY + 90,
+      `Stalker: ${this.gameStats.enemyKills.stalker}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    const bluText = this.add.text(
+      popupX,
+      enemyY + 108,
+      `Blu: ${this.gameStats.enemyKills.blu}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Total enemies line
+    const totalText = this.add.text(
+      popupX,
+      enemyY + 130,
+      `Total Enemies: ${this.gameStats.totalEnemiesDefeated}`,
+      {
+        fontSize: '11px',
+        color: '#9acf07',  // Green
         fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold',
-        stroke: '#4a148c',
-        strokeThickness: 1,
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000000',
-          blur: 3,
-          fill: true
-        }
+        fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
     // Restart button (full game restart, changed to teal)
     const restartButton = this.add.rectangle(
       popupX,
-      popupY + 80,
+      popupY + 185,
       150,
       40,
       0x20b2aa  // Teal color
@@ -6878,7 +6988,7 @@ export class GameScene extends Phaser.Scene {
     
     const restartText = this.add.text(
       popupX,
-      popupY + 80,
+      popupY + 185,
       'START OVER',
       {
         fontSize: '14px',
@@ -7133,6 +7243,27 @@ export class GameScene extends Phaser.Scene {
     // Update the background position with the new initial Y
     const newParallaxOffset = cameraY * 0.05
     this.backgroundSprite.setY(this.backgroundInitialY - newParallaxOffset)
+  }
+
+  // Helper method to get enemy type name for stats tracking
+  private getEnemyTypeName(enemy: any): string {
+    if (enemy.constructor.name === 'Cat') {
+      const color = enemy.color || enemy.getData?.('color')
+      const isStalker = enemy.isStalker || enemy.getData?.('isStalker')
+      
+      switch(color) {
+        case 'yellow': return 'caterpillar'
+        case 'blue': return 'chomper'
+        case 'red': return isStalker ? 'stalker' : 'snail'
+        case 'green': return 'bouncer'
+        default: return 'unknown'
+      }
+    } else if (enemy.constructor.name === 'Beetle') {
+      return 'rollz'
+    } else if (enemy.constructor.name === 'BaseBlu') {
+      return 'blu'
+    }
+    return 'unknown'
   }
 
   // Farcade SDK Integration Methods
