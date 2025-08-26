@@ -129,13 +129,13 @@
 
 ## 6-Tier Progressive System
 
-**Enemy Count per Floor** (replaces difficulty budget system):
-- **Tutorial (1-10)**: 2-3 enemies per floor
-- **Basic (11-20)**: 3-4 enemies per floor
-- **Speed (21-30)**: 4-5 enemies per floor
-- **Advanced (31-40)**: 5-6 enemies per floor
-- **Expert (41-50)**: 6-7 enemies per floor
-- **BEAST (51+)**: 7-8 enemies per floor
+**Enemy Count per Floor** (capped at 5 for balanced difficulty):
+- **Tutorial (1-10)**: 1-2 enemies per floor
+- **Basic (11-20)**: 2-3 enemies per floor
+- **Speed (21-30)**: 3-4 enemies per floor
+- **Advanced (31-40)**: 4-5 enemies per floor (max cap)
+- **Expert (41-50)**: 4-5 enemies per floor (max cap)
+- **BEAST (51+)**: 4-5 enemies per floor (max cap)
 
 **Speed Scaling**: Progressive speed multiplier from 1.0x (level 1) to 1.25x (level 50+)
 **BaseBlu Limits**: Max 0/0/1/2/2/2 per floor for each tier respectively
@@ -143,22 +143,22 @@
 ## 6-Tier Enemy Combinations Examples
 
 ### Tutorial Floors (1-10)
-- 2-3 enemies: 2 Caterpillars + 1 Beetle
+- 1-2 enemies: 1-2 Caterpillars or 1 Beetle
 - 70% Caterpillar, 30% Beetle spawns
 - No advanced enemies
 
 ### Speed Tier Floors (21-30) 
-- 4-5 enemies: 2 Snails + 2 Chompers + 1 BaseBlu
+- 3-4 enemies: 2 Snails + 1-2 Chompers + possibly 1 BaseBlu
 - 50% Snail, 35% Chomper, 15% BaseBlu (max 1 per floor)
 - Speed multiplier: ~1.10x
 
 ### Expert Floors (41-50)
-- 6-7 enemies: 2 Stalkers + 2 Jumpers + 2 BaseBlu + mix
+- 4-5 enemies: Mix of Stalkers, Jumpers, and BaseBlu
 - 35% Stalker, 30% Jumper, 25% BaseBlu (max 2 per floor)  
 - Speed multiplier: 1.20x-1.25x
 
 ### BEAST Mode (51+)
-- 7-8 enemies: Balanced chaos mix of all types
+- 4-5 enemies: Balanced chaos mix of all types
 - Equal emphasis on variety and challenge
 - Speed multiplier: 1.25x (capped)
 

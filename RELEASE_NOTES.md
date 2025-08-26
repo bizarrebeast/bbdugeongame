@@ -1,5 +1,25 @@
 # Treasure Quest - Release Notes
 
+## Version 1.0.1 - Balance Update
+
+### Release Date: January 2025
+
+### Changes
+- **Difficulty Adjustments**:
+  - Capped maximum enemies per floor to 5 (previously up to 7-8)
+  - Reduced enemy counts across all tiers for better balance
+  - Level 1 now spawns only 1 enemy per floor for gentle introduction
+  - Fixed stalker enemies appearing in tutorial levels
+- **Gameplay Improvements**:
+  - Reduced minimum jump height for better control (allows tiny bounces)
+  - Fixed HUD level counter not updating between levels
+  - Added portal-sucking animation when enemies are defeated by crystal balls
+  - New sound effects for door opening, power-up collection, and curse collection
+- **UI Updates**:
+  - Simplified HUD to show only level number (removed chapter text)
+  - Fixed "Press UP" prompt not showing on level 1
+  - Updated prompt styling to yellow text with black stroke
+
 ## Version 1.0.0 - Production Release
 
 ### Release Date: December 2024
