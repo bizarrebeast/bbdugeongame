@@ -54,6 +54,9 @@ export class GameScene extends Phaser.Scene {
   private currentFloor: number = 0
   private lives: number = 3
   private totalCoinsCollected: number = 0 // Still using coins internally for backwards compatibility
+  private totalGemsCollected: number = 0 // Track regular gems (coins)
+  private totalBlueGemsCollected: number = 0 // Track big blue gems
+  private totalDiamondsCollected: number = 0 // Track diamonds
   private livesText!: Phaser.GameObjects.Text
   private livesIcon!: Phaser.GameObjects.Image
   private coinCounterText!: Phaser.GameObjects.Text // Display shows crystals, but variable kept for compatibility
@@ -530,6 +533,9 @@ export class GameScene extends Phaser.Scene {
       this.score = 0 // Start new level with 0 current score
       this.lives = registry.get('playerLives')
       this.totalCoinsCollected = registry.get('totalCoins')
+      this.totalGemsCollected = registry.get('totalGems') || 0
+      this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
+      this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
       // Clear the progression flag
       registry.set('levelProgression', false)
     } else if (registry.has('playerLives') && registry.get('playerLives') > 0) {
@@ -539,15 +545,27 @@ export class GameScene extends Phaser.Scene {
       this.accumulatedScore = registry.get('accumulatedScore') || 0
       this.score = 0 // Reset current level score on death
       this.totalCoinsCollected = 0 // Reset crystals on death
+      this.totalGemsCollected = 0 // Reset gem counts on death
+      this.totalBlueGemsCollected = 0
+      this.totalDiamondsCollected = 0
       registry.set('totalCoins', 0)
+      registry.set('totalGems', 0)
+      registry.set('totalBlueGems', 0)
+      registry.set('totalDiamonds', 0)
     } else {
       // Initialize new game
       this.lives = 3
       this.score = 0
       this.accumulatedScore = 0
       this.totalCoinsCollected = 0
+      this.totalGemsCollected = 0
+      this.totalBlueGemsCollected = 0
+      this.totalDiamondsCollected = 0
       registry.set('playerLives', this.lives)
       registry.set('totalCoins', this.totalCoinsCollected)
+      registry.set('totalGems', 0)
+      registry.set('totalBlueGems', 0)
+      registry.set('totalDiamonds', 0)
       registry.set('accumulatedScore', 0)
     }
     
@@ -3484,7 +3502,9 @@ export class GameScene extends Phaser.Scene {
     
     // Increment coin counter and check for extra life
     this.totalCoinsCollected++
+    this.totalGemsCollected++ // Track regular gems
     this.game.registry.set('totalCoins', this.totalCoinsCollected)  // Save to registry
+    this.game.registry.set('totalGems', this.totalGemsCollected) // Save gems to registry
     this.checkForExtraLife()
     
     // Update displays
@@ -3519,7 +3539,9 @@ export class GameScene extends Phaser.Scene {
     
     // Blue coins count as 5 coins toward extra life
     this.totalCoinsCollected += 5
+    this.totalBlueGemsCollected++ // Track blue gems
     this.game.registry.set('totalCoins', this.totalCoinsCollected)  // Save to registry
+    this.game.registry.set('totalBlueGems', this.totalBlueGemsCollected) // Save blue gems to registry
     this.checkForExtraLife()
     
     // Update displays
@@ -3554,7 +3576,9 @@ export class GameScene extends Phaser.Scene {
     
     // Diamonds count as 10 coins toward extra life
     this.totalCoinsCollected += 10
+    this.totalDiamondsCollected++ // Track diamonds
     this.game.registry.set('totalCoins', this.totalCoinsCollected)  // Save to registry
+    this.game.registry.set('totalDiamonds', this.totalDiamondsCollected) // Save diamonds to registry
     this.checkForExtraLife()
     
     // Update displays
@@ -6149,6 +6173,9 @@ export class GameScene extends Phaser.Scene {
       const newAccumulatedScore = this.accumulatedScore + this.score
       registry.set('accumulatedScore', newAccumulatedScore)
       registry.set('totalCoins', this.totalCoinsCollected)
+      registry.set('totalGems', this.totalGemsCollected)
+      registry.set('totalBlueGems', this.totalBlueGemsCollected)
+      registry.set('totalDiamonds', this.totalDiamondsCollected)
       
       // Advance to next level
       const nextLevel = this.levelManager.nextLevel()
@@ -6490,9 +6517,9 @@ export class GameScene extends Phaser.Scene {
       0.7
     ).setDepth(199).setScrollFactor(0)
     
-    // Create popup background
-    const popupWidth = 300
-    const popupHeight = 220
+    // Create popup background (larger to fit more info)
+    const popupWidth = 340
+    const popupHeight = 320
     const popupX = this.cameras.main.width / 2
     const popupY = this.cameras.main.height / 2
     
@@ -6519,7 +6546,7 @@ export class GameScene extends Phaser.Scene {
     // Game over title
     const gameOverTitle = this.add.text(
       popupX,
-      popupY - 60,
+      popupY - 120,
       'GAME OVER!',
       {
         fontSize: '24px',
@@ -6541,7 +6568,7 @@ export class GameScene extends Phaser.Scene {
     // Display final score
     const scoreText = this.add.text(
       popupX,
-      popupY - 20,
+      popupY - 80,
       `Final Score: ${this.accumulatedScore + this.score}`,
       {
         fontSize: '16px',
@@ -6560,22 +6587,88 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    // Display total coins collected
-    const coinsText = this.add.text(
+    // Display level reached
+    const levelText = this.add.text(
       popupX,
-      popupY + 5,
-      `Coins Collected: ${this.totalCoinsCollected}`,
+      popupY - 50,
+      `Level Reached: ${this.levelManager.getCurrentLevel()}`,
       {
-        fontSize: '12px',
-        color: '#ffd700',  // Gold color to match HUD crystal text
+        fontSize: '14px',
+        color: '#ffd700',  // Gold color
         fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
-        stroke: '#4a148c',  // Dark purple stroke to match HUD
+        stroke: '#4a148c',
         strokeThickness: 1,
         shadow: {
           offsetX: 2,
           offsetY: 2,
-          color: '#000000',  // Black drop shadow
+          color: '#000000',
+          blur: 3,
+          fill: true
+        }
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Display gems collected
+    const gemsText = this.add.text(
+      popupX,
+      popupY - 15,
+      `Gems Collected: ${this.totalGemsCollected}`,
+      {
+        fontSize: '12px',
+        color: '#ffd700',  // Gold color
+        fontFamily: '"Press Start 2P", system-ui',
+        fontStyle: 'bold',
+        stroke: '#4a148c',
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
+          blur: 3,
+          fill: true
+        }
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Display blue gems collected
+    const blueGemsText = this.add.text(
+      popupX,
+      popupY + 10,
+      `Big Blue Gems: ${this.totalBlueGemsCollected}`,
+      {
+        fontSize: '12px',
+        color: '#40e0d0',  // Turquoise color for blue gems
+        fontFamily: '"Press Start 2P", system-ui',
+        fontStyle: 'bold',
+        stroke: '#4a148c',
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
+          blur: 3,
+          fill: true
+        }
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    // Display diamonds collected
+    const diamondsText = this.add.text(
+      popupX,
+      popupY + 35,
+      `Diamonds: ${this.totalDiamondsCollected}`,
+      {
+        fontSize: '12px',
+        color: '#ff69b4',  // Pink color for diamonds
+        fontFamily: '"Press Start 2P", system-ui',
+        fontStyle: 'bold',
+        stroke: '#4a148c',
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
           blur: 3,
           fill: true
         }
@@ -6585,7 +6678,7 @@ export class GameScene extends Phaser.Scene {
     // Restart button (full game restart, changed to teal)
     const restartButton = this.add.rectangle(
       popupX,
-      popupY + 50,
+      popupY + 80,
       150,
       40,
       0x20b2aa  // Teal color
@@ -6595,7 +6688,7 @@ export class GameScene extends Phaser.Scene {
     
     const restartText = this.add.text(
       popupX,
-      popupY + 50,
+      popupY + 80,
       'START OVER',
       {
         fontSize: '14px',
