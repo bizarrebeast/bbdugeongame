@@ -129,8 +129,11 @@ export class BackgroundManager {
       name: 'Special Bonus',
       levelRange: [-1, -1], // Special identifier for bonus levels
       backgrounds: [
-        // Placeholder
-        'crystal-cavern-bg'
+        'bonus-1',
+        'bonus-2',
+        'bonus-3',
+        'bonus-4',
+        'bonus-5'
       ],
       theme: 'unique backgrounds for bonus levels'
     })
@@ -186,18 +189,17 @@ export class BackgroundManager {
   }
 
   private loadBeastModePool(): void {
-    // Collect all backgrounds from all chapters
+    // Collect all backgrounds from all chapters including bonus
     const allBackgrounds: string[] = []
     
     this.chapters.forEach((chapter, key) => {
-      if (key !== 'beast_mode' && key !== 'bonus') {
+      if (key !== 'beast_mode') {
         allBackgrounds.push(...chapter.backgrounds)
       }
     })
 
-    // Select random subset
-    const poolSize = Math.min(15, allBackgrounds.length)
-    this.beastModePool = this.selectRandomSubset(allBackgrounds, poolSize)
+    // Beast Mode uses ALL backgrounds - no subset needed
+    this.beastModePool = [...allBackgrounds]
     
     // Add beast mode exclusives if they exist
     const beastModeChapter = this.chapters.get('beast_mode')

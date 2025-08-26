@@ -461,6 +461,13 @@ export class GameScene extends Phaser.Scene {
     this.load.image('galactic-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2049-MqGMDTShcuUgAj5bNZJITaKkhOjNhR.png?iYFP')
     this.load.image('galactic-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2050-ff9za6km5crBBMDI3SCAAMmFudZq8E.png?s174')
     
+    // Load Bonus level backgrounds
+    this.load.image('bonus-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%201-sSavRhv3PSULBYqZTyGpCnPdMjhAq2.png?5PEU')
+    this.load.image('bonus-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%202-w0skJJAvJH9cYfQluphIJQwMFJpgK3.png?q77P')
+    this.load.image('bonus-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%203-kn73QdXKclD3LrMf3BXOH4B3ujbuxN.png?t9Nv')
+    this.load.image('bonus-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%204-opRR6rXctR8XkRkQIo5LfITdiyHhzq.png?Yubo')
+    this.load.image('bonus-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%205-FOtt55z5rVDYStfszLrUJRnnpovVMb.png?RCnr')
+    
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
