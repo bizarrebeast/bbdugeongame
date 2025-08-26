@@ -20,6 +20,7 @@ import { Door } from "../objects/Door"
 import { AssetPool, AssetConfig } from "../systems/AssetPool"
 import { GemShapeGenerator, GemStyle, GemCut } from "../utils/GemShapes"
 import { MenuOverlay } from "../ui/MenuOverlay"
+import { BackgroundManager } from "../systems/BackgroundManager"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -95,6 +96,7 @@ export class GameScene extends Phaser.Scene {
   private levelText!: Phaser.GameObjects.Text
   private menuOverlay!: MenuOverlay
   private backgroundMusic!: Phaser.Sound.BaseSound
+  private backgroundManager!: BackgroundManager
   
   // Game statistics tracking
   private gameStats = {
@@ -524,8 +526,12 @@ export class GameScene extends Phaser.Scene {
       this.game.registry.set('isReplay', false)
     }
     
+    // Initialize background manager
+    this.backgroundManager = new BackgroundManager(this)
+    
     // Select background based on current level
-    this.currentBackground = this.getBackgroundForLevel(this.levelManager?.getCurrentLevel() || 1)
+    const currentLevel = this.levelManager?.getCurrentLevel() || 1
+    this.currentBackground = this.backgroundManager.getBackgroundForLevel(currentLevel)
     
     // Add current background (first, so it appears behind everything)
     const background = this.add.image(0, 0, this.currentBackground)
@@ -1053,8 +1059,10 @@ export class GameScene extends Phaser.Scene {
     doorIcon.setDepth(100)
     doorIcon.setScrollFactor(0)
     
-    const currentLevel = this.levelManager.getCurrentLevel()
-    const levelDisplayText = currentLevel >= 51 ? 'BEAST MODE' : `${currentLevel}`
+    const levelForHUD = this.levelManager.getCurrentLevel()
+    const levelDisplayText = levelForHUD >= 51 ? 'BEAST MODE' : `${levelForHUD}`
+    const chapterInfo = this.backgroundManager.getCurrentChapterInfo()
+    
     this.levelText = this.add.text(45, 111, levelDisplayText, {
       fontSize: '14px',
       color: '#9acf07',  // Same green as hamburger menu
@@ -1071,6 +1079,18 @@ export class GameScene extends Phaser.Scene {
       }
     }).setOrigin(0, 0.5).setDepth(100)
     this.levelText.setScrollFactor(0)
+    
+    // Add subtle chapter name below level if not in beast mode and past level 1
+    if (levelForHUD > 1 && levelForHUD <= 50) {
+      const chapterText = this.add.text(45, 128, chapterInfo.name.toUpperCase(), {
+        fontSize: '8px',
+        color: '#7b1fa2',  // Lighter purple
+        fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#000000',
+        strokeThickness: 1
+      }).setOrigin(0, 0.5).setDepth(100)
+      chapterText.setScrollFactor(0)
+    }
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
@@ -6391,15 +6411,122 @@ export class GameScene extends Phaser.Scene {
       // Advance to next level
       const nextLevel = this.levelManager.nextLevel()
       
+      // Check for chapter transition
+      if (this.backgroundManager.isChapterTransition(nextLevel)) {
+        // Preload next chapter backgrounds
+        const nextChapter = this.backgroundManager.getChapterForLevel(nextLevel)
+        this.backgroundManager.loadChapterBackgrounds(nextChapter).then(() => {
+          // Unload previous chapter if needed
+          const prevChapter = this.backgroundManager.getChapterForLevel(nextLevel - 1)
+          this.backgroundManager.unloadChapterBackgrounds(prevChapter)
+        })
+      }
+      
       // Check if entering BEAST MODE (level 51)
       if (nextLevel === 51) {
         this.showBeastModeNotification(() => {
           // Restart scene after BEAST MODE notification
           this.scene.restart()
         })
+      } else if (this.backgroundManager.isChapterTransition(nextLevel) && nextLevel !== 1) {
+        // Show chapter transition notification
+        this.showChapterTransition(nextLevel, () => {
+          this.scene.restart()
+        })
       } else {
         // Regular level progression
         this.scene.restart()
+      }
+    })
+  }
+
+  private showChapterTransition(nextLevel: number, onComplete: () => void): void {
+    const chapterName = this.backgroundManager.getChapterName(nextLevel)
+    
+    // Create overlay
+    const overlay = this.add.rectangle(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2,
+      GameSettings.canvas.width,
+      GameSettings.canvas.height,
+      0x000000,
+      0.7
+    ).setDepth(299).setScrollFactor(0)
+
+    // Create notification background
+    const notificationBg = this.add.graphics()
+    notificationBg.fillStyle(0x4a148c, 1.0)  // Dark purple fill
+    notificationBg.lineStyle(2, 0x7b1fa2, 1.0) // Lighter purple border
+    notificationBg.fillRoundedRect(
+      GameSettings.canvas.width / 2 - 150,
+      GameSettings.canvas.height / 2 - 60,
+      300,
+      120,
+      12
+    )
+    notificationBg.strokeRoundedRect(
+      GameSettings.canvas.width / 2 - 150,
+      GameSettings.canvas.height / 2 - 60,
+      300,
+      120,
+      12
+    )
+    notificationBg.setDepth(300).setScrollFactor(0)
+
+    // Chapter name text
+    const titleText = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 - 20,
+      'ENTERING',
+      {
+        fontSize: '14px',
+        color: '#FFD700',
+        fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#000000',
+        strokeThickness: 2
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+
+    const chapterText = this.add.text(
+      GameSettings.canvas.width / 2,
+      GameSettings.canvas.height / 2 + 10,
+      chapterName.toUpperCase(),
+      {
+        fontSize: '16px',
+        color: '#9ACF07',
+        fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#000000',
+        strokeThickness: 2
+      }
+    ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
+
+    // Fade in
+    overlay.setAlpha(0)
+    notificationBg.setAlpha(0)
+    titleText.setAlpha(0)
+    chapterText.setAlpha(0)
+
+    this.tweens.add({
+      targets: [overlay, notificationBg, titleText, chapterText],
+      alpha: 1,
+      duration: 500,
+      onComplete: () => {
+        // Hold for a moment
+        this.time.delayedCall(1500, () => {
+          // Fade out
+          this.tweens.add({
+            targets: [overlay, notificationBg, titleText, chapterText],
+            alpha: 0,
+            duration: 500,
+            onComplete: () => {
+              overlay.destroy()
+              notificationBg.destroy()
+              titleText.destroy()
+              chapterText.destroy()
+              onComplete()
+            }
+          })
+        })
       }
     })
   }
@@ -7205,12 +7332,6 @@ export class GameScene extends Phaser.Scene {
     this.player.notifyBubbleActive(false)
   }
 
-  // Background management methods
-  private getBackgroundForLevel(level: number): string {
-    // Rotate through backgrounds based on level
-    const backgroundIndex = (level - 1) % this.backgroundLibrary.length
-    return this.backgroundLibrary[backgroundIndex]
-  }
 
   private updateBackgroundPosition(): void {
     if (!this.backgroundSprite) return
