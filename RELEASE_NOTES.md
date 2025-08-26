@@ -2,7 +2,7 @@
 
 ## Version 1.0.1 - Balance Update
 
-### Release Date: January 2025
+### Release Date: August 2025
 
 ### Changes
 - **Difficulty Adjustments**:
