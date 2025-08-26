@@ -30,6 +30,30 @@ export function initializeFarcadeSDK(game: Phaser.Game): void {
   // Set mute/unmute handler
   window.FarcadeSDK.on("toggle_mute", (data: { isMuted: boolean }) => {
     game.sound.mute = data.isMuted
+    
+    // If unmuting, we need to resume the audio context after user interaction
+    if (!data.isMuted) {
+      // Try to resume audio context immediately
+      if (game.sound.context && game.sound.context.state === 'suspended') {
+        game.sound.context.resume()
+      }
+      
+      // Also add a one-time listener for the next user interaction to ensure audio resumes
+      const resumeAudio = () => {
+        if (game.sound.context && game.sound.context.state === 'suspended') {
+          game.sound.context.resume()
+        }
+        // Remove the listener after first interaction
+        game.canvas.removeEventListener('click', resumeAudio)
+        game.canvas.removeEventListener('touchstart', resumeAudio)
+        document.removeEventListener('keydown', resumeAudio)
+      }
+      
+      // Add listeners for various user interactions
+      game.canvas.addEventListener('click', resumeAudio, { once: true })
+      game.canvas.addEventListener('touchstart', resumeAudio, { once: true })
+      document.addEventListener('keydown', resumeAudio, { once: true })
+    }
   })
 
   // Setup play_again handler

@@ -50,4 +50,26 @@ game.registry.set('isReplay', false)
 // Initialize Farcade SDK
 game.events.once("ready", () => {
   initializeFarcadeSDK(game)
+  
+  // Set up audio context resumption on user interaction
+  // This helps ensure audio works after page visibility changes or SDK unmute
+  const ensureAudioContext = () => {
+    if (game.sound.context && game.sound.context.state === 'suspended') {
+      game.sound.context.resume().catch((e: Error) => {
+        console.warn('Could not resume audio context:', e)
+      })
+    }
+  }
+  
+  // Add listeners for user interactions to resume audio if needed
+  canvas.addEventListener('click', ensureAudioContext)
+  canvas.addEventListener('touchstart', ensureAudioContext)
+  document.addEventListener('keydown', ensureAudioContext)
+  
+  // Also try to resume on visibility change (when tab becomes active)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      ensureAudioContext()
+    }
+  })
 })
