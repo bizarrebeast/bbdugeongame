@@ -7,7 +7,7 @@ A retro-style endless climbing arcade game built with Phaser.js and TypeScript f
 ## Game Features
 
 - 🎮 **Retro Arcade Gameplay**: Classic Donkey Kong-style climbing action with modern enhancements
-- 💎 **Crystal Cavern Theme**: Magical underground setting with crystal platforms, gem formations, and floating orbs
+- 💎 **50 Unique Backgrounds**: 5 themed crystal cavern chapters with distinct visual styles
 - 📱 **Mobile-Optimized**: 5:9 aspect ratio with full touch controls and virtual joystick
 - 🎯 **Progressive Levels**: Discrete level system (1-50) then BEAST MODE with 6-tier difficulty progression
 - 👾 **Advanced Enemy System**: 7 enemy types with 6-tier progressive spawning and anti-clustering distribution
@@ -187,7 +187,8 @@ bizarre-underground/
 ```
 
 ### Key Game Systems:
-- **`GameScene.ts`**: Complete gameplay logic with Crystal Cavern Theme background and 6-tier enemy spawning
+- **`GameScene.ts`**: Complete gameplay logic with 50 unique backgrounds and 6-tier enemy spawning
+- **`BackgroundManager.ts`**: Advanced background system managing 5 chapters and 50 unique backgrounds
 - **`Player.ts`**: Enhanced player with 9 custom animations and smart state management
 - **`LevelManager.ts`**: Progressive difficulty system (levels 1-50, then BEAST MODE endless)
 - **`EnemySpawningSystem.ts`**: Sophisticated 6-tier enemy spawning with anti-clustering algorithms
@@ -220,7 +221,7 @@ npm run preview  # Preview the built game locally
 ### Adding New Features
 - **New Enemies**: Create in `src/objects/` following the Cat.ts pattern
 - **New Collectibles**: Add to collectible system in GameScene.ts
-- **Visual Themes**: Modify Crystal Cavern Theme background system for new themes
+- **Visual Themes**: 50 backgrounds across 5 chapters (Crystal, Volcanic, Steampunk, Electrified, Galactic)
 - **Game Mechanics**: Extend GameScene.ts with new systems
 
 ### Testing
@@ -273,7 +274,8 @@ This creates `dist/index.html` - a single file containing your entire game ready
 
 ### Game Features
 - **Complete Arcade Game**: Fully playable retro climbing adventure with production-ready polish
-- **Crystal Cavern Theme**: Magical underground setting with colorful crystal visuals
+- **50 Unique Backgrounds**: Complete visual journey through 5 themed crystal cavern chapters
+- **Dynamic Chapter System**: Visual transitions between Crystal, Volcanic, Steampunk, Electrified, and Galactic themes
 - **6-Tier Difficulty System**: 50 discrete levels with progressive spawning then BEAST MODE
 - **Advanced Enemy System**: 7 enemy types (50-1000 points) with anti-clustering distribution
 - **Enhanced Collision**: Forgiving hitbox system and smart treasure chest safety zones
