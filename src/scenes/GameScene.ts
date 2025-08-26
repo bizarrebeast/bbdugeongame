@@ -422,15 +422,27 @@ export class GameScene extends Phaser.Scene {
 
     // Load sound effects
     // Gem collect sound
-    this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-GRPjYznU3dMUrNZta0nIA9Y3hYfuyd.wav?FgFr')
+    this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-WzBPpRwr17lykb68jA7Wxq3XddHB7h.wav?t5j4')
     
     // Jump sounds (3 variations to rotate between)
     this.load.audio('jump-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%201%20sfx-Cfx219m2NwhVClkP67iebiwcV0HiF5.wav?GDjY')
     this.load.audio('jump-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%202%20sfx-UU3Gj2quONoFPk7SO3OI3koGgiSRGY.wav?4Zrt')
     this.load.audio('jump-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%203%20sfx-8h2X8f0XZJYeVB65fDYk4hth9h1G0O.wav?Wpvy')
     
-    // Enemy squish sound
-    this.load.audio('enemy-squish', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%201%20sfx-MBkO4SrZ1IVUJ6jqjHWa5L0NURtkJH.wav?qytP')
+    // Player damage sounds
+    this.load.audio('spike-hit', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20hits%20spikes%20sfx-Pt2SxNCgCXtyIz2jiBS3AYiCvYrp8X.wav?IM9a')
+    this.load.audio('player-dies-enemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20dies%20from%20enemy%20sfx-61hLKPCRlGrkam7zYIUuuWTwHFZXun.wav?d7C2')
+    
+    // Game over sound
+    this.load.audio('game-over', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/game%20over%20sfx-CcqXjJvB1fNTt9i31KIzjv0KLNN6CF.wav?OQAX')
+    
+    // Enemy-specific squish sounds
+    this.load.audio('squish-caterpillar', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%201%20sfx-Q07M71fpvcarGwZ67kaOsiFBD8hQw9.wav?eCQ1') // Yellow cat
+    this.load.audio('squish-beetle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Rollz%20squish%20sfx-ENEJDyuGH2imVNsLezuv5w3TzofWsG.wav?caYG') // Rollz beetle
+    this.load.audio('squish-chomper', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%202-euwtmXFPsH1NH9XQzixjo6lgeA7Nxd.wav?6rLZ') // Blue cat
+    this.load.audio('squish-snail', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%203-22EnbLa2GEVZPJCf7zWpqhYHS6V4K2.wav?h9e6') // Red cat
+    this.load.audio('squish-jumper', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%201%20sfx-MBkO4SrZ1IVUJ6jqjHWa5L0NURtkJH.wav?qytP') // Green bouncer
+    this.load.audio('squish-stalker', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%203-22EnbLa2GEVZPJCf7zWpqhYHS6V4K2.wav?h9e6') // Red stalker (same as snail)
     
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -4560,10 +4572,12 @@ export class GameScene extends Phaser.Scene {
     // Check if cat is already squished to prevent multiple kills
     if ((cat as any).isSquished) return
     
+    // Get cat color once at the start
+    const catColor = cat.getCatColor()
+    
     // Don't allow combo while climbing ladders
     if (player.getIsClimbing()) {
       // Just award base points without combo using cat color
-      const catColor = cat.getCatColor()
       let enemyType: EnemyType
       switch(catColor) {
         case 'yellow': enemyType = EnemyType.CATERPILLAR; break
@@ -4589,7 +4603,6 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Calculate points with current combo multiplier (before incrementing)
-    const catColor = cat.getCatColor()
     let enemyType: EnemyType
     switch(catColor) {
       case 'yellow': enemyType = EnemyType.CATERPILLAR; break
@@ -4625,8 +4638,24 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
-    // Play enemy squish sound
-    this.sound.play('enemy-squish', { volume: 0.5 })
+    // Play enemy-specific squish sound based on cat color
+    // catColor already set above
+    let squishSound = 'squish-chomper' // Default
+    switch (catColor) {
+      case 'yellow':
+        squishSound = 'squish-caterpillar'
+        break
+      case 'blue':
+        squishSound = 'squish-chomper'
+        break
+      case 'red':
+        squishSound = 'squish-snail'
+        break
+      case 'green':
+        squishSound = 'squish-jumper'
+        break
+    }
+    this.sound.play(squishSound, { volume: 0.5 })
     
     // Squish the cat
     cat.squish()
@@ -4687,8 +4716,8 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
-    // Play enemy squish sound
-    this.sound.play('enemy-squish', { volume: 0.5 })
+    // Play beetle-specific squish sound
+    this.sound.play('squish-beetle', { volume: 0.5 })
     
     // Squish the beetle with animation
     beetle.squish()
@@ -4710,8 +4739,28 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce slightly (less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
     
-    // Play enemy squish sound
-    this.sound.play('enemy-squish', { volume: 0.5 })
+    // Play appropriate squish sound based on enemy type
+    let squishSound = 'squish-chomper' // Default
+    if (enemy.constructor.name === 'Beetle') {
+      squishSound = 'squish-beetle'
+    } else if (enemy.constructor.name === 'Cat') {
+      const catColor = enemy.getCatColor()
+      switch (catColor) {
+        case 'yellow':
+          squishSound = 'squish-caterpillar'
+          break
+        case 'blue':
+          squishSound = 'squish-chomper'
+          break
+        case 'red':
+          squishSound = enemy.isStalker ? 'squish-stalker' : 'squish-snail'
+          break
+        case 'green':
+          squishSound = 'squish-jumper'
+          break
+      }
+    }
+    this.sound.play(squishSound, { volume: 0.5 })
     
     // Squish the enemy with special golden effect
     enemy.squish()
@@ -4771,8 +4820,8 @@ export class GameScene extends Phaser.Scene {
     // Make player bounce up (slightly less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
-    // Play enemy squish sound
-    this.sound.play('enemy-squish', { volume: 0.5 })
+    // Play stalker-specific squish sound
+    this.sound.play('squish-stalker', { volume: 0.5 })
     
     // Squish the stalker cat
     stalkerCat.squish()
@@ -4914,16 +4963,27 @@ export class GameScene extends Phaser.Scene {
     })
   }
   
-  private handlePlayerDamage(player: Player, cat: any): void {
+  private handlePlayerDamage(player: Player, damageSource?: any): void {
     if (this.isGameOver) return
     
     // Check if player is invincible
     if (this.invincibilityActive) {
       // Player is invincible - kill enemy and award triple points
-      if (cat && cat.squish) {
-        this.handleInvincibilityEnemyKill(player, cat)
+      if (damageSource && damageSource.squish) {
+        this.handleInvincibilityEnemyKill(player, damageSource)
       }
       return
+    }
+    
+    // Play appropriate damage sound based on source
+    const isSpikeDamage = !damageSource || damageSource.texture?.key?.includes('spike')
+    
+    if (isSpikeDamage) {
+      // Spike damage or no source (assume spike)
+      this.sound.play('spike-hit', { volume: 0.5 })
+    } else {
+      // Enemy damage - play death sound
+      this.sound.play('player-dies-enemy', { volume: 0.5 })
     }
     
     // Reset combo on hit
@@ -6530,6 +6590,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showGameOverScreen(): void {
+    // Play game over sound
+    this.sound.play('game-over', { volume: 0.5 })
+    
     // Notify Farcade SDK of game over with final score
     const finalScore = this.accumulatedScore + this.score
     this.notifyFarcadeGameOver(finalScore)
