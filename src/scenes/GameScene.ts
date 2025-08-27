@@ -797,7 +797,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     // TEST: Start at level 10 for testing
-    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 40  // TEST: Starting at level 40
+    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 50  // TEST: Starting at level 50
     // Sync level manager with registry
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
@@ -2601,6 +2601,10 @@ export class GameScene extends Phaser.Scene {
       const spawnPattern = this.getRandomSpawnPattern(selectedEnemies.length)
       // Using spawn pattern for enemies (replaced console.log)
       
+      // Track BaseBlu spawn positions - alternate between edges
+      let baseBluCount = 0
+      const baseBluSpawnedLeft = new Set<number>() // Track which floors have left-edge BaseBlu
+      
       // Create enemies based on selected types and pattern
       for (let enemyIndex = 0; enemyIndex < selectedEnemies.length; enemyIndex++) {
         const enemyType = selectedEnemies[enemyIndex]
@@ -2610,8 +2614,39 @@ export class GameScene extends Phaser.Scene {
         let leftBound: number
         let rightBound: number
         
-        if (layout.gapStart === -1) {
-          // Complete floor - use pattern-based positioning
+        // Special positioning for BaseBlu enemies - spawn at edges
+        if (EnemySpawningSystem.isBaseBluType(enemyType)) {
+          // Count total BaseBlu enemies on this floor
+          const totalBaseBluOnFloor = selectedEnemies.filter(e => EnemySpawningSystem.isBaseBluType(e)).length
+          
+          if (totalBaseBluOnFloor === 1) {
+            // Single BaseBlu - randomly choose left or right edge
+            const spawnLeft = Math.random() < 0.5
+            if (spawnLeft) {
+              x = tileSize * 1 // Left edge
+              leftBound = tileSize * 0.5
+              rightBound = tileSize * (floorWidth - 0.5)
+            } else {
+              x = tileSize * (floorWidth - 1) // Right edge
+              leftBound = tileSize * 0.5
+              rightBound = tileSize * (floorWidth - 0.5)
+            }
+          } else {
+            // Multiple BaseBlu - alternate between edges
+            if (baseBluCount === 0) {
+              // First BaseBlu goes to left edge
+              x = tileSize * 1
+              baseBluSpawnedLeft.add(floor)
+            } else {
+              // Second BaseBlu goes to opposite edge
+              x = tileSize * (floorWidth - 1)
+            }
+            leftBound = tileSize * 0.5
+            rightBound = tileSize * (floorWidth - 0.5)
+            baseBluCount++
+          }
+        } else if (layout.gapStart === -1) {
+          // Complete floor - use pattern-based positioning for non-BaseBlu
           const positions = this.calculateEnemyPositions(selectedEnemies.length, spawnPattern, floorWidth, tileSize)
           const position = positions[enemyIndex]
           
@@ -2682,6 +2717,17 @@ export class GameScene extends Phaser.Scene {
           // Create BaseBlu enemy
           const baseBlu = new BaseBlu(this, x, y)
           baseBlu.setPlatformBounds(leftBound, rightBound)
+          
+          // Set initial direction based on spawn position - patrol inward from edges
+          const centerX = tileSize * (floorWidth / 2)
+          if (x < centerX) {
+            // Spawned on left side - move right initially
+            baseBlu.setInitialDirection(1)
+          } else {
+            // Spawned on right side - move left initially
+            baseBlu.setInitialDirection(-1)
+          }
+          
           // Apply speed multiplier to BaseBlu if it has a method for it
           if (typeof (baseBlu as any).setSpeedMultiplier === 'function') {
             (baseBlu as any).setSpeedMultiplier(speedMultiplier)

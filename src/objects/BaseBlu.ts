@@ -83,6 +83,10 @@ export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
     this.platformRight = right
   }
   
+  setInitialDirection(direction: number): void {
+    this.direction = direction // 1 for right, -1 for left
+  }
+  
   update(time: number, delta: number): void {
     const body = this.body as Phaser.Physics.Arcade.Body
     
