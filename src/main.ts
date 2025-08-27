@@ -19,7 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
     resolution: window.devicePixelRatio || 1,
   },
   canvas: canvas,
-  backgroundColor: "#1a0f2e", // Dark underground purple
+  backgroundColor: "#000000", // Pure black to avoid grey flash
   scene: [SplashScene, InstructionsScene, GameScene],
   physics: {
     default: "arcade",

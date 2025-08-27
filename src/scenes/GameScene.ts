@@ -147,6 +147,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload(): void {
+    console.log('🔄 GameScene.preload() started at', performance.now())
     // Initialize asset pool
     this.assetPool = new AssetPool(this)
     
@@ -401,6 +402,14 @@ export class GameScene extends Phaser.Scene {
     // Load talking bubble sprite
     this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
     
+    // Load chapter splash screens
+    this.load.image('chapter-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Crystal%20Cavern%20Chapter%20marker-xVVl4RJLl7pqY1teeQdZ9YR8qRbIbf.png')
+    this.load.image('chapter-11', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Volcanic%20Crystal%20Cavern%20Chapter%20marker-DrODhcdT2pkFF5SP0zLVzzpmHeZwBl.png')
+    this.load.image('chapter-21', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Steampunk%20Crystal%20Cavern%20Chapter%20marker-Oerxv49ruukEeuSe6Dz9Epj2apX18R.png')
+    this.load.image('chapter-31', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Electrified%20Crystal%20Cavern%20Chapter%20marker-GstidG6WUl0ZXoFwC2l5HOqWCrXgaA.png')
+    this.load.image('chapter-41', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Galatic%20Crystal%20Cavern%20Chapter%20marker-HTsVFy9CSXYas98BckhvpCBkEV4AwP.png')
+    this.load.image('chapter-51', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Beast%20Mode%20splash%20page-hnSUzR7voB81jfSXp0WpSwdDWEm4LD.png')
+    
     // Load Crystal Cavern chapter backgrounds (levels 1-10)
     this.load.image('crystal-cavern-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%201-o5M2rYkM5ffKmdp8pMw6QzmR87KA0k.png?4qbf')
     this.load.image('crystal-cavern-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%202-Sdyqtq58gC1XVkllts47M2AzYOTgpX.png?0mX8')
@@ -605,12 +614,89 @@ export class GameScene extends Phaser.Scene {
   private reopenMenuAfterInit: boolean = false
 
   create(): void {
+    console.log('🎮 GameScene.create() started at', performance.now())
+    
+    // Immediately set black background to avoid any grey flash
+    this.cameras.main.setBackgroundColor('#000000')
+    console.log('🎨 Camera background set to black')
+    
     // Reset the replay flag after using it
     // This ensures that if player manually restarts (not through SDK), they see splash screen again
     if (this.game.registry.get('isReplay')) {
+      console.log('📌 Replay flag detected, resetting')
       this.game.registry.set('isReplay', false)
     }
     
+    // Check for chapter splash FIRST before anything else
+    const chapterLevels = [1, 11, 21, 31, 41, 51]
+    const currentLevelCheck = this.game.registry.get('currentLevel') || 1
+    console.log(`📊 Current level: ${currentLevelCheck}`)
+    
+    if (chapterLevels.includes(currentLevelCheck)) {
+      console.log(`🎬 Chapter splash needed for level ${currentLevelCheck}`)
+      // Show chapter splash and delay game initialization
+      this.showChapterSplashScreen(currentLevelCheck, () => {
+        console.log('✅ Splash complete, initializing game')
+        this.initializeGameAfterSplash()
+      })
+      return // Exit early - game will be initialized after splash
+    }
+    
+    console.log('⏩ No splash needed, initializing game immediately')
+    // No splash needed, initialize game immediately
+    this.initializeGameAfterSplash()
+  }
+  
+  private showChapterSplashScreen(level: number, onComplete: () => void): void {
+    console.log(`🖼️ Creating splash screen for level ${level} at`, performance.now())
+    
+    // Show the chapter splash image IMMEDIATELY at full opacity
+    const splashImage = this.add.image(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2,
+      `chapter-${level}`
+    )
+    console.log(`📷 Splash image created: chapter-${level}`)
+    
+    // Scale to fill screen
+    const scaleX = this.cameras.main.width / splashImage.width
+    const scaleY = this.cameras.main.height / splashImage.height
+    const scale = Math.max(scaleX, scaleY)
+    splashImage.setScale(scale)
+    splashImage.setDepth(10001)
+    splashImage.setScrollFactor(0)
+    splashImage.alpha = 1 // Start at full opacity - no fade in needed
+    console.log(`📐 Image scaled: ${scale.toFixed(2)}x, showing immediately`)
+    
+    // Wait 2 seconds then fade out and continue
+    console.log('⏱️ Starting 2 second timer')
+    this.time.delayedCall(2000, () => {
+      console.log('⏰ Timer complete, starting fade out')
+      
+      // Create black background for fade transition
+      const fadeOutBg = this.add.graphics()
+      fadeOutBg.fillStyle(0x000000, 0) // Start transparent
+      fadeOutBg.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height)
+      fadeOutBg.setDepth(10002)
+      fadeOutBg.setScrollFactor(0)
+      
+      // Fade to black then destroy
+      this.tweens.add({
+        targets: fadeOutBg,
+        alpha: 1,
+        duration: 200,
+        ease: 'Power2',
+        onComplete: () => {
+          console.log('🗑️ Destroying splash elements')
+          splashImage.destroy()
+          fadeOutBg.destroy()
+          onComplete()
+        }
+      })
+    })
+  }
+  
+  private initializeGameAfterSplash(): void {
     // Initialize background manager
     this.backgroundManager = new BackgroundManager(this)
     
@@ -1366,7 +1452,7 @@ export class GameScene extends Phaser.Scene {
       // Music already playing, just get the reference
       this.backgroundMusic = this.game.registry.get('backgroundMusicInstance')
     }
-  }
+  }  // End of initializeGameAfterSplash
 
 
   private generateTileTextures(): void {
@@ -5645,6 +5731,9 @@ export class GameScene extends Phaser.Scene {
   update(time: number, deltaTime: number): void {
     if (this.isGameOver) return
     
+    // Don't update if game hasn't been initialized yet (during splash screen)
+    if (!this.touchControls || !this.player) return
+    
     // Update dynamic background positioning to handle high floors
     this.updateBackgroundPosition()
     
@@ -5955,7 +6044,6 @@ export class GameScene extends Phaser.Scene {
 
   private startLevelIntro(targetX: number, targetY: number): void {
     this.isLevelStarting = true
-    
     // Level intro start (replaced console.log)
     
     // Create entrance ladder extending below the floor
