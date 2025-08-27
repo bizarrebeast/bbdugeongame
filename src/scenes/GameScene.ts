@@ -9,7 +9,7 @@ import { Diamond } from "../objects/Diamond"
 import { FreeLife } from "../objects/FreeLife"
 import { InvincibilityPendant } from "../objects/InvincibilityPendant"
 import { TreasureChest } from "../objects/TreasureChest"
-import { FlashPowerUp } from "../objects/FlashPowerUp"
+// import { FlashPowerUp } from "../objects/FlashPowerUp" // Commented out for later use
 import { CrystalBall } from "../objects/CrystalBall"
 import { CrystalBallProjectile } from "../objects/CrystalBallProjectile"
 import { CursedOrb } from "../objects/CursedOrb"
@@ -37,7 +37,7 @@ export class GameScene extends Phaser.Scene {
   private freeLifes: FreeLife[] = []
   private invincibilityPendants: InvincibilityPendant[] = []
   private treasureChests: TreasureChest[] = []
-  private flashPowerUps: FlashPowerUp[] = []
+  // private flashPowerUps: FlashPowerUp[] = [] // Commented out for later use
   private crystalBalls: CrystalBall[] = []
   private crystalBallProjectiles: CrystalBallProjectile[] = []
   private levelHasCrystalBall: boolean = false
@@ -72,8 +72,8 @@ export class GameScene extends Phaser.Scene {
   private comboText!: Phaser.GameObjects.Text
   private visibilityMask: any // Store visibility system components
   private visibilityRadius: number = 160 // 5 tiles * 32 pixels
-  private flashPowerUpActive: boolean = false
-  private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null
+  // private flashPowerUpActive: boolean = false // Commented out for later use
+  // private flashPowerUpTimer: Phaser.Time.TimerEvent | null = null // Commented out for later use
   private invincibilityActive: boolean = false
   private invincibilityTimer: Phaser.Time.TimerEvent | null = null
   private invincibilityTimerImage!: Phaser.GameObjects.Image
@@ -925,7 +925,7 @@ export class GameScene extends Phaser.Scene {
     this.blueCoins = []
     this.diamonds = []
     this.treasureChests = []
-    this.flashPowerUps = []
+    // this.flashPowerUps = [] // Commented out for later use
     this.crystalBalls = []
     this.freeLifs = []
     this.invincibilityPendants = []
@@ -3310,11 +3310,13 @@ export class GameScene extends Phaser.Scene {
       }
       
       // Flash power-ups: Only spawn on dark mode levels (levels ending in 9)
-      const currentLevel = this.levelManager.getCurrentLevel()
-      const isDarkModeLevel = currentLevel % 10 === 9
-      if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
-        this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
-      }
+      // Commented out for later use
+      // const currentLevel = this.levelManager.getCurrentLevel()
+      // const isDarkModeLevel = currentLevel % 10 === 9
+      // if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
+      //   this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+      // }
+      const currentLevel = this.levelManager.getCurrentLevel() // Still needed for other logic
       
       // Crystal Ball power-up: One per level starting from level 3
       if (currentLevel >= 3 && !this.levelHasCrystalBall && floor >= 2 && Math.random() < 0.3) { // 30% chance
@@ -3341,7 +3343,7 @@ export class GameScene extends Phaser.Scene {
   private placeCollectiblesOfType(
     validPositions: number[], 
     count: number, 
-    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'flashPowerUp' | 'crystalBall' | 'cursedOrb' | 'cursedTealOrb',
+    type: 'coin' | 'blueCoin' | 'diamond' | 'freeLife' | 'invincibilityPendant' | 'treasureChest' | 'crystalBall' | 'cursedOrb' | 'cursedTealOrb', // 'flashPowerUp' commented out for later use
     y: number,
     floor: number,
     floorUsedPositions: Array<{x: number, type: string}>
@@ -3448,17 +3450,18 @@ export class GameScene extends Phaser.Scene {
           // Treasure chests use interaction system, not automatic collection
           break
           
-        case 'flashPowerUp':
-          const flashPowerUp = new FlashPowerUp(this, x, y)
-          this.flashPowerUps.push(flashPowerUp)
-          this.physics.add.overlap(
-            this.player,
-            flashPowerUp.sprite,
-            () => this.handleFlashPowerUpCollection(flashPowerUp),
-            undefined,
-            this
-          )
-          break
+        // Commented out for later use
+        // case 'flashPowerUp':
+        //   const flashPowerUp = new FlashPowerUp(this, x, y)
+        //   this.flashPowerUps.push(flashPowerUp)
+        //   this.physics.add.overlap(
+        //     this.player,
+        //     flashPowerUp.sprite,
+        //     () => this.handleFlashPowerUpCollection(flashPowerUp),
+        //     undefined,
+        //     this
+        //   )
+        //   break
           
         case 'crystalBall':
           console.log('🔮 SPAWNING Crystal Ball at', x, y, 'floor:', floor)
@@ -4067,22 +4070,23 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
-  private handleFlashPowerUpCollection(flashPowerUp: FlashPowerUp): void {
-    // Don't collect during intro animation
-    if (this.isLevelStarting) return
-    
-    // Activate flash power-up (reveals full screen for 5 seconds)
-    this.activateFlashPowerUp()
-    
-    // Play collection animation
-    flashPowerUp.collect()
-    
-    // Remove from array
-    const index = this.flashPowerUps.indexOf(flashPowerUp)
-    if (index > -1) {
-      this.flashPowerUps.splice(index, 1)
-    }
-  }
+  // Commented out for later use
+  // private handleFlashPowerUpCollection(flashPowerUp: FlashPowerUp): void {
+  //   // Don't collect during intro animation
+  //   if (this.isLevelStarting) return
+  //   
+  //   // Activate flash power-up (reveals full screen for 5 seconds)
+  //   this.activateFlashPowerUp()
+  //   
+  //   // Play collection animation
+  //   flashPowerUp.collect()
+  //   
+  //   // Remove from array
+  //   const index = this.flashPowerUps.indexOf(flashPowerUp)
+  //   if (index > -1) {
+  //     this.flashPowerUps.splice(index, 1)
+  //   }
+  // }
   
   private handleCrystalBallCollection(crystalBall: CrystalBall): void {
     console.log('🔮 CRYSTAL BALL COLLISION DETECTED!')
@@ -4186,34 +4190,35 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
-  private activateFlashPowerUp(): void {
-    this.flashPowerUpActive = true
-    
-    // Clear existing timer if any
-    if (this.flashPowerUpTimer) {
-      this.flashPowerUpTimer.destroy()
-    }
-    
-    // Immediately fade out the visibility mask for instant full screen reveal
-    // Scale up happens instantly but invisibly
-    this.visibilityMask.setScale(6, 6) // Instant scale
-    this.tweens.add({
-      targets: this.visibilityMask,
-      alpha: 0, // Immediate fade out
-      duration: 100, // Very fast fade
-      ease: 'Power2.easeOut'
-    })
-    
-    // Set 5-second timer
-    this.flashPowerUpTimer = this.time.delayedCall(5000, () => {
-      this.flashPowerUpActive = false
-      this.flashPowerUpTimer = null
-      
-      // Immediately return to normal - instant scale and fade back
-      this.visibilityMask.setScale(1, 1) // Instant scale back to normal
-      this.visibilityMask.setAlpha(1) // Instant fade back to visible
-    })
-  }
+  // Commented out for later use
+  // private activateFlashPowerUp(): void {
+  //   this.flashPowerUpActive = true
+  //   
+  //   // Clear existing timer if any
+  //   if (this.flashPowerUpTimer) {
+  //     this.flashPowerUpTimer.destroy()
+  //   }
+  //   
+  //   // Immediately fade out the visibility mask for instant full screen reveal
+  //   // Scale up happens instantly but invisibly
+  //   this.visibilityMask.setScale(6, 6) // Instant scale
+  //   this.tweens.add({
+  //     targets: this.visibilityMask,
+  //     alpha: 0, // Immediate fade out
+  //     duration: 100, // Very fast fade
+  //     ease: 'Power2.easeOut'
+  //   })
+  //   
+  //   // Set 5-second timer
+  //   this.flashPowerUpTimer = this.time.delayedCall(5000, () => {
+  //     this.flashPowerUpActive = false
+  //     this.flashPowerUpTimer = null
+  //     
+  //     // Immediately return to normal - instant scale and fade back
+  //     this.visibilityMask.setScale(1, 1) // Instant scale back to normal
+  //     this.visibilityMask.setAlpha(1) // Instant fade back to visible
+  //   })
+  // }
   
   activateDarknessEffect(): void {
     console.log('💀 Activating darkness effect!')
@@ -5845,30 +5850,31 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Flash power-up spawning - enabled for dark mode levels
-    if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
-      const pos = spawnPositions[positionIndex++]
-      const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
-      this.flashPowerUps.push(flashPowerUp)
-      
-      // Add physics overlap detection
-      this.physics.add.overlap(
-        this.player,
-        flashPowerUp.sprite,
-        () => this.handleFlashPowerUpCollection(flashPowerUp),
-        undefined,
-        this
-      )
-      
-      // Add electric spawn animation
-      this.tweens.add({
-        targets: flashPowerUp.sprite,
-        scaleX: 1.4,
-        scaleY: 1.4,
-        duration: 400,
-        ease: 'Back.easeOut',
-        yoyo: true
-      })
-    }
+    // Commented out for later use
+    // if (contents.flashPowerUp && positionIndex < spawnPositions.length) {
+    //   const pos = spawnPositions[positionIndex++]
+    //   const flashPowerUp = new FlashPowerUp(this, pos.x, pos.y)
+    //   this.flashPowerUps.push(flashPowerUp)
+    //   
+    //   // Add physics overlap detection
+    //   this.physics.add.overlap(
+    //     this.player,
+    //     flashPowerUp.sprite,
+    //     () => this.handleFlashPowerUpCollection(flashPowerUp),
+    //     undefined,
+    //     this
+    //   )
+    //   
+    //   // Add electric spawn animation
+    //   this.tweens.add({
+    //     targets: flashPowerUp.sprite,
+    //     scaleX: 1.4,
+    //     scaleY: 1.4,
+    //     duration: 400,
+    //     ease: 'Back.easeOut',
+    //     yoyo: true
+    //   })
+    // }
   }
 
   // Helper method to play sound effects with respect to settings
@@ -6113,11 +6119,12 @@ export class GameScene extends Phaser.Scene {
         }
         
         // Flash power-ups: Only spawn on dark mode levels (levels ending in 9)
-        const currentLevel = this.levelManager.getCurrentLevel()
-        const isDarkModeLevel = currentLevel % 10 === 9
-        if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
-          this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
-        }
+        // Commented out for later use
+        // const currentLevel = this.levelManager.getCurrentLevel()
+        // const isDarkModeLevel = currentLevel % 10 === 9
+        // if (isDarkModeLevel && floor > 2 && Math.random() < 0.25) { // 25% chance per floor on dark mode levels
+        //   this.placeCollectiblesOfType(validPositions, 1, 'flashPowerUp', collectibleY, floor, floorUsedPositions)
+        // }
       }
       
       // Get allowed enemy types for current level (reuse the levelConfig from above)

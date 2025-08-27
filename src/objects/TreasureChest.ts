@@ -97,9 +97,9 @@ export class TreasureChest {
     return !this.isOpened
   }
   
-  public open(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number, invincibilityPendants: number, flashPowerUp: boolean, totalPoints: number } {
+  public open(): { coins: number, blueCoins: number, diamonds: number, freeLifes: number, invincibilityPendants: number, totalPoints: number } { // flashPowerUp removed - commented out for later use
     if (this.isOpened) {
-      return { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0, invincibilityPendants: 0, flashPowerUp: false, totalPoints: 0 }
+      return { coins: 0, blueCoins: 0, diamonds: 0, freeLifes: 0, invincibilityPendants: 0, totalPoints: 0 } // flashPowerUp removed
     }
     
     this.isOpened = true
@@ -144,7 +144,7 @@ export class TreasureChest {
       diamonds: contents.diamonds,
       freeLifes: contents.freeLifes,
       invincibilityPendants: contents.invincibilityPendants,
-      flashPowerUp: false, 
+      // flashPowerUp: false, // Commented out for later use 
       totalPoints 
     }
   }
