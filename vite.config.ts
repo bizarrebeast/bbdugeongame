@@ -10,7 +10,7 @@ export default defineConfig({
     outDir: "dist",
     assetsDir: "assets",
     emptyOutDir: true,
-    minify: false,
+    minify: "esbuild",
     rollupOptions: {
       external: ["phaser"],
       output: {

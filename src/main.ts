@@ -1,3 +1,4 @@
+import { LoadingScene } from "./scenes/LoadingScene"
 import { SplashScene } from "./scenes/SplashScene"
 import { InstructionsScene } from "./scenes/InstructionsScene"
 import { GameScene } from "./scenes/GameScene"
@@ -20,7 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   canvas: canvas,
   backgroundColor: "#000000", // Pure black to avoid grey flash
-  scene: [SplashScene, InstructionsScene, GameScene],
+  scene: [LoadingScene, SplashScene, InstructionsScene, GameScene],
   physics: {
     default: "arcade",
     arcade: {
