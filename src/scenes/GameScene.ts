@@ -691,17 +691,36 @@ export class GameScene extends Phaser.Scene {
       fadeOutBg.setDepth(10002)
       fadeOutBg.setScrollFactor(0)
       
-      // Fade to black then destroy
+      // Fade splash image out while fading black in for smooth transition
+      this.tweens.add({
+        targets: splashImage,
+        alpha: 0,
+        duration: 500, // Slower fade out for splash image
+        ease: 'Power2'
+      })
+      
+      // Fade to black slightly slower for smoother transition
       this.tweens.add({
         targets: fadeOutBg,
         alpha: 1,
-        duration: 200,
-        ease: 'Power2',
+        duration: 400, // Slightly faster than image fade for overlap
+        ease: 'Power2.easeInOut',
         onComplete: () => {
           console.log('🗑️ Destroying splash elements')
           splashImage.destroy()
-          fadeOutBg.destroy()
-          onComplete()
+          
+          // Keep black screen briefly then fade it out as game starts
+          this.tweens.add({
+            targets: fadeOutBg,
+            alpha: 0,
+            duration: 300,
+            delay: 100, // Small delay before fading out black
+            ease: 'Power2.easeOut',
+            onComplete: () => {
+              fadeOutBg.destroy()
+              onComplete()
+            }
+          })
         }
       })
     })
