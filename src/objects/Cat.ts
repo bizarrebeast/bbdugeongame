@@ -134,6 +134,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.catColor = catColor
     this.isStalker = isStalker
     
+    // Set display size for green enemy immediately after creation
+    // This prevents the 84x84 default size from being used
+    if (catColor === CatColor.GREEN) {
+      this.setDisplaySize(36, 36)
+      console.log('🟢 GREEN INITIAL: Display size set to 36x36')
+    }
+    
     // Set up stalker if needed
     if (this.isStalker) {
       this.stalkerOriginalY = y
@@ -180,15 +187,49 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Center the larger hitbox on the sprite (accounting for 14px sprite offset down)
       this.body.setOffset(-8, -8 + 14)  // Offset to center: (-8, 6) to account for sprite movement
     } else if (catColor === CatColor.GREEN && this.body instanceof Phaser.Physics.Arcade.Body) {
-      // Make green bouncer hitbox more forgiving - reduce by 20%
-      const defaultWidth = this.body.width
-      const defaultHeight = this.body.height
-      this.body.setSize(defaultWidth * 0.8, defaultHeight * 0.8)
+      // Green bouncer - custom hitbox size 26x22 in screen pixels
+      // Phaser's setSize works in texture space, not display space
+      // If texture is 84x84 displayed at 36x36, scale is 36/84 = 0.428571
+      // To get 26x22 screen pixels, we need: 26/0.428571 = 60.67, 22/0.428571 = 51.33
+      const textureWidth = this.texture.get().width
+      const textureHeight = this.texture.get().height
+      const scaleX = this.displayWidth / textureWidth
+      const scaleY = this.displayHeight / textureHeight
       
-      // Center the smaller hitbox
-      const hitboxCenterOffsetX = (defaultWidth - this.body.width) / 2
-      const hitboxCenterOffsetY = (defaultHeight - this.body.height) / 2
-      this.body.setOffset(hitboxCenterOffsetX, hitboxCenterOffsetY)
+      // Calculate the body size in texture space to achieve desired screen size
+      const desiredScreenWidth = 26
+      const desiredScreenHeight = 22
+      const bodyWidthInTextureSpace = desiredScreenWidth / scaleX
+      const bodyHeightInTextureSpace = desiredScreenHeight / scaleY
+      
+      this.body.setSize(bodyWidthInTextureSpace, bodyHeightInTextureSpace)
+      
+      console.log('🟢 GREEN BOUNCER HITBOX SETUP:')
+      console.log('  Body size requested: 26 x 22')
+      console.log('  Body size actual:', this.body.width, 'x', this.body.height)
+      console.log('  Current sprite display size:', this.displayWidth, 'x', this.displayHeight)
+      console.log('  Sprite position:', this.x, ',', this.y)
+      console.log('  Texture key:', this.texture.key)
+      console.log('  Texture frame size:', this.texture.get().width, 'x', this.texture.get().height)
+      
+      // The physics body offset positions the hitbox relative to the sprite's top-left corner
+      // Keep the hitbox centered as it was working correctly
+      // To move visual sprite up 5px relative to the hitbox:
+      // We offset the hitbox down 5px from center
+      
+      // First center the hitbox (this was correct)
+      const hitboxCenterX = (textureWidth - bodyWidthInTextureSpace) / 2
+      const hitboxCenterY = (textureHeight - bodyHeightInTextureSpace) / 2
+      
+      // Apply visual offset: sprite up 5px means hitbox down 5px
+      const visualOffsetX = 0  // No horizontal offset
+      const visualOffsetY = 5 / scaleY  // Move hitbox down in texture space
+      
+      this.body.setOffset(hitboxCenterX + visualOffsetX, hitboxCenterY + visualOffsetY)
+      
+      console.log('  Physics offset applied:', this.body.offset.x, ',', this.body.offset.y)
+      console.log('  Scales:', scaleX, scaleY)
+      console.log('  Visual offset in texture space:', visualOffsetX, visualOffsetY)
     }
     
     this.setCollideWorldBounds(true)
@@ -245,11 +286,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         // Stalker sprite positioning info (replaced console.log)
       }
     } else if (catColor === CatColor.GREEN && textureKey === 'greenEnemy') {
-      // Green enemy uses single sprite (not animation sprites yet)
-      this.setDisplaySize(36, 36)
-      this.setOffset(3, -3) // Positioning for green enemy
+      // Green enemy - display size already set in constructor
+      // Offset is handled in the physics body setup, not here
       this.setFlipX(false)
       this.addDebugVisualization()
+      
+      console.log('🟢 GREEN VISUAL FINAL:')
+      console.log('  Display size remains:', this.displayWidth, 'x', this.displayHeight)
+      console.log('  Physics body handles visual offset')
     } else {
       // No fallback needed - all enemies should use proper animation sprites
       // Unknown sprite warning (replaced console.log)
@@ -333,6 +377,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.direction = Math.random() < 0.5 ? -1 : 1
     }
   }
+  
   
   update(time: number, delta: number): void {
     if (this.isSquished) return
