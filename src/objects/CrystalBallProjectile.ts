@@ -8,7 +8,6 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   private readonly MAX_DISTANCE: number = 5 * GameSettings.game.tileSize // 5 tiles
   private direction: number = 1 // 1 for right, -1 for left
   private glowGraphics?: Phaser.GameObjects.Graphics
-  private glowTween?: Phaser.Tweens.Tween
   private rotationTween?: Phaser.Tweens.Tween
   
   constructor(scene: Phaser.Scene, x: number, y: number, direction: number, playerVelocityX: number = 0) {
@@ -44,28 +43,16 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     this.glowGraphics = scene.add.graphics()
     this.glowGraphics.setDepth(14)
     this.glowGraphics.fillStyle(0x44d0a7, 0.3)
-    this.glowGraphics.fillCircle(x, y, 12) // Glow around the ball
+    this.glowGraphics.fillCircle(0, 0, 12) // Draw at origin of graphics object
     this.glowGraphics.fillStyle(0x44d0a7, 0.2) 
-    this.glowGraphics.fillCircle(x, y, 18) // Outer glow
+    this.glowGraphics.fillCircle(0, 0, 18) // Draw at origin of graphics object
     
-    // Make glow follow the projectile - store tween reference to kill it later
-    this.glowTween = scene.tweens.add({
-      targets: this.glowGraphics,
-      x: { from: x, to: x + (direction * 300) },
-      duration: 2000,
-      onUpdate: () => {
-        if (this.active && this.glowGraphics) {
-          this.glowGraphics.x = this.x
-          this.glowGraphics.y = this.y
-        }
-      },
-      onComplete: () => {
-        if (this.glowGraphics) {
-          this.glowGraphics.destroy()
-          this.glowGraphics = undefined
-        }
-      }
-    })
+    // Position the graphics at the projectile location
+    this.glowGraphics.x = x
+    this.glowGraphics.y = y
+    
+    // Make glow follow the projectile - no need for tween, just update position
+    this.scene.events.on('update', this.updateGlow, this)
     
     // Add rotation animation - store tween reference
     this.rotationTween = scene.tweens.add({
@@ -77,6 +64,13 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     })
   }
   
+  
+  private updateGlow(): void {
+    if (this.active && this.glowGraphics) {
+      this.glowGraphics.x = this.x
+      this.glowGraphics.y = this.y
+    }
+  }
   
   update(time: number, delta: number): void {
     super.update(time, delta)
@@ -187,12 +181,10 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   burst(): void {
     if (!this.scene) return
     
-    // Kill all tweens immediately to prevent orphaned animations
-    if (this.glowTween) {
-      this.glowTween.stop()
-      this.glowTween = undefined
-    }
+    // Remove the update event listener
+    this.scene.events.off('update', this.updateGlow, this)
     
+    // Kill rotation tween
     if (this.rotationTween) {
       this.rotationTween.stop()
       this.rotationTween = undefined
