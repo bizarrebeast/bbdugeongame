@@ -444,11 +444,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       
       if (upPressed) {
         // Always allow climbing up - player can exit at top
-        this.setVelocityY(-GameSettings.game.climbSpeed)
+        // Apply speed multiplier (1.5x when holding pendant)
+        const climbSpeed = GameSettings.game.climbSpeed * this.speedMultiplier
+        this.setVelocityY(-climbSpeed)
         climbingMovement = true
       } else if (downPressed && !atLadderBottom) {
         // Allow climbing down but stop at ladder bottom
-        this.setVelocityY(GameSettings.game.climbSpeed)
+        // Apply speed multiplier (1.5x when holding pendant)
+        const climbSpeed = GameSettings.game.climbSpeed * this.speedMultiplier
+        this.setVelocityY(climbSpeed)
         climbingMovement = true
       } else {
         // Stop movement when not pressing or at ladder bottom

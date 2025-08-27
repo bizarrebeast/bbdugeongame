@@ -46,7 +46,7 @@ export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(false) // We'll handle platform edges manually
     this.setBounce(0)
     this.setGravityY(GameSettings.game.gravity)
-    this.setSize(42, 38) // 42x38 hitbox
+    this.setSize(42, 46) // 42x46 hitbox (8px taller, was 38)
     
     // Make BaseBlu completely immovable but allow it to affect other objects
     const body = this.body as Phaser.Physics.Arcade.Body
@@ -56,10 +56,10 @@ export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
     
     // Since we moved the sprite up and left visually, adjust the physics offset
     // The physics body needs to be positioned correctly relative to the visual sprite
-    // Hitbox is now 42x38 
-    // Offset x: 15 (left shift) + 3 (center with wider hitbox) + 1 + 1 (shift right again) = 20
-    // Offset y: 8 (visual shift up) + 5 (center vertically) + 3 + 3 (shift down again) = 19
-    this.setOffset(20, 19) // Compensate for visual shifts with hitbox
+    // Hitbox is now 42x46 (8px taller than before)
+    // Keep same X offset: 20
+    // Keep same Y offset: 19 (this keeps the top of the physics body aligned)
+    this.setOffset(20, 19) // Keep top aligned - bottom extends down 8px more
     
     // Set random speed variation (90-110% of base 20)
     const speedVariation = 0.9 + Math.random() * 0.2
