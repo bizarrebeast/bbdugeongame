@@ -156,6 +156,9 @@ export class BackgroundManager {
   }
 
   public getChapterForLevel(level: number): string {
+    // Check if this is a bonus level (multiples of 10, but not 50)
+    if (level % 10 === 0 && level !== 50 && level < 51) return 'bonus'
+    
     if (level >= 51) return 'beast_mode'
     if (level >= 41) return 'galactic'
     if (level >= 31) return 'storm'

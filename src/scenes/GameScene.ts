@@ -773,8 +773,8 @@ export class GameScene extends Phaser.Scene {
       this.levelManager = new LevelManager()
     }
     
-    // Sync level manager with registry
-    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 1
+    // TEST: Start at level 9 for testing
+    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 9  // TEST: Starting at level 9
     // Sync level manager with registry
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
@@ -3174,12 +3174,7 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
-    // Special handling for level 10 testing - only spawn invincibility pendants
-    const currentLevel = this.levelManager.getCurrentLevel()
-    if (currentLevel === 10) {
-      this.createLevel10TestingCollectibles()
-      return
-    }
+    // Removed level 10 testing - normal collectibles now
     
     // Place collectibles on each floor based on rarity rules from sprint plan
     for (let floor = 0; floor < this.floorLayouts.length; floor++) {
@@ -3939,6 +3934,9 @@ export class GameScene extends Phaser.Scene {
     if (this.lives < this.MAX_LIVES) {
       this.lives++
       this.game.registry.set('lives', this.lives)
+      
+      // Show extra life popup with reason
+      this.showExtraLifePopup('Heart Crystal!')
     }
     
     // Update displays
@@ -4218,6 +4216,15 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(
       projectile,
       this.stalkerCats,
+      (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
+      undefined,
+      this
+    )
+    
+    // Add collision with BaseBlu enemies
+    this.physics.add.overlap(
+      projectile,
+      this.baseBlus,
       (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
       undefined,
       this
@@ -4809,8 +4816,18 @@ export class GameScene extends Phaser.Scene {
       return
     }
     
-    // Side collision - damage player if not invincible
-    if (!this.invincibilityActive) {
+    // Side collision - check invincibility
+    if (this.invincibilityActive) {
+      // With invincibility pendant, destroy the beetle!
+      this.justKilledCat = true
+      this.handleBeetleKill(playerObj, beetleObj)
+      
+      // Reset flag after a short delay
+      this.time.delayedCall(100, () => {
+        this.justKilledCat = false
+      })
+    } else {
+      // Normal collision - damage player
       this.handlePlayerDamage(playerObj, beetleObj)
     }
   }
@@ -6777,10 +6794,11 @@ export class GameScene extends Phaser.Scene {
           this.scene.restart()
         })
       } else if (this.backgroundManager.isChapterTransition(nextLevel) && nextLevel !== 1) {
-        // Show chapter transition notification
-        this.showChapterTransition(nextLevel, () => {
-          this.scene.restart()
-        })
+        // Show chapter splash screen for transition
+        // Mark that we need to show splash on restart
+        registry.set('showChapterSplash', true)
+        registry.set('chapterSplashLevel', nextLevel)
+        this.scene.restart()
       } else {
         // Regular level progression
         this.scene.restart()
@@ -7031,13 +7049,14 @@ export class GameScene extends Phaser.Scene {
         // Play heart collect sound for earning extra life
         this.playSoundEffect('heart-collect', 0.5)
         
-        // Show extra life popup
-        this.showExtraLifePopup()
+        // Show extra life popup with reason
+        this.showExtraLifePopup('150 Gems!')
       }
     }
   }
 
-  private showExtraLifePopup(): void {
+  private showExtraLifePopup(reason: string = ''): void {
+    // Main extra life text
     const popup = this.add.text(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2 - 50,
@@ -7051,15 +7070,37 @@ export class GameScene extends Phaser.Scene {
         strokeThickness: 3
       }
     ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+    
+    // Show reason if provided (e.g., "150 Gems!" or "Heart Crystal!")
+    let reasonText: Phaser.GameObjects.Text | null = null
+    if (reason) {
+      reasonText = this.add.text(
+        this.cameras.main.width / 2,
+        this.cameras.main.height / 2 - 20,
+        reason,
+        {
+          fontSize: '16px',
+          color: '#ffff00',
+          fontFamily: 'Arial Black',
+          fontStyle: 'bold',
+          stroke: '#000000',
+          strokeThickness: 2
+        }
+      ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+    }
 
     // Animate popup
+    const animTargets = reasonText ? [popup, reasonText] : [popup]
     this.tweens.add({
-      targets: popup,
-      y: popup.y - 30,
+      targets: animTargets,
+      y: '-=30',
       alpha: 0,
       duration: 2000,
       ease: 'Power2.easeOut',
-      onComplete: () => popup.destroy()
+      onComplete: () => {
+        popup.destroy()
+        if (reasonText) reasonText.destroy()
+      }
     })
   }
 
