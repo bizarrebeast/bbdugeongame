@@ -50,6 +50,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private nextExpressionTime: number = 0
   private nextBiteTime: number = 0
   private nextBlinkTime: number = 0
+  private blueTextureFixed: boolean = false  // Track if we've already fixed the texture
   
   // Red enemy animation system
   private redEnemyAnimationState: 'patrol' | 'bite_starting' | 'bite_opening' | 'bite_wide' | 'bite_closing' = 'patrol'
@@ -628,8 +629,19 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private updateBlueEnemyAnimations(delta: number): void {
     // Only animate if using the new animation sprites
     if (!this.isBlueEnemyAnimationSprite(this.texture.key)) {
+      // Only fix the texture once, not every frame
+      if (this.catColor === CatColor.BLUE && !this.blueTextureFixed && this.scene.textures.exists('blueEnemyMouthClosed')) {
+        this.setTexture('blueEnemyMouthClosed')
+        this.setDisplaySize(36, 36)
+        this.blueTextureFixed = true  // Mark as fixed so we don't keep resetting
+        // Re-initialize animations after fixing texture
+        this.initializeBlueEnemyAnimations()
+      }
       return
     }
+    
+    // Reset the fixed flag if we have a valid texture now
+    this.blueTextureFixed = false
     
     // Update timers
     this.biteTimer += delta
@@ -727,9 +739,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Maintain consistent display size and positioning
       this.setDisplaySize(36, 36)
       
-      // Update sprite flip based on movement direction
-      if (this.catColor === CatColor.BLUE) {
-        this.setFlipX(this.direction > 0) // Flip when moving right
+      // Maintain current flip state based on movement direction
+      // Don't change flip here - it's already handled in updateBluePatrol
+      // Just preserve the current flip state
+    } else {
+      // Fallback to default texture if requested texture doesn't exist
+      if (this.scene.textures.exists('blueEnemyMouthClosed')) {
+        this.setTexture('blueEnemyMouthClosed')
+        this.setDisplaySize(36, 36)
       }
     }
   }

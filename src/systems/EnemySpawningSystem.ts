@@ -257,6 +257,11 @@ export class EnemySpawningSystem {
             continue // Skip BaseBlu if we've hit the limit
           }
           
+          // Skip Chomper (blue enemy) on floor 9 due to animation issues
+          if (type === EnemyType.CHOMPER && floorNumber === 9) {
+            continue // Skip chompers on floor 9
+          }
+          
           availableTypes.push({ type, weight })
           totalWeight += weight
         }
