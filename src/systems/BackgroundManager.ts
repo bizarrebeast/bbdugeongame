@@ -185,6 +185,15 @@ export class BackgroundManager {
       return this.getFallbackBackground(level)
     }
 
+    // Special handling for bonus levels
+    if (chapter === 'bonus') {
+      // Bonus levels: 10, 20, 30, 40 map to backgrounds 0-3
+      // Calculate which bonus level this is (1st, 2nd, 3rd, or 4th)
+      const bonusNumber = Math.floor(level / 10) - 1 // 0 for level 10, 1 for level 20, etc.
+      const backgroundIndex = bonusNumber % chapterConfig.backgrounds.length
+      return chapterConfig.backgrounds[backgroundIndex]
+    }
+
     // Rotate through available backgrounds in the chapter
     const backgroundIndex = (level - chapterConfig.levelRange[0]) % chapterConfig.backgrounds.length
     return chapterConfig.backgrounds[backgroundIndex]
