@@ -62,7 +62,7 @@ export class GameScene extends Phaser.Scene {
   private livesIcon!: Phaser.GameObjects.Image
   private coinCounterText!: Phaser.GameObjects.Text // Display shows crystals, but variable kept for compatibility
   private readonly COINS_PER_EXTRA_LIFE = 150 // Crystals needed for extra life
-  private readonly MAX_LIVES = 9
+  private readonly MAX_LIVES = 99
   private hamburgerMenuButton!: Phaser.GameObjects.Text // Hamburger menu button
   private highestFloorGenerated: number = 5 // Track how many floors we've generated
   public touchControls!: TouchControls
@@ -632,6 +632,28 @@ export class GameScene extends Phaser.Scene {
     const currentLevelCheck = this.game.registry.get('currentLevel') || 1
     console.log(`📊 Current level: ${currentLevelCheck}`)
     
+    // Check if we need to show a splash screen after bonus level
+    const needsChapterSplash = this.game.registry.get('showChapterSplash') === true
+    const splashLevel = this.game.registry.get('chapterSplashLevel') || currentLevelCheck
+    
+    if (needsChapterSplash) {
+      console.log(`🎯 Showing chapter splash after bonus for level ${splashLevel}`)
+      // Clear the flags
+      this.game.registry.set('showChapterSplash', false)
+      this.game.registry.remove('chapterSplashLevel')
+      
+      // Mark this splash as shown
+      const splashShownKey = `chapterSplashShown_${splashLevel}`
+      this.game.registry.set(splashShownKey, true)
+      
+      // Show chapter splash and delay game initialization
+      this.showChapterSplashScreen(splashLevel, () => {
+        console.log('✅ Splash complete after bonus, initializing game')
+        this.initializeGameAfterSplash()
+      })
+      return // Exit early - game will be initialized after splash
+    }
+    
     // Check if we've already shown this chapter's splash (only show once per game session)
     const splashShownKey = `chapterSplashShown_${currentLevelCheck}`
     const splashAlreadyShown = this.game.registry.get(splashShownKey) === true
@@ -774,8 +796,8 @@ export class GameScene extends Phaser.Scene {
       this.levelManager = new LevelManager()
     }
     
-    // TEST: Start at level 9 for testing
-    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 9  // TEST: Starting at level 9
+    // TEST: Start at level 10 for testing
+    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 10  // TEST: Starting at level 10
     // Sync level manager with registry
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
@@ -3939,6 +3961,7 @@ export class GameScene extends Phaser.Scene {
       // Show extra life popup with reason
       this.showExtraLifePopup('Heart Crystal!')
     }
+    // If already at max lives, just collect it for points
     
     // Update displays
     this.updateScoreDisplay()
@@ -6694,12 +6717,28 @@ export class GameScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(301).setScrollFactor(0)
     
     // Next level preview
-    const nextLevel = levelNum + 1
-    const nextConfig = this.levelManager.getLevelConfig(nextLevel)
+    const shouldHaveBonus = this.levelManager.shouldHaveBonusAfter(levelNum)
+    const isInBonus = this.levelManager.isBonusLevel()
+    let previewText = ''
+    
+    if (shouldHaveBonus && !isInBonus) {
+      // We're completing a level that triggers a bonus (10, 20, 30, 40)
+      previewText = 'Next: BONUS LEVEL!'
+    } else if (isInBonus) {
+      // We're in a bonus level, next is the regular level
+      const nextLevel = levelNum + 1
+      previewText = `Next: Level ${nextLevel}`
+    } else {
+      // Regular progression
+      const nextLevel = levelNum + 1
+      const nextConfig = this.levelManager.getLevelConfig(nextLevel)
+      previewText = nextConfig.isEndless ? 'Next: BEAST MODE!' : `Next: Level ${nextLevel}`
+    }
+    
     const preview = this.add.text(
       GameSettings.canvas.width / 2,
       GameSettings.canvas.height / 2 + 50,  // Adjusted position for new layout
-      nextConfig.isEndless ? 'Next: BEAST MODE!' : `Next: Level ${nextLevel}`,
+      previewText,
       {
         fontSize: '12px',
         color: '#ff69b4',  // Pink color to match HUD lives text
@@ -7035,8 +7074,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateLivesDisplay(): void {
-    // Show count for lives (max 9 to fit on screen)  
-    const livesToShow = Math.min(this.lives, 9)
+    // Show actual count for lives (up to 99)
+    const livesToShow = this.lives
     const livesText = livesToShow > 0 ? `x${livesToShow}` : 'GAME OVER'
     this.livesText.setText(livesText)
     
@@ -7058,71 +7097,9 @@ export class GameScene extends Phaser.Scene {
         
         // Show extra life popup with reason
         this.showExtraLifePopup('150 Gems!')
-      } else {
-        // Already at max lives - show notification
-        this.showMaxLivesNotification()
       }
+      // If already at max lives, just continue silently
     }
-  }
-
-  private showMaxLivesNotification(): void {
-    // Show notification that player is at max lives
-    const popup = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2 - 50,
-      'MAX LIVES!',
-      {
-        fontSize: '18px',
-        color: '#ff69b4',
-        fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold',
-        stroke: '#4a148c',
-        strokeThickness: 2,
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000000',
-          blur: 0,
-          stroke: false,
-          fill: true
-        }
-      }
-    ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
-    
-    const subText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2 - 20,
-      '150 Gems!',
-      {
-        fontSize: '12px',
-        color: '#ffd700',
-        fontFamily: '"Press Start 2P", system-ui',
-        fontStyle: 'bold',
-        stroke: '#4a148c',
-        strokeThickness: 1,
-        shadow: {
-          offsetX: 2,
-          offsetY: 2,
-          color: '#000000',
-          blur: 0,
-          stroke: false,
-          fill: true
-        }
-      }
-    ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
-
-    // Animate both texts
-    this.tweens.add({
-      targets: [popup, subText],
-      y: '-=30',
-      alpha: 0,
-      duration: 2000,
-      ease: 'Power2.easeOut',
-      onComplete: () => {
-        popup.destroy()
-        subText.destroy()
-      }
-    })
   }
 
   private showExtraLifePopup(reason: string = ''): void {
