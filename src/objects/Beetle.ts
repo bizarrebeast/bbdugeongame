@@ -104,7 +104,7 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
       this.setRotation(this.totalRotation)
       
       // Always show mouth closed while rolling
-      if (this.scene.textures.exists('beetle-mouth-closed')) {
+      if (this.scene && this.scene.textures.exists('beetle-mouth-closed')) {
         this.setTexture('beetle-mouth-closed')
       }
       
@@ -118,7 +118,7 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
       this.biteAnimationTimer += delta
       
       // Animate biting
-      if (this.scene.textures.exists('beetle-mouth-closed')) {
+      if (this.scene && this.scene.textures.exists('beetle-mouth-closed')) {
         this.animateBiting(delta)
       }
       
@@ -148,7 +148,7 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     // Set random distance for next bite (50-250 pixels)
     this.nextActionDistance = 50 + Math.random() * 200
     // Reset to closed mouth
-    if (this.scene.textures.exists('beetle-mouth-closed')) {
+    if (this.scene && this.scene.textures.exists('beetle-mouth-closed')) {
       this.setTexture('beetle-mouth-closed')
     }
   }
@@ -165,7 +165,7 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
       const frameTexture = this.animationFrames[this.currentFrame]
       
       // Update texture if it exists
-      if (this.scene.textures.exists(frameTexture)) {
+      if (this.scene && this.scene.textures.exists(frameTexture)) {
         this.setTexture(frameTexture)
       }
     }
@@ -204,9 +204,12 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     this.totalRotation = 0
     
     // Set to closed mouth texture for clean squish
-    if (this.scene.textures.exists('beetle-mouth-closed')) {
+    if (this.scene && this.scene.textures.exists('beetle-mouth-closed')) {
       this.setTexture('beetle-mouth-closed')
     }
+    
+    // Check if scene still exists before creating tween
+    if (!this.scene) return
     
     // Squish animation
     this.scene.tweens.add({

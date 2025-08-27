@@ -113,18 +113,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Set up physics properties (world bounds set in GameScene to allow full floor movement)
     this.setCollideWorldBounds(true)
     this.setBounce(0)
-    this.setSize(18, 45)  // Reduced by 10px each for more forgiving hitbox
-    
-    // The hitbox is positioned correctly, we need to shift the visual sprite UP
-    // so that the sprite's bottom aligns with the hitbox's bottom
-    // Sprite is 64px tall, hitbox is 45px tall
-    // The difference is 19px that the sprite extends above the hitbox
-    // Offset moves the physics body relative to sprite center
-    // Positive Y offset moves the physics body DOWN relative to sprite
-    // Which effectively moves the sprite UP relative to the physics body
-    // We want the physics body at the bottom 45px of the 64px sprite
-    // So offset = 64/2 - 45/2 = 32 - 22.5 = 9.5
-    this.setOffset(15, 15.5)  // Move physics body down, which visually shifts sprite up (decreased by 1px)
+    // Set physics body size and offset for better collision detection
+    // The player is 48x64 visually, but we want a smaller hitbox
+    this.setSize(18, 45)
+    // Center the hitbox horizontally and align with feet
+    this.setOffset(15, 19)
     this.setDepth(20) // Player renders on top of everything
     
     // Phaser's built-in debug visualization will show the hitbox

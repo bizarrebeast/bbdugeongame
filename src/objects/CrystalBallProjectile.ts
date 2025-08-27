@@ -154,6 +154,9 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   }
   
   private createBounceEffect(): void {
+    // Check if scene still exists
+    if (!this.scene) return
+    
     // Create small particles at bounce point
     for (let i = 0; i < 3; i++) {
       const particle = this.scene.add.graphics()

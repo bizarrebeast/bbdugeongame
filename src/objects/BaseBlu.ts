@@ -199,6 +199,9 @@ export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
   startStun(): void {
     if (this.isStunned) return // Already stunned
     
+    // Check if scene still exists
+    if (!this.scene) return
+    
     this.isStunned = true
     this.stunEndTime = this.scene.time.now + 2000 // 2 second stun
     // Movement is handled by manual position updates, so no velocity to stop
@@ -230,6 +233,9 @@ export class BaseBlu extends Phaser.Physics.Arcade.Sprite {
   }
   
   squish(): void {
+    // Check if scene still exists
+    if (!this.scene) return
+    
     // Create squish tween animation
     this.scene.tweens.add({
       targets: this,

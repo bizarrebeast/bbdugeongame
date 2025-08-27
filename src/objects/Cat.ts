@@ -180,7 +180,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Center the larger hitbox on the sprite (accounting for 14px sprite offset down)
       this.body.setOffset(-8, -8 + 14)  // Offset to center: (-8, 6) to account for sprite movement
     } else if (catColor === CatColor.GREEN && this.body instanceof Phaser.Physics.Arcade.Body) {
-      // Keep default hitbox for bouncing mechanics
+      // Make green bouncer hitbox more forgiving - reduce by 20%
+      const defaultWidth = this.body.width
+      const defaultHeight = this.body.height
+      this.body.setSize(defaultWidth * 0.8, defaultHeight * 0.8)
+      
+      // Center the smaller hitbox
+      const hitboxCenterOffsetX = (defaultWidth - this.body.width) / 2
+      const hitboxCenterOffsetY = (defaultHeight - this.body.height) / 2
+      this.body.setOffset(hitboxCenterOffsetX, hitboxCenterOffsetY)
     }
     
     this.setCollideWorldBounds(true)
@@ -301,7 +309,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.moveSpeed = this.baseSpeed * yellowSpeedMultiplier * speedVariation
         break
       case CatColor.GREEN:
-        this.moveSpeed = this.baseSpeed * 1.5 * speedVariation
+        // Reduce green bouncer speed for more manageable gameplay
+        this.moveSpeed = this.baseSpeed * 1.0 * speedVariation  // Reduced from 1.5x to 1.0x
         break
       case CatColor.RED:
         this.moveSpeed = this.baseSpeed * 1.2 * speedVariation // Fast but not as fast as green
@@ -314,6 +323,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // This gives players more time to react
       const centerX = (this.platformBounds.left + this.platformBounds.right) / 2
       this.direction = this.x < centerX ? -1 : 1  // Move towards edges
+    } else if (this.catColor === CatColor.GREEN) {
+      // Green enemies: randomize initial direction to prevent clustering
+      this.direction = Math.random() < 0.5 ? -1 : 1
+      // Also randomize initial bounce timer to prevent synchronized bouncing
+      this.bounceTimer = Math.random() * 1500  // Random start between 0-1.5 seconds
     } else {
       // Random initial direction for other enemies and later levels
       this.direction = Math.random() < 0.5 ? -1 : 1
@@ -414,20 +428,26 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     if (this.bounceTimer <= 0 && this.body?.touching.down) {
       this.setVelocityY(-200)
-      this.bounceTimer = 800 + Math.random() * 400
+      // Add more randomness to bounce timing to prevent clustering
+      this.bounceTimer = 1000 + Math.random() * 1000  // 1-2 seconds (was 0.8-1.2)
     }
     
-    // Simplified movement - just use platform bounds for now
-    // Green enemies travel the full width of their platform section
-    
-    // Green cats travel the full width of their platform section (like original logic)
-    if (this.x <= this.platformBounds.left + 5) {
+    // Green enemies patrol the full width of their platform
+    // Use larger margins to ensure they travel the full width
+    if (this.x <= this.platformBounds.left + 20) {
       this.direction = 1
-    } else if (this.x >= this.platformBounds.right - 5) {
+      // Add small random speed variation when turning to prevent clustering
+      const variation = 0.9 + Math.random() * 0.2
+      this.setVelocityX(this.moveSpeed * this.direction * variation)
+    } else if (this.x >= this.platformBounds.right - 20) {
       this.direction = -1
+      // Add small random speed variation when turning to prevent clustering
+      const variation = 0.9 + Math.random() * 0.2
+      this.setVelocityX(this.moveSpeed * this.direction * variation)
+    } else {
+      // Maintain current velocity while not at edges
+      this.setVelocityX(this.moveSpeed * this.direction)
     }
-    
-    this.setVelocityX(this.moveSpeed * this.direction)
   }
   
   private updateRedPatrol(): void {
@@ -734,6 +754,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private changeBlueEnemyTexture(textureKey: string): void {
+    // Check if scene still exists (enemy might be destroyed or scene cleaning up)
+    if (!this.scene) return
+    
     if (this.scene.textures.exists(textureKey)) {
       this.setTexture(textureKey)
       // Maintain consistent display size and positioning
@@ -948,6 +971,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private changeRedEnemyTexture(textureKey: string): void {
+    // Check if scene still exists (enemy might be destroyed or scene cleaning up)
+    if (!this.scene) return
+    
     if (this.scene.textures.exists(textureKey)) {
       this.setTexture(textureKey)
       // Maintain consistent display size and positioning
@@ -1116,6 +1142,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateStalkerEyeAnimations(delta: number): void {
+    // Check if scene still exists (enemy might be destroyed or scene cleaning up)
+    if (!this.scene) return
     if (!this.scene.textures.exists('stalkerEnemyEye1')) return
     
     this.stalkerEyeAnimationTimer += delta
@@ -1234,6 +1262,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         textureKey = 'greenEnemyBlink'
         break
     }
+    
+    // Check if scene still exists (enemy might be destroyed or scene cleaning up)
+    if (!this.scene) return
     
     if (this.scene.textures.exists(textureKey)) {
       this.setTexture(textureKey)
