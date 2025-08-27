@@ -26,9 +26,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private jumpHoldTime: number = 0
   private isAirborne: boolean = false
   private jumpReleased: boolean = false
-  private readonly MIN_JUMP_VELOCITY: number = -120 // Very small hop - allows for tiny bounces
-  private readonly MAX_JUMP_VELOCITY: number = -300 // Full jump - reduced for better game balance
-  private readonly MAX_JUMP_HOLD_TIME: number = 400 // milliseconds to reach max height - more control over jump height
+  private readonly MIN_JUMP_VELOCITY: number = GameSettings.game.jumpVelocity * 0.75 // Start at 75% of max (-262.5 with default -350)
+  private readonly MAX_JUMP_VELOCITY: number = GameSettings.game.jumpVelocity // Full jump from GameSettings (-350)
+  private readonly MAX_JUMP_HOLD_TIME: number = 200 // milliseconds to reach max height - quick response for mobile
   
   // Speed multiplier for power-ups (like invincibility)
   private speedMultiplier: number = 1.0
@@ -365,7 +365,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityY(this.MIN_JUMP_VELOCITY)
         // Play rotating jump sound
         this.playJumpSound()
-        // Jump started with initial velocity
+        console.log(`Jump started - Initial velocity: ${this.MIN_JUMP_VELOCITY}, Target max: ${this.MAX_JUMP_VELOCITY}`)
         this.triggerHapticFeedback() // Haptic feedback for jump start
       }
       
