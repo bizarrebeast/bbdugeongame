@@ -732,7 +732,8 @@ export class GameScene extends Phaser.Scene {
     
     // Select background based on current level
     const currentLevel = this.levelManager?.getCurrentLevel() || 1
-    this.currentBackground = this.backgroundManager.getBackgroundForLevel(currentLevel)
+    const isInBonus = this.levelManager?.isBonusLevel() || false
+    this.currentBackground = this.backgroundManager.getBackgroundForLevel(currentLevel, isInBonus)
     
     // Add current background (first, so it appears behind everything)
     const background = this.add.image(0, 0, this.currentBackground)
@@ -6770,19 +6771,24 @@ export class GameScene extends Phaser.Scene {
       registry.set('accumulatedBlueGems', this.totalBlueGemsCollected)
       registry.set('accumulatedDiamonds', this.totalDiamondsCollected)
       
+      // Check if we're about to enter a bonus level BEFORE advancing
+      const wasInBonus = this.levelManager.isBonusLevel()
+      const willEnterBonus = !wasInBonus && this.levelManager.shouldHaveBonusAfter(this.levelManager.getCurrentLevel())
+      
       // Advance to next level
       const nextLevel = this.levelManager.nextLevel()
+      const isNowInBonus = this.levelManager.isBonusLevel()
       
       // Update the registry with the new level
       registry.set('currentLevel', nextLevel)
       
-      // Check for chapter transition
-      if (this.backgroundManager.isChapterTransition(nextLevel)) {
+      // Check for chapter transition (happens after bonus → next chapter)
+      if (this.backgroundManager.isChapterTransition(nextLevel, isNowInBonus)) {
         // Preload next chapter backgrounds
-        const nextChapter = this.backgroundManager.getChapterForLevel(nextLevel)
+        const nextChapter = this.backgroundManager.getChapterForLevel(nextLevel, isNowInBonus)
         this.backgroundManager.loadChapterBackgrounds(nextChapter).then(() => {
           // Unload previous chapter if needed
-          const prevChapter = this.backgroundManager.getChapterForLevel(nextLevel - 1)
+          const prevChapter = this.backgroundManager.getChapterForLevel(nextLevel - 1, false)
           this.backgroundManager.unloadChapterBackgrounds(prevChapter)
         })
       }
@@ -6793,9 +6799,10 @@ export class GameScene extends Phaser.Scene {
           // Restart scene after BEAST MODE notification
           this.scene.restart()
         })
-      } else if (this.backgroundManager.isChapterTransition(nextLevel) && nextLevel !== 1) {
-        // Show chapter splash screen for transition
-        // Mark that we need to show splash on restart
+      } else if (wasInBonus && !isNowInBonus && nextLevel > 1) {
+        // Coming out of bonus level to a new chapter - show splash
+        // (e.g., completing bonus after level 10 → going to level 11)
+        console.log('📍 Transitioning from bonus to chapter, showing splash for level', nextLevel)
         registry.set('showChapterSplash', true)
         registry.set('chapterSplashLevel', nextLevel)
         this.scene.restart()
@@ -7051,8 +7058,71 @@ export class GameScene extends Phaser.Scene {
         
         // Show extra life popup with reason
         this.showExtraLifePopup('150 Gems!')
+      } else {
+        // Already at max lives - show notification
+        this.showMaxLivesNotification()
       }
     }
+  }
+
+  private showMaxLivesNotification(): void {
+    // Show notification that player is at max lives
+    const popup = this.add.text(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2 - 50,
+      'MAX LIVES!',
+      {
+        fontSize: '18px',
+        color: '#ff69b4',
+        fontFamily: '"Press Start 2P", system-ui',
+        fontStyle: 'bold',
+        stroke: '#4a148c',
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
+          blur: 0,
+          stroke: false,
+          fill: true
+        }
+      }
+    ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+    
+    const subText = this.add.text(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2 - 20,
+      '150 Gems!',
+      {
+        fontSize: '12px',
+        color: '#ffd700',
+        fontFamily: '"Press Start 2P", system-ui',
+        fontStyle: 'bold',
+        stroke: '#4a148c',
+        strokeThickness: 1,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
+          blur: 0,
+          stroke: false,
+          fill: true
+        }
+      }
+    ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
+
+    // Animate both texts
+    this.tweens.add({
+      targets: [popup, subText],
+      y: '-=30',
+      alpha: 0,
+      duration: 2000,
+      ease: 'Power2.easeOut',
+      onComplete: () => {
+        popup.destroy()
+        subText.destroy()
+      }
+    })
   }
 
   private showExtraLifePopup(reason: string = ''): void {
@@ -7062,12 +7132,20 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.height / 2 - 50,
       'EXTRA LIFE!',
       {
-        fontSize: '24px',
+        fontSize: '20px',
         color: '#00ff00',
-        fontFamily: 'Arial Black',
+        fontFamily: '"Press Start 2P", system-ui',
         fontStyle: 'bold',
-        stroke: '#000000',
-        strokeThickness: 3
+        stroke: '#4a148c',
+        strokeThickness: 2,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
+          blur: 0,
+          stroke: false,
+          fill: true
+        }
       }
     ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
     
@@ -7079,12 +7157,20 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.height / 2 - 20,
         reason,
         {
-          fontSize: '16px',
-          color: '#ffff00',
-          fontFamily: 'Arial Black',
+          fontSize: '14px',
+          color: '#ffd700',
+          fontFamily: '"Press Start 2P", system-ui',
           fontStyle: 'bold',
-          stroke: '#000000',
-          strokeThickness: 2
+          stroke: '#4a148c',
+          strokeThickness: 1,
+          shadow: {
+            offsetX: 2,
+            offsetY: 2,
+            color: '#000000',
+            blur: 0,
+            stroke: false,
+            fill: true
+          }
         }
       ).setOrigin(0.5).setDepth(300).setScrollFactor(0)
     }

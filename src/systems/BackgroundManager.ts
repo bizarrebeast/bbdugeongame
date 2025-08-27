@@ -155,9 +155,9 @@ export class BackgroundManager {
     })
   }
 
-  public getChapterForLevel(level: number): string {
-    // Check if this is a bonus level (multiples of 10, but not 50)
-    if (level % 10 === 0 && level !== 50 && level < 51) return 'bonus'
+  public getChapterForLevel(level: number, isBonus: boolean = false): string {
+    // Check if this is a bonus level (passed as parameter from LevelManager)
+    if (isBonus) return 'bonus'
     
     if (level >= 51) return 'beast_mode'
     if (level >= 41) return 'galactic'
@@ -167,8 +167,8 @@ export class BackgroundManager {
     return 'crystal_cavern'
   }
 
-  public getBackgroundForLevel(level: number): string {
-    const chapter = this.getChapterForLevel(level)
+  public getBackgroundForLevel(level: number, isBonus: boolean = false): string {
+    const chapter = this.getChapterForLevel(level, isBonus)
     this.currentLevel = level
     
     if (chapter !== this.currentChapter) {
@@ -327,12 +327,21 @@ export class BackgroundManager {
     })
   }
 
-  public isChapterTransition(nextLevel: number): boolean {
+  public isChapterTransition(nextLevel: number, isNextLevelBonus: boolean = false): boolean {
+    // Never a chapter transition if going into a bonus level
+    if (isNextLevelBonus) return false
+    
+    // Check if we're transitioning from bonus to a new chapter
+    if (this.currentChapter === 'bonus') {
+      // After bonus, we go to the next chapter (e.g., after level 10 bonus -> level 11 volcanic)
+      return true
+    }
+    
     return this.getChapterForLevel(nextLevel) !== this.currentChapter
   }
 
-  public getChapterName(level: number): string {
-    const chapter = this.getChapterForLevel(level)
+  public getChapterName(level: number, isBonus: boolean = false): string {
+    const chapter = this.getChapterForLevel(level, isBonus)
     const chapterConfig = this.chapters.get(chapter)
     return chapterConfig?.name || 'Unknown'
   }

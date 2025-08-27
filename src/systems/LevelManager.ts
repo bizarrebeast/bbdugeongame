@@ -31,7 +31,7 @@ export class LevelManager {
   /**
    * Check if a level should trigger a bonus level after it
    */
-  private shouldHaveBonusAfter(levelNumber: number): boolean {
+  public shouldHaveBonusAfter(levelNumber: number): boolean {
     // Bonus levels appear after levels 10, 20, 30, 40, 50
     return levelNumber > 0 && levelNumber % 10 === 0 && levelNumber < this.BEAST_MODE_LEVEL
   }
