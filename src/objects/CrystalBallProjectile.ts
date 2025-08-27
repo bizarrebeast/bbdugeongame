@@ -8,6 +8,8 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   private readonly MAX_DISTANCE: number = 5 * GameSettings.game.tileSize // 5 tiles
   private direction: number = 1 // 1 for right, -1 for left
   private glowGraphics?: Phaser.GameObjects.Graphics
+  private glowTween?: Phaser.Tweens.Tween
+  private rotationTween?: Phaser.Tweens.Tween
   
   constructor(scene: Phaser.Scene, x: number, y: number, direction: number, playerVelocityX: number = 0) {
     super(scene, x, y, 'crystalBallProjectile')
@@ -46,8 +48,8 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
     this.glowGraphics.fillStyle(0x44d0a7, 0.2) 
     this.glowGraphics.fillCircle(x, y, 18) // Outer glow
     
-    // Make glow follow the projectile
-    scene.tweens.add({
+    // Make glow follow the projectile - store tween reference to kill it later
+    this.glowTween = scene.tweens.add({
       targets: this.glowGraphics,
       x: { from: x, to: x + (direction * 300) },
       duration: 2000,
@@ -60,12 +62,13 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
       onComplete: () => {
         if (this.glowGraphics) {
           this.glowGraphics.destroy()
+          this.glowGraphics = undefined
         }
       }
     })
     
-    // Add rotation animation
-    scene.tweens.add({
+    // Add rotation animation - store tween reference
+    this.rotationTween = scene.tweens.add({
       targets: this,
       rotation: Math.PI * 2 * direction,
       duration: 500,
@@ -184,6 +187,16 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
   burst(): void {
     if (!this.scene) return
     
+    // Kill all tweens immediately to prevent orphaned animations
+    if (this.glowTween) {
+      this.glowTween.stop()
+      this.glowTween = undefined
+    }
+    
+    if (this.rotationTween) {
+      this.rotationTween.stop()
+      this.rotationTween = undefined
+    }
     
     // Create burst effect
     for (let i = 0; i < 8; i++) {
@@ -209,9 +222,10 @@ export class CrystalBallProjectile extends Phaser.Physics.Arcade.Sprite {
       })
     }
     
-    // Clean up glow graphics
+    // Clean up glow graphics immediately
     if (this.glowGraphics) {
       this.glowGraphics.destroy()
+      this.glowGraphics = undefined
     }
     
     // Destroy projectile
