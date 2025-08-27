@@ -4281,29 +4281,29 @@ export class GameScene extends Phaser.Scene {
     // Play crystal ball hit enemy sound
     this.playSoundEffect('crystal-ball-hit-enemy', 0.5)
     
-    // Create portal sucking animation before destroying enemy
-    this.createPortalSuckAnimation(enemy.x, enemy.y, () => {
-      // Defeat enemy after animation
-      if (enemy.defeat) {
-        enemy.defeat()
-      } else if (enemy.destroy) {
-        enemy.destroy()
-      }
-    })
-    
-    // Animate enemy being sucked into portal
+    // Simple enemy defeat animation without portal effect
     if (enemy && enemy.body) {
       enemy.body.enable = false // Disable physics during animation
+      
+      // Create a simple sparkle effect instead of portal
+      this.createCrystalBallDefeatEffect(enemy.x, enemy.y)
+      
+      // Animate enemy shrinking and fading
       this.tweens.add({
         targets: enemy,
-        x: enemy.x,
-        y: enemy.y,
         scaleX: 0,
         scaleY: 0,
-        rotation: Math.PI * 2,
         alpha: 0,
-        duration: 600,
-        ease: 'Power2.easeIn'
+        duration: 300,
+        ease: 'Power2.easeOut',
+        onComplete: () => {
+          // Defeat enemy after animation
+          if (enemy.defeat) {
+            enemy.defeat()
+          } else if (enemy.destroy) {
+            enemy.destroy()
+          }
+        }
       })
     }
     
@@ -5337,6 +5337,32 @@ export class GameScene extends Phaser.Scene {
     })
   }
   
+  private createCrystalBallDefeatEffect(x: number, y: number): void {
+    // Create sparkle particles that match crystal ball color theme
+    for (let i = 0; i < 6; i++) {
+      const particle = this.add.graphics()
+      particle.fillStyle(0x44d0a7, 1) // Cyan/teal color
+      particle.fillCircle(0, 0, 2)
+      
+      const angle = (i / 6) * Math.PI * 2
+      particle.x = x
+      particle.y = y
+      particle.setDepth(25)
+      
+      const distance = 15 + Math.random() * 10
+      
+      this.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        duration: 400,
+        ease: 'Power2.easeOut',
+        onComplete: () => particle.destroy()
+      })
+    }
+  }
+  
   private createPortalSuckAnimation(x: number, y: number, onComplete: () => void): void {
     // Create swirling portal effect
     const portalGraphics = this.add.graphics()
@@ -5400,10 +5426,10 @@ export class GameScene extends Phaser.Scene {
       })
     }
     
-    // Create center vortex
+    // Create center vortex with crystal ball color theme
     const vortex = this.add.graphics()
     vortex.setDepth(26)
-    vortex.fillStyle(0x000000, 0.8)
+    vortex.fillStyle(0x44d0a7, 0.6)  // Cyan/teal color matching crystal ball, reduced opacity
     vortex.fillCircle(x, y, 5)
     
     // Animate vortex growth then shrink
