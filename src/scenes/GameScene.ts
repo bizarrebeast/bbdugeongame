@@ -649,7 +649,8 @@ export class GameScene extends Phaser.Scene {
       // Show chapter splash and delay game initialization
       this.showChapterSplashScreen(splashLevel, () => {
         console.log('✅ Splash complete after bonus, initializing game')
-        // Set flag to ensure intro animation plays after splash
+        // Initialize game state and set flag for intro animation
+        this.initializeGameState()
         this.game.registry.set('levelProgression', true)
         this.initializeGameAfterSplash()
       })
@@ -672,7 +673,8 @@ export class GameScene extends Phaser.Scene {
       // Show chapter splash and delay game initialization
       this.showChapterSplashScreen(currentLevelCheck, () => {
         console.log('✅ Splash complete, initializing game')
-        // Set flag to ensure intro animation plays after splash
+        // Initialize game state and set flag for intro animation
+        this.initializeGameState()
         this.game.registry.set('levelProgression', true)
         this.initializeGameAfterSplash()
       })
@@ -681,6 +683,7 @@ export class GameScene extends Phaser.Scene {
     
     console.log('⏩ No splash needed, initializing game immediately')
     // No splash needed, initialize game immediately
+    this.initializeGameState()
     this.initializeGameAfterSplash()
   }
   
@@ -752,6 +755,88 @@ export class GameScene extends Phaser.Scene {
     })
   }
   
+  private initializeGameState(): void {
+    // Initialize level manager if needed
+    if (!this.levelManager) {
+      this.levelManager = new LevelManager()
+    }
+    
+    // Get current level from registry, default to level 1
+    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 1
+    // Sync level manager with registry
+    this.levelManager.setCurrentLevel(currentLevelFromRegistry)
+    
+    // Clear any cached level from localStorage
+    localStorage.removeItem('treasureQuest_currentLevel')
+    
+    // Reset game state
+    this.isGameOver = false
+    this.isLevelComplete = false
+    this.currentFloor = 0
+    this.highestFloorGenerated = 5
+    
+    // Use game registry to persist lives and coins across scene restarts
+    const registry = this.game.registry
+    
+    // Check if this is a level progression (not a death/restart)
+    const isLevelProgression = registry.has('levelProgression') && registry.get('levelProgression') === true
+    
+    if (isLevelProgression) {
+      // Level progression - move current score to accumulated, start new level fresh
+      this.accumulatedScore = registry.get('accumulatedScore') || 0
+      this.score = 0 // Start new level with 0 current score
+      this.lives = registry.get('playerLives')
+      this.totalCoinsCollected = registry.get('totalCoins')
+      this.totalGemsCollected = registry.get('totalGems') || 0
+      this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
+      this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
+      // Don't clear the progression flag here - it's needed for intro animation
+    } else if (registry.has('playerLives') && registry.get('playerLives') > 0) {
+      // Restore from registry (level restart after losing life)
+      this.lives = registry.get('playerLives')
+      // Keep accumulated score from completed levels, reset only current level
+      this.accumulatedScore = registry.get('accumulatedScore') || 0
+      this.score = 0 // Reset current level score
+      this.totalCoinsCollected = registry.get('totalCoins')
+      this.totalGemsCollected = registry.get('totalGems') || 0
+      this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
+      this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
+    } else {
+      // New game - initialize defaults
+      this.lives = 9
+      this.score = 0
+      this.accumulatedScore = 0
+      this.totalCoinsCollected = 0
+      this.totalGemsCollected = 0
+      this.totalBlueGemsCollected = 0
+      this.totalDiamondsCollected = 0
+      
+      // Clear all registry values for fresh start
+      registry.set('playerLives', this.lives)
+      registry.set('totalCoins', 0)
+      registry.set('totalGems', 0)
+      registry.set('totalBlueGems', 0)
+      registry.set('totalDiamonds', 0)
+      registry.set('accumulatedScore', 0)
+      registry.set('currentScore', 0)
+      registry.set('accumulatedDiamonds', 0)
+      
+      // Clear all chapter splash shown flags for new game
+      const chapterLevels = [1, 11, 21, 31, 41, 51]
+      chapterLevels.forEach(level => {
+        registry.remove(`chapterSplashShown_${level}`)
+      })
+    }
+    
+    // Reset per-level collections (not persisted)
+    this.gemsCollectedThisLevel = 0
+    this.blueGemsCollectedThisLevel = 0
+    this.diamondsCollectedThisLevel = 0
+    
+    // Calculate accumulated diamonds (for display)
+    this.accumulatedDiamonds = registry.get('accumulatedDiamonds') || 0
+  }
+
   private initializeGameAfterSplash(): void {
     // Initialize background manager
     this.backgroundManager = new BackgroundManager(this)
@@ -794,93 +879,7 @@ export class GameScene extends Phaser.Scene {
     // Setup Farcade SDK event handlers
     this.setupFarcadeEventHandlers()
     
-    
-    // Initialize level manager
-    if (!this.levelManager) {
-      this.levelManager = new LevelManager()
-    }
-    
-    // Get current level from registry, default to level 1
-    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 1
-    // Sync level manager with registry
-    this.levelManager.setCurrentLevel(currentLevelFromRegistry)
-    
-    // Clear any cached level from localStorage
-    localStorage.removeItem('treasureQuest_currentLevel')
-    
-    // Reset game state
-    this.isGameOver = false
-    this.isLevelComplete = false
-    this.currentFloor = 0
-    this.highestFloorGenerated = 5
-    
-    // Use game registry to persist lives and coins across scene restarts
-    // Check if we have stored values (level restart) or need to initialize (new game)
-    const registry = this.game.registry
-    
-    // Check if this is a level progression (not a death/restart)
-    const isLevelProgression = registry.has('levelProgression') && registry.get('levelProgression') === true
-    
-    if (isLevelProgression) {
-      // Level progression - move current score to accumulated, start new level fresh
-      this.accumulatedScore = registry.get('accumulatedScore') || 0
-      this.score = 0 // Start new level with 0 current score
-      this.lives = registry.get('playerLives')
-      this.totalCoinsCollected = registry.get('totalCoins')
-      this.totalGemsCollected = registry.get('totalGems') || 0
-      this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
-      this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
-      // Clear the progression flag
-      registry.set('levelProgression', false)
-    } else if (registry.has('playerLives') && registry.get('playerLives') > 0) {
-      // Restore from registry (level restart after losing life)
-      this.lives = registry.get('playerLives')
-      // Keep accumulated score from completed levels, reset only current level
-      this.accumulatedScore = registry.get('accumulatedScore') || 0
-      this.score = 0 // Reset current level score on death
-      
-      // Keep accumulated gems from completed levels, only reset current level collections
-      const accumulatedCoins = registry.get('accumulatedCoins') || 0
-      const accumulatedGems = registry.get('accumulatedGems') || 0
-      const accumulatedBlueGems = registry.get('accumulatedBlueGems') || 0
-      const accumulatedDiamonds = registry.get('accumulatedDiamonds') || 0
-      
-      this.totalCoinsCollected = accumulatedCoins // Restore to completed level totals
-      this.totalGemsCollected = accumulatedGems
-      this.totalBlueGemsCollected = accumulatedBlueGems
-      this.totalDiamondsCollected = accumulatedDiamonds
-      
-      registry.set('totalCoins', accumulatedCoins)
-      registry.set('totalGems', accumulatedGems)
-      registry.set('totalBlueGems', accumulatedBlueGems)
-      registry.set('totalDiamonds', accumulatedDiamonds)
-    } else {
-      // Initialize new game
-      this.lives = 9
-      this.score = 0
-      this.accumulatedScore = 0
-      this.totalCoinsCollected = 0
-      this.totalGemsCollected = 0
-      this.totalBlueGemsCollected = 0
-      this.totalDiamondsCollected = 0
-      registry.set('playerLives', this.lives)
-      registry.set('totalCoins', this.totalCoinsCollected)
-      registry.set('totalGems', 0)
-      registry.set('totalBlueGems', 0)
-      registry.set('totalDiamonds', 0)
-      registry.set('accumulatedScore', 0)
-      // Reset accumulated values for new game
-      registry.set('accumulatedCoins', 0)
-      registry.set('accumulatedGems', 0)
-      registry.set('accumulatedBlueGems', 0)
-      registry.set('accumulatedDiamonds', 0)
-      
-      // Clear all chapter splash shown flags for new game
-      const chapterLevels = [1, 11, 21, 31, 41, 51]
-      chapterLevels.forEach(level => {
-        registry.remove(`chapterSplashShown_${level}`)
-      })
-    }
+    // Game state is already initialized in initializeGameState() called earlier
     
     // No longer generating textures - using preloaded images instead
     // this.generateTileTextures()
@@ -6290,6 +6289,9 @@ export class GameScene extends Phaser.Scene {
         // Phase 3: Complete intro
         this.player.body!.enable = true
         this.isLevelStarting = false
+        
+        // Clear the progression flag now that intro is complete
+        this.game.registry.set('levelProgression', false)
         
         // Notify Farcade SDK that game is ready
         this.notifyFarcadeGameReady()
