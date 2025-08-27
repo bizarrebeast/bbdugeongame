@@ -649,6 +649,8 @@ export class GameScene extends Phaser.Scene {
       // Show chapter splash and delay game initialization
       this.showChapterSplashScreen(splashLevel, () => {
         console.log('✅ Splash complete after bonus, initializing game')
+        // Set flag to ensure intro animation plays after splash
+        this.game.registry.set('levelProgression', true)
         this.initializeGameAfterSplash()
       })
       return // Exit early - game will be initialized after splash
@@ -670,6 +672,8 @@ export class GameScene extends Phaser.Scene {
       // Show chapter splash and delay game initialization
       this.showChapterSplashScreen(currentLevelCheck, () => {
         console.log('✅ Splash complete, initializing game')
+        // Set flag to ensure intro animation plays after splash
+        this.game.registry.set('levelProgression', true)
         this.initializeGameAfterSplash()
       })
       return // Exit early - game will be initialized after splash
