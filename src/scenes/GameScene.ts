@@ -537,6 +537,19 @@ export class GameScene extends Phaser.Scene {
     // Load background music - Crystal Cavern theme
     this.load.audio('background-music', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/CRYSTAL%20CAVERN%20-%20Treasure%20Quest%20-%20BizarreBeasts%20-%20MASTER%201-GnktEmoyUQQEEoFTBVrVAhEFyGRwL9.mp3?acKK')
     
+    // Add load error handling for audio debugging
+    this.load.on('loaderror', (file: any) => {
+      console.error('❌ Failed to load audio file:', file.key, file.url)
+    })
+    
+    this.load.on('filecomplete-audio-background-music', () => {
+      console.log('✅ Background music file loaded successfully')
+    })
+    
+    this.load.on('filecomplete-audio-splash-sound', () => {
+      console.log('✅ Splash sound file loaded successfully')
+    })
+    
     // Load sound effects
     // Collection sounds
     this.load.audio('gem-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/regular%20gem%20collect%20sfx-OXLLrrAXWUz21oDTEuQPFb2fxRWxXh.wav?pH1V')
@@ -1501,21 +1514,65 @@ export class GameScene extends Phaser.Scene {
     if (!isMusicPlaying) {
       // Check if music is enabled from settings
       const musicEnabled = this.registry.get('musicEnabled') !== false
-      this.backgroundMusic = this.sound.add('background-music', {
-        loop: true,
-        volume: musicEnabled ? 0.3 : 0
-      })
-      this.backgroundMusic.play()
-      // Mark that music is now playing
-      this.game.registry.set('backgroundMusicPlaying', true)
-      // Store reference in game registry so other scenes can access it
-      this.game.registry.set('backgroundMusicInstance', this.backgroundMusic)
+      
+      // Ensure audio context is running before playing music (critical for mobile)
+      if (this.sound.context && this.sound.context.state === 'suspended') {
+        console.log('🔊 GameScene: Audio context suspended, attempting to resume...')
+        this.sound.context.resume().then(() => {
+          console.log('✅ GameScene: Audio context resumed, starting music')
+          this.startBackgroundMusic(musicEnabled)
+        }).catch(e => {
+          console.error('❌ GameScene: Failed to resume audio context:', e)
+          // Still try to add the music, it might play later when user interacts
+          this.startBackgroundMusic(musicEnabled)
+        })
+      } else {
+        console.log('🔊 GameScene: Audio context state:', this.sound.context?.state || 'unknown')
+        this.startBackgroundMusic(musicEnabled)
+      }
     } else {
       // Music already playing, just get the reference
       this.backgroundMusic = this.game.registry.get('backgroundMusicInstance')
     }
   }  // End of initializeGameAfterSplash
 
+  private startBackgroundMusic(musicEnabled: boolean): void {
+    try {
+      // Check if sound is actually loaded
+      if (!this.cache.audio.exists('background-music')) {
+        console.error('❌ Background music not loaded in cache!')
+        return
+      }
+      
+      this.backgroundMusic = this.sound.add('background-music', {
+        loop: true,
+        volume: musicEnabled ? 0.3 : 0
+      })
+      
+      // Add error handling for play
+      const playPromise = this.backgroundMusic.play()
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((e: any) => {
+          console.error('❌ Background music play() failed:', e)
+        })
+      }
+      
+      console.log('🎵 GameScene: Background music started - actually playing:', this.backgroundMusic.isPlaying)
+      
+      // Check if it's really playing after a short delay
+      setTimeout(() => {
+        console.log('🎵 Music status after 100ms - playing:', this.backgroundMusic.isPlaying, 
+                    'paused:', this.backgroundMusic.isPaused)
+      }, 100)
+      
+      // Mark that music is now playing
+      this.game.registry.set('backgroundMusicPlaying', true)
+      // Store reference in game registry so other scenes can access it
+      this.game.registry.set('backgroundMusicInstance', this.backgroundMusic)
+    } catch (e) {
+      console.error('❌ GameScene: Failed to play background music:', e)
+    }
+  }
 
   private generateTileTextures(): void {
     const tileSize = GameSettings.game.tileSize
@@ -5882,7 +5939,25 @@ export class GameScene extends Phaser.Scene {
     // Only check local sfxEnabled setting, Phaser handles SDK mute internally
     const sfxEnabled = this.registry.get('sfxEnabled') !== false
     if (sfxEnabled) {
-      this.sound.play(key, { volume })
+      // Check audio context state before playing (mobile fix)
+      if (this.sound.context && this.sound.context.state === 'suspended') {
+        console.log('🔇 Audio context suspended, trying to resume for sound:', key)
+        this.sound.context.resume().then(() => {
+          try {
+            this.sound.play(key, { volume })
+          } catch (e) {
+            console.warn('⚠️ Failed to play sound effect:', key, e)
+          }
+        }).catch(e => {
+          console.error('❌ Failed to resume audio context for sound:', key, e)
+        })
+      } else {
+        try {
+          this.sound.play(key, { volume })
+        } catch (e) {
+          console.warn('⚠️ Failed to play sound effect:', key, e)
+        }
+      }
     }
   }
 

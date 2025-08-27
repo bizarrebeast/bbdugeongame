@@ -28,6 +28,11 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: GameSettings.debug,
     },
   },
+  // Audio configuration for better mobile compatibility
+  audio: {
+    disableWebAudio: false, // Use Web Audio API when available
+    noAudio: false,
+  },
   // Target frame rate
   fps: {
     target: 60,
@@ -53,18 +58,35 @@ game.events.once("ready", () => {
   
   // Set up audio context resumption on user interaction
   // This helps ensure audio works after page visibility changes or SDK unmute
+  let audioUnlocked = false
   const ensureAudioContext = () => {
-    if (game.sound.context && game.sound.context.state === 'suspended') {
-      game.sound.context.resume().catch((e: Error) => {
-        console.warn('Could not resume audio context:', e)
-      })
+    if (game.sound.context) {
+      console.log('🔊 Main: Audio context state:', game.sound.context.state)
+      
+      if (game.sound.context.state === 'suspended') {
+        game.sound.context.resume()
+          .then(() => {
+            console.log('✅ Main: Audio context resumed successfully')
+            audioUnlocked = true
+          })
+          .catch((e: Error) => {
+            console.warn('⚠️ Main: Could not resume audio context:', e)
+          })
+      } else if (game.sound.context.state === 'running') {
+        if (!audioUnlocked) {
+          console.log('✅ Main: Audio context already running')
+          audioUnlocked = true
+        }
+      }
     }
   }
   
   // Add listeners for user interactions to resume audio if needed
-  canvas.addEventListener('click', ensureAudioContext)
-  canvas.addEventListener('touchstart', ensureAudioContext)
-  document.addEventListener('keydown', ensureAudioContext)
+  // Use both passive and non-passive listeners for better mobile compatibility
+  canvas.addEventListener('click', ensureAudioContext, { passive: true })
+  canvas.addEventListener('touchstart', ensureAudioContext, { passive: false })
+  canvas.addEventListener('touchend', ensureAudioContext, { passive: false })
+  document.addEventListener('keydown', ensureAudioContext, { passive: true })
   
   // Also try to resume on visibility change (when tab becomes active)
   document.addEventListener('visibilitychange', () => {
