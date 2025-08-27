@@ -285,7 +285,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(time: number, delta: number): void {
-    const onGround = this.body!.blocked.down
+    // Guard against update being called before physics body is ready
+    if (!this.body) return
+    
+    const onGround = this.body.blocked.down
     const spaceKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     
     // Add WASD keys support
@@ -587,8 +590,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateBubbleSystem(): void {
+    if (!this.body) return // Guard against early calls
     const deltaTime = this.scene.game.loop.delta
-    const onGround = this.body!.blocked.down
+    const onGround = this.body.blocked.down
     
     // Check if player is truly idle (not moving, not climbing, not jumping, on ground)
     const playerIsIdle = !this.isMoving && !this.isClimbing && !this.isJumping && onGround
@@ -638,8 +642,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateSmartAnimations(): void {
+    if (!this.body) return // Guard against early calls
     const deltaTime = this.scene.game.loop.delta
-    const onGround = this.body!.blocked.down
+    const onGround = this.body.blocked.down
     
     // Priority 1: Climbing animations (climbing overrides EVERYTHING else)
     if (this.isClimbing) {

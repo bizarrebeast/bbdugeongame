@@ -632,8 +632,19 @@ export class GameScene extends Phaser.Scene {
     const currentLevelCheck = this.game.registry.get('currentLevel') || 1
     console.log(`📊 Current level: ${currentLevelCheck}`)
     
-    if (chapterLevels.includes(currentLevelCheck)) {
-      console.log(`🎬 Chapter splash needed for level ${currentLevelCheck}`)
+    // Check if we've already shown this chapter's splash (only show once per game session)
+    const splashShownKey = `chapterSplashShown_${currentLevelCheck}`
+    const splashAlreadyShown = this.game.registry.get(splashShownKey) === true
+    
+    // Also check if this is a death restart (player has lives remaining from a previous death)
+    const isDeathRestart = this.game.registry.has('playerLives') && this.game.registry.get('playerLives') > 0
+    
+    if (chapterLevels.includes(currentLevelCheck) && !splashAlreadyShown && !isDeathRestart) {
+      console.log(`🎬 Chapter splash needed for level ${currentLevelCheck} (first time)`)
+      
+      // Mark this splash as shown
+      this.game.registry.set(splashShownKey, true)
+      
       // Show chapter splash and delay game initialization
       this.showChapterSplashScreen(currentLevelCheck, () => {
         console.log('✅ Splash complete, initializing game')
@@ -817,6 +828,12 @@ export class GameScene extends Phaser.Scene {
       registry.set('accumulatedGems', 0)
       registry.set('accumulatedBlueGems', 0)
       registry.set('accumulatedDiamonds', 0)
+      
+      // Clear all chapter splash shown flags for new game
+      const chapterLevels = [1, 11, 21, 31, 41, 51]
+      chapterLevels.forEach(level => {
+        registry.remove(`chapterSplashShown_${level}`)
+      })
     }
     
     // No longer generating textures - using preloaded images instead
@@ -5484,7 +5501,7 @@ export class GameScene extends Phaser.Scene {
   }
   
   private updateDoorPrompt(): void {
-    if (!this.door) {
+    if (!this.door || !this.player || !this.player.body) {
       return
     }
     
@@ -5492,7 +5509,7 @@ export class GameScene extends Phaser.Scene {
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     const doorFloor = levelConfig.floorCount - 1
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body
-    const isOnGround = playerBody.blocked.down
+    const isOnGround = playerBody.blocked?.down || false
     
     // Calculate distance to door
     const distance = Phaser.Math.Distance.Between(
@@ -5731,8 +5748,11 @@ export class GameScene extends Phaser.Scene {
   update(time: number, deltaTime: number): void {
     if (this.isGameOver) return
     
-    // Don't update if game hasn't been initialized yet (during splash screen)
-    if (!this.touchControls || !this.player) return
+    // Don't update if game hasn't been initialized yet (during splash screen or scene restart)
+    if (!this.touchControls || !this.player || !this.player.body) return
+    
+    // Also check if essential groups are initialized
+    if (!this.cats || !this.stalkerCats || !this.baseBlus || !this.beetles || !this.ladders) return
     
     // Update dynamic background positioning to handle high floors
     this.updateBackgroundPosition()
@@ -5760,36 +5780,46 @@ export class GameScene extends Phaser.Scene {
     // Update visibility system
     this.updateVisibilitySystem()
     
-    // Update all cats
-    this.cats.children.entries.forEach(cat => {
-      (cat as Cat).update(this.time.now, this.game.loop.delta)
-    })
+    // Update all cats (only if group exists)
+    if (this.cats && this.cats.children) {
+      this.cats.children.entries.forEach(cat => {
+        (cat as Cat).update(this.time.now, this.game.loop.delta)
+      })
+    }
     
-    // Update all stalker cats and check ladder exits
-    this.stalkerCats.children.entries.forEach(stalkerCat => {
-      const catObj = stalkerCat as Cat
-      catObj.update(this.time.now, this.game.loop.delta)
-      
-      // Red cats no longer climb ladders
-    })
+    // Update all stalker cats and check ladder exits (only if group exists)
+    if (this.stalkerCats && this.stalkerCats.children) {
+      this.stalkerCats.children.entries.forEach(stalkerCat => {
+        const catObj = stalkerCat as Cat
+        catObj.update(this.time.now, this.game.loop.delta)
+        
+        // Red cats no longer climb ladders
+      })
+    }
     
-    // Update all BaseBlu enemies
-    this.baseBlus.children.entries.forEach(baseBlu => {
-      (baseBlu as BaseBlu).update(this.time.now, this.game.loop.delta)
-    })
+    // Update all BaseBlu enemies (only if group exists)
+    if (this.baseBlus && this.baseBlus.children) {
+      this.baseBlus.children.entries.forEach(baseBlu => {
+        (baseBlu as BaseBlu).update(this.time.now, this.game.loop.delta)
+      })
+    }
 
-    // Update all Beetle enemies with time and delta for animation
-    this.beetles.children.entries.forEach(beetle => {
-      (beetle as Beetle).update(time, deltaTime)
-    })
+    // Update all Beetle enemies with time and delta for animation (only if group exists)
+    if (this.beetles && this.beetles.children) {
+      this.beetles.children.entries.forEach(beetle => {
+        (beetle as Beetle).update(time, deltaTime)
+      })
+    }
     
-    // Check ladder overlaps
+    // Check ladder overlaps (only if ladders group exists)
     let overlappingAnyLadder = false
-    this.ladders.children.entries.forEach(ladder => {
-      if (this.physics.world.overlap(this.player, ladder)) {
-        overlappingAnyLadder = true
-      }
-    })
+    if (this.ladders && this.ladders.children) {
+      this.ladders.children.entries.forEach(ladder => {
+        if (this.physics.world.overlap(this.player, ladder)) {
+          overlappingAnyLadder = true
+        }
+      })
+    }
     
     // Clear nearby ladder reference if not overlapping any ladder
     if (!overlappingAnyLadder) {
