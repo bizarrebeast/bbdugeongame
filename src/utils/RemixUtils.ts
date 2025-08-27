@@ -65,9 +65,20 @@ export function initializeFarcadeSDK(game: Phaser.Game): void {
     game.registry.set('isDeathRetry', false)
     game.registry.set('isLevelProgression', false)
     game.registry.set('currentLevel', 1)
-    game.registry.set('playerLives', 3)
+    game.registry.set('playerLives', 9)  // Set to 9 lives for new game, not 3
     game.registry.set('totalCoins', 0)
+    game.registry.set('totalGems', 0)
+    game.registry.set('totalBlueGems', 0)
+    game.registry.set('totalDiamonds', 0)
     game.registry.set('accumulatedScore', 0)
+    game.registry.set('currentScore', 0)
+    game.registry.set('accumulatedDiamonds', 0)
+    
+    // Clear all chapter splash shown flags for new game
+    const chapterLevels = [1, 11, 21, 31, 41, 51]
+    chapterLevels.forEach(level => {
+      game.registry.remove(`chapterSplashShown_${level}`)
+    })
     
     // Get the current active scene
     const activeScenes = game.scene.getScenes(true)
