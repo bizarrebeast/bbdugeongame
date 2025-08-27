@@ -629,7 +629,7 @@ export class GameScene extends Phaser.Scene {
     
     // Check for chapter splash FIRST before anything else
     const chapterLevels = [1, 11, 21, 31, 41, 51]
-    const currentLevelCheck = this.game.registry.get('currentLevel') || 40  // TEST: Starting at level 40
+    const currentLevelCheck = this.game.registry.get('currentLevel') || 1
     console.log(`📊 Current level: ${currentLevelCheck}`)
     
     // Check if we need to show a splash screen after bonus level
@@ -796,8 +796,8 @@ export class GameScene extends Phaser.Scene {
       this.levelManager = new LevelManager()
     }
     
-    // TEST: Start at level 10 for testing
-    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 50  // TEST: Starting at level 50
+    // Get current level from registry, default to level 1
+    const currentLevelFromRegistry = this.game.registry.get('currentLevel') || 1
     // Sync level manager with registry
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
