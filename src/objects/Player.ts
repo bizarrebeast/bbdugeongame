@@ -116,8 +116,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Set physics body size and offset for better collision detection
     // The player is 48x64 visually, but we want a smaller hitbox
     this.setSize(18, 45)
-    // Center the hitbox horizontally and align with feet
-    this.setOffset(15, 19)
+    // Center the hitbox horizontally
+    // Move physics body up 3px total to make visual sprite appear 3px lower
+    this.setOffset(15, 16)  // Was 19, then 17, now 16
     this.setDepth(20) // Player renders on top of everything
     
     // Phaser's built-in debug visualization will show the hitbox
