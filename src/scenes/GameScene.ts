@@ -695,14 +695,22 @@ export class GameScene extends Phaser.Scene {
       // Keep accumulated score from completed levels, reset only current level
       this.accumulatedScore = registry.get('accumulatedScore') || 0
       this.score = 0 // Reset current level score on death
-      this.totalCoinsCollected = 0 // Reset crystals on death
-      this.totalGemsCollected = 0 // Reset gem counts on death
-      this.totalBlueGemsCollected = 0
-      this.totalDiamondsCollected = 0
-      registry.set('totalCoins', 0)
-      registry.set('totalGems', 0)
-      registry.set('totalBlueGems', 0)
-      registry.set('totalDiamonds', 0)
+      
+      // Keep accumulated gems from completed levels, only reset current level collections
+      const accumulatedCoins = registry.get('accumulatedCoins') || 0
+      const accumulatedGems = registry.get('accumulatedGems') || 0
+      const accumulatedBlueGems = registry.get('accumulatedBlueGems') || 0
+      const accumulatedDiamonds = registry.get('accumulatedDiamonds') || 0
+      
+      this.totalCoinsCollected = accumulatedCoins // Restore to completed level totals
+      this.totalGemsCollected = accumulatedGems
+      this.totalBlueGemsCollected = accumulatedBlueGems
+      this.totalDiamondsCollected = accumulatedDiamonds
+      
+      registry.set('totalCoins', accumulatedCoins)
+      registry.set('totalGems', accumulatedGems)
+      registry.set('totalBlueGems', accumulatedBlueGems)
+      registry.set('totalDiamonds', accumulatedDiamonds)
     } else {
       // Initialize new game
       this.lives = 3
@@ -718,6 +726,11 @@ export class GameScene extends Phaser.Scene {
       registry.set('totalBlueGems', 0)
       registry.set('totalDiamonds', 0)
       registry.set('accumulatedScore', 0)
+      // Reset accumulated values for new game
+      registry.set('accumulatedCoins', 0)
+      registry.set('accumulatedGems', 0)
+      registry.set('accumulatedBlueGems', 0)
+      registry.set('accumulatedDiamonds', 0)
     }
     
     // No longer generating textures - using preloaded images instead
@@ -6596,6 +6609,12 @@ export class GameScene extends Phaser.Scene {
       registry.set('totalGems', this.totalGemsCollected)
       registry.set('totalBlueGems', this.totalBlueGemsCollected)
       registry.set('totalDiamonds', this.totalDiamondsCollected)
+      
+      // Save accumulated values (locked in from completed levels)
+      registry.set('accumulatedCoins', this.totalCoinsCollected)
+      registry.set('accumulatedGems', this.totalGemsCollected)
+      registry.set('accumulatedBlueGems', this.totalBlueGemsCollected)
+      registry.set('accumulatedDiamonds', this.totalDiamondsCollected)
       
       // Advance to next level
       const nextLevel = this.levelManager.nextLevel()
