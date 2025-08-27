@@ -5192,15 +5192,20 @@ export class GameScene extends Phaser.Scene {
           spiral.clear()
           spiral.lineStyle(3, 0x9966ff, spiral.alpha)
           
-          // Draw spiral
+          // Draw spiral (relative to spiral's position, not world position)
           const points: { x: number, y: number }[] = []
           const spiralTurns = 3
-          const maxRadius = 30 * spiral.scaleX
+          const maxRadius = 15 * spiral.scaleX  // Reduced from 30 to 15 (50% smaller)
+          
+          // Position the spiral at the enemy location
+          spiral.x = x
+          spiral.y = y
           
           for (let angle = 0; angle < spiralTurns * Math.PI * 2; angle += 0.1) {
             const radius = (angle / (spiralTurns * Math.PI * 2)) * maxRadius
-            const px = x + Math.cos(angle + spiral.rotation) * radius
-            const py = y + Math.sin(angle + spiral.rotation) * radius
+            // Draw relative to 0,0 since we positioned the spiral graphics object
+            const px = Math.cos(angle + spiral.rotation) * radius
+            const py = Math.sin(angle + spiral.rotation) * radius
             points.push({ x: px, y: py })
           }
           
