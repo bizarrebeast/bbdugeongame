@@ -285,12 +285,19 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Add 10-20% random speed variation to each enemy
     const speedVariation = 0.9 + Math.random() * 0.2 // 90% to 110% of base
     
+    // Get current level from scene if available
+    const scene = this.scene as any
+    const currentLevel = scene.levelManager?.getCurrentLevel() || 1
+    const isEarlyLevel = currentLevel <= 10
+    
     switch (this.catColor) {
       case CatColor.BLUE:
         this.moveSpeed = this.baseSpeed * speedVariation
         break
       case CatColor.YELLOW:
-        this.moveSpeed = this.baseSpeed * 0.6 * speedVariation
+        // Even slower in early levels for better predictability
+        const yellowSpeedMultiplier = isEarlyLevel ? 0.4 : 0.6  // 40% speed in levels 1-10, 60% after
+        this.moveSpeed = this.baseSpeed * yellowSpeedMultiplier * speedVariation
         break
       case CatColor.GREEN:
         this.moveSpeed = this.baseSpeed * 1.5 * speedVariation
@@ -300,8 +307,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
     }
     
-    // Random initial direction - 50/50 chance left or right
-    this.direction = Math.random() < 0.5 ? -1 : 1
+    // Initial direction - more predictable in early levels
+    if (this.catColor === CatColor.YELLOW && isEarlyLevel) {
+      // In early levels, yellow enemies tend to move away from spawn center
+      // This gives players more time to react
+      const centerX = (this.platformBounds.left + this.platformBounds.right) / 2
+      this.direction = this.x < centerX ? -1 : 1  // Move towards edges
+    } else {
+      // Random initial direction for other enemies and later levels
+      this.direction = Math.random() < 0.5 ? -1 : 1
+    }
   }
   
   update(time: number, delta: number): void {
@@ -354,13 +369,28 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateYellowPatrol(delta: number): void {
+    // Get current level from scene if available
+    const scene = this.scene as any
+    const currentLevel = scene.levelManager?.getCurrentLevel() || 1
+    const isEarlyLevel = currentLevel <= 10
+    
     this.randomMoveTimer -= delta
     
     if (this.randomMoveTimer <= 0) {
-      if (Math.random() < 0.3) {
+      // In levels 1-10: Much more predictable movement
+      // In later levels: Original erratic behavior
+      const changeChance = isEarlyLevel ? 0.05 : 0.3  // 5% vs 30% chance to change direction
+      
+      if (Math.random() < changeChance) {
         this.direction = Math.random() < 0.5 ? -1 : 1
       }
-      this.randomMoveTimer = 500 + Math.random() * 1000
+      
+      // More consistent timing in early levels
+      if (isEarlyLevel) {
+        this.randomMoveTimer = 2000 + Math.random() * 1000  // 2-3 seconds (predictable)
+      } else {
+        this.randomMoveTimer = 500 + Math.random() * 1000   // 0.5-1.5 seconds (erratic)
+      }
     }
     
     if (this.x <= this.platformBounds.left + 10) {
