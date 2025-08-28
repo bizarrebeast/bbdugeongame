@@ -17,6 +17,10 @@ export class BackgroundManager {
   private beastModePool: string[] = []
   private lastBeastModeRotation: number = 0
   private backgroundUrls: Map<string, string>
+  private beastModeLoadingProgress: number = 0
+  private beastModeFullyLoaded: boolean = false
+  private loadingBatches: string[][] = []
+  private progressiveLoadTimer?: Phaser.Time.TimerEvent
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -294,22 +298,113 @@ export class BackgroundManager {
   }
 
   private loadBeastModePool(): void {
-    // Collect all backgrounds from all chapters including bonus
-    const allBackgrounds: string[] = []
+    // Pool is now loaded progressively, this method is called after all batches are loaded
+    if (this.beastModeFullyLoaded) {
+      // Collect all backgrounds from all chapters including bonus
+      const allBackgrounds: string[] = []
+      
+      this.chapters.forEach((chapter, key) => {
+        if (key !== 'beast_mode') {
+          allBackgrounds.push(...chapter.backgrounds)
+        }
+      })
+
+      // Beast Mode uses ALL backgrounds - no subset needed
+      this.beastModePool = [...allBackgrounds]
+      
+      // Add beast mode exclusives if they exist
+      const beastModeChapter = this.chapters.get('beast_mode')
+      if (beastModeChapter && beastModeChapter.backgrounds.length > 0) {
+        this.beastModePool.push(...beastModeChapter.backgrounds)
+      }
+    }
+  }
+  
+  private prepareBeastModeBatches(): void {
+    this.loadingBatches = []
     
-    this.chapters.forEach((chapter, key) => {
-      if (key !== 'beast_mode') {
-        allBackgrounds.push(...chapter.backgrounds)
+    // Create batches of 10 backgrounds each from remaining chapters
+    const chapterOrder = ['crystal_cavern', 'volcanic_crystal', 'steampunk', 'storm', 'galactic', 'bonus']
+    
+    for (const chapterKey of chapterOrder) {
+      const chapter = this.chapters.get(chapterKey)
+      if (chapter) {
+        // Split chapter backgrounds into batches of 10
+        for (let i = 0; i < chapter.backgrounds.length; i += 10) {
+          const batch = chapter.backgrounds.slice(i, Math.min(i + 10, chapter.backgrounds.length))
+          this.loadingBatches.push(batch)
+        }
+      }
+    }
+    
+    console.log(`📦 Prepared ${this.loadingBatches.length} batches for progressive loading`)
+  }
+  
+  private startProgressiveBeastModeLoading(): void {
+    if (this.loadingBatches.length === 0) {
+      this.beastModeFullyLoaded = true
+      console.log(`✅ Beast Mode fully loaded!`)
+      this.loadBeastModePool() // Rebuild pool with all backgrounds
+      return
+    }
+    
+    // Cancel any existing timer
+    if (this.progressiveLoadTimer) {
+      this.progressiveLoadTimer.destroy()
+    }
+    
+    let batchIndex = 0
+    
+    // Load a batch every 2 seconds
+    this.progressiveLoadTimer = this.scene.time.addEvent({
+      delay: 2000,
+      repeat: this.loadingBatches.length - 1,
+      callback: async () => {
+        if (batchIndex < this.loadingBatches.length) {
+          const batch = this.loadingBatches[batchIndex]
+          console.log(`📥 Loading batch ${batchIndex + 1}/${this.loadingBatches.length}`)
+          
+          await this.loadBackgroundBatch(batch)
+          
+          // Add loaded backgrounds to the pool
+          this.beastModePool.push(...batch)
+          this.beastModeLoadingProgress += batch.length
+          
+          batchIndex++
+          
+          // Check if all batches are loaded
+          if (batchIndex >= this.loadingBatches.length) {
+            this.beastModeFullyLoaded = true
+            console.log(`✅ Beast Mode fully loaded! Total backgrounds: ${this.beastModeLoadingProgress}`)
+            this.loadBeastModePool() // Rebuild pool with all backgrounds
+          }
+        }
       }
     })
-
-    // Beast Mode uses ALL backgrounds - no subset needed
-    this.beastModePool = [...allBackgrounds]
+  }
+  
+  private async loadBackgroundBatch(backgroundKeys: string[]): Promise<void> {
+    const loadPromises: Promise<void>[] = []
     
-    // Add beast mode exclusives if they exist
-    const beastModeChapter = this.chapters.get('beast_mode')
-    if (beastModeChapter && beastModeChapter.backgrounds.length > 0) {
-      this.beastModePool.push(...beastModeChapter.backgrounds)
+    for (const backgroundKey of backgroundKeys) {
+      if (!this.loadedTextures.has(backgroundKey) && !this.scene.textures.exists(backgroundKey)) {
+        const url = this.backgroundUrls.get(backgroundKey)
+        if (url) {
+          const loadPromise = new Promise<void>((resolve) => {
+            this.scene.load.image(backgroundKey, url)
+            this.scene.load.once('complete', () => {
+              this.loadedTextures.add(backgroundKey)
+              resolve()
+            })
+          })
+          loadPromises.push(loadPromise)
+        }
+      }
+    }
+    
+    if (loadPromises.length > 0) {
+      this.scene.load.start()
+      await Promise.all(loadPromises)
     }
   }
 
@@ -327,35 +422,31 @@ export class BackgroundManager {
   }
 
   public async loadChapterBackgrounds(chapter: string): Promise<void> {
-    // Special handling for Beast Mode - load ALL backgrounds
+    // Special handling for Beast Mode - progressive loading
     if (chapter === 'beast_mode') {
-      console.log(`🦾 Loading ALL backgrounds for BEAST MODE`)
-      const allLoadPromises: Promise<void>[] = []
+      console.log(`🦾 Starting progressive loading for BEAST MODE`)
       
-      // Load backgrounds from all chapters
-      for (const [chapterKey, chapterConfig] of this.chapters.entries()) {
-        for (const backgroundKey of chapterConfig.backgrounds) {
-          if (!this.loadedTextures.has(backgroundKey) && !this.scene.textures.exists(backgroundKey)) {
-            const url = this.backgroundUrls.get(backgroundKey)
-            if (url) {
-              const loadPromise = new Promise<void>((resolve) => {
-                this.scene.load.image(backgroundKey, url)
-                this.scene.load.once('complete', () => {
-                  this.loadedTextures.add(backgroundKey)
-                  resolve()
-                })
-              })
-              allLoadPromises.push(loadPromise)
-            }
-          }
-        }
+      // Reset loading state
+      this.beastModeLoadingProgress = 0
+      this.beastModeFullyLoaded = false
+      
+      // Load initial Beast Mode exclusive backgrounds immediately
+      const beastModeChapter = this.chapters.get('beast_mode')
+      if (beastModeChapter) {
+        await this.loadBackgroundBatch(beastModeChapter.backgrounds)
+        console.log(`✅ Loaded initial ${beastModeChapter.backgrounds.length} Beast Mode exclusives`)
+        
+        // Initialize pool with just the exclusives first
+        this.beastModePool = [...beastModeChapter.backgrounds]
+        this.beastModeLoadingProgress = beastModeChapter.backgrounds.length
       }
       
-      if (allLoadPromises.length > 0) {
-        this.scene.load.start()
-        await Promise.all(allLoadPromises)
-        console.log(`✅ Loaded ${allLoadPromises.length} backgrounds for Beast Mode`)
-      }
+      // Prepare batches for progressive loading
+      this.prepareBeastModeBatches()
+      
+      // Start progressive loading in background
+      this.startProgressiveBeastModeLoading()
+      
       return
     }
     
@@ -470,6 +561,19 @@ export class BackgroundManager {
     const chapter = this.getChapterForLevel(level, isBonus)
     const chapterConfig = this.chapters.get(chapter)
     return chapterConfig?.name || 'Unknown'
+  }
+  
+  public getBeastModeLoadingProgress(): { loaded: number, total: number, percentage: number } {
+    const total = 70 // Approximate total backgrounds
+    return {
+      loaded: this.beastModeLoadingProgress,
+      total,
+      percentage: Math.round((this.beastModeLoadingProgress / total) * 100)
+    }
+  }
+  
+  public isBeastModeFullyLoaded(): boolean {
+    return this.beastModeFullyLoaded
   }
 
   private getFallbackBackground(level: number): string {

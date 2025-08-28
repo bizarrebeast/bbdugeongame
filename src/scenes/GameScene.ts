@@ -97,6 +97,8 @@ export class GameScene extends Phaser.Scene {
   private menuOverlay!: MenuOverlay
   private backgroundMusic!: Phaser.Sound.BaseSound
   private backgroundManager!: BackgroundManager
+  private beastModeLoadingText?: Phaser.GameObjects.Text
+  private beastModeLoadingTimer?: Phaser.Time.TimerEvent
   
   // Game statistics tracking
   private gameStats = {
@@ -1657,6 +1659,11 @@ export class GameScene extends Phaser.Scene {
     } else {
       // Music already playing, just get the reference
       this.backgroundMusic = this.game.registry.get('backgroundMusicInstance')
+    }
+    
+    // Show Beast Mode loading indicator if in Beast Mode
+    if (this.levelManager?.getCurrentLevel() >= 51) {
+      this.showBeastModeLoadingIndicator()
     }
   }  // End of initializeGameAfterSplash
 
@@ -7367,6 +7374,57 @@ export class GameScene extends Phaser.Scene {
     if (this.livesIcon) {
       this.livesIcon.setVisible(livesToShow > 0)
     }
+  }
+  
+  private showBeastModeLoadingIndicator(): void {
+    // Create loading text in the center-top of the screen
+    this.beastModeLoadingText = this.add.text(
+      this.cameras.main.width / 2,
+      100,
+      'BEAST MODE: LOADING CHAOS... 0%',
+      {
+        fontSize: '16px',
+        color: '#ff00ff',
+        fontFamily: '"Press Start 2P", system-ui',
+        stroke: '#000000',
+        strokeThickness: 3
+      }
+    )
+    this.beastModeLoadingText.setOrigin(0.5)
+    this.beastModeLoadingText.setScrollFactor(0)
+    this.beastModeLoadingText.setDepth(200)
+    
+    // Update loading progress every 500ms
+    this.beastModeLoadingTimer = this.time.addEvent({
+      delay: 500,
+      repeat: -1,
+      callback: () => {
+        if (this.backgroundManager && this.beastModeLoadingText) {
+          const progress = this.backgroundManager.getBeastModeLoadingProgress()
+          
+          if (this.backgroundManager.isBeastModeFullyLoaded()) {
+            // Fully loaded - show completion message then hide
+            this.beastModeLoadingText.setText('BEAST MODE: FULLY LOADED!')
+            this.beastModeLoadingText.setColor('#00ff00')
+            
+            // Remove after 2 seconds
+            this.time.delayedCall(2000, () => {
+              if (this.beastModeLoadingText) {
+                this.beastModeLoadingText.destroy()
+                this.beastModeLoadingText = undefined
+              }
+              if (this.beastModeLoadingTimer) {
+                this.beastModeLoadingTimer.destroy()
+                this.beastModeLoadingTimer = undefined
+              }
+            })
+          } else {
+            // Still loading - update percentage
+            this.beastModeLoadingText.setText(`BEAST MODE: LOADING CHAOS... ${progress.percentage}%`)
+          }
+        }
+      }
+    })
   }
 
   private checkForExtraLife(): void {
