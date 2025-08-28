@@ -365,7 +365,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityY(this.MIN_JUMP_VELOCITY)
         // Play rotating jump sound
         this.playJumpSound()
-        console.log(`Jump started - Initial velocity: ${this.MIN_JUMP_VELOCITY}, Target max: ${this.MAX_JUMP_VELOCITY}`)
+        const inputType = this.touchControls?.jumpPressed ? 'TOUCH' : 'KEYBOARD'
+        console.log(`[${inputType}] Jump started - Initial velocity: ${this.MIN_JUMP_VELOCITY}, Target max: ${this.MAX_JUMP_VELOCITY}`)
         this.triggerHapticFeedback() // Haptic feedback for jump start
       }
       
@@ -384,7 +385,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             
             // Apply incremental upward force instead of setting absolute velocity
             // This creates a smoother jump arc without sudden velocity changes
-            const boostForce = -18 * boostMultiplier // Incremental boost per frame (tuned for proper height)
+            // Unified boost force for both input methods
+            const isTouchInput = this.touchControls?.jumpPressed || false
+            const baseBoostForce = -20 // Same boost for both desktop and mobile
+            const boostForce = baseBoostForce * boostMultiplier
             const currentVelocity = this.body!.velocity.y
             const newVelocity = Math.max(currentVelocity + boostForce, this.MAX_JUMP_VELOCITY)
             
@@ -407,10 +411,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       
       // Reset jump state when landing - but with a small delay to prevent immediate re-triggering
       if (onGround && this.isAirborne && this.body?.velocity.y! >= 0) {
+        const inputType = this.touchControls?.jumpPressed ? 'TOUCH' : 'KEYBOARD'
+        const totalHoldTime = this.jumpHoldTime
+        console.log(`[${inputType}] Jump completed - Total hold time: ${totalHoldTime.toFixed(0)}ms`)
+        
         this.isAirborne = false
         this.jumpButtonDown = false
         this.jumpReleased = false
-        const totalHoldTime = this.jumpHoldTime
         this.jumpHoldTime = 0
         // Player landed, jump complete - landing sound disabled for now
         // this.scene.sound.play('player-land', { volume: 0.4 })
