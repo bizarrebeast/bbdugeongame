@@ -361,12 +361,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.jumpHoldTime = 0
         this.isAirborne = true
         this.jumpReleased = false
+        
+        // Higher initial velocity for touch input to compensate for touch detection
+        const isTouchInput = this.touchControls?.jumpPressed || false
+        const initialVelocity = isTouchInput ? -175 : this.MIN_JUMP_VELOCITY // -175 for touch, -120 for keyboard
+        
         // Apply initial jump velocity
-        this.setVelocityY(this.MIN_JUMP_VELOCITY)
+        this.setVelocityY(initialVelocity)
         // Play rotating jump sound
         this.playJumpSound()
-        const inputType = this.touchControls?.jumpPressed ? 'TOUCH' : 'KEYBOARD'
-        console.log(`[${inputType}] Jump started - Initial velocity: ${this.MIN_JUMP_VELOCITY}, Target max: ${this.MAX_JUMP_VELOCITY}`)
+        const inputType = isTouchInput ? 'TOUCH' : 'KEYBOARD'
+        console.log(`[${inputType}] Jump started - Initial velocity: ${initialVelocity}, Target max: ${this.MAX_JUMP_VELOCITY}`)
         this.triggerHapticFeedback() // Haptic feedback for jump start
       }
       
@@ -385,9 +390,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             
             // Apply incremental upward force instead of setting absolute velocity
             // This creates a smoother jump arc without sudden velocity changes
-            // Unified boost force for both input methods
+            // Stronger boost force for touch input to compensate for detection issues
             const isTouchInput = this.touchControls?.jumpPressed || false
-            const baseBoostForce = -20 // Same boost for both desktop and mobile
+            const baseBoostForce = isTouchInput ? -30 : -20 // -30 for touch, -20 for keyboard
             const boostForce = baseBoostForce * boostMultiplier
             const currentVelocity = this.body!.velocity.y
             const newVelocity = Math.max(currentVelocity + boostForce, this.MAX_JUMP_VELOCITY)
