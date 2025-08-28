@@ -146,8 +146,18 @@ export class GameScene extends Phaser.Scene {
     super({ key: "GameScene" })
   }
 
+  private loadingOverlay: Phaser.GameObjects.Container | null = null
+  private showLoadingScreen: boolean = false
+
   preload(): void {
     console.log('🔄 GameScene.preload() started at', performance.now())
+    
+    // Set flag to show loading screen in create()
+    this.showLoadingScreen = true
+    
+    // Set purple background color
+    this.cameras.main.setBackgroundColor('#4d007e')
+    
     // Initialize asset pool
     this.assetPool = new AssetPool(this)
     
@@ -628,10 +638,123 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     console.log('🎮 GameScene.create() started at', performance.now())
+    console.log('📊 showLoadingScreen flag:', this.showLoadingScreen)
     
-    // Immediately set black background to avoid any grey flash
-    this.cameras.main.setBackgroundColor('#000000')
-    console.log('🎨 Camera background set to black')
+    // Create loading screen if we're coming from instructions
+    if (this.showLoadingScreen) {
+      console.log('🎨 Creating loading screen elements...')
+      const width = this.cameras.main.width
+      const height = this.cameras.main.height
+      console.log(`📐 Screen dimensions: ${width}x${height}`)
+      
+      // Create container for loading elements
+      this.loadingOverlay = this.add.container(0, 0)
+      this.loadingOverlay.setDepth(10000)
+      console.log('📦 Loading container created')
+      
+      // Purple background
+      const loadingBg = this.add.rectangle(width / 2, height / 2, width, height, 0x4d007e, 1)
+      this.loadingOverlay.add(loadingBg)
+      console.log('🟪 Purple background added')
+      
+      // "GOING BIZARRE" text with pink color and game font
+      const loadingText = this.add.text(width / 2, height / 2 - 60, 'GOING BIZARRE', {
+        fontFamily: '"Press Start 2P", system-ui',
+        fontSize: '28px',
+        color: '#FF69B4',
+        align: 'center'
+      })
+      loadingText.setOrigin(0.5)
+      loadingText.setShadow(2, 2, '#8B008B', 4, false, true)
+      this.loadingOverlay.add(loadingText)
+      console.log('💗 GOING BIZARRE text added')
+      
+      // Progress bar background
+      const barWidth = width * 0.6
+      const barHeight = 24
+      const barX = width / 2
+      const barY = height / 2 + 10
+      console.log(`📊 Progress bar dimensions: ${barWidth}x${barHeight} at (${barX}, ${barY})`)
+      
+      const progressBarBg = this.add.rectangle(barX, barY, barWidth, barHeight, 0x4B0082)
+      progressBarBg.setStrokeStyle(3, 0xFF69B4)
+      this.loadingOverlay.add(progressBarBg)
+      console.log('📊 Progress bar background added')
+      
+      // Progress bar fill (starts empty)
+      const progressBar = this.add.rectangle(
+        barX - barWidth / 2 + 2,
+        barY,
+        0,
+        barHeight - 6,
+        0xFF69B4
+      )
+      progressBar.setOrigin(0, 0.5)
+      this.loadingOverlay.add(progressBar)
+      console.log('📊 Progress bar fill added (starting at 0 width)')
+      
+      // Percentage text with game font
+      const percentText = this.add.text(width / 2, height / 2 + 50, '0%', {
+        fontFamily: '"Press Start 2P", system-ui',
+        fontSize: '16px',
+        color: '#FF69B4',
+        align: 'center'
+      })
+      percentText.setOrigin(0.5)
+      this.loadingOverlay.add(percentText)
+      console.log('💯 Percentage text added')
+      
+      // Animate progress bar
+      let progress = 0
+      console.log('⏱️ Starting progress animation')
+      const progressTimer = this.time.addEvent({
+        delay: 30, // Back to original speed
+        callback: () => {
+          if (progress < 100) {
+            progress = Math.min(progress + 2, 100)
+            const displayProgress = Math.floor(progress)
+            progressBar.width = (barWidth - 6) * (progress / 100)
+            percentText.setText(`${displayProgress}%`)
+            
+            // Log progress every 20%
+            if (displayProgress % 20 === 0 && displayProgress > 0) {
+              console.log(`📈 Progress: ${displayProgress}%`)
+            }
+            
+            // When we hit 100%, remove the overlay after a short delay
+            if (progress >= 100) {
+              console.log('✅ Progress complete, removing overlay in 200ms')
+              this.time.delayedCall(200, () => {
+                if (this.loadingOverlay) {
+                  console.log('🗑️ Destroying loading overlay')
+                  this.loadingOverlay.destroy()
+                  this.loadingOverlay = null
+                }
+                // Set black background for game
+                console.log('⬛ Setting black background for game')
+                this.cameras.main.setBackgroundColor('#000000')
+                
+                // Now check for chapter splash after loading screen is done
+                this.checkForChapterSplash()
+              })
+            }
+          }
+        },
+        repeat: -1
+      })
+      console.log('📊 Progress timer started')
+    } else {
+      // No loading screen needed, set black background immediately
+      this.cameras.main.setBackgroundColor('#000000')
+      // Check for chapter splash immediately if no loading screen
+      this.checkForChapterSplash()
+    }
+    
+    console.log('🎨 Scene initialized')
+  }
+  
+  private checkForChapterSplash(): void {
+    console.log('🔍 Checking for chapter splash...')
     
     // Reset the replay flag after using it
     // This ensures that if player manually restarts (not through SDK), they see splash screen again
