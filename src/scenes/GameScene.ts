@@ -2609,8 +2609,8 @@ export class GameScene extends Phaser.Scene {
     spikeSprite.setDepth(12) // Above platforms but below player
     
     // Create physics body for collision detection - same height as floor tiles for enemy movement
-    const fullTileHeight = tileSize + 2 // Extended by 2 pixels at the bottom
-    const spikeCollisionY = y + 1 // Move down 1 pixel to extend bottom by 2 pixels total
+    const fullTileHeight = tileSize
+    const spikeCollisionY = y // Same Y as platform tiles
     const spikeBody = this.add.rectangle(x, spikeCollisionY, tileSize * 0.9, fullTileHeight, 0x000000, 0)
     spikeBody.setVisible(false) // Invisible collision box
     
@@ -2719,7 +2719,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createCeilingSpikeGraphics(x: number, y: number, tileSize: number): void {
-    const spikeHeight = tileSize * 0.5 // 50% of tile height for collision
+    const spikeHeight = tileSize * 0.5 + 6 // 50% of tile height plus 6 pixels for better player detection
     
     // Position spikes hanging from ceiling
     const spikeBaseY = y - tileSize/2 + 1 // Attach to ceiling
