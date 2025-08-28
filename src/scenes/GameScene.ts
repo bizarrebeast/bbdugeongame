@@ -53,7 +53,7 @@ export class GameScene extends Phaser.Scene {
   private accumulatedScore: number = 0 // Score from completed levels
   private scoreText!: Phaser.GameObjects.Text
   private currentFloor: number = 0
-  private lives: number = 9
+  private lives: number = 3
   private totalCoinsCollected: number = 0 // Still using coins internally for backwards compatibility
   private totalGemsCollected: number = 0 // Track regular gems (coins)
   private totalBlueGemsCollected: number = 0 // Track big blue gems
@@ -1396,7 +1396,7 @@ export class GameScene extends Phaser.Scene {
     this.livesIcon.setDepth(100)
     this.livesIcon.setScrollFactor(0)
     
-    this.livesText = this.add.text(45, 65, 'x9', {
+    this.livesText = this.add.text(45, 65, 'x3', {
       fontSize: '14px',
       color: '#ff69b4',  // Pink color to match heart crystal theme
       fontFamily: '"Press Start 2P", system-ui',

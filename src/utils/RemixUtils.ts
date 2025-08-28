@@ -65,7 +65,7 @@ export function initializeFarcadeSDK(game: Phaser.Game): void {
     game.registry.set('isDeathRetry', false)
     game.registry.set('isLevelProgression', false)
     game.registry.set('currentLevel', 1)
-    game.registry.set('playerLives', 9)  // Set to 9 lives for new game, not 3
+    game.registry.set('playerLives', 3)  // Set to 3 lives for new game
     game.registry.set('totalCoins', 0)
     game.registry.set('totalGems', 0)
     game.registry.set('totalBlueGems', 0)
