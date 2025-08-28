@@ -408,13 +408,7 @@ export class GameScene extends Phaser.Scene {
     // Load talking bubble sprite
     this.load.image('talking-bubble', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/go%20bizarre%20talking%20bubble-QlBbag1lDPx9SbnKTlgwwCZ12Fowh2.png?h0Cw')
     
-    // Load chapter splash screens
-    this.load.image('chapter-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Crystal%20Cavern%20Chapter%20marker-xVVl4RJLl7pqY1teeQdZ9YR8qRbIbf.png')
-    this.load.image('chapter-11', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Volcanic%20Crystal%20Cavern%20Chapter%20marker-DrODhcdT2pkFF5SP0zLVzzpmHeZwBl.png')
-    this.load.image('chapter-21', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Steampunk%20Crystal%20Cavern%20Chapter%20marker-Oerxv49ruukEeuSe6Dz9Epj2apX18R.png')
-    this.load.image('chapter-31', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Electrified%20Crystal%20Cavern%20Chapter%20marker-GstidG6WUl0ZXoFwC2l5HOqWCrXgaA.png')
-    this.load.image('chapter-41', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Galatic%20Crystal%20Cavern%20Chapter%20marker-HTsVFy9CSXYas98BckhvpCBkEV4AwP.png')
-    this.load.image('chapter-51', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Beast%20Mode%20splash%20page-hnSUzR7voB81jfSXp0WpSwdDWEm4LD.png')
+    // Chapter splash screens are now loaded on-demand to improve initial load time
     
     // Load Crystal Cavern chapter backgrounds (levels 1-10)
     this.load.image('crystal-cavern-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%201-o5M2rYkM5ffKmdp8pMw6QzmR87KA0k.png?4qbf')
@@ -428,77 +422,8 @@ export class GameScene extends Phaser.Scene {
     this.load.image('crystal-cavern-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%209-s5weyP0mb0UngvFh3FP3FS4s4OuVCo.png?QS83')
     this.load.image('crystal-cavern-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2010-HpLzzcMARGk4bAxftjkS7AcaLC3ljt.png?AETo')
     
-    // Load Volcanic Crystal Cavern chapter backgrounds (levels 11-20)
-    this.load.image('volcanic-crystal-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2011-GZe4EOiyQqMVmrL1suPvCfj2H7XRyU.png?h8lo')
-    this.load.image('volcanic-crystal-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2012-Xpfr4nKJX0JcfLlrjZxaw0UVKr3xRJ.png?VTjY')
-    this.load.image('volcanic-crystal-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2013-5VWrULlkLRSqGhIPYBKAGOlY7cvDJs.png?spcG')
-    this.load.image('volcanic-crystal-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2014-1gw8iVsW1NFUtTX9qkrCaOkzceXgZa.png?uJJ4')
-    this.load.image('volcanic-crystal-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2015-My6wxLCAKkrjp7DnRUhTTNzy4pGzNz.png?wogd')
-    this.load.image('volcanic-crystal-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2016-HvPApBdJnsvIKOHL12BVv7OOCRvtXl.png?JpAr')
-    this.load.image('volcanic-crystal-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2017-M4H2arE4cKPFCFnWvPKeO75XQhGeTr.png?aP8G')
-    this.load.image('volcanic-crystal-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2018-EaBUdUtkhdA9O7UPGhUzbCSufw5Id3.png?7XYw')
-    this.load.image('volcanic-crystal-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2019-ypt8lxgxyGduFRNsmei09BL2mKGIYH.png?ojyx')
-    this.load.image('volcanic-crystal-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2020-VoCdHbTIAHWaULUuJAu1kL8TiARBUM.png?CK3z')
-    
-    // Load Steampunk Crystal Cavern chapter backgrounds (levels 21-30)
-    this.load.image('steampunk-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2021-DPL9BM5HXEAbpVzWP2BTZAfO33f54v.png?1fKU')
-    this.load.image('steampunk-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2022-qDjjzq1C2FmwcHMYRZTzpaGej0yGwb.png?5CrH')
-    this.load.image('steampunk-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2023-lLNjfzk4mhhPURUbkfRTMNdLplNM22.png?uDB5')
-    this.load.image('steampunk-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2024-Krew0eCXapHP78qdwQrgTp7Pvy9IMQ.png?tp0E')
-    this.load.image('steampunk-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2025-bROe8HWWQGVwbIcF2TrA4E3jOprfVJ.png?Z70l')
-    this.load.image('steampunk-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2026-UTEcGMcuwl5X6QRJj3TEmJxuQMtAVB.png?YEJ9')
-    this.load.image('steampunk-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2027-QsWK3rAAwdnMlTzY0zQlIQlqYIeZoe.png?v371')
-    this.load.image('steampunk-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2028-qunz3jvjcvUy0scMr4b18HIWuEABkb.png?DG4r')
-    this.load.image('steampunk-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2029-metaGhO5uoqBktHCQnoqNmrXrancE4.png?XeH2')
-    this.load.image('steampunk-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2030-qYeBT9cn6x3uAG4WvPeSa3clML1HpD.png?As4y')
-    
-    // Load Electrified Crystal Cavern chapter backgrounds (levels 31-40)
-    this.load.image('electrified-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2031-O06tOHxb8b80yfdepBVLj3wJjNDMju.png?ILXr')
-    this.load.image('electrified-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2032-1YFN1MhcMfKXh149SshcFyW07KBHCG.png?PXOw')
-    this.load.image('electrified-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2033-ve4BB0Wu6RoMblkZbGmx2ST3IyfWHn.png?6pEl')
-    this.load.image('electrified-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2034-9DMyTcBY2QhKKTskDe6bzWXRZsgLlT.png?Hr6t')
-    this.load.image('electrified-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2035-qNc9FoZH60Awf13ISIvHpDNSNJifFq.png?Dagv')
-    this.load.image('electrified-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2036-365hGJnOHpzVyTOpa1618kVJMi6UlX.png?DkAI')
-    this.load.image('electrified-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2037-KOs54KffvnmZRGfkzDmk3GRvpjQ7mg.png?Edo8')
-    this.load.image('electrified-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2038-oU56rbW3kuE6MYNXgMgvasvWprLYu4.png?f0hH')
-    this.load.image('electrified-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2039-4xcZEcBBGlY6iMfY9CO5qh6CtjIbDe.png?otb6')
-    this.load.image('electrified-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2040-Dr5Q2cJ64opY0LX1D8wIyzMhKfcaEY.png?CbYG')
-    
-    // Load Galactic Crystal Cavern chapter backgrounds (levels 41-50)
-    this.load.image('galactic-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2041-ojno2HZouD4Dt2V1Z8lPT8g9TkR4ie.png?zuLt')
-    this.load.image('galactic-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2042-zErQ0r8sKPMfgFQwVz0s3ZiGFbdWHA.png?Dppy')
-    this.load.image('galactic-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2043-RNzRiZW56aIS7iwgav4eUdiwLVjXeD.png?twVY')
-    this.load.image('galactic-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2044-gn593N3qTHsJT0UPP8gegOuTUMo1y5.png?oLhA')
-    this.load.image('galactic-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2045-eZS62LEmA5ziCPOdP2Q4F03IIqppAj.png?GGbK')
-    this.load.image('galactic-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2046-FblgXgSZg6UsQw0SjYc2kIiHh0KH2P.png?CjZV')
-    this.load.image('galactic-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2047-MZmOHh8GVZiGayV8U0klva12TlXzFq.png?0Irb')
-    this.load.image('galactic-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2048-4AZugPAFLnrLSulJNqKCiApLZwTYu6.png?3oKl')
-    this.load.image('galactic-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2049-MqGMDTShcuUgAj5bNZJITaKkhOjNhR.png?iYFP')
-    this.load.image('galactic-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2050-ff9za6km5crBBMDI3SCAAMmFudZq8E.png?s174')
-    
-    // Load Bonus level backgrounds
-    this.load.image('bonus-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%201-sSavRhv3PSULBYqZTyGpCnPdMjhAq2.png?5PEU')
-    this.load.image('bonus-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%202-w0skJJAvJH9cYfQluphIJQwMFJpgK3.png?q77P')
-    this.load.image('bonus-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%203-kn73QdXKclD3LrMf3BXOH4B3ujbuxN.png?t9Nv')
-    this.load.image('bonus-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%204-opRR6rXctR8XkRkQIo5LfITdiyHhzq.png?Yubo')
-    this.load.image('bonus-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%205-FOtt55z5rVDYStfszLrUJRnnpovVMb.png?RCnr')
-    this.load.image('bonus-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%206-mAMzjvs6bdoK8SLuFaztJphnDOLA9U.png?j0bG')
-    this.load.image('bonus-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%207-9aPLVTEEDFoFgelvBQTC9ISErnYBCj.png?Ongz')
-    
-    // Load Beast Mode exclusive backgrounds
-    this.load.image('beast-mode-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%201-sRb0H9ErQnF9lBm5DuUzqtpwbZkRVS.png?3q8c')
-    this.load.image('beast-mode-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%202-LUcNgytry1u8MpUxWVGimvuMvTIVAT.png?vxmF')
-    this.load.image('beast-mode-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%203-goZNWmCpFDdm6dGhQdNO7CkgPLwqME.png?ExJw')
-    this.load.image('beast-mode-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%204-d2C0xeqQEzBvpaqO7diW0kqqPLOsk6.png?xmRP')
-    this.load.image('beast-mode-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%205-dCQCUxMIvQGPsWXKVh8hzq3dX8M7TA.png?M3Hi')
-    this.load.image('beast-mode-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%206-eOFodTEiDxDZUN3E4wIMGwzxUJ8QIK.png?1gGD')
-    this.load.image('beast-mode-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%207-TmIgs4UZyBWqt2718z94QbOAdLdlcS.png?iWFS')
-    this.load.image('beast-mode-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%208-vkOQZUrtkY7OX8U7lF5G9QCnRGKYq0.png?26ru')
-    this.load.image('beast-mode-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%209-3U9nvV48tv4NvvdFgqprbv3HcVgGg1.png?tx2Q')
-    this.load.image('beast-mode-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2010-9N8a5M5G9wI0OVoSMXBhlHPqaLg2d2.png?mPP6')
-    this.load.image('beast-mode-11', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2011-ujFZSIcr0VPwhT4smr13EPziNY4kEa.png?Rnqv')
-    this.load.image('beast-mode-12', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2012-hjyMpMwqW5hKpVPAsFGPaxuD5RaC7B.png?A52X')
-    this.load.image('beast-mode-13', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2013-iekgQPJN2LYhyLP6LETjP8hkD2IlnD.png?3eMk')
+    // Backgrounds for other chapters are now loaded on-demand through BackgroundManager
+    // This saves loading 54 unnecessary images at startup!
     
     // Keep original background as fallback
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
@@ -850,16 +775,57 @@ export class GameScene extends Phaser.Scene {
     this.initializeGameAfterSplash()
   }
   
+  private getChapterSplashUrl(level: number): string {
+    const splashUrls: { [key: number]: string } = {
+      1: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Crystal%20Cavern%20Chapter%20marker-xVVl4RJLl7pqY1teeQdZ9YR8qRbIbf.png',
+      11: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Volcanic%20Crystal%20Cavern%20Chapter%20marker-DrODhcdT2pkFF5SP0zLVzzpmHeZwBl.png',
+      21: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Steampunk%20Crystal%20Cavern%20Chapter%20marker-Oerxv49ruukEeuSe6Dz9Epj2apX18R.png',
+      31: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Electrified%20Crystal%20Cavern%20Chapter%20marker-GstidG6WUl0ZXoFwC2l5HOqWCrXgaA.png',
+      41: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Galatic%20Crystal%20Cavern%20Chapter%20marker-HTsVFy9CSXYas98BckhvpCBkEV4AwP.png',
+      51: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Beast%20Mode%20splash%20page-hnSUzR7voB81jfSXp0WpSwdDWEm4LD.png'
+    }
+    return splashUrls[level] || ''
+  }
+  
   private showChapterSplashScreen(level: number, onComplete: () => void): void {
     console.log(`🖼️ Creating splash screen for level ${level} at`, performance.now())
+    
+    const splashKey = `chapter-${level}`
+    
+    // Check if splash image is already loaded
+    if (!this.textures.exists(splashKey)) {
+      console.log(`📥 Loading chapter splash on-demand: ${splashKey}`)
+      const splashUrl = this.getChapterSplashUrl(level)
+      
+      if (!splashUrl) {
+        console.warn(`⚠️ No splash URL found for level ${level}`)
+        onComplete()
+        return
+      }
+      
+      // Load the splash image on-demand
+      this.load.image(splashKey, splashUrl)
+      this.load.once('complete', () => {
+        console.log(`✅ Splash loaded: ${splashKey}`)
+        this.displayChapterSplash(level, onComplete)
+      })
+      this.load.start()
+    } else {
+      // Splash already loaded, display immediately
+      this.displayChapterSplash(level, onComplete)
+    }
+  }
+  
+  private displayChapterSplash(level: number, onComplete: () => void): void {
+    const splashKey = `chapter-${level}`
     
     // Show the chapter splash image IMMEDIATELY at full opacity
     const splashImage = this.add.image(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2,
-      `chapter-${level}`
+      splashKey
     )
-    console.log(`📷 Splash image created: chapter-${level}`)
+    console.log(`📷 Splash image created: ${splashKey}`)
     
     // Scale to fill screen
     const scaleX = this.cameras.main.width / splashImage.width
@@ -1000,13 +966,21 @@ export class GameScene extends Phaser.Scene {
     this.accumulatedDiamonds = registry.get('accumulatedDiamonds') || 0
   }
 
-  private initializeGameAfterSplash(): void {
+  private async initializeGameAfterSplash(): Promise<void> {
     // Initialize background manager
     this.backgroundManager = new BackgroundManager(this)
     
     // Select background based on current level
     const currentLevel = this.levelManager?.getCurrentLevel() || 1
     const isInBonus = this.levelManager?.isBonusLevel() || false
+    
+    // Load current chapter's backgrounds if not already loaded
+    const currentChapter = this.backgroundManager.getChapterForLevel(currentLevel, isInBonus)
+    if (currentChapter !== 'crystal_cavern') {
+      // Crystal Cavern is already loaded in preload, others need on-demand loading
+      await this.backgroundManager.loadChapterBackgrounds(currentChapter)
+    }
+    
     this.currentBackground = this.backgroundManager.getBackgroundForLevel(currentLevel, isInBonus)
     
     // Add current background (first, so it appears behind everything)

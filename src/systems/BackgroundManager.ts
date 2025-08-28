@@ -16,14 +16,17 @@ export class BackgroundManager {
   private currentLevel: number = 1
   private beastModePool: string[] = []
   private lastBeastModeRotation: number = 0
+  private backgroundUrls: Map<string, string>
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.loadedTextures = new Set()
     this.textureCache = new Map()
     this.chapters = new Map()
+    this.backgroundUrls = new Map()
     
     this.initializeChapters()
+    this.initializeBackgroundUrls()
   }
 
   private initializeChapters(): void {
@@ -155,6 +158,80 @@ export class BackgroundManager {
     })
   }
 
+  private initializeBackgroundUrls(): void {
+    // Volcanic Crystal Cavern backgrounds
+    this.backgroundUrls.set('volcanic-crystal-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2011-GZe4EOiyQqMVmrL1suPvCfj2H7XRyU.png?h8lo')
+    this.backgroundUrls.set('volcanic-crystal-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2012-Xpfr4nKJX0JcfLlrjZxaw0UVKr3xRJ.png?VTjY')
+    this.backgroundUrls.set('volcanic-crystal-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2013-5VWrULlkLRSqGhIPYBKAGOlY7cvDJs.png?spcG')
+    this.backgroundUrls.set('volcanic-crystal-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2014-1gw8iVsW1NFUtTX9qkrCaOkzceXgZa.png?uJJ4')
+    this.backgroundUrls.set('volcanic-crystal-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2015-My6wxLCAKkrjp7DnRUhTTNzy4pGzNz.png?wogd')
+    this.backgroundUrls.set('volcanic-crystal-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2016-HvPApBdJnsvIKOHL12BVv7OOCRvtXl.png?JpAr')
+    this.backgroundUrls.set('volcanic-crystal-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2017-M4H2arE4cKPFCFnWvPKeO75XQhGeTr.png?aP8G')
+    this.backgroundUrls.set('volcanic-crystal-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2018-EaBUdUtkhdA9O7UPGhUzbCSufw5Id3.png?7XYw')
+    this.backgroundUrls.set('volcanic-crystal-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2019-ypt8lxgxyGduFRNsmei09BL2mKGIYH.png?ojyx')
+    this.backgroundUrls.set('volcanic-crystal-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2020-VoCdHbTIAHWaULUuJAu1kL8TiARBUM.png?CK3z')
+    
+    // Steampunk backgrounds
+    this.backgroundUrls.set('steampunk-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2021-DPL9BM5HXEAbpVzWP2BTZAfO33f54v.png?1fKU')
+    this.backgroundUrls.set('steampunk-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2022-qDjjzq1C2FmwcHMYRZTzpaGej0yGwb.png?5CrH')
+    this.backgroundUrls.set('steampunk-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2023-lLNjfzk4mhhPURUbkfRTMNdLplNM22.png?uDB5')
+    this.backgroundUrls.set('steampunk-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2024-Krew0eCXapHP78qdwQrgTp7Pvy9IMQ.png?tp0E')
+    this.backgroundUrls.set('steampunk-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2025-bROe8HWWQGVwbIcF2TrA4E3jOprfVJ.png?Z70l')
+    this.backgroundUrls.set('steampunk-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2026-UTEcGMcuwl5X6QRJj3TEmJxuQMtAVB.png?YEJ9')
+    this.backgroundUrls.set('steampunk-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2027-QsWK3rAAwdnMlTzY0zQlIQlqYIeZoe.png?v371')
+    this.backgroundUrls.set('steampunk-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2028-qunz3jvjcvUy0scMr4b18HIWuEABkb.png?DG4r')
+    this.backgroundUrls.set('steampunk-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2029-metaGhO5uoqBktHCQnoqNmrXrancE4.png?XeH2')
+    this.backgroundUrls.set('steampunk-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2030-qYeBT9cn6x3uAG4WvPeSa3clML1HpD.png?As4y')
+    
+    // Electrified backgrounds
+    this.backgroundUrls.set('electrified-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2031-O06tOHxb8b80yfdepBVLj3wJjNDMju.png?ILXr')
+    this.backgroundUrls.set('electrified-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2032-1YFN1MhcMfKXh149SshcFyW07KBHCG.png?PXOw')
+    this.backgroundUrls.set('electrified-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2033-ve4BB0Wu6RoMblkZbGmx2ST3IyfWHn.png?6pEl')
+    this.backgroundUrls.set('electrified-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2034-9DMyTcBY2QhKKTskDe6bzWXRZsgLlT.png?Hr6t')
+    this.backgroundUrls.set('electrified-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2035-qNc9FoZH60Awf13ISIvHpDNSNJifFq.png?Dagv')
+    this.backgroundUrls.set('electrified-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2036-365hGJnOHpzVyTOpa1618kVJMi6UlX.png?DkAI')
+    this.backgroundUrls.set('electrified-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2037-KOs54KffvnmZRGfkzDmk3GRvpjQ7mg.png?Edo8')
+    this.backgroundUrls.set('electrified-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2038-oU56rbW3kuE6MYNXgMgvasvWprLYu4.png?f0hH')
+    this.backgroundUrls.set('electrified-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2039-4xcZEcBBGlY6iMfY9CO5qh6CtjIbDe.png?otb6')
+    this.backgroundUrls.set('electrified-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2040-Dr5Q2cJ64opY0LX1D8wIyzMhKfcaEY.png?CbYG')
+    
+    // Galactic backgrounds
+    this.backgroundUrls.set('galactic-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2041-ojno2HZouD4Dt2V1Z8lPT8g9TkR4ie.png?zuLt')
+    this.backgroundUrls.set('galactic-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2042-zErQ0r8sKPMfgFQwVz0s3ZiGFbdWHA.png?Dppy')
+    this.backgroundUrls.set('galactic-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2043-RNzRiZW56aIS7iwgav4eUdiwLVjXeD.png?twVY')
+    this.backgroundUrls.set('galactic-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2044-gn593N3qTHsJT0UPP8gegOuTUMo1y5.png?oLhA')
+    this.backgroundUrls.set('galactic-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2045-eZS62LEmA5ziCPOdP2Q4F03IIqppAj.png?GGbK')
+    this.backgroundUrls.set('galactic-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2046-FblgXgSZg6UsQw0SjYc2kIiHh0KH2P.png?CjZV')
+    this.backgroundUrls.set('galactic-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2047-MZmOHh8GVZiGayV8U0klva12TlXzFq.png?0Irb')
+    this.backgroundUrls.set('galactic-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2048-4AZugPAFLnrLSulJNqKCiApLZwTYu6.png?3oKl')
+    this.backgroundUrls.set('galactic-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2049-MqGMDTShcuUgAj5bNZJITaKkhOjNhR.png?iYFP')
+    this.backgroundUrls.set('galactic-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/level%2050-ff9za6km5crBBMDI3SCAAMmFudZq8E.png?s174')
+    
+    // Bonus backgrounds
+    this.backgroundUrls.set('bonus-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%201-sSavRhv3PSULBYqZTyGpCnPdMjhAq2.png?5PEU')
+    this.backgroundUrls.set('bonus-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%202-w0skJJAvJH9cYfQluphIJQwMFJpgK3.png?q77P')
+    this.backgroundUrls.set('bonus-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%203-kn73QdXKclD3LrMf3BXOH4B3ujbuxN.png?t9Nv')
+    this.backgroundUrls.set('bonus-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%204-opRR6rXctR8XkRkQIo5LfITdiyHhzq.png?Yubo')
+    this.backgroundUrls.set('bonus-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%205-FOtt55z5rVDYStfszLrUJRnnpovVMb.png?RCnr')
+    this.backgroundUrls.set('bonus-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%206-mAMzjvs6bdoK8SLuFaztJphnDOLA9U.png?j0bG')
+    this.backgroundUrls.set('bonus-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bonus%207-9aPLVTEEDFoFgelvBQTC9ISErnYBCj.png?Ongz')
+    
+    // Beast Mode backgrounds
+    this.backgroundUrls.set('beast-mode-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%201-sRb0H9ErQnF9lBm5DuUzqtpwbZkRVS.png?3q8c')
+    this.backgroundUrls.set('beast-mode-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%202-LUcNgytry1u8MpUxWVGimvuMvTIVAT.png?vxmF')
+    this.backgroundUrls.set('beast-mode-3', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%203-goZNWmCpFDdm6dGhQdNO7CkgPLwqME.png?ExJw')
+    this.backgroundUrls.set('beast-mode-4', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%204-d2C0xeqQEzBvpaqO7diW0kqqPLOsk6.png?xmRP')
+    this.backgroundUrls.set('beast-mode-5', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%205-dCQCUxMIvQGPsWXKVh8hzq3dX8M7TA.png?M3Hi')
+    this.backgroundUrls.set('beast-mode-6', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%206-eOFodTEiDxDZUN3E4wIMGwzxUJ8QIK.png?1gGD')
+    this.backgroundUrls.set('beast-mode-7', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%207-TmIgs4UZyBWqt2718z94QbOAdLdlcS.png?iWFS')
+    this.backgroundUrls.set('beast-mode-8', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%208-vkOQZUrtkY7OX8U7lF5G9QCnRGKYq0.png?26ru')
+    this.backgroundUrls.set('beast-mode-9', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%209-3U9nvV48tv4NvvdFgqprbv3HcVgGg1.png?tx2Q')
+    this.backgroundUrls.set('beast-mode-10', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2010-9N8a5M5G9wI0OVoSMXBhlHPqaLg2d2.png?mPP6')
+    this.backgroundUrls.set('beast-mode-11', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2011-ujFZSIcr0VPwhT4smr13EPziNY4kEa.png?Rnqv')
+    this.backgroundUrls.set('beast-mode-12', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2012-hjyMpMwqW5hKpVPAsFGPaxuD5RaC7B.png?A52X')
+    this.backgroundUrls.set('beast-mode-13', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%2013-iekgQPJN2LYhyLP6LETjP8hkD2IlnD.png?3eMk')
+  }
+
   public getChapterForLevel(level: number, isBonus: boolean = false): string {
     // Check if this is a bonus level (passed as parameter from LevelManager)
     if (isBonus) return 'bonus'
@@ -250,23 +327,72 @@ export class BackgroundManager {
   }
 
   public async loadChapterBackgrounds(chapter: string): Promise<void> {
+    // Special handling for Beast Mode - load ALL backgrounds
+    if (chapter === 'beast_mode') {
+      console.log(`🦾 Loading ALL backgrounds for BEAST MODE`)
+      const allLoadPromises: Promise<void>[] = []
+      
+      // Load backgrounds from all chapters
+      for (const [chapterKey, chapterConfig] of this.chapters.entries()) {
+        for (const backgroundKey of chapterConfig.backgrounds) {
+          if (!this.loadedTextures.has(backgroundKey) && !this.scene.textures.exists(backgroundKey)) {
+            const url = this.backgroundUrls.get(backgroundKey)
+            if (url) {
+              const loadPromise = new Promise<void>((resolve) => {
+                this.scene.load.image(backgroundKey, url)
+                this.scene.load.once('complete', () => {
+                  this.loadedTextures.add(backgroundKey)
+                  resolve()
+                })
+              })
+              allLoadPromises.push(loadPromise)
+            }
+          }
+        }
+      }
+      
+      if (allLoadPromises.length > 0) {
+        this.scene.load.start()
+        await Promise.all(allLoadPromises)
+        console.log(`✅ Loaded ${allLoadPromises.length} backgrounds for Beast Mode`)
+      }
+      return
+    }
+    
+    // Normal chapter loading
     const chapterConfig = this.chapters.get(chapter)
     if (!chapterConfig) return
 
+    console.log(`📥 Loading backgrounds for chapter: ${chapter}`)
     const loadPromises: Promise<void>[] = []
     
     for (const backgroundKey of chapterConfig.backgrounds) {
       if (!this.loadedTextures.has(backgroundKey)) {
         // Check if texture already exists in scene
         if (!this.scene.textures.exists(backgroundKey)) {
-          // For now, textures are preloaded in GameScene
-          // This will be updated when we have dynamic loading
+          // Load the background on-demand
+          const url = this.backgroundUrls.get(backgroundKey)
+          if (url) {
+            const loadPromise = new Promise<void>((resolve) => {
+              this.scene.load.image(backgroundKey, url)
+              this.scene.load.once('complete', () => {
+                this.loadedTextures.add(backgroundKey)
+                console.log(`✅ Loaded background: ${backgroundKey}`)
+                resolve()
+              })
+            })
+            loadPromises.push(loadPromise)
+          }
+        } else {
           this.loadedTextures.add(backgroundKey)
         }
       }
     }
 
-    await Promise.all(loadPromises)
+    if (loadPromises.length > 0) {
+      this.scene.load.start()
+      await Promise.all(loadPromises)
+    }
   }
 
   public unloadChapterBackgrounds(chapter: string): void {
