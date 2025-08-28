@@ -816,7 +816,7 @@ export class GameScene extends Phaser.Scene {
       this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
     } else {
       // New game - initialize defaults
-      this.lives = 9
+      this.lives = 3
       this.score = 0
       this.accumulatedScore = 0
       this.totalCoinsCollected = 0

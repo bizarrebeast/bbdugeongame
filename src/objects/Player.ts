@@ -26,9 +26,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private jumpHoldTime: number = 0
   private isAirborne: boolean = false
   private jumpReleased: boolean = false
-  private readonly MIN_JUMP_VELOCITY: number = GameSettings.game.jumpVelocity * 0.75 // Start at 75% of max (-262.5 with default -350)
+  private readonly MIN_JUMP_VELOCITY: number = -120 // Small hop for quick taps - allows tiny bounces
   private readonly MAX_JUMP_VELOCITY: number = GameSettings.game.jumpVelocity // Full jump from GameSettings (-350)
-  private readonly MAX_JUMP_HOLD_TIME: number = 200 // milliseconds to reach max height - quick response for mobile
+  private readonly MAX_JUMP_HOLD_TIME: number = 300 // milliseconds to reach max height - balanced for both controls
   
   // Speed multiplier for power-ups (like invincibility)
   private speedMultiplier: number = 1.0
