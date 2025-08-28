@@ -152,11 +152,7 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     console.log('🔄 GameScene.preload() started at', performance.now())
     
-    // Set flag to show loading screen in create()
-    this.showLoadingScreen = true
-    
-    // Set purple background color
-    this.cameras.main.setBackgroundColor('#4d007e')
+    // Background color already set in init(), assets loading below
     
     // Initialize asset pool
     this.assetPool = new AssetPool(this)
@@ -632,6 +628,14 @@ export class GameScene extends Phaser.Scene {
   init(data?: any): void {
     // Store flag to reopen menu after scene is ready
     this.reopenMenuAfterInit = data?.reopenMenu || false
+    
+    // Set flag to show loading screen (moved from preload)
+    this.showLoadingScreen = true
+    
+    // Set dark purple background to match instructions background color
+    // This minimizes the visual jump during the brief preload phase
+    this.cameras.main.setBackgroundColor('#1a0033')
+    console.log('🎨 Init: Set dark purple background to match theme')
   }
 
   private reopenMenuAfterInit: boolean = false
@@ -652,10 +656,30 @@ export class GameScene extends Phaser.Scene {
       this.loadingOverlay.setDepth(10000)
       console.log('📦 Loading container created')
       
-      // Purple background
-      const loadingBg = this.add.rectangle(width / 2, height / 2, width, height, 0x4d007e, 1)
-      this.loadingOverlay.add(loadingBg)
-      console.log('🟪 Purple background added')
+      // Try to use instructions background if available
+      if (this.textures.exists('instructionsBg')) {
+        console.log('🎨 Using instructions background image')
+        const bgImage = this.add.image(width / 2, height / 2, 'instructionsBg')
+        
+        // Scale to cover entire screen
+        const scaleX = width / bgImage.width
+        const scaleY = height / bgImage.height
+        const scale = Math.max(scaleX, scaleY)
+        bgImage.setScale(scale)
+        
+        this.loadingOverlay.add(bgImage)
+        
+        // Add semi-transparent overlay to make text more readable
+        const darkOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.5)
+        this.loadingOverlay.add(darkOverlay)
+        console.log('🖼️ Instructions background added with overlay')
+      } else {
+        // Fallback to solid purple background
+        console.log('⚠️ Instructions background not found, using solid color')
+        const loadingBg = this.add.rectangle(width / 2, height / 2, width, height, 0x4d007e, 1)
+        this.loadingOverlay.add(loadingBg)
+        console.log('🟪 Purple background added')
+      }
       
       // "GOING BIZARRE" text with pink color and game font
       const loadingText = this.add.text(width / 2, height / 2 - 60, 'GOING BIZARRE', {
