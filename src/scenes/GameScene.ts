@@ -7615,9 +7615,9 @@ export class GameScene extends Phaser.Scene {
     // Play game over sound
     this.playSoundEffect('game-over', 0.5)
     
-    // Notify Farcade SDK of game over with final score
+    // Store final score for later SDK notification
     const finalScore = this.accumulatedScore + this.score
-    this.notifyFarcadeGameOver(finalScore)
+    // SDK game over will now be triggered when START OVER is clicked
     
     // Create semi-transparent overlay
     const overlay = this.add.rectangle(
@@ -7881,7 +7881,7 @@ export class GameScene extends Phaser.Scene {
     const restartText = this.add.text(
       popupX,
       popupY + 185,
-      'START OVER',
+      'CONTINUE',
       {
         fontSize: '14px',
         color: '#9acf07',  // Green color to match HUD level text
@@ -7899,8 +7899,11 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
     
-    // Start over handler - reset everything
+    // Start over handler - trigger SDK game over then reset
     restartButton.on('pointerdown', () => {
+      // Notify Farcade SDK of game over with final score
+      this.notifyFarcadeGameOver(finalScore)
+      
       // Reset to level 1 and reset lives/coins
       this.levelManager.resetToStart()
       this.game.registry.set('currentLevel', 1)  // Reset level in registry
@@ -7920,6 +7923,9 @@ export class GameScene extends Phaser.Scene {
     
     // Keyboard support
     this.input.keyboard!.on('keydown-R', () => {
+      // Notify Farcade SDK of game over with final score
+      this.notifyFarcadeGameOver(finalScore)
+      
       this.levelManager.resetToStart()
       this.game.registry.set('currentLevel', 1)  // Reset level in registry
       this.game.registry.set('playerLives', 3)
