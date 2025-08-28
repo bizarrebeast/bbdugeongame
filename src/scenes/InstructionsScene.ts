@@ -86,7 +86,6 @@ export class InstructionsScene extends Phaser.Scene {
   create(): void {
     // Check if this is a replay - if so, skip directly to GameScene
     if (this.game.registry.get('isReplay')) {
-      console.log('📖 InstructionsScene: Replay detected, skipping to GameScene')
       this.scene.start('GameScene')
       return
     }

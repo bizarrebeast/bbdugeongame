@@ -58,10 +58,8 @@ export function initializeFarcadeSDK(game: Phaser.Game): void {
 
   // Setup play_again handler
   window.FarcadeSDK.on("play_again", () => {
-    console.log('🔄 SDK play_again triggered - Continue after death')
     // Set flag to indicate this is a replay (skip splash and instructions)
     game.registry.set('isReplay', true)
-    console.log('🏁 isReplay flag set to:', game.registry.get('isReplay'))
     
     // Reset game state for new game
     game.registry.set('isDeathRetry', false)
@@ -84,20 +82,16 @@ export function initializeFarcadeSDK(game: Phaser.Game): void {
     
     // Get the current active scene
     const activeScenes = game.scene.getScenes(true)
-    console.log('🎬 Active scenes before stopping:', activeScenes.map(s => s.scene.key))
     if (activeScenes.length > 0) {
       // Stop all active scenes
       activeScenes.forEach(scene => {
-        console.log(`⏹️ Stopping scene: ${scene.scene.key}`)
         game.scene.stop(scene.scene.key)
       })
     }
     
     // Start directly at GameScene, skipping loading, splash and instructions
     // The GameScene will handle all necessary setup for replay
-    console.log('🚀 Starting GameScene directly for replay')
     game.scene.start('GameScene')
-    console.log('✅ GameScene started, isReplay should be:', game.registry.get('isReplay'))
 
     // Attempt to bring focus back to the game canvas
     try {
