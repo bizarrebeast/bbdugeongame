@@ -18,8 +18,19 @@ export class LoadingScene extends Phaser.Scene {
   }
 
   create() {
-    // Immediately transition to splash scene
+    console.log('⏳ LoadingScene started')
+    console.log('⏳ isReplay flag value:', this.game.registry.get('isReplay'))
+    
+    // Check if this is a replay - if so, go directly to GameScene
+    if (this.game.registry.get('isReplay')) {
+      console.log('🎮 LoadingScene: Replay detected, skipping to GameScene')
+      this.scene.start("GameScene")
+      return
+    }
+    
+    // Otherwise, proceed normally to splash scene
     // No loading bar needed because there's nothing to load!
+    console.log('⏳ LoadingScene: No replay flag, proceeding to SplashScene')
     this.scene.start("SplashScene")
   }
 }

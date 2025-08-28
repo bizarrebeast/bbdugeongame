@@ -629,8 +629,18 @@ export class GameScene extends Phaser.Scene {
     // Store flag to reopen menu after scene is ready
     this.reopenMenuAfterInit = data?.reopenMenu || false
     
-    // Set flag to show loading screen (moved from preload)
-    this.showLoadingScreen = true
+    // Check if this is a continue after death
+    const isDeathRetry = this.game.registry.get('isDeathRetry') || false
+    const playerLives = this.game.registry.get('playerLives') || 0
+    
+    // Set flag to show loading screen ONLY if this is NOT a replay or death retry
+    // On replay/continue, we skip the loading screen since assets are already loaded
+    const isReplay = this.game.registry.get('isReplay') || false
+    const skipLoadingScreen = isReplay || (isDeathRetry && playerLives > 0)
+    this.showLoadingScreen = !skipLoadingScreen
+    
+    console.log('🎮 GameScene init - isReplay:', isReplay, 'isDeathRetry:', isDeathRetry)
+    console.log('🎮 GameScene init - playerLives:', playerLives, 'showLoadingScreen:', this.showLoadingScreen)
     
     // Set dark purple background to match instructions background color
     // This minimizes the visual jump during the brief preload phase
@@ -779,12 +789,14 @@ export class GameScene extends Phaser.Scene {
   
   private checkForChapterSplash(): void {
     console.log('🔍 Checking for chapter splash...')
+    console.log('🎮 GameScene checkForChapterSplash - isReplay flag:', this.game.registry.get('isReplay'))
     
     // Reset the replay flag after using it
     // This ensures that if player manually restarts (not through SDK), they see splash screen again
     if (this.game.registry.get('isReplay')) {
-      console.log('📌 Replay flag detected, resetting')
+      console.log('📌 Replay flag detected in checkForChapterSplash, resetting now')
       this.game.registry.set('isReplay', false)
+      console.log('📌 isReplay flag reset to:', this.game.registry.get('isReplay'))
     }
     
     // Check for chapter splash FIRST before anything else
@@ -7592,6 +7604,10 @@ export class GameScene extends Phaser.Scene {
       // Play continue button sound
       this.playSoundEffect('continue-button', 0.5)
       
+      // Set flag to indicate this is a death retry, not a fresh start
+      this.game.registry.set('isDeathRetry', true)
+      console.log('💀 Death continue clicked - setting isDeathRetry flag')
+      
       this.scene.restart() // This will keep current level and not reset lives/coins
     })
     
@@ -8168,11 +8184,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private notifyFarcadeGameOver(score: number): void {
+    console.log('☠️ notifyFarcadeGameOver called with score:', score)
     try {
       if (typeof window !== 'undefined' && (window as any).FarcadeSDK) {
+        console.log('☠️ Sending gameOver to SDK')
         (window as any).FarcadeSDK.singlePlayer.actions.gameOver({ score })
+        console.log('☠️ gameOver sent to SDK - waiting for play_again')
       }
     } catch (error) {
+      console.log('☠️ FarcadeSDK not available')
       // Fail silently if SDK not available
     }
   }

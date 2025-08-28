@@ -27,6 +27,13 @@ export class SplashScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Check if this is a replay - if so, skip directly to GameScene
+    if (this.game.registry.get('isReplay')) {
+      console.log('🎮 SplashScene: Replay detected, skipping to GameScene')
+      this.scene.start('GameScene')
+      return
+    }
+    
     console.log('🎮 SplashScene: Creating splash screen')
     
     // Set up audio unlock on first user interaction (critical for mobile)
