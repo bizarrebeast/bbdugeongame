@@ -21,6 +21,7 @@ import { AssetPool, AssetConfig } from "../systems/AssetPool"
 import { GemShapeGenerator, GemStyle, GemCut } from "../utils/GemShapes"
 import { MenuOverlay } from "../ui/MenuOverlay"
 import { BackgroundManager } from "../systems/BackgroundManager"
+import { SharedAssetManager } from "../systems/SharedAssetManager"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -150,11 +151,79 @@ export class GameScene extends Phaser.Scene {
 
   private loadingOverlay: Phaser.GameObjects.Container | null = null
   private showLoadingScreen: boolean = false
+  private preloadChapterText?: Phaser.GameObjects.Text
+  private preloadLoadingText?: Phaser.GameObjects.Text
+  private instantLoadingScreen?: Phaser.GameObjects.Image
+
+  // WARNING: DUPLICATE init() METHOD - DO NOT DELETE WITHOUT CHECKING WITH DYLAN FIRST
+  // There are two init() methods in this file (line ~158 and line ~621)
+  // This duplication may be intentional for specific loading/initialization behavior
+  init(data?: any): void {
+    // Store flag to reopen menu after scene is ready
+    this.reopenMenuAfterInit = data?.reopenMenu || false
+    
+    // Check if this is a continue after death
+    const isDeathRetry = this.game.registry.get('isDeathRetry') || false
+    const playerLives = this.game.registry.get('playerLives') || 0
+    
+    // Set flag to show loading screen ONLY if this is NOT a replay or death retry
+    const isReplay = this.game.registry.get('isReplay') || false
+    const skipLoadingScreen = isReplay || (isDeathRetry && playerLives > 0)
+    this.showLoadingScreen = !skipLoadingScreen
+    
+    // Initialize managers that need scene references
+    this.levelManager = new LevelManager()
+    this.backgroundManager = new BackgroundManager(this)
+    
+    // Set purple background immediately (matching theme)
+    this.cameras.main.setBackgroundColor(0x2e2348)
+    
+    // Check if we have a pre-generated loading screen
+    const currentLevel = this.registry.get('currentLevel') || 1
+    const loadingScreenKey = `loading-screen-${currentLevel >= 51 ? 51 : currentLevel >= 41 ? 41 : currentLevel >= 31 ? 31 : currentLevel >= 21 ? 21 : currentLevel >= 11 ? 11 : 1}`
+    
+    if (this.textures.exists(loadingScreenKey)) {
+      // Use pre-generated loading screen for INSTANT display
+      console.log(`⚡ Using pre-generated loading screen: ${loadingScreenKey}`)
+      this.instantLoadingScreen = this.add.image(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY,
+        loadingScreenKey
+      )
+      this.instantLoadingScreen.setOrigin(0.5)
+      this.instantLoadingScreen.setDepth(100000)
+    } else {
+      // Fallback to creating text (slower but still works)
+      console.log('⚠️ No pre-generated loading screen, creating text')
+      const centerX = GameSettings.canvas.width / 2
+      const centerY = GameSettings.canvas.height / 2
+      
+      // Single "LOADING..." text centered
+      const loading = this.add.text(centerX, centerY, 'LOADING...', {
+        fontSize: '24px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#FFFFFF',
+        fontStyle: 'bold'
+      })
+      loading.setOrigin(0.5)
+      loading.setDepth(10000)
+      
+      this.preloadLoadingText = loading
+    }
+    
+    console.log('🎮 GameScene.init() - Loading screen displayed')
+  }
 
   preload(): void {
     console.log('🔄 GameScene.preload() started at', performance.now())
     
-    // Background color already set in init(), assets loading below
+    // Check how many assets were preloaded
+    const preloadedCount = SharedAssetManager.getPreloadedCount()
+    if (preloadedCount > 0) {
+      console.log(`✨ Found ${preloadedCount} preloaded assets from InstructionsScene`)
+    }
+    
+    // Loading screen already shown in init(), just load assets now
     
     // Initialize asset pool
     this.assetPool = new AssetPool(this)
@@ -552,6 +621,9 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
+  // WARNING: DUPLICATE init() METHOD #2 - DO NOT DELETE WITHOUT CHECKING WITH DYLAN FIRST
+  // This is the second init() method (first one is around line ~158)
+  // This duplication may be intentional for specific loading/initialization behavior
   init(data?: any): void {
     // Store flag to reopen menu after scene is ready
     this.reopenMenuAfterInit = data?.reopenMenu || false
@@ -789,8 +861,28 @@ export class GameScene extends Phaser.Scene {
     return splashUrls[level] || ''
   }
   
+  // Method no longer needed - moved to init()
+  // Keeping empty method to avoid breaking any existing calls
+  private showPreloadChapterScreen(): void {
+    // Loading screen is now shown in init() before preload
+  }
+
   private showChapterSplashScreen(level: number, onComplete: () => void): void {
     console.log(`🖼️ Creating splash screen for level ${level} at`, performance.now())
+    
+    // Clean up any loading screen elements
+    if (this.instantLoadingScreen) {
+      this.instantLoadingScreen.destroy()
+      this.instantLoadingScreen = undefined
+    }
+    if (this.preloadChapterText) {
+      this.preloadChapterText.destroy()
+      this.preloadChapterText = undefined
+    }
+    if (this.preloadLoadingText) {
+      this.preloadLoadingText.destroy()
+      this.preloadLoadingText = undefined
+    }
     
     const splashKey = `chapter-${level}`
     
@@ -6457,23 +6549,27 @@ export class GameScene extends Phaser.Scene {
     
     if (this.textures.exists('tealLadder')) {
       // Use new teal ladder sprite with same scaling method as gameplay ladders
-      const totalHeight = ladderHeight + tileSize * 1.0 // Include extension height like gameplay ladders
-      entranceLadder = this.add.image(ladderX + 1, ladderCenterY, 'tealLadder')  // Moved 1 pixel to the right
-      const scaledWidth = entranceLadder.width * (totalHeight / entranceLadder.height)
-      entranceLadder.setDisplaySize(scaledWidth - 4, totalHeight)  // 4 pixels smaller in width
+      const visualHeight = ladderHeight // Use the actual height for intro
+      const visualCenterY = ladderCenterY + 1 // Match the 1px downward shift from gameplay ladders
+      entranceLadder = this.add.image(ladderX + 1, visualCenterY, 'tealLadder')  // Moved 1 pixel to the right
+      // Scale to match gameplay ladder proportions
+      entranceLadder.setDisplaySize(entranceLadder.width * (visualHeight / entranceLadder.height), visualHeight)
       entranceLadder.setDepth(5)
     } else {
       // Fallback to graphics ladder
       entranceLadder = this.add.graphics()
+      // Match visual positioning from gameplay ladders
+      const visualTop = ladderTop + 1 // Match 1px downward shift
+      const visualBottom = ladderBottom + 1
       entranceLadder.fillStyle(0x40e0d0, 1) // Teal color to match game theme
-      entranceLadder.fillRect(ladderX - 2, ladderTop, 4, ladderHeight) // Center rail
-      entranceLadder.fillRect(ladderX - 13, ladderTop, 26, 4) // Top rung
-      entranceLadder.fillRect(ladderX - 13, ladderBottom - 4, 26, 4) // Bottom rung
+      entranceLadder.fillRect(ladderX - 2, visualTop, 4, ladderHeight) // Center rail
+      entranceLadder.fillRect(ladderX - 13, visualTop, 26, 4) // Top rung
+      entranceLadder.fillRect(ladderX - 13, visualBottom - 4, 26, 4) // Bottom rung
       
       // Middle rungs
       const numRungs = Math.floor(ladderHeight / 32)
       for (let i = 1; i < numRungs; i++) {
-        const rungY = ladderTop + (i * (ladderHeight / (numRungs + 1)))
+        const rungY = visualTop + (i * (ladderHeight / (numRungs + 1)))
         entranceLadder.fillRect(ladderX - 13, rungY, 26, 3)
       }
       

@@ -282,6 +282,41 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Guard against update being called before physics body is ready
     if (!this.body) return
     
+    // FLOOR CLIPPING PREVENTION - Multiple layers of protection
+    // Layer 1: Clamp maximum fall speed to prevent tunneling through platforms
+    const MAX_FALL_SPEED = 600 // Safe speed that won't tunnel through 32px platforms at 60fps
+    if (this.body.velocity.y > MAX_FALL_SPEED) {
+      this.setVelocityY(MAX_FALL_SPEED)
+    }
+    
+    // Layer 2: Absolute ground floor enforcement - never allow player below bottom platform
+    // Ground floor is at canvas height minus one tile (where the platform surface is)
+    // EXCEPT during level intro animation (GameScene handles positioning during intro)
+    const gameScene = this.scene as any
+    const isLevelStarting = gameScene.isLevelStarting || false
+    
+    const groundFloorY = GameSettings.canvas.height - GameSettings.game.tileSize - 10
+    if (this.y > groundFloorY && !this.isClimbing && !isLevelStarting) {
+      // Player somehow got below ground floor - snap them back up
+      this.y = groundFloorY
+      this.setVelocityY(0)
+      // Force grounded state
+      if (this.body instanceof Phaser.Physics.Arcade.Body) {
+        this.body.blocked.down = true
+      }
+    }
+    
+    // Layer 3: Predictive collision check for next frame
+    if (this.body.velocity.y > 0 && !this.isClimbing && !isLevelStarting) { // Only when falling and not during intro
+      const nextFrameY = this.y + (this.body.velocity.y * delta / 1000)
+      if (nextFrameY > groundFloorY) {
+        // Next frame would put us below ground - prevent it
+        const distanceToGround = groundFloorY - this.y
+        const safeVelocity = (distanceToGround * 1000) / delta
+        this.setVelocityY(Math.max(0, safeVelocity))
+      }
+    }
+    
     const onGround = this.body.blocked.down
     const spaceKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     
@@ -355,7 +390,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         tryingToClimb = true
       }
       
-      if (jumpJustPressed && onGround && !this.isAirborne && !tryingToClimb && !this.isClimbing) {
+      // ANTI-SPAM PROTECTION: Prevent jump if velocity is still very negative from previous jump
+      // This prevents velocity stacking from rapid jump spam
+      const canJump = !this.body.velocity.y || this.body.velocity.y > -100
+      
+      if (jumpJustPressed && onGround && !this.isAirborne && !tryingToClimb && !this.isClimbing && canJump) {
         // Start jump with initial velocity
         this.jumpButtonDown = true
         this.jumpHoldTime = 0
