@@ -3570,7 +3570,8 @@ export class GameScene extends Phaser.Scene {
       const floorUsedPositions: Array<{x: number, type: string}> = []
       
       // Regular coins: distribute throughout floors (2-4 per floor)
-      if (allowedCollectibles.includes('coin')) {
+      // Skip floor 0 to avoid collectibles in intro animation area
+      if (allowedCollectibles.includes('coin') && floor > 0) {
         const numCoins = Math.floor(Math.random() * 3) + 2 // 2-4 coins per floor
         this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
       }
@@ -6412,7 +6413,8 @@ export class GameScene extends Phaser.Scene {
         const floorUsedPositions: number[] = []
         
         // Regular coins: 2-4 per floor
-        if (allowedCollectibles.includes('coin')) {
+        // Skip floor 0 to avoid collectibles in intro animation area
+        if (allowedCollectibles.includes('coin') && floor > 0) {
           const numCoins = Math.floor(Math.random() * 3) + 2
           this.placeCollectiblesOfType(validPositions, numCoins, 'coin', collectibleY, floor, floorUsedPositions)
         }
