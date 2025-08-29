@@ -1,4 +1,6 @@
 import GameSettings from "../config/GameSettings"
+import { SharedAssetManager } from "../systems/SharedAssetManager"
+import { LoadingScreenGenerator } from "../systems/LoadingScreenGenerator"
 
 interface InstructionItem {
   sprite: string
@@ -97,6 +99,12 @@ export class InstructionsScene extends Phaser.Scene {
     this.createSkipButton()
     this.createScrollIndicator()
     this.setupScrolling()
+    
+    // Pre-generate loading screens for instant display
+    this.generateLoadingScreens()
+    
+    // Start preloading GameScene assets in the background
+    this.startBackgroundPreload()
   }
 
   private setupBackground(): void {
@@ -515,8 +523,12 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   private transitionToGame(): void {
-    // Quick fade out
-    this.cameras.main.fadeOut(300, 0, 0, 0)
+    // Show instant loading screen BEFORE transitioning
+    const currentLevel = this.registry.get('currentLevel') || 1
+    const loadingScreen = LoadingScreenGenerator.showInstantLoadingScreen(this, currentLevel)
+    
+    // Very quick fade to hide the transition
+    this.cameras.main.fadeOut(100, 0, 0, 0)
     
     this.cameras.main.once('camerafadeoutcomplete', () => {
       if (this.fromMenu && this.reopenMenu) {
@@ -536,6 +548,79 @@ export class InstructionsScene extends Phaser.Scene {
         this.scene.start('GameScene')
       }
     })
+  }
+
+  private generateLoadingScreens(): void {
+    console.log('🎨 Pre-generating loading screens for instant display')
+    
+    // Generate loading screen for current chapter
+    const currentLevel = this.registry.get('currentLevel') || 1
+    LoadingScreenGenerator.generateLoadingScreen(this, currentLevel)
+    
+    // Also generate for next chapter if close to transition
+    if (currentLevel % 10 >= 8) {
+      LoadingScreenGenerator.generateLoadingScreen(this, currentLevel + 10)
+    }
+  }
+
+  private startBackgroundPreload(): void {
+    console.log('🔄 Starting background preload of GameScene assets')
+    
+    // Get critical assets to preload
+    const criticalAssets = SharedAssetManager.getCriticalAssets()
+    const secondaryAssets = SharedAssetManager.getSecondaryAssets()
+    
+    // Combine all assets
+    const allAssets = [...criticalAssets, ...secondaryAssets]
+    
+    let assetsToLoad = 0
+    
+    // Queue assets for loading (skip if already exists)
+    allAssets.forEach(asset => {
+      // Check if texture/audio already exists
+      if (asset.type === 'image' && !this.textures.exists(asset.key)) {
+        this.load.image(asset.key, asset.url)
+        SharedAssetManager.markAsLoading(asset.key)
+        assetsToLoad++
+      } else if (asset.type === 'audio' && !this.cache.audio.exists(asset.key)) {
+        this.load.audio(asset.key, asset.url)
+        SharedAssetManager.markAsLoading(asset.key)
+        assetsToLoad++
+      }
+    })
+    
+    if (assetsToLoad === 0) {
+      console.log('✅ All assets already loaded')
+      return
+    }
+    
+    console.log(`📦 Queued ${assetsToLoad} assets for background loading`)
+    
+    // Set up load progress tracking
+    this.load.on('progress', (value: number) => {
+      const percentage = Math.round(value * 100)
+      console.log(`⏳ Background preload progress: ${percentage}%`)
+    })
+    
+    // Track individual file completions
+    this.load.on('filecomplete', (key: string) => {
+      SharedAssetManager.markAsPreloaded(key)
+    })
+    
+    // Handle load completion
+    this.load.on('complete', () => {
+      const count = SharedAssetManager.getPreloadedCount()
+      console.log(`✅ Background preload complete! ${count} assets ready for GameScene`)
+    })
+    
+    // Handle load errors gracefully
+    this.load.on('loaderror', (file: any) => {
+      console.warn(`⚠️ Failed to preload: ${file.key} - will retry in GameScene`)
+      // Don't mark as preloaded so GameScene will try again
+    })
+    
+    // Start loading the queued assets
+    this.load.start()
   }
 
   update(): void {

@@ -8057,17 +8057,15 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
     
-    // Start over handler - trigger SDK game over then reset
+    // Start over handler - trigger SDK game over then let Farcade handle restart
     restartButton.on('pointerdown', () => {
       // Notify Farcade SDK of game over with final score
       this.notifyFarcadeGameOver(finalScore)
       
-      // Reset to level 1 and reset lives/coins
-      this.levelManager.resetToStart()
-      this.game.registry.set('currentLevel', 1)  // Reset level in registry
-      this.game.registry.set('playerLives', 3)
-      this.game.registry.set('totalCoins', 0)
-      this.scene.restart()
+      // DO NOT restart the scene here - let Farcade handle it
+      // When player clicks "Play Again" in Farcade overlay,
+      // the SDK will trigger the play_again event which restarts properly
+      // This prevents the game from running behind Farcade's overlay
     })
     
     // Hover effects
@@ -8084,11 +8082,8 @@ export class GameScene extends Phaser.Scene {
       // Notify Farcade SDK of game over with final score
       this.notifyFarcadeGameOver(finalScore)
       
-      this.levelManager.resetToStart()
-      this.game.registry.set('currentLevel', 1)  // Reset level in registry
-      this.game.registry.set('playerLives', 3)
-      this.game.registry.set('totalCoins', 0)
-      this.scene.restart()
+      // DO NOT restart the scene here - let Farcade handle it
+      // Same as the button click - prevents game from running behind overlay
     })
   }
 

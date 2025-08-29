@@ -68,38 +68,39 @@ export class MenuOverlay {
     // Divider line
     const divider1 = this.createDivider(-100)
     
-    // Sound effects toggle (with line break)
-    this.soundToggle = this.createToggleSwitch(
-      'Sound\nEffects',
-      -60,
-      this.soundEffectsEnabled,
-      (enabled) => this.setSoundEffects(enabled)
-    )
+    // TEMPORARILY DISABLED - Sound and music toggles
+    // this.soundToggle = this.createToggleSwitch(
+    //   'Sound\nEffects',
+    //   -60,
+    //   this.soundEffectsEnabled,
+    //   (enabled) => this.setSoundEffects(enabled)
+    // )
     
-    // Music toggle
-    this.musicToggle = this.createToggleSwitch(
-      'Music',
-      -10,
-      this.musicEnabled,
-      (enabled) => this.setMusic(enabled)
-    )
+    // // Music toggle
+    // this.musicToggle = this.createToggleSwitch(
+    //   'Music',
+    //   -10,
+    //   this.musicEnabled,
+    //   (enabled) => this.setMusic(enabled)
+    // )
     
-    // Divider line
-    const divider2 = this.createDivider(30)
+    // Divider line (moved up from 30 to -30 to close the gap)
+    const divider2 = this.createDivider(-30)
     
-    // BizarreBeasts info instead of SDK indicator
-    const bizarreInfo = this.createBizarreInfo(60)
+    // BizarreBeasts info (moved up from 60 to 0)
+    const bizarreInfo = this.createBizarreInfo(0)
     
-    // Divider line
-    const divider3 = this.createDivider(170)
+    // Divider line (moved up from 170 to 110)
+    const divider3 = this.createDivider(110)
     
-    // Resume button
+    // Resume button (moved up from 210 to 150)
     const resumeBtn = this.createButton(
-      0, 210,
+      0, 150,
       'RESUME GAME',
       () => this.close(),
       0x32CD32 // Keep green for resume
     )
+    resumeBtn.setName('resumeButton')
     
     // Add all elements to container
     // IMPORTANT: Add background FIRST so it's behind everything
@@ -110,8 +111,8 @@ export class MenuOverlay {
       title,                   // Then all UI elements on top
       instructionsBtn,
       divider1,
-      this.soundToggle,
-      this.musicToggle,
+      // this.soundToggle,  // DISABLED
+      // this.musicToggle,  // DISABLED
       divider2,
       bizarreInfo,
       divider3,
@@ -127,6 +128,7 @@ export class MenuOverlay {
     // Initially hidden
     this.container.setVisible(false)
   }
+  
   
   private createMenuPanel(): Phaser.GameObjects.Graphics {
     const panel = this.scene.add.graphics()
@@ -187,13 +189,14 @@ export class MenuOverlay {
       this.scene.input.setTopOnly(false)  // Allow all objects to receive input
     }
     
-    bgRect.on('pointerover', () => {
-      bgRect.setFillStyle(0x20B2AA, 0.9)
-    })
+    // HOVER EFFECTS DISABLED - Due to offset issues with camera scroll
+    // bgRect.on('pointerover', () => {
+    //   bgRect.setFillStyle(0x20B2AA, 0.9)
+    // })
     
-    bgRect.on('pointerout', () => {
-      bgRect.setFillStyle(color, 0.8)
-    })
+    // bgRect.on('pointerout', () => {
+    //   bgRect.setFillStyle(color, 0.8)
+    // })
     
     bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       onClick()
@@ -466,6 +469,8 @@ export class MenuOverlay {
     this.isOpen = true
     this.container.setVisible(true)
     
+    // Debug visualization removed - buttons are working
+    
     // Update SDK indicator
     const indicators = this.container.list.filter(obj => 
       obj instanceof Phaser.GameObjects.Container && obj.getData('updateStatus')
@@ -528,9 +533,10 @@ export class MenuOverlay {
     const containerX = this.container.x
     const containerY = this.container.y
     
-    // Check resume button manually
+    // Check resume button manually - button is at Y=150 relative to container
+    // Container is at Y=400, so button is at world Y=550
     const resumeBtnX = containerX + 0
-    const resumeBtnY = containerY + 210
+    const resumeBtnY = containerY + 150  // Back to correct position
     if (Math.abs(pointer.x - resumeBtnX) < 170 && Math.abs(pointer.y - resumeBtnY) < 25) {
       this.close()
     }
@@ -542,19 +548,167 @@ export class MenuOverlay {
       this.openInstructionsScene()
     }
     
-    // Check sound toggle manually
+    // Check sound toggle manually (re-enabled)
     const soundToggleX = containerX + 80
     const soundToggleY = containerY + (-60)
     if (Math.abs(pointer.x - soundToggleX) < 30 && Math.abs(pointer.y - soundToggleY) < 15) {
       this.setSoundEffects(!this.soundEffectsEnabled)
     }
     
-    // Check music toggle manually
+    // Check music toggle manually (re-enabled)
     const musicToggleX = containerX + 80
     const musicToggleY = containerY + (-10)
     if (Math.abs(pointer.x - musicToggleX) < 30 && Math.abs(pointer.y - musicToggleY) < 15) {
       this.setMusic(!this.musicEnabled)
     }
+  }
+  
+  private addDebugVisualization(): void {
+    // Remove any existing debug container
+    const existingDebug = this.container.getByName('debugContainer')
+    if (existingDebug) {
+      existingDebug.destroy()
+    }
+    
+    // Create debug container
+    const debugContainer = this.scene.add.container(0, 0)
+    debugContainer.setName('debugContainer')
+    
+    // Add semi-transparent boxes to show expected hover zones
+    const graphics = this.scene.add.graphics()
+    
+    // Find the actual resume button to show its REAL position
+    const resumeButton = this.container.getByName('resumeButton') as Phaser.GameObjects.Container
+    if (resumeButton) {
+      // Show the actual button position with a thick purple box
+      graphics.lineStyle(4, 0xff00ff, 1)
+      graphics.strokeRect(resumeButton.x - 170, resumeButton.y - 25, 340, 50)
+      
+      const actualPosLabel = this.scene.add.text(resumeButton.x, resumeButton.y - 40, 
+        `ACTUAL Button Pos: (${resumeButton.x}, ${resumeButton.y})`, {
+        fontSize: '12px',
+        fontFamily: 'Arial',
+        color: '#ff00ff',
+        backgroundColor: '#000000',
+        padding: { x: 2, y: 2 }
+      })
+      actualPosLabel.setOrigin(0.5)
+      debugContainer.add(actualPosLabel)
+    }
+    
+    // Resume button expected hover zone (where it SHOULD be based on creation)
+    graphics.lineStyle(2, 0x00ff00, 0.5)
+    graphics.strokeRect(-170, 150 - 25, 340, 50)
+    
+    // Instructions button expected hover zone
+    graphics.lineStyle(2, 0x0000ff, 0.5)
+    graphics.strokeRect(-170, -140 - 25, 340, 50)
+    
+    // Add text labels
+    const resumeLabel = this.scene.add.text(0, 150 - 40, 'Created at Y=150', {
+      fontSize: '10px',
+      fontFamily: 'Arial',
+      color: '#00ff00'
+    })
+    resumeLabel.setOrigin(0.5)
+    
+    const instrLabel = this.scene.add.text(0, -140 - 40, 'Instructions Zone', {
+      fontSize: '10px',
+      fontFamily: 'Arial',
+      color: '#0000ff'
+    })
+    instrLabel.setOrigin(0.5)
+    
+    // Add cursor tracking text
+    const cursorText = this.scene.add.text(-210, -380, '', {
+      fontSize: '10px',
+      fontFamily: 'monospace',
+      color: '#ffff00',
+      backgroundColor: '#000000',
+      padding: { x: 5, y: 5 }
+    })
+    cursorText.setName('cursorText')
+    
+    // Add actual manual hit test zone visualization
+    const actualZoneGraphics = this.scene.add.graphics()
+    actualZoneGraphics.lineStyle(2, 0xff0000, 0.8)
+    // This shows where manualHitTest currently checks for Resume button
+    const containerX = this.container.x
+    const containerY = this.container.y
+    const resumeBtnX = 0  // Relative to container
+    const resumeBtnY = 150  // Correct position where button actually is
+    actualZoneGraphics.strokeRect(resumeBtnX - 170, resumeBtnY - 25, 340, 50)
+    
+    const actualLabel = this.scene.add.text(0, 150 + 40, 'Manual Hit Test Y=150 (Fixed)', {
+      fontSize: '10px',
+      fontFamily: 'Arial',
+      color: '#ff0000'
+    })
+    actualLabel.setOrigin(0.5)
+    
+    // Add all to debug container
+    debugContainer.add([graphics, actualZoneGraphics, resumeLabel, instrLabel, actualLabel, cursorText])
+    this.container.add(debugContainer)
+  }
+  
+  private updateCursorTracking(pointer: Phaser.Input.Pointer): void {
+    const debugContainer = this.container.getByName('debugContainer') as Phaser.GameObjects.Container
+    if (!debugContainer) return
+    
+    const cursorText = debugContainer.getByName('cursorText') as Phaser.GameObjects.Text
+    if (!cursorText) return
+    
+    const camera = this.scene.cameras.main
+    const containerX = this.container.x
+    const containerY = this.container.y
+    const relativeX = pointer.x - containerX
+    const relativeY = pointer.y - containerY
+    
+    // Check if cursor is in resume button zone according to manual hit test
+    const resumeBtnX = containerX + 0
+    const resumeBtnY = containerY + 150  // Back to correct position
+    const inManualResumeZone = Math.abs(pointer.x - resumeBtnX) < 170 && Math.abs(pointer.y - resumeBtnY) < 25
+    
+    // Find the actual resume button and its interactive rectangle
+    const resumeButton = this.container.getByName('resumeButton') as Phaser.GameObjects.Container
+    let buttonInfo = 'Button not found'
+    let rectInfo = 'Rect not found'
+    
+    if (resumeButton) {
+      const btnX = resumeButton.x
+      const btnY = resumeButton.y
+      buttonInfo = `Button container: (${btnX}, ${btnY})`
+      
+      // Find the rectangle inside the button container
+      const rect = resumeButton.list[0] as Phaser.GameObjects.Rectangle
+      if (rect) {
+        const rectWorldX = containerX + btnX + rect.x
+        const rectWorldY = containerY + btnY + rect.y
+        rectInfo = `Rect world: (${Math.round(rectWorldX)}, ${Math.round(rectWorldY)})`
+        
+        // Check if we're actually hovering over this rectangle
+        const inRectBounds = pointer.x >= rectWorldX - 170 && 
+                           pointer.x <= rectWorldX + 170 &&
+                           pointer.y >= rectWorldY - 25 &&
+                           pointer.y <= rectWorldY + 25
+        rectInfo += inRectBounds ? ' HOVERING!' : ''
+      }
+    }
+    
+    // The real issue: camera scroll position affects visual rendering but not input
+    const cameraY = camera.scrollY
+    const visualButtonY = containerY + 150 - cameraY  // Where button appears visually
+    
+    cursorText.setText([
+      `Cursor: (${Math.round(pointer.x)}, ${Math.round(pointer.y)})`,
+      `Container: (${Math.round(containerX)}, ${Math.round(containerY)})`,
+      `Camera ScrollY: ${Math.round(cameraY)}`,
+      `Button Logic Y: ${containerY + 150} (= 550)`,
+      `Button Visual Y: ${Math.round(visualButtonY)}`,
+      `Manual Hit: ${inManualResumeZone ? 'YES' : 'NO'}`,
+      `${buttonInfo}`,
+      `${rectInfo}`
+    ])
   }
   
   close(): void {

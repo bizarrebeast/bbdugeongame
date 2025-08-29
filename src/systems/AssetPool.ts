@@ -100,6 +100,18 @@ export class AssetPool {
 
   private loadSingleAsset(asset: AssetConfig): Promise<void> {
     return new Promise((resolve, reject) => {
+      // Check if asset already exists (was preloaded)
+      if (asset.type === 'image' && this.scene.textures.exists(asset.key)) {
+        console.log(`⚡ Asset already loaded: ${asset.key}`)
+        resolve()
+        return
+      }
+      if (asset.type === 'audio' && this.scene.cache.audio.exists(asset.key)) {
+        console.log(`⚡ Audio already loaded: ${asset.key}`)
+        resolve()
+        return
+      }
+      
       // Set up load event handlers
       const onLoadComplete = () => {
         this.scene.load.off('filecomplete', onFileComplete)
