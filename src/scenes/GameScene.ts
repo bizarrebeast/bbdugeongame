@@ -2504,9 +2504,17 @@ export class GameScene extends Phaser.Scene {
     const tileSize = GameSettings.game.tileSize
     
     // Create one continuous ladder from bottom to top
-    // Extend slightly above and below floor levels for player access, but not a full tile
-    const ladderHeight = bottomY - topY + (tileSize * 0.5) // Half tile extension for access
-    const ladderY = (bottomY + topY) / 2
+    // Extend slightly above floor levels for player access, but NEVER below ground floor
+    // Check if this is a ground floor ladder (bottomY is close to canvas height)
+    const isGroundFloor = bottomY >= GameSettings.canvas.height - tileSize * 2
+    
+    // For ground floor ladders, don't extend below the platform
+    // For other ladders, allow small extension below for smooth transitions
+    const bottomExtension = isGroundFloor ? 0 : tileSize * 0.25
+    const topExtension = tileSize * 0.25
+    
+    const ladderHeight = bottomY - topY + bottomExtension + topExtension
+    const ladderY = (bottomY + bottomExtension + topY - topExtension) / 2
     
     // Create the invisible ladder hitbox
     const ladder = this.add.rectangle(
@@ -2523,28 +2531,36 @@ export class GameScene extends Phaser.Scene {
     // Use new teal ladder sprite
     if (this.textures.exists('tealLadder')) {
       const ladderX = x + tileSize/2
-      const totalHeight = ladderHeight + tileSize * 1.0 // Include extension height
-      const centerY = (topY + bottomY) / 2 - tileSize * 0.5 + 3 // Adjust center for extension, move down 3px
+      // For visual consistency, make all ladder sprites the same height
+      // Even though ground floor ladder hitbox is shorter
+      const visualHeight = bottomY - topY + tileSize * 0.5 // Standard visual height for all ladders
+      const visualCenterY = (bottomY + topY) / 2 // Standard visual center
       
       // Create ladder sprite
-      const ladderSprite = this.add.image(ladderX + 1, centerY, 'tealLadder')  // Moved 1 pixel to the right
+      const ladderSprite = this.add.image(ladderX + 1, visualCenterY, 'tealLadder')  // Moved 1 pixel to the right
       // Scale to proper height while maintaining aspect ratio
-      ladderSprite.setDisplaySize(ladderSprite.width * (totalHeight / ladderSprite.height), totalHeight)
+      ladderSprite.setDisplaySize(ladderSprite.width * (visualHeight / ladderSprite.height), visualHeight)
       ladderSprite.setDepth(11)
     } else {
       // Fallback to simple graphics ladder
       const ladderGraphics = this.add.graphics()
       const ladderX = x + tileSize/2
       
+      // For visual consistency, use standard visual dimensions
+      const visualHeight = bottomY - topY + tileSize * 0.5
+      const visualCenterY = (bottomY + topY) / 2
+      const visualTop = visualCenterY - visualHeight/2
+      const visualBottom = visualCenterY + visualHeight/2
+      
       ladderGraphics.fillStyle(0x40e0d0, 1) // Teal color
-      ladderGraphics.fillRect(ladderX - 2, topY - tileSize * 0.5, 4, ladderHeight + tileSize * 1.0)
-      ladderGraphics.fillRect(ladderX - 13, topY, 26, 4) // Top rung
-      ladderGraphics.fillRect(ladderX - 13, bottomY - 4, 26, 4) // Bottom rung
+      ladderGraphics.fillRect(ladderX - 2, visualTop, 4, visualHeight)
+      ladderGraphics.fillRect(ladderX - 13, visualTop + 4, 26, 4) // Top rung
+      ladderGraphics.fillRect(ladderX - 13, visualBottom - 8, 26, 4) // Bottom rung
       
       // Middle rungs
-      const numRungs = Math.floor(ladderHeight / 32)
+      const numRungs = Math.floor(visualHeight / 32)
       for (let i = 1; i < numRungs; i++) {
-        const rungY = topY + (i * (ladderHeight / (numRungs + 1)))
+        const rungY = visualTop + (i * (visualHeight / (numRungs + 1)))
         ladderGraphics.fillRect(ladderX - 13, rungY, 26, 3)
       }
       

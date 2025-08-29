@@ -490,8 +490,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       
       // Exit climbing with jump only if:
       // 1. Not trying to climb up (prevents accidental jumps when trying to climb)
-      // 2. Not at or below the ladder bottom (prevents jumping off bottom)
-      if (jumpJustPressed && !upPressed && !atLadderBottom) {
+      // 2. For ground floor ladders, always allow jumping
+      // 3. For other ladders, don't allow jumping from the very bottom
+      const isGroundFloorLadder = ladderBottom >= GameSettings.canvas.height - GameSettings.game.tileSize * 3
+      if (jumpJustPressed && !upPressed && (isGroundFloorLadder || !atLadderBottom)) {
         this.exitClimbing()
         this.setVelocityY(this.MAX_JUMP_VELOCITY)
         this.playJumpSound() // Play jump sound when jumping off ladder
