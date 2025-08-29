@@ -282,6 +282,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Guard against update being called before physics body is ready
     if (!this.body) return
     
+    // Check if game is over - stop all player updates
+    const gameScene = this.scene as any
+    if (gameScene.isGameOver) return
+    
     // FLOOR CLIPPING PREVENTION - Multiple layers of protection
     // Layer 1: Clamp maximum fall speed to prevent tunneling through platforms
     const MAX_FALL_SPEED = 600 // Safe speed that won't tunnel through 32px platforms at 60fps
@@ -292,7 +296,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Layer 2: Absolute ground floor enforcement - never allow player below bottom platform
     // Ground floor is at canvas height minus one tile (where the platform surface is)
     // EXCEPT during level intro animation (GameScene handles positioning during intro)
-    const gameScene = this.scene as any
     const isLevelStarting = gameScene.isLevelStarting || false
     
     const groundFloorY = GameSettings.canvas.height - GameSettings.game.tileSize - 10

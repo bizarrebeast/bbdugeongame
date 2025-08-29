@@ -1662,6 +1662,10 @@ export class GameScene extends Phaser.Scene {
     // Connect touch controls to player
     this.player.setTouchControls(this.touchControls)
     
+    // Ensure input is enabled (in case it was disabled before restart)
+    this.input.keyboard!.enabled = true
+    this.touchControls.enable()
+    
     // Create menu overlay (after HUD is created)
     this.menuOverlay = new MenuOverlay(this)
     
@@ -7622,6 +7626,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showLostLifePopup(): void {
+    // STOP ALL GAMEPLAY - Pause physics and disable controls
+    this.physics.pause() // Freezes all physics bodies and stops all movement
+    this.touchControls.disable() // Disable touch controls
+    this.input.keyboard!.enabled = false // Disable keyboard input
+    
     // Create semi-transparent overlay
     const overlay = this.add.rectangle(
       GameSettings.canvas.width / 2,
@@ -7758,6 +7767,11 @@ export class GameScene extends Phaser.Scene {
   private showGameOverScreen(): void {
     // Play game over sound
     this.playSoundEffect('game-over', 0.5)
+    
+    // STOP ALL GAMEPLAY - Pause physics and disable controls
+    this.physics.pause() // Freezes all physics bodies and stops all movement
+    this.touchControls.disable() // Disable touch controls
+    this.input.keyboard!.enabled = false // Disable keyboard input
     
     // Store final score for later SDK notification
     const finalScore = this.accumulatedScore + this.score
