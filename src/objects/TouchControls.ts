@@ -44,12 +44,12 @@ export class TouchControls {
   
   // Touchpad layout
   private touchpadCenter: { x: number, y: number }
-  private touchpadRadius: number = 60
+  private touchpadRadius: number = 75  // Changed from 60 to 75 for 150px visual diameter
   private deadZone: number = 5 // Smaller dead zone for more responsive touch
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
-    this.touchpadCenter = { x: 80, y: GameSettings.canvas.height - 80 }
+    this.touchpadCenter = { x: 110, y: 680 }
     
     this.createTouchpad()
     this.createJumpButton()
@@ -65,11 +65,11 @@ export class TouchControls {
 
     // Create custom D-pad background image
     this.touchpadBackground = this.scene.add.image(0, 0, 'custom-dpad')
-    this.touchpadBackground.setDisplaySize(this.touchpadRadius * 2, this.touchpadRadius * 2) // 120px diameter
+    this.touchpadBackground.setDisplaySize(this.touchpadRadius * 2, this.touchpadRadius * 2) // 150px diameter
     this.touchpadContainer.add(this.touchpadBackground)
 
-    // Debug: Add hitbox visualization (75px radius circle - 15px larger than visual)
-    // const hitboxDebug = this.scene.add.circle(0, 0, this.touchpadRadius + 15, 0x0000ff, 0.3) // Semi-transparent blue circle
+    // Debug: Add hitbox visualization (92.5px radius circle for 185px total diameter)
+    // const hitboxDebug = this.scene.add.circle(0, 0, 92.5, 0x0000ff, 0.3) // Semi-transparent blue circle
     // hitboxDebug.setStrokeStyle(2, 0x0000ff, 0.8) // Blue border
     // this.touchpadContainer.add(hitboxDebug)
 
@@ -84,8 +84,8 @@ export class TouchControls {
   // private addDirectionalHints(): void { ... } - removed since custom D-pad includes visual cues
 
   private createJumpButton(): void {
-    const buttonX = GameSettings.canvas.width - 60
-    const buttonY = GameSettings.canvas.height - 80
+    const buttonX = GameSettings.canvas.width - 60  // x: 390 (450 - 60)
+    const buttonY = GameSettings.canvas.height - 120 // y: 680 (800 - 120)
     
     // Create jump button container
     this.jumpButton = this.scene.add.container(buttonX, buttonY)
@@ -94,12 +94,12 @@ export class TouchControls {
 
     // Custom jump button image
     this.jumpButtonImage = this.scene.add.image(0, 0, 'custom-jump-button')
-    this.jumpButtonImage.setDisplaySize(70, 70) // Keep same relative size as before (was 70px diameter circle)
+    this.jumpButtonImage.setDisplaySize(80, 80) // Updated to 80x80px
     
-    // Debug: Add hitbox visualization (100px wide, screen height - 200px rectangle, shifted down 100px)
+    // Debug: Add hitbox visualization (100px wide, extends from y:550 to bottom)
     // const screenHeight = GameSettings.canvas.height
-    // const hitboxHeight = screenHeight - 200
-    // const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 100, hitboxHeight, 0xff0000, 0.3) // Semi-transparent red rectangle, shifted down 100px
+    // const hitboxHeight = screenHeight - 550 // From y:550 to bottom (800 - 550 = 250px tall)
+    // const hitboxDebug = this.scene.add.rectangle(0, (hitboxHeight/2) - (680 - 550), 100, hitboxHeight, 0xff0000, 0.3) // Semi-transparent red rectangle
     // hitboxDebug.setStrokeStyle(2, 0xff0000, 0.8) // Red border
     
     // No text - clean minimal design
@@ -107,8 +107,8 @@ export class TouchControls {
   }
 
   private createActionButton(): void {
-    const buttonX = GameSettings.canvas.width - 165 // Left of jump button (moved 25px left)
-    const buttonY = GameSettings.canvas.height - 80
+    const buttonX = GameSettings.canvas.width - 175 // Updated to position at x:275 (450 - 175 = 275)
+    const buttonY = GameSettings.canvas.height - 120 // Updated to position at y:680 (800 - 120 = 680)
     
     // Create action button container (initially visible for setup)
     this.actionButton = this.scene.add.container(buttonX, buttonY)
@@ -118,12 +118,12 @@ export class TouchControls {
 
     // Custom action button image
     this.actionButtonImage = this.scene.add.image(0, 0, 'custom-action-button')
-    this.actionButtonImage.setDisplaySize(70, 70) // Same size as jump button
+    this.actionButtonImage.setDisplaySize(80, 80) // Updated to 80x80px
     
-    // Debug: Add hitbox visualization (110px wide, screen height - 200px rectangle, shifted down 100px)
+    // Debug: Add hitbox visualization (110px wide, extends from y:550 to bottom)
     // const screenHeight = GameSettings.canvas.height
-    // const hitboxHeight = screenHeight - 200
-    // const hitboxDebug = this.scene.add.rectangle(0, -buttonY + screenHeight/2 + 100, 110, hitboxHeight, 0x00ff00, 0.3) // Semi-transparent green rectangle, shifted down 100px
+    // const hitboxHeight = screenHeight - 550 // From y:550 to bottom (800 - 550 = 250px tall)
+    // const hitboxDebug = this.scene.add.rectangle(0, (hitboxHeight/2) - (680 - 550), 110, hitboxHeight, 0x00ff00, 0.3) // Semi-transparent green rectangle
     // hitboxDebug.setStrokeStyle(2, 0x00ff00, 0.8) // Green border
     
     this.actionButton.add([this.actionButtonImage])
@@ -156,13 +156,13 @@ export class TouchControls {
     const touchX = pointer.x
     const touchY = pointer.y
     
-    // Check if touch is on touchpad area (hitbox is 15px larger than visual)
+    // Check if touch is on touchpad area (hitbox is 92.5px radius = 185px diameter)
     const touchpadDist = Math.sqrt(
       Math.pow(touchX - this.touchpadCenter.x, 2) + 
       Math.pow(touchY - this.touchpadCenter.y, 2)
     )
     
-    if (touchpadDist <= (this.touchpadRadius + 15) && this.touchpadPointerId === -1) {
+    if (touchpadDist <= 92.5 && this.touchpadPointerId === -1) {
       this.touchpadPointerId = pointer.id
       // Immediately update position on initial touch for instant response
       this.updateTouchpadFromPosition(touchX, touchY)
@@ -172,11 +172,11 @@ export class TouchControls {
       return
     }
     
-    // Check if touch is on jump button area (rectangle: 100px wide, screen height - 200px, shifted down 100px)
-    const jumpButtonX = GameSettings.canvas.width - 60
+    // Check if touch is on jump button area (rectangle: 100px wide, extends from y:550 to bottom)
+    const jumpButtonX = GameSettings.canvas.width - 60  // x: 390
     const jumpButtonLeft = jumpButtonX - 50  // 50px to the left of center
     const jumpButtonRight = jumpButtonX + 50  // 50px to the right of center
-    const hitboxTop = 200  // 200px from top of screen (shifted down 100px)
+    const hitboxTop = 550  // Starts at y:550
     const hitboxBottom = GameSettings.canvas.height  // Goes all the way to bottom
     
     if (touchX >= jumpButtonLeft && touchX <= jumpButtonRight && 
@@ -191,10 +191,10 @@ export class TouchControls {
     
     // Check if touch is on action button area (only if visible)
     if (this.actionButton.visible) {
-      const actionButtonX = GameSettings.canvas.width - 165  // Moved 25px left
+      const actionButtonX = GameSettings.canvas.width - 175  // Updated position (x:275)
       const actionButtonLeft = actionButtonX - 55  // 55px to the left of center
       const actionButtonRight = actionButtonX + 55  // 55px to the right of center
-      const hitboxTop = 200  // 200px from top of screen (shifted down 100px)
+      const hitboxTop = 550  // Starts at y:550
       const hitboxBottom = GameSettings.canvas.height  // Goes all the way to bottom
       
       if (touchX >= actionButtonLeft && touchX <= actionButtonRight && 
@@ -360,7 +360,12 @@ export class TouchControls {
     this.jumpButton.setVisible(false)
     this.actionButton.setVisible(false)
     // Reset all states
-    this.direction = { x: 0, y: 0 }
+    this.horizontalInput = 0
+    this.verticalInput = 0
+    this.leftPressed = false
+    this.rightPressed = false
+    this.upPressed = false
+    this.downPressed = false
     this.jumpPressed = false
     this.jumpJustPressed = false
     this.actionPressed = false
