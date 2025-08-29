@@ -2534,7 +2534,7 @@ export class GameScene extends Phaser.Scene {
       // For visual consistency, make all ladder sprites the same height
       // Even though ground floor ladder hitbox is shorter
       const visualHeight = bottomY - topY + tileSize * 0.5 // Standard visual height for all ladders
-      const visualCenterY = (bottomY + topY) / 2 // Standard visual center
+      const visualCenterY = (bottomY + topY) / 2 + 1 // Standard visual center, shifted down 1px
       
       // Create ladder sprite
       const ladderSprite = this.add.image(ladderX + 1, visualCenterY, 'tealLadder')  // Moved 1 pixel to the right
@@ -2548,7 +2548,7 @@ export class GameScene extends Phaser.Scene {
       
       // For visual consistency, use standard visual dimensions
       const visualHeight = bottomY - topY + tileSize * 0.5
-      const visualCenterY = (bottomY + topY) / 2
+      const visualCenterY = (bottomY + topY) / 2 + 1 // Shifted down 1px to match sprite
       const visualTop = visualCenterY - visualHeight/2
       const visualBottom = visualCenterY + visualHeight/2
       
@@ -2721,7 +2721,7 @@ export class GameScene extends Phaser.Scene {
     spikeSprite.setDepth(12) // Same depth as floor spikes
     
     // Create physics body for collision detection
-    const spikeBody = this.add.rectangle(x, spikeBaseY + spikeHeight/2, tileSize * 0.9, spikeHeight, 0x000000, 0)
+    const spikeBody = this.add.rectangle(x, spikeBaseY + spikeHeight/2, 24, spikeHeight, 0x000000, 0)
     spikeBody.setVisible(false) // Invisible collision box
     spikeBody.setData('isCeilingSpike', true) // Mark as ceiling spike
     spikeBody.setData('sprite', spikeSprite) // Store sprite reference for shaking
