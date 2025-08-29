@@ -1,5 +1,15 @@
 # Treasure Quest - Release Notes
 
+## Version 1.0.2 - Animation Polish Update
+
+### Release Date: August 29, 2025
+
+### Changes
+- **Visual Improvements**:
+  - Prevented collectibles from spawning on floor 0 (player spawn floor)
+  - Ensures clean intro animation without visual clutter
+  - Maintains game balance with collectibles starting from floor 1
+
 ## Version 1.0.1 - Balance Update
 
 ### Release Date: August 2025

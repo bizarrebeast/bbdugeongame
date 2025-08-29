@@ -370,6 +370,7 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Level intro animation with climbing entrance from below screen
 - Enhanced enemy physics with proper platform bounds checking
 - No enemy spawning on ground floor (floor 0) for safer gameplay
+- No collectibles spawn on floor 0 to ensure clean intro animation
 - **ENEMY_COMPREHENSIVE_GUIDE.md:** Complete documentation for all enemy types, movements, and spawning patterns
 
 ---
