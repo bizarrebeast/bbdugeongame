@@ -59,6 +59,7 @@ export class GameScene extends Phaser.Scene {
   private totalGemsCollected: number = 0 // Track regular gems (coins)
   private totalBlueGemsCollected: number = 0 // Track big blue gems
   private totalDiamondsCollected: number = 0 // Track diamonds
+  private livesEarned: number = 0 // Track how many lives have been earned from gems
   private livesText!: Phaser.GameObjects.Text
   private livesIcon!: Phaser.GameObjects.Image
   private coinCounterText!: Phaser.GameObjects.Text // Display shows crystals, but variable kept for compatibility
@@ -1013,6 +1014,7 @@ export class GameScene extends Phaser.Scene {
       this.totalGemsCollected = registry.get('totalGems') || 0
       this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
       this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
+      this.livesEarned = registry.get('livesEarned') || 0
       // Don't clear the progression flag here - it's needed for intro animation
     } else if (registry.has('playerLives') && registry.get('playerLives') > 0) {
       // Restore from registry (level restart after losing life)
@@ -1024,6 +1026,7 @@ export class GameScene extends Phaser.Scene {
       this.totalGemsCollected = registry.get('totalGems') || 0
       this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
       this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
+      this.livesEarned = registry.get('livesEarned') || 0
     } else {
       // New game - initialize defaults
       this.lives = 3
@@ -1033,6 +1036,7 @@ export class GameScene extends Phaser.Scene {
       this.totalGemsCollected = 0
       this.totalBlueGemsCollected = 0
       this.totalDiamondsCollected = 0
+      this.livesEarned = 0
       
       // Clear all registry values for fresh start
       registry.set('playerLives', this.lives)
@@ -1040,6 +1044,7 @@ export class GameScene extends Phaser.Scene {
       registry.set('totalGems', 0)
       registry.set('totalBlueGems', 0)
       registry.set('totalDiamonds', 0)
+      registry.set('livesEarned', 0)
       registry.set('accumulatedScore', 0)
       registry.set('currentScore', 0)
       registry.set('accumulatedDiamonds', 0)
@@ -7212,6 +7217,7 @@ export class GameScene extends Phaser.Scene {
       registry.set('totalGems', this.totalGemsCollected)
       registry.set('totalBlueGems', this.totalBlueGemsCollected)
       registry.set('totalDiamonds', this.totalDiamondsCollected)
+      registry.set('livesEarned', this.livesEarned)
       
       // Save accumulated values (locked in from completed levels)
       registry.set('accumulatedCoins', this.totalCoinsCollected)
@@ -7546,19 +7552,33 @@ export class GameScene extends Phaser.Scene {
   }
 
   private checkForExtraLife(): void {
-    if (this.totalCoinsCollected > 0 && this.totalCoinsCollected % this.COINS_PER_EXTRA_LIFE === 0) {
-      if (this.lives < this.MAX_LIVES) {
-        this.lives++
-        this.game.registry.set('playerLives', this.lives)  // Save to registry
-        this.updateLivesDisplay()
-        
-        // Play heart collect sound for earning extra life
-        this.playSoundEffect('heart-collect', 0.5)
-        
-        // Show extra life popup with reason
-        this.showExtraLifePopup('150 Gems!')
+    // Calculate how many lives should have been earned based on total gems
+    const livesFromGems = Math.floor(this.totalCoinsCollected / this.COINS_PER_EXTRA_LIFE)
+    
+    // Check if more lives should be awarded than have been earned so far
+    if (livesFromGems > this.livesEarned) {
+      const newLivesToAward = livesFromGems - this.livesEarned
+      
+      // Award all earned lives (handles multiple lives at once in bonus levels)
+      for (let i = 0; i < newLivesToAward; i++) {
+        if (this.lives < this.MAX_LIVES) {
+          this.lives++
+          this.livesEarned++
+          this.game.registry.set('playerLives', this.lives)  // Save to registry
+          this.game.registry.set('livesEarned', this.livesEarned)  // Save earned count
+          this.updateLivesDisplay()
+          
+          // Play heart collect sound for earning extra life
+          this.playSoundEffect('heart-collect', 0.5)
+          
+          // Show extra life popup with reason
+          this.showExtraLifePopup('150 Gems!')
+        } else {
+          // Still track that the life was "earned" even if at max
+          this.livesEarned++
+          this.game.registry.set('livesEarned', this.livesEarned)
+        }
       }
-      // If already at max lives, just continue silently
     }
   }
 
@@ -8381,6 +8401,7 @@ export class GameScene extends Phaser.Scene {
     this.game.registry.set('currentLevel', 1)  // Always start at level 1
     this.game.registry.set('playerLives', 3) // Use correct key
     this.game.registry.set('totalCoins', 0) // Use correct key
+    this.game.registry.set('livesEarned', 0) // Reset lives earned counter
     this.game.registry.set('accumulatedScore', 0)
     
     // Restart the scene
