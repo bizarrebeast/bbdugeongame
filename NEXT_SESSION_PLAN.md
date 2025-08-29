@@ -1,7 +1,7 @@
 # Next Session Plan & Context
 
 ## Current Game Status
-**"Bizarre Underground"** - Retro endless climber in abandoned mine setting
+**"Treasure Quest"** - Retro endless climber in abandoned mine setting
 
 ### ✅ COMPLETED (6-Tier Enemy System & Production Polish Sprint)
 - **Game is fully playable** with sophisticated progressive difficulty system
@@ -95,7 +95,7 @@ cat NEXT_SESSION_PLAN.md  # This file
 ```
 
 ## Quick Reference
-- **Game Name**: Bizarre Underground
+- **Game Name**: Treasure Quest
 - **Current Sprint**: 6-Tier Enemy System & Production Polish (COMPLETED)
 - **Enemy Types**: 7 types with progressive 6-tier spawning system (Tutorial → BEAST Mode)
 - **Architecture**: Phaser.js + TypeScript with comprehensive enemy spawning system

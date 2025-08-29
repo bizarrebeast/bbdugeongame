@@ -1,4 +1,4 @@
-# Next Development Plan for Bizarre Underground
+# Next Development Plan for Treasure Quest
 
 ## Current Game State ✅ COMPLETE
 - Discrete level system (1-100 then endless) with automatic door progression

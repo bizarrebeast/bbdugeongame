@@ -1,7 +1,7 @@
-# V2 Future Features - Bizarre Underground
+# V2 Future Features - Treasure Quest
 
 ## Overview
-This document contains features that would be valuable for future versions of Bizarre Underground, particularly for standalone releases outside of the Remix/Farcade ecosystem which handles certain features natively.
+This document contains features that would be valuable for future versions of Treasure Quest, particularly for standalone releases outside of the Remix/Farcade ecosystem which handles certain features natively.
 
 ## High Score & Leaderboard System 🏆
 **Note:** Remix/Farcade SDK handles leaderboards in current version. This would be for standalone releases.

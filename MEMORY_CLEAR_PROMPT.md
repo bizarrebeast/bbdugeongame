@@ -2,7 +2,7 @@
 
 ## 🎮 CURRENT STATUS: READY TO CHOOSE NEXT SPRINT
 
-**"Bizarre Underground"** - Retro endless climber in abandoned mine setting
+**"Treasure Quest"** - Retro endless climber in abandoned mine setting
 
 ### ✅ COMPLETED: Blob Chaos Update Sprint + Visibility Enhancement (FULLY IMPLEMENTED)
 - **Game is 100% playable** with all core mechanics working
@@ -55,7 +55,7 @@ cat NEXT_SESSION_PLAN.md           # Complete context preservation
 
 ## 📝 NEXT SESSION PROMPT
 
-**Context:** This is "Bizarre Underground", a fully playable Phaser.js retro endless climber. The Blob Chaos Update sprint is COMPLETED with 4 enemy types, complete combat system, collectibles, and mobile controls. Game is production-ready and choosing next development focus.
+**Context:** This is "Treasure Quest", a fully playable Phaser.js retro endless climber. The Blob Chaos Update sprint is COMPLETED with 4 enemy types, complete combat system, collectibles, and mobile controls. Game is production-ready and choosing next development focus.
 
 **Immediate Task:** Choose and begin implementation of next sprint. **Audio & Atmosphere Sprint is recommended** for biggest impact (5-8 days) - adds complete sound system, music, SFX, and flash power-up timer UI.
 

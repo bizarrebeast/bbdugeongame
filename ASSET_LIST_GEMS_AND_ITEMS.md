@@ -1,4 +1,4 @@
-# Bizarre Underground - Gem & Item Asset List
+# Treasure Quest - Gem & Item Asset List
 
 ## 🎮 Current Display Sizes in Game
 

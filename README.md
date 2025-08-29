@@ -69,7 +69,7 @@ npm run dev
 - Development server starts at `http://localhost:3000`
 - A QR code appears in your terminal for mobile testing
 - The browser opens automatically
-- You'll see the full Bizarre Underground game
+- You'll see the full Treasure Quest game
 - File changes trigger automatic browser refresh
 
 ### Step 3: Test on Mobile

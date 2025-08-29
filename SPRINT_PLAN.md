@@ -1,4 +1,4 @@
-# Bizarre Underground Sprint Plan
+# Treasure Quest Sprint Plan
 
 ## Sprint Overview
 **Sprint Goal:** Address critical bugs, implement playtester feedback, and enhance core gameplay mechanics

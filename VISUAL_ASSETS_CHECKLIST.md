@@ -1,6 +1,6 @@
 # Visual Assets Creation Checklist 🎨
 
-**Game:** Bizarre Underground - Retro Endless Climber  
+**Game:** Treasure Quest - Retro Endless Climber  
 **Theme:** Underground mine/cave environment with retro pixel art style  
 **Status:** Comprehensive asset list for artwork creation  
 
@@ -101,7 +101,7 @@
 ## 🎭 MENU & SCREEN ASSETS
 
 ### Title Screen
-- [ ] **Game Logo**: "Bizarre Underground" title treatment
+- [ ] **Game Logo**: "Treasure Quest" title treatment
 - [ ] **Start Button**: Play/start game button
 - [ ] **Settings Button**: Options/settings access
 - [ ] **Background**: Title screen cave environment

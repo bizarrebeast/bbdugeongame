@@ -1,4 +1,4 @@
-# Comprehensive Enemy Guide - Bizarre Underground
+# Comprehensive Enemy Guide - Treasure Quest
 
 ## Complete Enemy Roster with Movement, Scoring, and Distribution
 
