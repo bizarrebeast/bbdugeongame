@@ -59,6 +59,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private positionCheckInterval: number = 500 // Check position every 0.5 seconds
   private positionCheckTimer: number = 0
   
+  // Individual speed variation to prevent clustering
+  private individualSpeedMultiplier: number = 1
+  private turnDelayTimer: number = 0
+  
   // Red enemy animation system
   private redEnemyAnimationState: 'patrol' | 'bite_starting' | 'bite_opening' | 'bite_wide' | 'bite_closing' = 'patrol'
   private redBiteTimer: number = 0
@@ -342,8 +346,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private setupBehavior(): void {
-    // Add 10-20% random speed variation to each enemy
-    const speedVariation = 0.9 + Math.random() * 0.2 // 90% to 110% of base
+    // Add individual speed variation to prevent clustering (85% to 115%)
+    this.individualSpeedMultiplier = 0.85 + Math.random() * 0.3
     
     // Get current level from scene if available
     const scene = this.scene as any
@@ -352,19 +356,19 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     switch (this.catColor) {
       case CatColor.BLUE:
-        this.moveSpeed = this.baseSpeed * speedVariation
+        this.moveSpeed = this.baseSpeed * this.individualSpeedMultiplier
         break
       case CatColor.YELLOW:
         // Even slower in early levels for better predictability
         const yellowSpeedMultiplier = isEarlyLevel ? 0.4 : 0.6  // 40% speed in levels 1-10, 60% after
-        this.moveSpeed = this.baseSpeed * yellowSpeedMultiplier * speedVariation
+        this.moveSpeed = this.baseSpeed * yellowSpeedMultiplier * this.individualSpeedMultiplier
         break
       case CatColor.GREEN:
         // Reduce green bouncer speed for more manageable gameplay
-        this.moveSpeed = this.baseSpeed * 1.0 * speedVariation  // Reduced from 1.5x to 1.0x
+        this.moveSpeed = this.baseSpeed * 1.0 * this.individualSpeedMultiplier  // Reduced from 1.5x to 1.0x
         break
       case CatColor.RED:
-        this.moveSpeed = this.baseSpeed * 1.2 * speedVariation // Fast but not as fast as green
+        this.moveSpeed = this.baseSpeed * 1.2 * this.individualSpeedMultiplier // Fast but not as fast as green
         break
     }
     
@@ -429,19 +433,32 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       return // Skip rest of patrol logic
     }
     
+    // Handle turn delay timer
+    if (this.turnDelayTimer > 0) {
+      this.turnDelayTimer -= Phaser.Math.Clamp(16, 0, 100) // Use fixed delta approximation
+    }
+    
     // Check for edge proximity and turn around if too close during idle
     const edgeBuffer = 32 // 1 tile buffer from edges
     if (this.x <= this.platformBounds.left + edgeBuffer) {
-      this.direction = 1
-      // If we're about to bite and near edge, delay the bite
-      if (this.biteTimer >= this.nextBiteTime) {
-        this.nextBiteTime = this.biteTimer + 500 // Delay bite by 0.5s
+      if (this.turnDelayTimer <= 0) {
+        this.direction = 1
+        // Add small random delay to prevent synchronized turning (50-200ms)
+        this.turnDelayTimer = 50 + Math.random() * 150
+        // If we're about to bite and near edge, delay the bite
+        if (this.biteTimer >= this.nextBiteTime) {
+          this.nextBiteTime = this.biteTimer + 500 // Delay bite by 0.5s
+        }
       }
     } else if (this.x >= this.platformBounds.right - edgeBuffer) {
-      this.direction = -1
-      // If we're about to bite and near edge, delay the bite
-      if (this.biteTimer >= this.nextBiteTime) {
-        this.nextBiteTime = this.biteTimer + 500 // Delay bite by 0.5s
+      if (this.turnDelayTimer <= 0) {
+        this.direction = -1
+        // Add small random delay to prevent synchronized turning (50-200ms)
+        this.turnDelayTimer = 50 + Math.random() * 150
+        // If we're about to bite and near edge, delay the bite
+        if (this.biteTimer >= this.nextBiteTime) {
+          this.nextBiteTime = this.biteTimer + 500 // Delay bite by 0.5s
+        }
       }
     }
     
@@ -479,10 +496,24 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       }
     }
     
+    // Handle turn delay timer
+    if (this.turnDelayTimer > 0) {
+      this.turnDelayTimer -= delta
+    }
+    
+    // Check boundaries with turn delay to prevent synchronized turning
     if (this.x <= this.platformBounds.left + 10) {
-      this.direction = 1
+      if (this.turnDelayTimer <= 0) {
+        this.direction = 1
+        // Add random delay before next possible turn (100-500ms)
+        this.turnDelayTimer = 100 + Math.random() * 400
+      }
     } else if (this.x >= this.platformBounds.right - 10) {
-      this.direction = -1
+      if (this.turnDelayTimer <= 0) {
+        this.direction = -1
+        // Add random delay before next possible turn (100-500ms)
+        this.turnDelayTimer = 100 + Math.random() * 400
+      }
     }
     
     this.setVelocityX(this.moveSpeed * this.direction)
