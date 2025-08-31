@@ -172,6 +172,8 @@ export class GameScene extends Phaser.Scene {
     const skipLoadingScreen = isReplay || (isDeathRetry && playerLives > 0)
     this.showLoadingScreen = !skipLoadingScreen
     
+    console.log(`🎬 Loading screen decision: isReplay=${isReplay}, isDeathRetry=${isDeathRetry}, skip=${skipLoadingScreen}, SHOW=${this.showLoadingScreen}`)
+    
     // Initialize managers that need scene references
     this.levelManager = new LevelManager()
     this.backgroundManager = new BackgroundManager(this)
@@ -638,6 +640,8 @@ export class GameScene extends Phaser.Scene {
     const isReplay = this.game.registry.get('isReplay') || false
     const skipLoadingScreen = isReplay || (isDeathRetry && playerLives > 0)
     this.showLoadingScreen = !skipLoadingScreen
+    
+    console.log(`🎬 Loading screen decision (2nd init): isReplay=${isReplay}, isDeathRetry=${isDeathRetry}, skip=${skipLoadingScreen}, SHOW=${this.showLoadingScreen}`)
     
     // Set dark purple background to match instructions background color
     // This minimizes the visual jump during the brief preload phase
@@ -2651,7 +2655,7 @@ export class GameScene extends Phaser.Scene {
     // For ground floor ladders, don't extend below the platform
     // For other ladders, allow small extension below for smooth transitions
     const bottomExtension = isGroundFloor ? 0 : tileSize * 0.25
-    const topExtension = tileSize * 0.25
+    const topExtension = tileSize * 0.1  // Reduced from 0.25 to 0.1 for tighter ladder bounds
     
     const ladderHeight = bottomY - topY + bottomExtension + topExtension
     const ladderY = (bottomY + bottomExtension + topY - topExtension) / 2
@@ -7281,6 +7285,8 @@ export class GameScene extends Phaser.Scene {
       // Check if entering BEAST MODE (level 51)
       if (nextLevel === 51) {
         this.showBeastModeNotification(() => {
+          // Set isReplay flag to skip loading screen
+          registry.set('isReplay', true)
           // Restart scene after BEAST MODE notification
           this.scene.restart()
         })
@@ -7290,9 +7296,13 @@ export class GameScene extends Phaser.Scene {
         console.log('📍 Transitioning from bonus to chapter, showing splash for level', nextLevel)
         registry.set('showChapterSplash', true)
         registry.set('chapterSplashLevel', nextLevel)
+        // Set isReplay flag to skip loading screen
+        registry.set('isReplay', true)
         this.scene.restart()
       } else {
         // Regular level progression
+        // Set isReplay flag to skip loading screen
+        registry.set('isReplay', true)
         this.scene.restart()
       }
     })
