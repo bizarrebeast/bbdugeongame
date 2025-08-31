@@ -5417,6 +5417,9 @@ export class GameScene extends Phaser.Scene {
     if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
       this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
       this.gameStats.totalEnemiesDefeated++
+      console.log(`✅ Kill tracked: ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+    } else {
+      console.error(`❌ Kill NOT tracked! Enemy type: ${enemyName}`)
     }
     
     // Play enemy-specific squish sound based on cat color
@@ -8359,15 +8362,23 @@ export class GameScene extends Phaser.Scene {
   // Helper method to get enemy type name for stats tracking
   private getEnemyTypeName(enemy: any): string {
     if (enemy.constructor.name === 'Cat') {
-      const color = enemy.color || enemy.getData?.('color')
-      const isStalker = enemy.isStalker || enemy.getData?.('isStalker')
+      // Use getter methods if available, fallback to properties
+      const color = enemy.getCatColor ? enemy.getCatColor() : 
+                     enemy.catColor || enemy.color || enemy.getData?.('color')
+      const isStalker = enemy.getIsStalker ? enemy.getIsStalker() : 
+                        enemy.isStalker || enemy.getData?.('isStalker')
+      
+      // Debug logging to verify it's working
+      console.log(`🎯 Enemy type detection - Color: ${color}, Stalker: ${isStalker}`)
       
       switch(color) {
         case 'yellow': return 'caterpillar'
         case 'blue': return 'chomper'
         case 'red': return isStalker ? 'stalker' : 'snail'
         case 'green': return 'bouncer'
-        default: return 'unknown'
+        default: 
+          console.warn('❌ Unknown enemy color:', color)
+          return 'unknown'
       }
     } else if (enemy.constructor.name === 'Beetle') {
       return 'rollz'

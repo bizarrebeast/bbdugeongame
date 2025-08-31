@@ -99,6 +99,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private stalkerEyeState: 'eye1' | 'eye2' | 'eye3' | 'eye4' | 'blink' = 'eye1'
   private stalkerEyeAnimationTimer: number = 0
   
+  // Public getter methods for kill tracking
+  public getCatColor(): CatColor {
+    return this.catColor
+  }
+  
+  public getIsStalker(): boolean {
+    return this.isStalker
+  }
+  
   constructor(
     scene: Phaser.Scene, 
     x: number, 
@@ -639,10 +648,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.destroy()
       }
     })
-  }
-  
-  getCatColor(): CatColor {
-    return this.catColor
   }
   
   private addDebugVisualization(): void {
@@ -1389,10 +1394,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       this.stalkerEyeAnimationTimer = 0
     }
-  }
-  
-  getIsStalker(): boolean {
-    return this.isStalker
   }
   
   private updateGreenEnemyAnimations(delta: number): void {
