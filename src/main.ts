@@ -13,7 +13,10 @@ const config: Phaser.Types.Core.GameConfig = {
   width: GameSettings.canvas.width,
   height: GameSettings.canvas.height,
   scale: {
-    mode: Phaser.Scale.FIT,
+    // FIT: Maintains aspect ratio, may show bars
+    // ENVELOP: Fills screen better, minimal cropping
+    // HEIGHT_CONTROLS_WIDTH: No bars but may crop sides
+    mode: Phaser.Scale.FIT,  // Try ENVELOP if black bars persist
     parent: "gameContainer",
     autoCenter: Phaser.Scale.CENTER_BOTH,
     // Support for high DPI displays
@@ -52,6 +55,18 @@ const game = new Phaser.Game(config)
 
 // Initialize game state - this is NOT a replay on first start
 game.registry.set('isReplay', false)
+
+// Debug viewport dimensions (helps identify black bar issues)
+console.log('🖥️ Viewport Debug:', {
+  innerHeight: window.innerHeight,
+  innerWidth: window.innerWidth,
+  dvhSupported: CSS.supports('height', '100dvh') ? '✅' : '❌',
+  clientHeight: document.documentElement.clientHeight,
+  clientWidth: document.documentElement.clientWidth,
+  screenHeight: screen.height,
+  screenWidth: screen.width,
+  devicePixelRatio: window.devicePixelRatio
+})
 
 // Initialize Farcade SDK
 game.events.once("ready", () => {

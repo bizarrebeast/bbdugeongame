@@ -16,14 +16,15 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 100dvh;
+        width: 100dvw;
+        height: 100dvh;
         background: #000;
         font-family: "Press Start 2P", system-ui;
         overflow: hidden;
       }
       .game-frame {
         position: relative;
-        width: min(1000px, 100vw);
+        width: min(1000px, 100dvw);
         height: min(1800px, 100dvh);
         aspect-ratio: 5/9;
         display: flex;
@@ -44,7 +45,8 @@
         height: 100%;
         max-width: 1000px;
         max-height: 100dvh;
-        object-fit: contain;
+        display: block;
+        touch-action: none;
       }
       canvas:focus {
         outline: none;
