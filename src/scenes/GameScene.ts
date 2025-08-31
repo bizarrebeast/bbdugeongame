@@ -1002,6 +1002,12 @@ export class GameScene extends Phaser.Scene {
     // Use game registry to persist lives and coins across scene restarts
     const registry = this.game.registry
     
+    // CLEANUP: Remove old incorrect 'lives' key if it exists
+    if (registry.has('lives')) {
+      console.warn(`⚠️ Cleaning up old 'lives' registry key`)
+      registry.remove('lives')
+    }
+    
     // Check if this is a level progression (not a death/restart)
     const isLevelProgression = registry.has('levelProgression') && registry.get('levelProgression') === true
     
@@ -1009,16 +1015,29 @@ export class GameScene extends Phaser.Scene {
       // Level progression - move current score to accumulated, start new level fresh
       this.accumulatedScore = registry.get('accumulatedScore') || 0
       this.score = 0 // Start new level with 0 current score
-      this.lives = registry.get('playerLives')
+      this.lives = registry.get('playerLives') || 3
+      // Validate lives count
+      if (this.lives < 0 || this.lives > this.MAX_LIVES) {
+        console.error(`🔴 Invalid lives count detected: ${this.lives}, resetting to 3`)
+        this.lives = 3
+        registry.set('playerLives', this.lives)
+      }
       this.totalCoinsCollected = registry.get('totalCoins')
       this.totalGemsCollected = registry.get('totalGems') || 0
       this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
       this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
       this.livesEarned = registry.get('livesEarned') || 0
+      console.log(`🎮 Level progression - Lives: ${this.lives}, Gems: ${this.totalCoinsCollected}`)
       // Don't clear the progression flag here - it's needed for intro animation
     } else if (registry.has('playerLives') && registry.get('playerLives') > 0) {
       // Restore from registry (level restart after losing life)
       this.lives = registry.get('playerLives')
+      // Validate lives count
+      if (this.lives < 0 || this.lives > this.MAX_LIVES) {
+        console.error(`🔴 Invalid lives count detected: ${this.lives}, resetting to 3`)
+        this.lives = 3
+        registry.set('playerLives', this.lives)
+      }
       // Keep accumulated score from completed levels, reset only current level
       this.accumulatedScore = registry.get('accumulatedScore') || 0
       this.score = 0 // Reset current level score
@@ -1027,6 +1046,7 @@ export class GameScene extends Phaser.Scene {
       this.totalBlueGemsCollected = registry.get('totalBlueGems') || 0
       this.totalDiamondsCollected = registry.get('totalDiamonds') || 0
       this.livesEarned = registry.get('livesEarned') || 0
+      console.log(`🎮 Death restart - Lives: ${this.lives}, Gems: ${this.totalCoinsCollected}`)
     } else {
       // New game - initialize defaults
       this.lives = 3
@@ -1037,6 +1057,8 @@ export class GameScene extends Phaser.Scene {
       this.totalBlueGemsCollected = 0
       this.totalDiamondsCollected = 0
       this.livesEarned = 0
+      
+      console.log(`🎮 New game started - Lives: ${this.lives}`)
       
       // Clear all registry values for fresh start
       registry.set('playerLives', this.lives)
@@ -4308,7 +4330,9 @@ export class GameScene extends Phaser.Scene {
     // Add extra life (if not at max)
     if (this.lives < this.MAX_LIVES) {
       this.lives++
-      this.game.registry.set('lives', this.lives)
+      this.game.registry.set('playerLives', this.lives)  // FIX: Use correct registry key
+      
+      console.log(`💚 Free life collected! Lives: ${this.lives}`)
       
       // Show extra life popup with reason
       this.showExtraLifePopup('Heart Crystal!')
@@ -5864,10 +5888,13 @@ export class GameScene extends Phaser.Scene {
     }
     
     // Lose a life
+    const oldLives = this.lives
     this.lives--
     this.gameStats.livesLost++  // Track lives lost for stats
     this.game.registry.set('playerLives', this.lives)  // Save to registry
     this.updateLivesDisplay()
+    
+    console.log(`💔 Player died! Lives: ${oldLives} -> ${this.lives}`)
     
     // Trigger haptic feedback for taking damage
     this.triggerFarcadeHapticFeedback()
@@ -7224,11 +7251,15 @@ export class GameScene extends Phaser.Scene {
       
       // Check if we're about to enter a bonus level BEFORE advancing
       const wasInBonus = this.levelManager.isBonusLevel()
-      const willEnterBonus = !wasInBonus && this.levelManager.shouldHaveBonusAfter(this.levelManager.getCurrentLevel())
+      const currentLevelBeforeAdvance = this.levelManager.getCurrentLevel()
+      const willEnterBonus = !wasInBonus && this.levelManager.shouldHaveBonusAfter(currentLevelBeforeAdvance)
       
       // Advance to next level
       const nextLevel = this.levelManager.nextLevel()
       const isNowInBonus = this.levelManager.isBonusLevel()
+      
+      console.log(`📊 Level transition: ${currentLevelBeforeAdvance} -> ${nextLevel} (Bonus: ${isNowInBonus})`)
+      console.log(`💚 Current lives: ${this.lives}, Gems: ${this.totalCoinsCollected}`)
       
       // Update the registry with the new level
       registry.set('currentLevel', nextLevel)
@@ -7556,14 +7587,19 @@ export class GameScene extends Phaser.Scene {
     if (livesFromGems > this.livesEarned) {
       const newLivesToAward = livesFromGems - this.livesEarned
       
+      console.log(`💎 Checking extra lives: ${newLivesToAward} new lives to award (${this.totalCoinsCollected} gems / ${this.COINS_PER_EXTRA_LIFE})`)
+      
       // Award all earned lives (handles multiple lives at once in bonus levels)
       for (let i = 0; i < newLivesToAward; i++) {
         if (this.lives < this.MAX_LIVES) {
+          const oldLives = this.lives
           this.lives++
           this.livesEarned++
           this.game.registry.set('playerLives', this.lives)  // Save to registry
           this.game.registry.set('livesEarned', this.livesEarned)  // Save earned count
           this.updateLivesDisplay()
+          
+          console.log(`💚 Extra life earned from gems! Lives: ${oldLives} -> ${this.lives}`)
           
           // Play heart collect sound for earning extra life
           this.playSoundEffect('heart-collect', 0.5)
@@ -7574,6 +7610,7 @@ export class GameScene extends Phaser.Scene {
           // Still track that the life was "earned" even if at max
           this.livesEarned++
           this.game.registry.set('livesEarned', this.livesEarned)
+          console.log(`💛 Extra life earned but at max (${this.MAX_LIVES})`)
         }
       }
     }
