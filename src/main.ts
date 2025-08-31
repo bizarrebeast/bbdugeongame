@@ -5,7 +5,19 @@ import { GameScene } from "./scenes/GameScene"
 import { initializeFarcadeSDK } from "./utils/RemixUtils"
 import GameSettings from "./config/GameSettings"
 
+// Import TestScene conditionally (will be tree-shaken in production if debug is false)
+import { TestScene } from "./scenes/TestScene"
+
 const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement
+
+// Build scene list
+const scenes: any[] = [LoadingScene, SplashScene, InstructionsScene, GameScene]
+
+// Add TestScene only in debug mode
+if (GameSettings.debug) {
+  scenes.push(TestScene)
+  console.log("🧪 TestScene enabled - Press 'T' in game to access")
+}
 
 // Game configuration
 const config: Phaser.Types.Core.GameConfig = {
@@ -24,12 +36,12 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   canvas: canvas,
   backgroundColor: "#000000", // Pure black to avoid grey flash
-  scene: [LoadingScene, SplashScene, InstructionsScene, GameScene],
+  scene: scenes,
   physics: {
     default: "arcade",
     arcade: {
       gravity: { y: GameSettings.game.gravity },
-      debug: GameSettings.debug,
+      debug: false,  // Keep hitboxes off in main game (use H key in test scene to toggle)
     },
   },
   // Audio configuration for better mobile compatibility

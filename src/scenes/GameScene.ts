@@ -1697,6 +1697,15 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard!.enabled = true
     this.touchControls.enable()
     
+    // Add debug test level shortcut (no visual indicator in main game)
+    if (GameSettings.debug) {
+      // Add keyboard listener for 'T' key - silent activation
+      this.input.keyboard!.on('keydown-T', () => {
+        console.log('🧪 Switching to TestScene...')
+        this.scene.start('TestScene')
+      })
+    }
+    
     // Create menu overlay (after HUD is created)
     this.menuOverlay = new MenuOverlay(this)
     
@@ -6635,19 +6644,8 @@ export class GameScene extends Phaser.Scene {
     
     // Player start position (replaced console.log)
     
-    // Debug markers (temporary)
-    if (GameSettings.debug) {
-      const debugGraphics = this.add.graphics()
-      debugGraphics.fillStyle(0xff0000, 0.5)
-      debugGraphics.fillCircle(ladderX, floorY, 10) // Red dot at floor level
-      debugGraphics.fillStyle(0x00ff00, 0.5)
-      debugGraphics.fillCircle(ladderX, playerStartY, 10) // Green dot at player start
-      debugGraphics.fillStyle(0x0000ff, 0.5)
-      debugGraphics.fillCircle(targetX, targetY, 10) // Blue dot at target position
-      debugGraphics.setDepth(500)
-      
-      // Debug color indicators (replaced console.log)
-    }
+    // Debug markers removed - no longer needed
+    // (These were causing red, green, and blue circles during ladder animation)
     
     // Phase 1: Climbing animation - climb to the actual target Y (not floor Y)
     this.animatePlayerClimbing(ladderX, targetY, () => {
