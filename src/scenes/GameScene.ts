@@ -1,6 +1,6 @@
 import GameSettings from "../config/GameSettings"
 import { Player } from "../objects/Player"
-import { Cat } from "../objects/Cat"
+import { Cat, CatColor } from "../objects/Cat"
 import { BaseBlu } from "../objects/BaseBlu"
 import { Beetle } from "../objects/Beetle"
 import { Coin } from "../objects/Coin"
@@ -8466,15 +8466,15 @@ export class GameScene extends Phaser.Scene {
    * This is a nuclear option to ensure gameplay continues
    */
   private checkAndReplaceStuckChompers(): void {
-    if (!this.enemies) return
+    if (!this.cats) return
     
-    this.enemies.children.entries.forEach(enemy => {
+    this.cats.children.entries.forEach(enemy => {
       if (enemy instanceof Cat) {
         const cat = enemy as Cat
         
         // Check if this is a Chomper that's been stuck multiple times
         const stuckCount = cat.getData('stuckRecoveryCount') || 0
-        if (cat.catColor === CatColor.BLUE && stuckCount >= 3) {
+        if (cat.getCatColor() === CatColor.BLUE && stuckCount >= 3) {
           console.warn('Replacing chronically stuck Chomper with Snail at position', cat.x, cat.y)
           
           // Store the enemy's position and floor info
@@ -8490,17 +8490,14 @@ export class GameScene extends Phaser.Scene {
             this,
             enemyX,
             enemyY,
-            'red', // Snail color
-            this.anims
+            platformBounds.left,
+            platformBounds.right,
+            CatColor.RED, // Snail color
+            false // Not a stalker
           )
           
-          // Set up the new enemy with the same platform bounds
-          if (platformBounds) {
-            newEnemy.setPlatformBounds(platformBounds.left, platformBounds.right)
-          }
-          
-          // Add to enemies group
-          this.enemies.add(newEnemy)
+          // Add to cats group
+          this.cats.add(newEnemy)
           
           // Log the replacement for debugging
           console.log('Successfully replaced stuck Chomper with Snail')

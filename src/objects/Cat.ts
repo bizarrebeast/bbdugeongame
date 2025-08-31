@@ -55,9 +55,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   // Stuck detection for Chompers
   private stuckTimer: number = 0
   private lastPositionX: number = 0
-  private stuckThreshold: number = 2000 // 2 seconds max for any animation
-  private positionCheckInterval: number = 500 // Check position every 0.5 seconds
+  private stuckThreshold: number = 1500 // Reduced to 1.5 seconds for faster recovery
+  private positionCheckInterval: number = 250 // Check position every 0.25 seconds
   private positionCheckTimer: number = 0
+  private positionHistory: number[] = [] // Track last few positions
+  private velocityStuckTimer: number = 0 // Track time with zero velocity
   
   // Individual speed variation to prevent clustering
   private individualSpeedMultiplier: number = 1
@@ -435,11 +437,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateBluePatrol(): void {
-    // PAUSE MOVEMENT during bite animations to prevent getting stuck
+    // PAUSE movement during bite animations for cleaner look
+    // Our new safety systems will prevent getting stuck
     if (this.blueEnemyAnimationState === 'bite_partial' || 
         this.blueEnemyAnimationState === 'bite_full') {
       this.setVelocityX(0) // Stop moving during bite
-      return // Skip rest of patrol logic
+      // Don't return - still need to check edges for safety
     }
     
     // Handle turn delay timer
@@ -447,32 +450,54 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.turnDelayTimer -= Phaser.Math.Clamp(16, 0, 100) // Use fixed delta approximation
     }
     
-    // Check for edge proximity and turn around if too close during idle
-    const edgeBuffer = 32 // 1 tile buffer from edges
+    // Check for edge proximity and turn around if too close
+    const edgeBuffer = 40 // Increased buffer for safer turning
     if (this.x <= this.platformBounds.left + edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
         this.direction = 1
+        // Force position away from edge if too close
+        if (this.x < this.platformBounds.left + 20) {
+          this.x = this.platformBounds.left + 20
+        }
         // Add small random delay to prevent synchronized turning (50-200ms)
         this.turnDelayTimer = 50 + Math.random() * 150
-        // If we're about to bite and near edge, delay the bite
-        if (this.biteTimer >= this.nextBiteTime) {
-          this.nextBiteTime = this.biteTimer + 500 // Delay bite by 0.5s
+        // Cancel any ongoing bite animation at edges
+        if (this.blueEnemyAnimationState === 'bite_partial' || 
+            this.blueEnemyAnimationState === 'bite_full') {
+          this.blueEnemyAnimationState = 'idle'
+          this.biteAnimationTimer = 0
+          this.nextBiteTime = this.biteTimer + 1000 // Delay next bite
+          // Resume movement when cancelling bite at edge
+          this.setVelocityX(this.moveSpeed * this.direction)
         }
       }
     } else if (this.x >= this.platformBounds.right - edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
         this.direction = -1
+        // Force position away from edge if too close
+        if (this.x > this.platformBounds.right - 20) {
+          this.x = this.platformBounds.right - 20
+        }
         // Add small random delay to prevent synchronized turning (50-200ms)
         this.turnDelayTimer = 50 + Math.random() * 150
-        // If we're about to bite and near edge, delay the bite
-        if (this.biteTimer >= this.nextBiteTime) {
-          this.nextBiteTime = this.biteTimer + 500 // Delay bite by 0.5s
+        // Cancel any ongoing bite animation at edges
+        if (this.blueEnemyAnimationState === 'bite_partial' || 
+            this.blueEnemyAnimationState === 'bite_full') {
+          this.blueEnemyAnimationState = 'idle'
+          this.biteAnimationTimer = 0
+          this.nextBiteTime = this.biteTimer + 1000 // Delay next bite
+          // Resume movement when cancelling bite at edge
+          this.setVelocityX(this.moveSpeed * this.direction)
         }
       }
     }
     
-    // Normal patrol movement
-    this.setVelocityX(this.moveSpeed * this.direction)
+    // Set movement based on current state
+    if (this.blueEnemyAnimationState === 'idle') {
+      // Normal patrol movement
+      this.setVelocityX(this.moveSpeed * this.direction)
+    }
+    // Movement during bite is already handled above
     
     // Update sprite flip for all blue enemy sprites
     if (this.catColor === CatColor.BLUE) {
@@ -749,7 +774,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private initializeBlueEnemyAnimations(): void {
     // Set random initial timers to make enemies feel unique
     this.nextBiteTime = Math.random() * 2000 + 2000 // 2-4 seconds
-    this.nextBlinkTime = Math.random() * 1000 + 1000 // 1-2 seconds
+    this.nextBlinkTime = Number.MAX_SAFE_INTEGER // DISABLED - No blinking for Chompers
     this.blueEnemyAnimationState = 'idle'
   }
   
@@ -770,11 +795,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Reset the fixed flag if we have a valid texture now
     this.blueTextureFixed = false
     
-    // Update timers
+    // Update timers (skip blink timer for performance)
     this.biteTimer += delta
-    this.blinkTimer += delta
+    // this.blinkTimer += delta  // DISABLED for Chompers
     this.biteAnimationTimer += delta
-    this.blinkAnimationTimer += delta
+    // this.blinkAnimationTimer += delta  // DISABLED for Chompers
     
     // Handle current animation state
     switch (this.blueEnemyAnimationState) {
@@ -788,11 +813,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.handleBiteFullState()
         break
       case 'blinking':
-        this.handleBlinkingState()
+        // Should never happen but handle gracefully
+        this.blueEnemyAnimationState = 'idle'
         break
     }
     
-    // Check for new animation triggers (independent of current state)
+    // Check for new animation triggers (bite only, no blinking)
     this.checkForNewAnimations()
   }
   
@@ -805,12 +831,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (this.biteAnimationTimer < 150) {
       // First part of bite - partial open
       this.changeBlueEnemyTexture('blueEnemyMouthPartialOpen')
-    } else if (this.biteAnimationTimer > 400) {
-      // SAFETY: Force transition if taking too long
+    } else if (this.biteAnimationTimer > 300) {
+      // SAFETY: Force transition if taking too long (reduced from 400)
       console.warn('Bite partial state exceeded max duration - forcing transition')
       this.blueEnemyAnimationState = 'idle'
       this.biteAnimationTimer = 0
       this.nextBiteTime = this.biteTimer + 3000 // Delay next bite
+      // Resume movement immediately after failed bite
+      this.setVelocityX(this.moveSpeed * this.direction)
     } else {
       // Normal transition to full bite
       this.blueEnemyAnimationState = 'bite_full'
@@ -822,58 +850,42 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (this.biteAnimationTimer < 200) {
       // Full bite - mouth wide open
       this.changeBlueEnemyTexture('blueEnemyMouthOpen')
-    } else if (this.biteAnimationTimer > 500) {
-      // SAFETY: Force end if taking too long
+    } else if (this.biteAnimationTimer > 350) {
+      // SAFETY: Force end if taking too long (reduced from 500)
       console.warn('Bite full state exceeded max duration - forcing idle')
       this.blueEnemyAnimationState = 'idle'
       this.biteAnimationTimer = 0
       this.nextBiteTime = this.biteTimer + 3000 // Delay next bite
+      // Resume movement immediately
+      this.setVelocityX(this.moveSpeed * this.direction)
     } else {
       // Normal return to idle
       this.blueEnemyAnimationState = 'idle'
       this.biteAnimationTimer = 0
       // Set next bite time with variation
       this.nextBiteTime = this.biteTimer + Math.random() * 2000 + 2000 // 2-4 seconds
+      // Explicitly resume movement after bite completes
+      this.setVelocityX(this.moveSpeed * this.direction)
     }
   }
   
   private handleBlinkingState(): void {
-    if (this.blinkAnimationTimer < 150) {
-      // Show blinking version based on current mouth state
-      let blinkTexture = 'blueEnemyMouthClosedBlinking'
-      
-      if (this.blueEnemyAnimationState === 'bite_partial') {
-        blinkTexture = 'blueEnemyMouthPartialOpenBlinking'
-      } else if (this.blueEnemyAnimationState === 'bite_full') {
-        blinkTexture = 'blueEnemyMouthOpenBlinking'
-      }
-      
-      this.changeBlueEnemyTexture(blinkTexture)
-    } else {
-      // Return to previous state
-      this.blueEnemyAnimationState = 'idle'
-      this.blinkAnimationTimer = 0
-      // Set next blink time with variation
-      this.nextBlinkTime = this.blinkTimer + Math.random() * 1000 + 1000 // 1-2 seconds
-    }
+    // BLINKING DISABLED FOR CHOMPERS
+    // If somehow we get here, immediately return to idle
+    this.blueEnemyAnimationState = 'idle'
+    this.blinkAnimationTimer = 0
+    this.nextBlinkTime = Number.MAX_SAFE_INTEGER // Keep blinking disabled
   }
   
   private checkForNewAnimations(): void {
-    // Check for bite trigger (not while already biting or blinking)
+    // Check for bite trigger (not while already biting)
     if (this.biteTimer >= this.nextBiteTime && this.blueEnemyAnimationState === 'idle') {
       this.blueEnemyAnimationState = 'bite_partial'
       this.biteAnimationTimer = 0
     }
     
-    // Check for blink trigger - CANNOT interrupt bite animations
-    // This prevents the stuck biting issue
-    if (this.blinkTimer >= this.nextBlinkTime && 
-        this.blueEnemyAnimationState !== 'blinking' &&
-        this.blueEnemyAnimationState !== 'bite_partial' &&  // Don't interrupt bite
-        this.blueEnemyAnimationState !== 'bite_full') {      // Don't interrupt bite
-      this.blueEnemyAnimationState = 'blinking'
-      this.blinkAnimationTimer = 0
-    }
+    // BLINKING DISABLED FOR CHOMPERS - Prevents stuck issues
+    // Chompers only bite, no blinking
   }
   
   private changeBlueEnemyTexture(textureKey: string): void {
@@ -898,44 +910,76 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private checkIfChomperStuck(delta: number): void {
+    // Track position history
+    this.positionCheckTimer += delta
+    if (this.positionCheckTimer >= this.positionCheckInterval) {
+      this.positionHistory.push(this.x)
+      if (this.positionHistory.length > 8) { // Keep last 8 positions (2 seconds)
+        this.positionHistory.shift()
+      }
+      this.positionCheckTimer = 0
+    }
+    
+    // Check velocity stuck (should always be moving unless at edge)
+    if (Math.abs(this.body!.velocity.x) < 1) {
+      this.velocityStuckTimer += delta
+      
+      // If velocity is zero for too long and not at edge
+      if (this.velocityStuckTimer > 1000 && 
+          this.x > this.platformBounds.left + 40 && 
+          this.x < this.platformBounds.right - 40) {
+        console.warn('Chomper velocity stuck - forcing reset')
+        this.forceResetChomper()
+        return
+      }
+    } else {
+      this.velocityStuckTimer = 0
+    }
+    
+    // Check if stuck in same position
+    if (this.positionHistory.length >= 4) {
+      const allSame = this.positionHistory.every(pos => 
+        Math.abs(pos - this.positionHistory[0]) < 2
+      )
+      
+      if (allSame && this.x > this.platformBounds.left + 40 && 
+          this.x < this.platformBounds.right - 40) {
+        console.warn('Chomper position stuck (not at edge) - forcing reset')
+        this.forceResetChomper()
+        return
+      }
+    }
+    
     // Only check during bite animations
     if (this.blueEnemyAnimationState === 'bite_partial' || 
         this.blueEnemyAnimationState === 'bite_full') {
       
-      // Check if position hasn't changed
-      this.positionCheckTimer += delta
-      if (this.positionCheckTimer >= this.positionCheckInterval) {
-        const currentX = this.x
-        const moved = Math.abs(currentX - this.lastPositionX) > 1
-        
-        if (!moved && Math.abs(this.body!.velocity.x) < 1) {
-          // Not moving during bite - increment stuck timer
-          this.stuckTimer += this.positionCheckInterval
-          console.warn(`Chomper stuck for ${this.stuckTimer}ms at position ${currentX}`)
-        } else {
-          // Moving normally, reset stuck timer
-          this.stuckTimer = 0
-        }
-        
-        this.lastPositionX = currentX
-        this.positionCheckTimer = 0
-      }
-      
       // Check if animation is taking too long
-      if (this.biteAnimationTimer > 500) {
+      if (this.biteAnimationTimer > 400) { // Reduced from 500
         console.warn('Bite animation taking too long - forcing reset')
         this.forceResetChomper()
+        return
       }
       
-      // Check if stuck for too long
-      if (this.stuckTimer >= this.stuckThreshold) {
-        console.error('Chomper stuck for 2+ seconds - forcing recovery!')
-        this.forceResetChomper()
+      // Track stuck time during bite
+      const currentX = this.x
+      const moved = Math.abs(currentX - this.lastPositionX) > 1
+      
+      if (!moved) {
+        this.stuckTimer += delta
+        if (this.stuckTimer >= this.stuckThreshold) {
+          console.error('Chomper stuck during bite - forcing recovery!')
+          this.forceResetChomper()
+          return
+        }
+      } else {
+        this.stuckTimer = 0
       }
+      
+      this.lastPositionX = currentX
     } else {
-      // Not in bite animation, reset timers
+      // Not in bite animation, reset bite stuck timer
       this.stuckTimer = 0
-      this.positionCheckTimer = 0
       this.lastPositionX = this.x
     }
   }
@@ -943,38 +987,55 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private forceResetChomper(): void {
     console.warn('=== FORCE RESETTING STUCK CHOMPER ===')
     
-    // Reset animation state
+    // Reset ALL animation states
     this.blueEnemyAnimationState = 'idle'
     this.biteAnimationTimer = 0
     this.blinkAnimationTimer = 0
+    this.biteTimer = 0
+    this.blinkTimer = 0
     
-    // Delay next bite to prevent immediate re-trigger
-    this.nextBiteTime = this.biteTimer + 4000 // 4 second delay
+    // Delay next animations significantly
+    this.nextBiteTime = 5000 // 5 second delay
+    this.nextBlinkTime = Number.MAX_SAFE_INTEGER // Keep blinking disabled
     
     // Reset stuck detection
     this.stuckTimer = 0
     this.positionCheckTimer = 0
+    this.velocityStuckTimer = 0
+    this.positionHistory = []
     
     // Force texture update
     this.changeBlueEnemyTexture('blueEnemyMouthClosed')
     
-    // Check for edge and force direction change if needed
-    if (this.x <= this.platformBounds.left + 32) {
+    // Force direction change to unstick
+    if (this.x <= this.platformBounds.left + 50) {
       this.direction = 1 // Go right
-    } else if (this.x >= this.platformBounds.right - 32) {
-      this.direction = -1 // Go left
+      this.x = this.platformBounds.left + 51 // Move away from edge
+    } else if (this.x >= this.platformBounds.right - 50) {
+      this.direction = -1 // Go left  
+      this.x = this.platformBounds.right - 51 // Move away from edge
+    } else {
+      // In middle - pick random direction
+      this.direction = Math.random() < 0.5 ? -1 : 1
     }
     
-    // Force movement resume
-    this.setVelocityX(this.moveSpeed * this.direction)
+    // Force movement resume with slight speed boost temporarily
+    this.setVelocityX(this.moveSpeed * this.direction * 1.2)
+    
+    // Reset to normal speed after 500ms
+    this.scene.time.delayedCall(500, () => {
+      if (this.active) {
+        this.setVelocityX(this.moveSpeed * this.direction)
+      }
+    })
     
     // Mark this enemy as potentially problematic
     this.setData('recoveredFromStuck', true)
     this.setData('stuckRecoveryCount', (this.getData('stuckRecoveryCount') || 0) + 1)
     
     // If stuck too many times, mark for replacement
-    if (this.getData('stuckRecoveryCount') >= 3) {
-      console.error('Chomper stuck 3+ times - marking for replacement')
+    if (this.getData('stuckRecoveryCount') >= 2) { // Reduced from 3
+      console.error('Chomper stuck 2+ times - marking for replacement')
       this.setData('needsReplacement', true)
     }
   }
