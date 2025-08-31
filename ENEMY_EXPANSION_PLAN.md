@@ -417,8 +417,247 @@ difficultyScore = baseScore * speedMultiplier * healthMultiplier * specialAbilit
 - Sound effects: < 50KB per enemy
 - Particle effects: Shared particle pool
 
+## 📋 COMPREHENSIVE NEW ENEMY IMPLEMENTATION CHECKLIST
+
+When adding a new enemy to Bizarre Underground, use this checklist to ensure complete integration across all game systems. Check off each item as you complete it.
+
+### Phase 1: Core Implementation
+#### Enemy Class Setup
+- [ ] Create new TypeScript class file in `src/objects/enemies/[EnemyName].ts`
+- [ ] Extend appropriate base class (Phaser.Physics.Arcade.Sprite or existing enemy base)
+- [ ] Implement constructor with scene, x, y, and platform bounds parameters
+- [ ] Set up physics body with appropriate size and offset
+- [ ] Configure collision properties (setCollideWorldBounds, setBounce, setGravityY)
+- [ ] Set appropriate depth layer (typically 15 for enemies)
+- [ ] Implement update() method with delta time handling
+- [ ] Add destroy() method with proper cleanup
+
+#### Visual Assets
+- [ ] Create/commission sprite artwork (recommended: 32x32 or 48x48)
+- [ ] Create animation frames if needed (idle, move, attack, death)
+- [ ] Add sprite loading in PreloadScene.ts
+- [ ] Verify sprites load correctly in all scenes
+- [ ] Set up proper display size with setDisplaySize()
+- [ ] Configure sprite flipping for direction changes if needed
+
+#### Movement & Behavior
+- [ ] Define base movement speed and patterns
+- [ ] Implement platform edge detection and turning
+- [ ] Add individual speed variation (0.9-1.1x multiplier)
+- [ ] Apply level-based speed scaling from EnemySpawningSystem
+- [ ] Implement special abilities/behaviors as defined
+- [ ] Add state machine if complex behaviors needed
+- [ ] Test movement across different platform configurations
+
+### Phase 2: System Integration
+#### Enemy Spawning System
+- [ ] Add new enemy to `EnemyType` enum in EnemySpawningSystem.ts
+- [ ] Create `EnemyDefinition` entry with:
+  - [ ] type (matches enum)
+  - [ ] color (for identification)
+  - [ ] difficultyScore (0.5-4.0 range)
+  - [ ] speed multiplier (0.25-1.5x)
+  - [ ] pointValue (25-1000 points)
+  - [ ] description (brief behavior summary)
+- [ ] Add spawn weights to all tier configurations:
+  - [ ] tutorial_early (levels 1-3)
+  - [ ] tutorial_late (levels 4-10)
+  - [ ] basic (levels 11-20)
+  - [ ] speed (levels 21-30)
+  - [ ] advanced (levels 31-40)
+  - [ ] expert (levels 41-50)
+  - [ ] beast (levels 51+)
+- [ ] Add special spawn checking method if needed (like isStalkerType())
+- [ ] Update selectEnemiesForFloor() logic if special rules apply
+- [ ] Set max per floor limits if restricted (like BaseBlu)
+
+#### GameScene Integration
+- [ ] Create enemy group in GameScene: `this.[enemyName]s: Phaser.Physics.Arcade.Group`
+- [ ] Initialize group in create() method
+- [ ] Add enemy spawning logic in floor generation
+- [ ] Configure spawn positioning (zones, edges, special placement)
+- [ ] Add to resetLevel() cleanup
+- [ ] Add to pauseAllEnemies() and resumeAllEnemies()
+- [ ] Implement in update() loop for animation/behavior updates
+
+#### Collision System
+- [ ] Add platform collisions: `this.physics.add.collider(this.[enemyName]s, this.platforms)`
+- [ ] Add spike collisions if enemy walks on spikes
+- [ ] Add player overlap detection for damage
+- [ ] Add player collision for jumping on enemy
+- [ ] Handle invincibility interactions
+- [ ] Add enemy-to-enemy collisions if needed
+- [ ] Configure special collision behaviors (stunning, bouncing, etc.)
+- [ ] Test collision boxes with debug mode
+
+### Phase 3: Combat & Scoring
+#### Player Interactions
+- [ ] Implement damage to player on contact
+- [ ] Add jump-kill detection and scoring
+- [ ] Handle invincibility pendant interactions
+- [ ] Support Crystal Ball projectile damage
+- [ ] Implement combo system integration
+- [ ] Add special defeat conditions if applicable
+- [ ] Create death/squish animation
+- [ ] Add particle effects on defeat
+
+#### Kill Tracking
+- [ ] Add enemy type to `gameStats.enemyKills` object
+- [ ] Implement kill increment in defeat handler
+- [ ] Add to game over statistics display
+- [ ] Update stats formatting if needed for 17+ enemies
+- [ ] Test kill counting accuracy
+- [ ] Verify stats persist across deaths
+
+#### Audio Integration
+- [ ] Add movement sound effects
+- [ ] Create unique defeat sound
+- [ ] Add special ability sounds
+- [ ] Implement warning sounds if dangerous
+- [ ] Configure volume levels
+- [ ] Test audio across all enemy states
+
+### Phase 4: Testing & Debug
+#### Test Scene Integration
+- [ ] Add enemy to TestScene.ts if it exists
+- [ ] Create spawn button in debug controls
+- [ ] Add to "spawn all enemies" function
+- [ ] Include in stress test scenarios
+- [ ] Add parameter adjustment controls
+- [ ] Verify hitbox display in debug mode
+- [ ] Test with speed multipliers (0.5x, 1x, 2x, 4x)
+
+#### Debug Features
+- [ ] Add debug key for instant spawn (if applicable)
+- [ ] Include in performance profiling
+- [ ] Add to memory usage monitoring
+- [ ] Create specific test scenarios
+- [ ] Document any known issues
+- [ ] Add console logging for development (remove for production)
+
+### Phase 5: Documentation & Polish
+#### Documentation Updates
+- [ ] Update ENEMY_COMPREHENSIVE_GUIDE.md with:
+  - [ ] Complete enemy stats
+  - [ ] Movement patterns
+  - [ ] Spawn distribution
+  - [ ] Special mechanics
+- [ ] Add to README.md enemy list
+- [ ] Update GAMEPLAN.md if significant feature
+- [ ] Document in relevant sprint files
+- [ ] Add to visual assets checklist if new sprites
+
+#### Instructions Scene
+- [ ] Add enemy sprite to instructions display
+- [ ] Write enemy description text
+- [ ] Include point value
+- [ ] Explain special mechanics
+- [ ] Add to appropriate category section
+- [ ] Test instructions scroll with new content
+
+### Phase 6: Quality Assurance
+#### Gameplay Testing
+- [ ] Test spawn rates across all level tiers
+- [ ] Verify difficulty progression feels balanced
+- [ ] Check enemy doesn't break on edge cases:
+  - [ ] Narrow platforms
+  - [ ] Near ladders
+  - [ ] Platform gaps
+  - [ ] With treasure chests
+  - [ ] Multiple enemies clustered
+- [ ] Confirm proper behavior during:
+  - [ ] Level transitions
+  - [ ] Player death/respawn
+  - [ ] Pause/resume
+  - [ ] Power-up states
+- [ ] Test on minimum floor width (tutorial levels)
+- [ ] Test on maximum floor width (later levels)
+
+#### Performance Testing
+- [ ] Profile with 20+ enemies on screen
+- [ ] Check memory usage with enemy pooling
+- [ ] Verify 60 FPS maintained
+- [ ] Test on mobile devices
+- [ ] Monitor for memory leaks
+- [ ] Optimize animation updates if needed
+
+#### Compatibility Testing
+- [ ] Works with all existing power-ups:
+  - [ ] Invincibility Pendant
+  - [ ] Crystal Ball
+  - [ ] Cursed Orb (darkness)
+  - [ ] Cursed Teal Orb (reversed controls)
+- [ ] Compatible with combo system
+- [ ] Respects pause state
+- [ ] Saves/loads correctly (if applicable)
+- [ ] Works in all game modes
+
+### Phase 7: Final Verification
+#### Pre-Release Checklist
+- [ ] Remove all development console.log statements
+- [ ] Verify no placeholder graphics remain
+- [ ] Confirm all sounds implemented
+- [ ] Test complete gameplay loop
+- [ ] Check enemy appears in correct levels
+- [ ] Validate point values are balanced
+- [ ] Ensure no regression in existing enemies
+- [ ] Update version documentation
+
+#### Sign-off Requirements
+- [ ] Code review completed
+- [ ] Playtesting feedback incorporated
+- [ ] Performance benchmarks met
+- [ ] No critical bugs remaining
+- [ ] Documentation complete
+- [ ] Assets finalized
+- [ ] Ready for production
+
+### Special Considerations by Enemy Type
+
+#### If Flying Enemy:
+- [ ] Ignore platform collisions
+- [ ] Implement flight path/pattern
+- [ ] Add vertical bounds checking
+- [ ] Consider ladder interactions
+
+#### If Multi-Hit Enemy:
+- [ ] Track health/hit points
+- [ ] Show damage feedback
+- [ ] Implement invulnerability frames
+- [ ] Add health bar if needed
+
+#### If Spawning/Summoning Enemy:
+- [ ] Implement spawn limits
+- [ ] Add cleanup for spawned entities
+- [ ] Track parent-child relationships
+- [ ] Handle cascade deaths
+
+#### If Disguised Enemy (like Mimic):
+- [ ] Create disguised state sprites
+- [ ] Implement reveal trigger
+- [ ] Add surprise factor delay
+- [ ] Differentiate from real objects
+
+#### If Boss/Mini-Boss:
+- [ ] Add health bar UI
+- [ ] Create phase transitions
+- [ ] Implement special attacks
+- [ ] Add victory celebration
+- [ ] Consider checkpoint system
+
+### Common Pitfalls to Avoid
+1. **Don't forget to add to all spawn weight tiers** - Enemy won't appear if missing
+2. **Always test with speed multipliers** - Ensures scaling works correctly
+3. **Check memory cleanup in destroy()** - Prevents memory leaks
+4. **Verify collision boxes match visuals** - Use debug mode to check
+5. **Test edge detection on narrow platforms** - Common source of bugs
+6. **Don't hardcode point values** - Use EnemySpawningSystem.getPointValue()
+7. **Remember mobile touch controls** - Test enemy is beatable on mobile
+8. **Update kill tracking immediately** - Don't batch or delay increments
+
 ---
 
-*Document Version: 1.0*  
+*Document Version: 2.0*  
 *Last Updated: August 2025*  
 *Author: Bizarre Underground Development Team*
+*Checklist Added: August 31, 2025*
