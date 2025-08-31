@@ -2352,61 +2352,78 @@ export class GameScene extends Phaser.Scene {
       }
       
       if (validPositions.length > 0) {
+        const laddersPlaced: number[] = []
+        
         if (floor === 0) {
-          // Ground floor - place 2 ladders if possible
+          // GROUND FLOOR ONLY: Place 2 ladders with good spacing
+          // Randomize positions for challenge, not predictable zones
+          
           if (validPositions.length >= 2) {
-            // Try to place ladders on opposite sides
-            const leftPositions = validPositions.filter(pos => pos < floorWidth / 2)
-            const rightPositions = validPositions.filter(pos => pos >= floorWidth / 2)
+            // Place first ladder randomly
+            const firstLadder = validPositions[Math.floor(Math.random() * validPositions.length)]
+            this.createContinuousLadder(firstLadder * tileSize, bottomY, topY)
+            laddersPlaced.push(firstLadder)
             
-            if (leftPositions.length > 0 && rightPositions.length > 0) {
-              const leftLadder = leftPositions[Math.floor(Math.random() * leftPositions.length)]
-              // Ensure right ladder is at least 4 tiles away from left
-              const validRightPositions = rightPositions.filter(pos => Math.abs(pos - leftLadder) >= 4)
-              if (validRightPositions.length > 0) {
-                const rightLadder = validRightPositions[Math.floor(Math.random() * validRightPositions.length)]
-                this.createContinuousLadder(leftLadder * tileSize, bottomY, topY)
-                this.createContinuousLadder(rightLadder * tileSize, bottomY, topY)
-                this.storeLadderPositions(floor, [leftLadder, rightLadder])
-              } else {
-                // Only place left ladder if right can't be properly spaced
-                this.createContinuousLadder(leftLadder * tileSize, bottomY, topY)
-                this.storeLadderPositions(floor, [leftLadder])
-              }
+            // Place second ladder with at least 6 tile separation
+            const minSeparation = 6
+            const secondLadderPositions = validPositions.filter(pos => 
+              Math.abs(pos - firstLadder) >= minSeparation
+            )
+            
+            if (secondLadderPositions.length > 0) {
+              // Pick from valid separated positions
+              const secondLadder = secondLadderPositions[Math.floor(Math.random() * secondLadderPositions.length)]
+              this.createContinuousLadder(secondLadder * tileSize, bottomY, topY)
+              laddersPlaced.push(secondLadder)
             } else {
-              // Place 2 ladders from available positions with proper spacing
-              const pos1 = validPositions[Math.floor(Math.random() * validPositions.length)]
-              const validPos2Options = validPositions.filter(p => Math.abs(p - pos1) >= 4)
-              this.createContinuousLadder(pos1 * tileSize, bottomY, topY)
-              if (validPos2Options.length > 0) {
-                const pos2 = validPos2Options[Math.floor(Math.random() * validPos2Options.length)]
-                this.createContinuousLadder(pos2 * tileSize, bottomY, topY)
-                this.storeLadderPositions(floor, [pos1, pos2])
-              } else {
-                this.storeLadderPositions(floor, [pos1])
+              // If no good separation, find the furthest position
+              let maxDistance = 0
+              let bestSecondLadder = -1
+              
+              for (const pos of validPositions) {
+                const distance = Math.abs(pos - firstLadder)
+                if (distance > maxDistance && pos !== firstLadder) {
+                  maxDistance = distance
+                  bestSecondLadder = pos
+                }
               }
+              
+              if (bestSecondLadder !== -1 && maxDistance >= 3) {
+                this.createContinuousLadder(bestSecondLadder * tileSize, bottomY, topY)
+                laddersPlaced.push(bestSecondLadder)
+              }
+              // If still can't place second ladder, that's ok - at least we have one
             }
           } else {
-            // Only one valid position
-            this.createContinuousLadder(validPositions[0] * tileSize, bottomY, topY)
-            this.storeLadderPositions(floor, [validPositions[0]])
+            // Only one valid position on ground floor - place it
+            const ladder = validPositions[0]
+            this.createContinuousLadder(ladder * tileSize, bottomY, topY)
+            laddersPlaced.push(ladder)
           }
+          
         } else {
-          // Upper floors - place 1 ladder, avoid stacking directly above previous floor's ladder
+          // ALL UPPER FLOORS: Only 1 ladder for challenge
+          // Smart placement to avoid vertical stacking
+          
           const prevFloorLadders = this.ladderPositions.get(floor - 1) || []
           
-          // Prefer positions not directly above previous ladders
-          const preferredPositions = validPositions.filter(pos => 
-            !prevFloorLadders.some(prevPos => Math.abs(pos - prevPos) < 2)
+          // Prefer positions NOT directly above/below previous ladders
+          const antiStackPositions = validPositions.filter(pos => 
+            !prevFloorLadders.some(prevPos => Math.abs(pos - prevPos) < 3)
           )
           
-          // Use preferred positions if available, otherwise use any valid position
-          const positionsToUse = preferredPositions.length > 0 ? preferredPositions : validPositions
-          const randomPos = positionsToUse[Math.floor(Math.random() * positionsToUse.length)]
+          // Use anti-stack positions if available, otherwise use any valid position
+          const positionsToUse = antiStackPositions.length > 0 ? antiStackPositions : validPositions
           
-          this.createContinuousLadder(randomPos * tileSize, bottomY, topY)
-          this.storeLadderPositions(floor, [randomPos])
+          // Randomize within the valid positions for variety
+          const ladderPos = positionsToUse[Math.floor(Math.random() * positionsToUse.length)]
+          
+          this.createContinuousLadder(ladderPos * tileSize, bottomY, topY)
+          laddersPlaced.push(ladderPos)
         }
+        
+        // Store ladder positions for reference
+        this.storeLadderPositions(floor, laddersPlaced)
       }
       // If no valid positions, skip this connection (emergency fallback)
     }
@@ -2905,116 +2922,85 @@ export class GameScene extends Phaser.Scene {
         continue
       }
 
-      // Determine spawn pattern for this floor
-      const spawnPattern = this.getRandomSpawnPattern(selectedEnemies.length)
-      // Using spawn pattern for enemies (replaced console.log)
+      // Use zone-based spawning system
+      const currentLevel = this.levelManager.getCurrentLevel()
+      const availableZones = this.calculateEnemyZones(floorWidth, currentLevel)
+      
+      // Get ladder and chest positions for this floor to avoid them
+      const ladderPositions = this.ladderPositions.get(floor) || []
+      const chestPositions: number[] = [] // Will be populated if chests exist on this floor
+      
+      // Shuffle zones for random distribution
+      const shuffledZones = [...availableZones].sort(() => Math.random() - 0.5)
       
       // Track BaseBlu spawn positions - alternate between edges
       let baseBluCount = 0
       const baseBluSpawnedLeft = new Set<number>() // Track which floors have left-edge BaseBlu
       
-      // Create enemies based on selected types and pattern
-      for (let enemyIndex = 0; enemyIndex < selectedEnemies.length; enemyIndex++) {
+      // Create enemies based on selected types using zones
+      for (let enemyIndex = 0; enemyIndex < selectedEnemies.length && enemyIndex < shuffledZones.length; enemyIndex++) {
         const enemyType = selectedEnemies[enemyIndex]
+        const zone = shuffledZones[enemyIndex]
         
-        // Calculate position for this enemy based on spawn pattern
+        // Calculate position for this enemy within its zone
         let x: number
         let leftBound: number
         let rightBound: number
         
-        // Special positioning for BaseBlu enemies - spawn at edges
+        // Zone-based enemy positioning with special cases
         if (EnemySpawningSystem.isBaseBluType(enemyType)) {
-          // Count total BaseBlu enemies on this floor
+          // BaseBlu enemies always spawn at edges, ignore zones
           const totalBaseBluOnFloor = selectedEnemies.filter(e => EnemySpawningSystem.isBaseBluType(e)).length
           
           if (totalBaseBluOnFloor === 1) {
             // Single BaseBlu - randomly choose left or right edge
             const spawnLeft = Math.random() < 0.5
-            if (spawnLeft) {
-              x = tileSize * 1 // Left edge
-              leftBound = tileSize * 0.5
-              rightBound = tileSize * (floorWidth - 0.5)
-            } else {
-              x = tileSize * (floorWidth - 1) // Right edge
-              leftBound = tileSize * 0.5
-              rightBound = tileSize * (floorWidth - 0.5)
-            }
+            x = tileSize * (spawnLeft ? 1 : floorWidth - 1)
           } else {
-            // Multiple BaseBlu - alternate between edges
-            if (baseBluCount === 0) {
-              // First BaseBlu goes to left edge
-              x = tileSize * 1
-              baseBluSpawnedLeft.add(floor)
-            } else {
-              // Second BaseBlu goes to opposite edge
-              x = tileSize * (floorWidth - 1)
-            }
-            leftBound = tileSize * 0.5
-            rightBound = tileSize * (floorWidth - 0.5)
+            // Multiple BaseBlu - alternate edges
+            x = tileSize * (baseBluCount === 0 ? 1 : floorWidth - 1)
             baseBluCount++
           }
-        } else if (layout.gapStart === -1) {
-          // Complete floor - use pattern-based positioning for non-BaseBlu
-          const positions = this.calculateEnemyPositions(selectedEnemies.length, spawnPattern, floorWidth, tileSize)
-          const position = positions[enemyIndex]
+          // BaseBlu patrol full floor
+          leftBound = tileSize * 0.5
+          rightBound = tileSize * (floorWidth - 0.5)
           
-          x = tileSize * position.x
-          leftBound = tileSize * position.leftBound
-          rightBound = tileSize * position.rightBound
-        } else {
-          // Floor with gap - decide if enemy can cross spikes or stays on one side
-          const leftSectionSize = layout.gapStart
-          const rightSectionSize = floorWidth - (layout.gapStart + layout.gapSize)
+        } else if (EnemySpawningSystem.isStalkerType(enemyType)) {
+          // Stalkers avoid ladders and chests
+          let validZone = zone
           
-          // 40% chance for enemies to patrol across spikes (full floor width)
-          const canCrossSpikes = Math.random() < 0.4 && enemyType !== EnemyType.BASEBLU
+          // Check if zone contains ladder or chest
+          const zoneHasLadder = ladderPositions.some(ladderX => 
+            ladderX >= zone.start && ladderX < zone.end)
+          const zoneHasChest = chestPositions.some(chestX => 
+            chestX >= zone.start && chestX < zone.end)
           
-          if (canCrossSpikes) {
-            // Enemy can patrol across the entire floor including spikes
-            const randomX = 1 + Math.random() * (floorWidth - 2)
-            x = tileSize * randomX
-            leftBound = tileSize * 0.5
-            rightBound = tileSize * (floorWidth - 0.5)
-          } else {
-            // Enemy stays on one side of the gap
-            const useLeftSection = Math.random() < 0.5 && leftSectionSize > 4
+          // Find alternative zone if needed
+          if (zoneHasLadder || zoneHasChest) {
+            const alternativeZones = shuffledZones.filter((z, idx) => {
+              if (idx <= enemyIndex) return false // Already used
+              const hasLadder = ladderPositions.some(lx => lx >= z.start && lx < z.end)
+              const hasChest = chestPositions.some(cx => cx >= z.start && cx < z.end)
+              return !hasLadder && !hasChest
+            })
             
-            if (useLeftSection && leftSectionSize > 4) {
-              // Place on left section with wider patrol area
-              const randomOffset = 1 + Math.random() * (leftSectionSize - 2)
-              leftBound = tileSize * 0.5
-              rightBound = tileSize * (layout.gapStart - 0.5)
-              x = tileSize * randomOffset
-              
-              // Ensure minimum patrol width of 6 tiles if section is large enough
-              const currentWidth = (rightBound - leftBound) / tileSize
-              if (currentWidth < 6 && leftSectionSize >= 6) {
-                // Section is large enough for minimum patrol width
-                const center = x
-                leftBound = Math.max(tileSize * 0.5, center - tileSize * 3)
-                rightBound = Math.min(tileSize * (layout.gapStart - 0.5), center + tileSize * 3)
-              }
-            } else if (rightSectionSize > 4) {
-              // Place on right section with wider patrol area
-              const rightStart = layout.gapStart + layout.gapSize
-              const randomOffset = rightStart + 1 + Math.random() * (rightSectionSize - 2)
-              leftBound = tileSize * (rightStart + 0.5)
-              rightBound = tileSize * (floorWidth - 0.5)
-              x = tileSize * randomOffset
-              
-              // Ensure minimum patrol width of 6 tiles if section is large enough
-              const currentWidth = (rightBound - leftBound) / tileSize
-              if (currentWidth < 6 && rightSectionSize >= 6) {
-                // Section is large enough for minimum patrol width
-                const center = x
-                leftBound = Math.max(tileSize * (rightStart + 0.5), center - tileSize * 3)
-                rightBound = Math.min(tileSize * (floorWidth - 0.5), center + tileSize * 3)
-              }
-            } else {
-              // Skip if no valid section
-              continue
+            if (alternativeZones.length > 0) {
+              validZone = alternativeZones[0]
             }
           }
+          
+          // Place stalker in zone center
+          x = tileSize * (validZone.center + (Math.random() - 0.5))
+          // Stalkers patrol full floor
+          leftBound = tileSize * 0.5
+          rightBound = tileSize * (floorWidth - 0.5)
+          
+        } else {
+          // Regular enemies - use zone placement
+          x = tileSize * (zone.center + (Math.random() - 0.5) * 2)
+          // ALL enemies patrol full floor width (over gaps/spikes)
+          leftBound = tileSize * 0.5
+          rightBound = tileSize * (floorWidth - 0.5)
         }
         
         // Get speed multiplier for current level
@@ -3105,24 +3091,32 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Get a random spawn pattern for enemies on a floor
+   * Get zone size based on level for dynamic difficulty
    */
-  private getRandomSpawnPattern(enemyCount: number): string {
-    if (enemyCount === 1) {
-      // Single enemy: favor random placement for variety
-      return Math.random() < 0.8 ? 'random' : 'center'
-    } else if (enemyCount === 2) {
-      // Two enemies: heavily favor edges for separation
-      return Math.random() < 0.8 ? 'edges' : 'spread'
-    } else if (enemyCount === 3) {
-      // Three enemies: prefer spread to avoid clustering
-      const patterns = ['spread', 'spread', 'spread', 'edges', 'random'] // 60% spread
-      return patterns[Math.floor(Math.random() * patterns.length)]
-    } else {
-      // 4+ enemies: strongly favor spread and avoid clustering
-      const patterns = ['spread', 'spread', 'spread', 'spread', 'edges', 'random'] // 66% spread
-      return patterns[Math.floor(Math.random() * patterns.length)]
+  private getZoneSizeForLevel(level: number): number {
+    if (level <= 10) return 6   // Early levels: spacious zones
+    if (level <= 30) return 5   // Mid levels: moderate zones
+    if (level <= 50) return 4   // Late levels: tighter zones
+    return 4                     // Beast mode: maintain challenge
+  }
+  
+  /**
+   * Calculate enemy spawn zones for the floor
+   */
+  private calculateEnemyZones(floorWidth: number, level: number): Array<{start: number, end: number, center: number}> {
+    const zoneSize = this.getZoneSizeForLevel(level)
+    const numZones = Math.floor(floorWidth / zoneSize)
+    const zones: Array<{start: number, end: number, center: number}> = []
+    
+    for (let i = 0; i < numZones; i++) {
+      zones.push({
+        start: i * zoneSize,
+        end: (i + 1) * zoneSize,
+        center: (i * zoneSize) + (zoneSize / 2)
+      })
     }
+    
+    return zones
   }
 
   /**
@@ -6250,6 +6244,9 @@ export class GameScene extends Phaser.Scene {
       this.cats.children.entries.forEach(cat => {
         (cat as Cat).update(this.time.now, this.game.loop.delta)
       })
+      
+      // Check for Chompers that need replacement (last resort)
+      this.checkAndReplaceStuckChompers()
     }
     
     // Update all stalker cats and check ladder exits (only if group exists)
@@ -8406,6 +8403,54 @@ export class GameScene extends Phaser.Scene {
     
     // Restart the scene
     this.scene.restart()
+  }
+
+  /**
+   * Check for stuck Chompers and replace them with Snails as a last resort
+   * This is a nuclear option to ensure gameplay continues
+   */
+  private checkAndReplaceStuckChompers(): void {
+    if (!this.enemies) return
+    
+    this.enemies.children.entries.forEach(enemy => {
+      if (enemy instanceof Cat) {
+        const cat = enemy as Cat
+        
+        // Check if this is a Chomper that's been stuck multiple times
+        const stuckCount = cat.getData('stuckRecoveryCount') || 0
+        if (cat.catColor === CatColor.BLUE && stuckCount >= 3) {
+          console.warn('Replacing chronically stuck Chomper with Snail at position', cat.x, cat.y)
+          
+          // Store the enemy's position and floor info
+          const enemyX = cat.x
+          const enemyY = cat.y
+          const platformBounds = cat.platformBounds
+          
+          // Destroy the stuck Chomper
+          cat.destroy()
+          
+          // Create a Snail enemy as replacement
+          const newEnemy = new Cat(
+            this,
+            enemyX,
+            enemyY,
+            'red', // Snail color
+            this.anims
+          )
+          
+          // Set up the new enemy with the same platform bounds
+          if (platformBounds) {
+            newEnemy.setPlatformBounds(platformBounds.left, platformBounds.right)
+          }
+          
+          // Add to enemies group
+          this.enemies.add(newEnemy)
+          
+          // Log the replacement for debugging
+          console.log('Successfully replaced stuck Chomper with Snail')
+        }
+      }
+    })
   }
 
   shutdown() {

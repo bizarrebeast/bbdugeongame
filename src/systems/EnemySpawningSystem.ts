@@ -87,8 +87,8 @@ export class EnemySpawningSystem {
   }
 
   private static readonly LEVEL_SPAWN_WEIGHTS: Record<string, SpawnWeights> = {
-    // Levels 1-10: Tutorial Tier
-    'tutorial': {
+    // Levels 1-3: Tutorial Introduction
+    'tutorial_early': {
       [EnemyType.CATERPILLAR]: 0.70,  // 70% - Yellow Cat
       [EnemyType.BEETLE]: 0.30,       // 30% - Beetle
       [EnemyType.BASEBLU]: 0.00,
@@ -97,13 +97,23 @@ export class EnemySpawningSystem {
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
     },
+    // Levels 4-10: Tutorial with Variety
+    'tutorial_late': {
+      [EnemyType.CATERPILLAR]: 0.50,  // 50% - Yellow Cat
+      [EnemyType.BEETLE]: 0.25,       // 25% - Beetle
+      [EnemyType.CHOMPER]: 0.15,      // 15% - Blue Cat (Chomper)
+      [EnemyType.SNAIL]: 0.10,        // 10% - Red Cat (Snail) - NEW!
+      [EnemyType.BASEBLU]: 0.00,
+      [EnemyType.JUMPER]: 0.00,
+      [EnemyType.STALKER]: 0.00
+    },
     // Levels 11-20: Basic Challenge
     'basic': {
       [EnemyType.CHOMPER]: 0.50,      // 50% - Blue Cat
-      [EnemyType.CATERPILLAR]: 0.30,  // 30% - Yellow Cat
-      [EnemyType.BEETLE]: 0.20,       // 20% - Beetle
+      [EnemyType.CATERPILLAR]: 0.20,  // 20% - Yellow Cat (reduced)
+      [EnemyType.BEETLE]: 0.15,       // 15% - Beetle (reduced)
+      [EnemyType.SNAIL]: 0.15,        // 15% - Red Cat (Snail) - INCREASED!
       [EnemyType.BASEBLU]: 0.00,
-      [EnemyType.SNAIL]: 0.00,
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
     },
@@ -207,8 +217,10 @@ export class EnemySpawningSystem {
    * Get spawn weights based on level
    */
   static getSpawnWeights(levelNumber: number): SpawnWeights {
-    if (levelNumber <= 10) {
-      return this.LEVEL_SPAWN_WEIGHTS['tutorial']
+    if (levelNumber <= 3) {
+      return this.LEVEL_SPAWN_WEIGHTS['tutorial_early']
+    } else if (levelNumber <= 10) {
+      return this.LEVEL_SPAWN_WEIGHTS['tutorial_late']
     } else if (levelNumber <= 20) {
       return this.LEVEL_SPAWN_WEIGHTS['basic']
     } else if (levelNumber <= 30) {
