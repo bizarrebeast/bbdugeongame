@@ -1,5 +1,7 @@
 export class Rex extends Phaser.Physics.Arcade.Sprite {
-  private moveSpeed: number = 60  // Slower than green bouncer (which is 100)
+  private baseMoveSpeed: number = 60  // Base speed (slower than green bouncer which is 100)
+  private moveSpeed: number = 60  // Actual speed after multiplier
+  private speedMultiplier: number = 1  // Speed multiplier for difficulty scaling
   private direction: number = 1  // 1 for right, -1 for left
   private bounceTimer: number = 0
   private isSquishing: boolean = false
@@ -187,6 +189,11 @@ export class Rex extends Phaser.Physics.Arcade.Sprite {
         this.blinkTimer = 0
       }
     }
+  }
+  
+  setSpeedMultiplier(multiplier: number): void {
+    this.speedMultiplier = multiplier
+    this.moveSpeed = this.baseMoveSpeed * multiplier
   }
   
   squish(): void {

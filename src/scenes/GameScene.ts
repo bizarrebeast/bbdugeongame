@@ -8308,7 +8308,7 @@ export class GameScene extends Phaser.Scene {
     // Restart button (full game restart, changed to teal)
     const restartButton = this.add.rectangle(
       popupX,
-      popupY + 185,
+      popupY + 195,  // Adjusted for taller popup (was 185)
       150,
       40,
       0x20b2aa  // Teal color
@@ -8318,7 +8318,7 @@ export class GameScene extends Phaser.Scene {
     
     const restartText = this.add.text(
       popupX,
-      popupY + 185,
+      popupY + 195,  // Adjusted for taller popup (was 185)
       'CONTINUE',
       {
         fontSize: '14px',
