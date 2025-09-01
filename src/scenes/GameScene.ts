@@ -3,6 +3,7 @@ import { Player } from "../objects/Player"
 import { Cat, CatColor } from "../objects/Cat"
 import { BaseBlu } from "../objects/BaseBlu"
 import { Beetle } from "../objects/Beetle"
+import { Rex } from "../objects/Rex"
 import { Coin } from "../objects/Coin"
 import { BlueCoin } from "../objects/BlueCoin"
 import { Diamond } from "../objects/Diamond"
@@ -32,6 +33,7 @@ export class GameScene extends Phaser.Scene {
   private stalkerCats!: Phaser.Physics.Arcade.Group
   private baseBlus!: Phaser.Physics.Arcade.Group
   private beetles!: Phaser.Physics.Arcade.Group
+  private rexEnemies!: Phaser.Physics.Arcade.Group
   private coins: Coin[] = []
   private blueCoins: BlueCoin[] = []
   private diamonds: Diamond[] = []
@@ -112,6 +114,7 @@ export class GameScene extends Phaser.Scene {
       snail: 0,
       bouncer: 0,
       stalker: 0,
+      rex: 0,
       blu: 0
     },
     totalEnemiesDefeated: 0,
@@ -550,6 +553,10 @@ export class GameScene extends Phaser.Scene {
     this.load.image('beetle-mouth-closed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20closed-6ScuNGGsBgifOGHCCMext3ghafhXlB.png?XErn')
     this.load.image('beetle-mouth-open-30', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2030-HXSFqNWDpvxFnv2l35lrddto2TAyCk.png?sdgg')
     this.load.image('beetle-mouth-open-70', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
+
+    // Load Rex enemy sprites
+    this.load.image('rexEyesOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/rex%20eyes%20open-xKvtdvPdMIy13IjDLdWArsLxH3bi3m.png')
+    this.load.image('rexBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/rex%20eyes%20blinking-ix1xWvDmRTfWQT1HB22Z4z0lYCST06.png')
 
     // Load background music - Crystal Cavern theme
     this.load.audio('background-music', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/CRYSTAL%20CAVERN%20-%20Treasure%20Quest%20-%20BizarreBeasts%20-%20MASTER%201-GnktEmoyUQQEEoFTBVrVAhEFyGRwL9.mp3?acKK')
@@ -1194,6 +1201,12 @@ export class GameScene extends Phaser.Scene {
       runChildUpdate: true
     })
     
+    // Create Rex enemies group
+    this.rexEnemies = this.physics.add.group({
+      classType: Rex,
+      runChildUpdate: true
+    })
+    
     // Initialize collectibles arrays
     this.coins = []
     this.blueCoins = []
@@ -1292,6 +1305,7 @@ export class GameScene extends Phaser.Scene {
     // Cats collide with platforms and FLOOR spikes only (floor spikes act like platforms for enemies)
     this.physics.add.collider(this.cats, this.platforms)
     this.physics.add.collider(this.beetles, this.platforms)
+    this.physics.add.collider(this.rexEnemies, this.platforms)
     // Custom collision for spikes - only collide with floor spikes, not ceiling spikes
     this.physics.add.collider(
       this.cats, 
@@ -1384,6 +1398,15 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.beetles,
       this.handlePlayerBeetleInteraction,
+      undefined,
+      this
+    )
+    
+    // Player vs Rex collision - check for jump-to-kill vs damage
+    this.physics.add.overlap(
+      this.player,
+      this.rexEnemies,
+      this.handlePlayerRexInteraction,
       undefined,
       this
     )
@@ -3084,6 +3107,16 @@ export class GameScene extends Phaser.Scene {
             (beetle as any).setSpeedMultiplier(speedMultiplier)
           }
           this.beetles.add(beetle)
+          enemiesCreated++
+          
+        } else if (EnemySpawningSystem.isRexType(enemyType)) {
+          // Create Rex enemy
+          const rex = new Rex(this, x, y, leftBound, rightBound)
+          // Apply speed multiplier to Rex if it has a method for it
+          if (typeof (rex as any).setSpeedMultiplier === 'function') {
+            (rex as any).setSpeedMultiplier(speedMultiplier)
+          }
+          this.rexEnemies.add(rex)
           enemiesCreated++
           
         } else if (EnemySpawningSystem.isStalkerType(enemyType)) {
@@ -5551,6 +5584,121 @@ export class GameScene extends Phaser.Scene {
     this.showPointPopup(beetle.x, beetle.y - 20, points)
   }
   
+  private handlePlayerRexInteraction(
+    player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    rex: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    if (this.isGameOver || this.justKilledCat) return
+    
+    const playerObj = player as Player
+    const rexObj = rex as Rex
+    
+    // Get physics bodies
+    const playerBody = playerObj.body as Phaser.Physics.Arcade.Body
+    const rexBody = rexObj.body as Phaser.Physics.Arcade.Body
+    
+    // Check if player is above and falling (jump-to-kill)
+    const playerFalling = playerBody.velocity.y > 0
+    const verticalDifference = rexBody.top - playerBody.bottom
+    const playerAboveRex = (verticalDifference > 5) || (playerBody.bottom <= rexBody.top + 12)
+    
+    if (playerFalling && playerAboveRex) {
+      // Jump-to-kill Rex!
+      this.justKilledCat = true
+      this.handleRexKill(playerObj, rexObj)
+      
+      // Reset flag after a short delay to allow for physics processing
+      this.time.delayedCall(100, () => {
+        this.justKilledCat = false
+      })
+      return
+    }
+    
+    // Side collision - check invincibility
+    if (this.invincibilityActive) {
+      // With invincibility pendant, destroy Rex!
+      this.justKilledCat = true
+      this.handleRexKill(playerObj, rexObj)
+      
+      // Reset flag after a short delay
+      this.time.delayedCall(100, () => {
+        this.justKilledCat = false
+      })
+    } else {
+      // Normal collision - damage player
+      this.handlePlayerDamage(playerObj, rexObj)
+    }
+  }
+  
+  private handleRexKill(player: Player, rex: Rex): void {
+    // Check if Rex is already squished to prevent multiple kills
+    if ((rex as any).isSquished) return
+    
+    // Don't allow combo while climbing ladders
+    if (player.getIsClimbing()) {
+      // Just award base points without combo
+      const basePoints = 500  // Rex is worth 500 points
+      this.score += basePoints
+      this.updateScoreDisplay()
+      
+      // Make player bounce up
+      player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+      
+      // Squish Rex with animation
+      rex.squish()
+      
+      // Show point popup
+      this.showPointPopup(rex.x, rex.y - 20, basePoints)
+      
+      return
+    }
+    
+    // Calculate points with current combo multiplier
+    const basePoints = 500  // Rex is worth 500 points
+    const comboMultiplier = Math.max(1, this.comboCount)
+    const points = basePoints * comboMultiplier
+    
+    // Award points
+    this.score += points
+    this.updateScoreDisplay()
+    
+    // Increment combo for next kill
+    this.comboCount++
+    
+    // Update combo display
+    if (this.comboText) {
+      if (this.comboCount > 1) {
+        this.comboText.setText(`COMBO x${this.comboCount}`)
+        this.comboText.setVisible(true)
+      } else {
+        this.comboText.setVisible(false)
+      }
+    }
+    
+    // Reset combo timer
+    if (this.comboTimer) this.comboTimer.destroy()
+    this.comboTimer = this.time.delayedCall(this.COMBO_WINDOW, () => {
+      this.comboCount = 0
+      if (this.comboText) this.comboText.setVisible(false)
+    })
+    
+    // Make player bounce up
+    player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
+    
+    // Track Rex kill for stats
+    this.gameStats.enemyKills.rex++
+    this.gameStats.totalEnemiesDefeated++
+    
+    // Play Rex-specific squish sound (use bouncer sound for now)
+    this.playSoundEffect('squish-jumper', 0.5)
+    
+    // Squish Rex with particle animation
+    rex.squish()
+    
+    // Show point popup
+    this.showPointPopup(rex.x, rex.y - 20, points)
+  }
+  
   private handleInvincibilityEnemyKill(player: Player, enemy: any): void {
     // Check if enemy is already squished to prevent multiple kills
     if (enemy.isSquished) return
@@ -6360,6 +6508,13 @@ export class GameScene extends Phaser.Scene {
     if (this.beetles && this.beetles.children) {
       this.beetles.children.entries.forEach(beetle => {
         (beetle as Beetle).update(time, deltaTime)
+      })
+    }
+    
+    // Update all Rex enemies with time and delta (only if group exists)
+    if (this.rexEnemies && this.rexEnemies.children) {
+      this.rexEnemies.children.entries.forEach(rex => {
+        (rex as Rex).update(time, deltaTime)
       })
     }
     
@@ -7903,7 +8058,7 @@ export class GameScene extends Phaser.Scene {
     
     // Create popup background (much larger for enhanced stats)
     const popupWidth = 380
-    const popupHeight = 450
+    const popupHeight = 470  // Increased from 450 to accommodate Rex
     const popupX = this.cameras.main.width / 2
     const popupY = this.cameras.main.height / 2
     
@@ -8115,9 +8270,20 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
-    const bluText = this.add.text(
+    const rexText = this.add.text(
       popupX,
       enemyY + 108,
+      `Rex: ${this.gameStats.enemyKills.rex}`,
+      {
+        fontSize: '10px',
+        color: '#9acf07',  // Green
+        fontFamily: '"Press Start 2P", system-ui'
+      }
+    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
+    
+    const bluText = this.add.text(
+      popupX,
+      enemyY + 126,
       `Blu: ${this.gameStats.enemyKills.blu}`,
       {
         fontSize: '10px',
@@ -8129,7 +8295,7 @@ export class GameScene extends Phaser.Scene {
     // Total enemies line
     const totalText = this.add.text(
       popupX,
-      enemyY + 130,
+      enemyY + 148,
       `Total Enemies: ${this.gameStats.totalEnemiesDefeated}`,
       {
         fontSize: '11px',
@@ -8439,6 +8605,8 @@ export class GameScene extends Phaser.Scene {
       }
     } else if (enemy.constructor.name === 'Beetle') {
       return 'rollz'
+    } else if (enemy.constructor.name === 'Rex') {
+      return 'rex'
     } else if (enemy.constructor.name === 'BaseBlu') {
       return 'blu'
     }

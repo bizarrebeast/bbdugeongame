@@ -11,7 +11,8 @@ export enum EnemyType {
   CHOMPER = 'chomper',         // Blue cat - standard patrol
   SNAIL = 'snail',            // Red cat - faster patrol  
   JUMPER = 'jumper',          // Green cat - bouncing movement
-  STALKER = 'stalker'         // Red cat - mine-like activation + chase
+  STALKER = 'stalker',        // Red cat - mine-like activation + chase
+  REX = 'rex'                 // Flipping enemy - patrol with jumps
 }
 
 export interface EnemyDefinition {
@@ -92,6 +93,14 @@ export class EnemySpawningSystem {
       speed: 1.5,
       pointValue: 300,
       description: 'Hidden activation + chase AI'
+    },
+    [EnemyType.REX]: {
+      type: EnemyType.REX,
+      color: 'rex',
+      difficultyScore: 1.2,
+      speed: 0.75,
+      pointValue: 500,
+      description: 'Flipping enemy with periodic jumps'
     }
   }
 
@@ -105,34 +114,38 @@ export class EnemySpawningSystem {
       [EnemyType.CHOMPER]: 0.00,
       [EnemyType.SNAIL]: 0.00,
       [EnemyType.JUMPER]: 0.00,
-      [EnemyType.STALKER]: 0.00
+      [EnemyType.STALKER]: 0.00,
+      [EnemyType.REX]: 0.00
     },
     // Levels 4-10: Tutorial with Variety
     'tutorial_late': {
-      [EnemyType.CATERPILLAR]: 0.35,  // 35% - Yellow Cat
+      [EnemyType.CATERPILLAR]: 0.30,  // 30% - Yellow Cat (reduced for Rex)
       [EnemyType.BLUE_CATERPILLAR]: 0.15, // 15% - Blue Caterpillar
-      [EnemyType.BEETLE]: 0.25,       // 25% - Beetle
+      [EnemyType.BEETLE]: 0.20,       // 20% - Beetle (reduced for Rex)
       [EnemyType.CHOMPER]: 0.15,      // 15% - Blue Cat (Chomper)
-      [EnemyType.SNAIL]: 0.10,        // 10% - Red Cat (Snail) - NEW!
+      [EnemyType.SNAIL]: 0.10,        // 10% - Red Cat (Snail)
+      [EnemyType.REX]: 0.10,          // 10% - Rex (introduced early)
       [EnemyType.BASEBLU]: 0.00,
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
     },
     // Levels 11-20: Basic Challenge
     'basic': {
-      [EnemyType.CHOMPER]: 0.45,      // 45% - Blue Cat
-      [EnemyType.CATERPILLAR]: 0.15,  // 15% - Yellow Cat (reduced)
+      [EnemyType.CHOMPER]: 0.40,      // 40% - Blue Cat (reduced for Rex)
+      [EnemyType.CATERPILLAR]: 0.10,  // 10% - Yellow Cat (reduced)
       [EnemyType.BLUE_CATERPILLAR]: 0.10, // 10% - Blue Caterpillar
-      [EnemyType.BEETLE]: 0.15,       // 15% - Beetle (reduced)
-      [EnemyType.SNAIL]: 0.15,        // 15% - Red Cat (Snail) - INCREASED!
+      [EnemyType.BEETLE]: 0.10,       // 10% - Beetle (reduced)
+      [EnemyType.SNAIL]: 0.15,        // 15% - Red Cat (Snail)
+      [EnemyType.REX]: 0.15,          // 15% - Rex
       [EnemyType.BASEBLU]: 0.00,
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
     },
     // Levels 21-30: Speed Increase
     'speed': {
-      [EnemyType.SNAIL]: 0.50,        // 50% - Red Cat
-      [EnemyType.CHOMPER]: 0.35,      // 35% - Blue Cat
+      [EnemyType.SNAIL]: 0.40,        // 40% - Red Cat (reduced for Rex)
+      [EnemyType.CHOMPER]: 0.30,      // 30% - Blue Cat (reduced for Rex)
+      [EnemyType.REX]: 0.15,          // 15% - Rex
       [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu (max 1 per floor)
       [EnemyType.CATERPILLAR]: 0.00,
       [EnemyType.BLUE_CATERPILLAR]: 0.00,
@@ -142,8 +155,9 @@ export class EnemySpawningSystem {
     },
     // Levels 31-40: Advanced Mechanics
     'advanced': {
-      [EnemyType.JUMPER]: 0.40,       // 40% - Green Cat
-      [EnemyType.SNAIL]: 0.35,        // 35% - Red Cat
+      [EnemyType.JUMPER]: 0.35,       // 35% - Green Cat (reduced for Rex)
+      [EnemyType.SNAIL]: 0.25,        // 25% - Red Cat (reduced for Rex)
+      [EnemyType.REX]: 0.15,          // 15% - Rex
       [EnemyType.STALKER]: 0.125,     // 12.5% - Red Cat Stalker
       [EnemyType.BASEBLU]: 0.125,     // 12.5% - BaseBlu
       [EnemyType.CATERPILLAR]: 0.00,
@@ -153,9 +167,10 @@ export class EnemySpawningSystem {
     },
     // Levels 41-50: Expert Challenge
     'expert': {
-      [EnemyType.STALKER]: 0.35,      // 35% - Red Cat Stalker
-      [EnemyType.JUMPER]: 0.30,       // 30% - Green Cat
-      [EnemyType.BASEBLU]: 0.25,      // 25% - BaseBlu (max 2 per floor)
+      [EnemyType.STALKER]: 0.30,      // 30% - Red Cat Stalker (reduced for Rex)
+      [EnemyType.JUMPER]: 0.25,       // 25% - Green Cat (reduced for Rex)
+      [EnemyType.BASEBLU]: 0.20,      // 20% - BaseBlu (reduced for Rex)
+      [EnemyType.REX]: 0.15,          // 15% - Rex
       // 10% mixed earlier enemies
       [EnemyType.CATERPILLAR]: 0.025, // 2.5%
       [EnemyType.BLUE_CATERPILLAR]: 0.00, // 0%
@@ -165,11 +180,12 @@ export class EnemySpawningSystem {
     },
     // Levels 51+: BEAST MODE - Chaos Variety
     'beast': {
-      [EnemyType.STALKER]: 0.20,      // 20% - Balanced mix
-      [EnemyType.JUMPER]: 0.20,       // 20%
+      [EnemyType.STALKER]: 0.15,      // 15% - Balanced mix (reduced for Rex)
+      [EnemyType.JUMPER]: 0.15,       // 15% (reduced for Rex)
+      [EnemyType.REX]: 0.15,          // 15% - Rex
       [EnemyType.BASEBLU]: 0.15,      // 15%
       [EnemyType.SNAIL]: 0.15,        // 15%
-      [EnemyType.CHOMPER]: 0.15,      // 15%
+      [EnemyType.CHOMPER]: 0.10,      // 10% (reduced for Rex)
       [EnemyType.CATERPILLAR]: 0.05,  // 5%
       [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5%
       [EnemyType.BEETLE]: 0.05        // 5%
@@ -363,6 +379,13 @@ export class EnemySpawningSystem {
    */
   static isBeetleType(type: EnemyType): boolean {
     return type === EnemyType.BEETLE
+  }
+
+  /**
+   * Check if enemy type is Rex (needs special spawning)
+   */
+  static isRexType(type: EnemyType): boolean {
+    return type === EnemyType.REX
   }
 
   /**
