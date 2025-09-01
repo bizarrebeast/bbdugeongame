@@ -119,13 +119,6 @@ export class SharedAssetManager {
         type: 'image'
       },
       
-      // Core collectibles
-      {
-        key: 'coin',
-        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/gem-5jQtQF7YqdqR7G1KRjGUhLJJELpArq.png?R4cY',
-        type: 'image'
-      },
-      
       // Essential sounds (small files, quick to load)
       {
         key: 'gem-collect',
@@ -167,7 +160,7 @@ export class SharedAssetManager {
       // More floor tiles
       {
         key: 'floor-tile-4',
-        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%204-Vl2fwYXJcU4x0ZJaOMvgeSCrbWLnZV.png?2hv3',
+        url: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%204-ecTwalLp4rzl9hegwIwVMuDBeN1YVJ.png?nxJJ',
         type: 'image'
       }
     ]

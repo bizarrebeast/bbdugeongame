@@ -67,12 +67,13 @@ export class InstructionsScene extends Phaser.Scene {
     this.load.image('yellow-chest', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20chest-QMRMmVk9i7S0qkLteaXfhjqQBI351B.png?sE5u')
     
     // Enemies
-    this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20closed-HUXqx9HBdotEhJE2LBgzK8Z4kA7e2H.png?AVKZ')
-    this.load.image('yellowEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20eye%20open-4dEmp2gPrn80UE2QOE1uSSovKJjcCe.png?SLUI')
+    this.load.image('blueEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/chomper2%20mid%20mouth-OvzgXzA7k4tlCopnJB6tiD0RqjATsS.png')
+    this.load.image('yellowEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillars%20for%20instructions-kZxgRN7GYjkDNz2YNyG01YlnoFmwHl.png')
     this.load.image('redEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%201-RKF3p3F7fxdBSfen8UD9UGqIzf8zlv.png?xRpM')
-    this.load.image('greenEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/green%20test-0I8rDwYn5lbuPQTEUiYrg8ctBccIAC.png?IBFc')
+    this.load.image('greenEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/bouncer%20for%20instructions-id5JdSwy2HEqrh3atcd89xIimkk8fI.png')
     this.load.image('stalkerEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/stalker%20enemy%20eye%201-Xt3Vtu2FiWWLT9l2wfeakBAqVSZet8.png?gS6O')
     this.load.image('beetle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beetle%20mouth%20open%2070-gToASj29g9XTDxUDHBKXDOfpYOKudu.png?uZh3')
+    this.load.image('rexEnemy', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/rex%20for%20instructions-nQEFZF5vjHMbWTsA9J6aVk3eAFyBDt.png')
     
     // BaseBlu enemy (was missing)
     this.load.image('baseblue-eyes-center', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/baseblue%20eyes%20center-BWjYc09iCwYsTuEB3TEsa7GdmDc4Nj.png?NZtQ')
@@ -189,31 +190,32 @@ export class InstructionsScene extends Phaser.Scene {
       {
         title: 'COLLECTIBLES',
         items: [
-          { sprite: 'crystal-hud-icon', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 19, height: 19 }},
-          { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 26, height: 26 }},
+          { sprite: 'crystal-hud-icon', title: 'Gems', description: 'Collect for 50 points each. 150 gems = free life', spriteSize: { width: 45, height: 45 }},
+          { sprite: 'blueCoin', title: 'Blue Gems', description: 'Rare gems worth 500 points each', spriteSize: { width: 40, height: 40 }},
           { sprite: 'diamond', title: 'Diamonds', description: 'Valuable gems worth 1000 points each', spriteSize: { width: 35, height: 35 }},
           { sprite: 'heart-crystal', title: 'Heart Crystal', description: 'Gain an extra life worth 2000 points', spriteSize: { width: 35, height: 35 }},
-          { sprite: 'yellow-chest', title: 'Treasure Chest', description: 'Contains random rewards (2500 points + items)', spriteSize: { width: 36, height: 36 }}
+          { sprite: 'yellow-chest', title: 'Treasure Chest', description: 'Contains random rewards (2500 points + items)', spriteSize: { width: 48, height: 48 }}
         ]
       },
       {
         title: 'POWER-UPS & CURSES',
         items: [
-          { sprite: 'pendant', title: 'Pendant', description: 'Power-up: Invincibility for 10 seconds', spriteSize: { width: 24, height: 24 }},
-          { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Throw crystal balls for 20 seconds', spriteSize: { width: 24, height: 24 }},
-          { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Curse: Darkness effect for 10 seconds', spriteSize: { width: 24, height: 24 }},
-          { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Curse: Controls reversed for 10 seconds', spriteSize: { width: 24, height: 24 }}
+          { sprite: 'pendant', title: 'Pendant', description: 'Power-up: Invincibility for 10 seconds', spriteSize: { width: 40, height: 40 }},
+          { sprite: 'crystalBallCollectible', title: 'Crystal Ball', description: 'Power-up: Throw crystal balls for 20 seconds', spriteSize: { width: 40, height: 40 }},
+          { sprite: 'cursedOrbCollectible', title: 'Cursed Orb', description: 'Curse: Darkness effect for 10 seconds', spriteSize: { width: 40, height: 40 }},
+          { sprite: 'tealOrbCollectible', title: 'Teal Orb', description: 'Curse: Controls reversed for 10 seconds', spriteSize: { width: 40, height: 40 }}
         ]
       },
       {
         title: 'ENEMIES',
         items: [
-          { sprite: 'yellowEnemy', title: 'Caterpillar', description: 'Slow random movement (50 points)', spriteSize: { width: 65, height: 26 }},
+          { sprite: 'yellowEnemy', title: 'Caterpillar', description: 'Slow random movement (50 points)', spriteSize: { width: 58, height: 58 }},
           { sprite: 'beetle', title: 'Rollz', description: 'Simple patrol enemy (75 points)', spriteSize: { width: 54, height: 54 }},
           { sprite: 'blueEnemy', title: 'Chomper', description: 'Standard patrol enemy (100 points)', spriteSize: { width: 58, height: 58 }},
           { sprite: 'redEnemy', title: 'Snail', description: 'Faster patrol movement (150 points)', spriteSize: { width: 58, height: 58 }},
           { sprite: 'greenEnemy', title: 'Bouncer', description: 'Fast bouncing movement (200 points)', spriteSize: { width: 58, height: 58 }},
           { sprite: 'stalkerEnemy', title: 'Stalker', description: 'Activates and chases you (300 points)', spriteSize: { width: 58, height: 58 }},
+          { sprite: 'rexEnemy', title: 'Rex', description: 'Slow moving, nervous flipping jumper (500 points)', spriteSize: { width: 58, height: 58 }},
           { sprite: 'baseblue-eyes-center', title: 'Blu', description: 'Immovable blocker (1000 points when invincible)', spriteSize: { width: 58, height: 58 }}
         ]
       },

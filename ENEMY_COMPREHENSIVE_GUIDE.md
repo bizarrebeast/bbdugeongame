@@ -143,7 +143,7 @@
   - BEAST (51+): 15%
 
 ### 9. **Rex (Flipping Enemy)**
-- **Points**: 100
+- **Points**: 500
 - **Speed**: 0.75x (60 units/sec - slower than bouncer)
 - **Difficulty Score**: 1.2
 - **Movement Pattern**:
