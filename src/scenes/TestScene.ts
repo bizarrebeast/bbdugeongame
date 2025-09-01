@@ -3,6 +3,7 @@ import { Player } from "../objects/Player"
 import { Cat, CatColor } from "../objects/Cat"
 import { BaseBlu } from "../objects/BaseBlu"
 import { Beetle } from "../objects/Beetle"
+import { Rex } from "../objects/Rex"
 import { EnemyType } from "../systems/EnemySpawningSystem"
 
 interface ControlButton {
@@ -28,6 +29,7 @@ export class TestScene extends Phaser.Scene {
   private baseBlus!: Phaser.Physics.Arcade.Group
   private beetles!: Phaser.Physics.Arcade.Group
   private stalkerCats!: Phaser.Physics.Arcade.Group
+  private rexEnemies!: Phaser.Physics.Arcade.Group
   
   // Control panel
   private controlButtons: ControlButton[] = []
@@ -52,6 +54,12 @@ export class TestScene extends Phaser.Scene {
   
   constructor() {
     super({ key: "TestScene" })
+  }
+  
+  preload(): void {
+    // Load Rex enemy sprites from URLs
+    this.load.image('rexEyesOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/rex%20eyes%20open-xKvtdvPdMIy13IjDLdWArsLxH3bi3m.png')
+    this.load.image('rexBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/rex%20eyes%20blinking-ix1xWvDmRTfWQT1HB22Z4z0lYCST06.png')
   }
   
   init(): void {
@@ -231,6 +239,10 @@ export class TestScene extends Phaser.Scene {
     this.baseBlus = this.physics.add.group()
     this.beetles = this.physics.add.group()
     this.stalkerCats = this.physics.add.group()
+    this.rexEnemies = this.physics.add.group({
+      classType: Rex,
+      runChildUpdate: true
+    })
   }
   
   private createUnifiedControlMenu(): void {
@@ -490,7 +502,7 @@ export class TestScene extends Phaser.Scene {
     })
   }
   
-  private spawnEnemy(type: EnemyType, color: string): void {
+  private spawnEnemy(type: EnemyType | string, color: string): void {
     // Choose random platform
     const platformIndex = Math.floor(Math.random() * this.platformSpawnPoints.length)
     const spawnPoint = this.platformSpawnPoints[platformIndex]
@@ -522,6 +534,11 @@ export class TestScene extends Phaser.Scene {
         this.stalkerCats.add(stalker)
         break
         
+      case 'REX':
+        const rex = new Rex(this, x, y, platformLeft, platformRight)
+        this.rexEnemies.add(rex)
+        break
+        
       default:
         // All other enemy types use Cat class with different colors
         const cat = new Cat(this, x, y, platformLeft, platformRight, color as CatColor, false)
@@ -536,6 +553,7 @@ export class TestScene extends Phaser.Scene {
     this.baseBlus.clear(true, true)
     this.beetles.clear(true, true)
     this.stalkerCats.clear(true, true)
+    this.rexEnemies.clear(true, true)
   }
   
   private createSpeedControlsInMenu(x: number, y: number): void {
@@ -633,7 +651,8 @@ export class TestScene extends Phaser.Scene {
       { type: EnemyType.SNAIL, name: 'SNAIL', color: 'red' },
       { type: EnemyType.JUMPER, name: 'JUMPER', color: 'green' },
       { type: EnemyType.STALKER, name: 'STALKR', color: 'red' },
-      { type: EnemyType.BASEBLU, name: 'BLU', color: 'blue' }
+      { type: EnemyType.BASEBLU, name: 'BLU', color: 'blue' },
+      { type: 'REX' as any, name: 'REX', color: 'rex' }  // New Rex enemy
     ]
     
     enemies.forEach((enemy, index) => {
@@ -743,16 +762,19 @@ export class TestScene extends Phaser.Scene {
     this.physics.add.collider(this.baseBlus, this.platforms)
     this.physics.add.collider(this.beetles, this.platforms)
     this.physics.add.collider(this.stalkerCats, this.platforms)
+    this.physics.add.collider(this.rexEnemies, this.platforms)
     
     // Enemy vs enemy collisions
     this.physics.add.collider(this.cats, this.cats, this.handleEnemyCollision, undefined, this)
     this.physics.add.collider(this.beetles, this.beetles, this.handleBeetleCollision, undefined, this)
+    // Rex passes through other Rex enemies - no collision
     
     // Player vs enemy overlaps - always active for jump detection
     this.physics.add.overlap(this.player, this.cats, this.handlePlayerEnemyCollision, undefined, this)
     this.physics.add.overlap(this.player, this.baseBlus, this.handlePlayerEnemyCollision, undefined, this)
     this.physics.add.overlap(this.player, this.beetles, this.handlePlayerEnemyCollision, undefined, this)
     this.physics.add.overlap(this.player, this.stalkerCats, this.handlePlayerEnemyCollision, undefined, this)
+    this.physics.add.overlap(this.player, this.rexEnemies, this.handlePlayerEnemyCollision, undefined, this)
   }
   
   private handleEnemyCollision(enemy1: any, enemy2: any): void {
@@ -936,6 +958,10 @@ export class TestScene extends Phaser.Scene {
     
     this.stalkerCats.children.entries.forEach((stalker: any) => {
       if (stalker.update) stalker.update(time, delta)
+    })
+    
+    this.rexEnemies.children.entries.forEach((rex: any) => {
+      if (rex.update) rex.update(time, delta)
     })
     
     // Update stats display
