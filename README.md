@@ -10,7 +10,7 @@ A retro-style endless climbing arcade game built with Phaser.js and TypeScript f
 - 🎨 **70 Unique Backgrounds**: Unprecedented visual variety with 5 chapters + bonus + Beast Mode exclusives
 - 📱 **Mobile-Optimized**: 5:9 aspect ratio with full touch controls and virtual joystick
 - 🎯 **Progressive Levels**: Discrete level system (1-50) then BEAST MODE with 6-tier difficulty progression
-- 👾 **Advanced Enemy System**: 7 enemy types with 6-tier progressive spawning and anti-clustering distribution
+- 👾 **Advanced Enemy System**: 9 enemy types with 6-tier progressive spawning and anti-clustering distribution
 - 💎 **Rich Collectibles**: Coins, blue coins, diamonds, and treasure chests with automated opening
 - 🎪 **Combat System**: Jump-to-kill mechanics with combo multipliers and score popups
 - 🏆 **Scoring System**: Comprehensive point system with floor bonuses and achievement feedback
@@ -284,7 +284,7 @@ This creates `dist/index.html` - a single file containing your entire game ready
 - **Dynamic Chapter System**: Visual transitions with chapter announcements
 - **Beast Mode Variety**: Access to entire 70-background collection for endless visual excitement
 - **6-Tier Difficulty System**: 50 discrete levels with progressive spawning then BEAST MODE
-- **Advanced Enemy System**: 7 enemy types (50-1000 points) with anti-clustering distribution
+- **Advanced Enemy System**: 9 enemy types (50-1000 points) with anti-clustering distribution
 - **Enhanced Collision**: Forgiving hitbox system and smart treasure chest safety zones
 - **Mobile Optimized**: Full touch controls with virtual joystick and haptic feedback
 

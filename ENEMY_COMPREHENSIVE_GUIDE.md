@@ -142,6 +142,30 @@
   - Expert (41-50): 25%
   - BEAST (51+): 15%
 
+### 9. **Rex (Flipping Enemy)**
+- **Points**: 100
+- **Speed**: 0.75x (60 units/sec - slower than bouncer)
+- **Difficulty Score**: 1.2
+- **Movement Pattern**:
+  - Horizontal patrol movement
+  - Periodic low jumps with flip rotation
+  - Continues moving while jumping
+  - No collision with other Rex enemies
+- **Visual**: 40x40px square sprite with two states (eyes open/blinking)
+- **Special Features**:
+  - 38px circular hitbox
+  - Natural flip rotation during jumps
+  - Blinks randomly while on ground
+  - Light green particle burst on death
+  - Passes through other Rex enemies
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 0%
+  - Basic (11-20): Currently TestScene only
+  - Speed (21-30): Currently TestScene only
+  - Advanced (31-40): Currently TestScene only
+  - Expert (41-50): Currently TestScene only
+  - BEAST (51+): Currently TestScene only
+
 ## 6-Tier Progressive System
 
 **Enemy Count per Floor** (capped at 5 for balanced difficulty):
