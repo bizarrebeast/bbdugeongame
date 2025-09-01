@@ -46,18 +46,49 @@ export class Beetle extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true)
     this.setBounce(0)
     
-    // Set size to 45x45 for both visual and hitbox
+    // Set size to 45x45 for visual display
     const beetleSize = 45
     
     // Set display size to 45x45
     this.setDisplaySize(beetleSize, beetleSize)
     
-    // Set physics body to match display size (45x45)
-    this.setSize(beetleSize, beetleSize)
+    // Set CIRCULAR physics body for smoother rolling motion!
+    // Use 38px diameter circle as requested
+    const desiredRadius = 19  // 38px diameter circle
     
-    // Move the visual sprite up 30 pixels and left 13 pixels relative to the hitbox
-    // Positive offset moves the hitbox down and right, making the visual appear up and left
-    this.setOffset(13, 30)
+    // Calculate radius in texture space
+    const textureWidth = this.texture.get().width
+    const textureHeight = this.texture.get().height
+    const scaleX = beetleSize / textureWidth
+    const scaleY = beetleSize / textureHeight
+    const avgScale = (scaleX + scaleY) / 2
+    const radiusInTextureSpace = desiredRadius / avgScale
+    
+    // Set circular hitbox
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      this.body.setCircle(radiusInTextureSpace)
+      
+      // CENTER the visual sprite on the circular hitbox
+      // The circle is smaller than the display size (38px vs 45px)
+      // So we need to center the 38px circle within the 45px sprite
+      const circleDiameter = radiusInTextureSpace * 2
+      
+      // Calculate offset to center the circle on the sprite
+      // The sprite is 45x45, circle is 38x38
+      // To center: (45-38)/2 = 3.5px offset on each side
+      const centeringOffset = (beetleSize - (desiredRadius * 2)) / 2  // 3.5px
+      const offsetX = centeringOffset / avgScale  // Convert to texture space
+      const offsetY = centeringOffset / avgScale  // Convert to texture space
+      
+      this.body.setOffset(offsetX, offsetY)
+      
+      console.log('🪲 BEETLE CIRCULAR HITBOX:')
+      console.log('  Circle diameter:', desiredRadius * 2, 'px (38px as requested)')
+      console.log('  Body is circular:', this.body.isCircle)
+      console.log('  Display size:', beetleSize, 'x', beetleSize)
+      console.log('  Centering offset:', offsetX, ',', offsetY, '(texture space)')
+      console.log('  Visual sprite centered on hitbox: ✅')
+    }
     
     this.setDepth(15) // Beetles render on top of platforms and ladders
     
