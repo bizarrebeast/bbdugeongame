@@ -1204,6 +1204,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   private checkIfCaterpillarStuck(delta: number): void {
     // Similar to chomper stuck detection but adapted for caterpillars
+    const catType = this.catColor === CatColor.BLUE_CATERPILLAR ? 'Blue Caterpillar' : 'Yellow Caterpillar'
     
     // Track position history
     this.positionCheckTimer += delta
@@ -1219,11 +1220,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (Math.abs(this.body!.velocity.x) < 1) {
       this.velocityStuckTimer += delta
       
-      // If velocity is zero for too long and not at edge
-      if (this.velocityStuckTimer > 800 && 
+      // If velocity is zero for too long and not at edge - REDUCED TIME FOR FASTER RECOVERY
+      if (this.velocityStuckTimer > 400 && // Reduced from 800ms to 400ms
           this.x > this.platformBounds.left + 30 && 
           this.x < this.platformBounds.right - 30) {
-        console.warn('Caterpillar velocity stuck - forcing reset')
+        console.warn(`🐛 ${catType} velocity stuck at X:${Math.round(this.x)} - forcing reset`)
         this.forceResetCaterpillar()
         return
       }
@@ -1239,7 +1240,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       if (allSame && this.x > this.platformBounds.left + 30 && 
           this.x < this.platformBounds.right - 30) {
-        console.warn('Caterpillar position stuck (not at edge) - forcing reset')
+        console.warn(`🐛 ${catType} position stuck at X:${Math.round(this.x)} (not at edge) - forcing reset`)
         this.forceResetCaterpillar()
         return
       }
@@ -1247,14 +1248,24 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Check if caterpillar is outside platform bounds (safety check)
     if (this.x < this.platformBounds.left - 10 || this.x > this.platformBounds.right + 10) {
-      console.error('Caterpillar escaped platform bounds - forcing reset')
+      console.error(`🐛 ${catType} escaped platform bounds at X:${Math.round(this.x)} - forcing reset`)
       this.forceResetCaterpillar()
+    }
+    
+    // Special check for Blue Caterpillar - check if it hasn't moved much
+    if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 3) {
+      const recentMovement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
+      if (recentMovement < 10) { // If moved less than 10 pixels in last 0.75 seconds
+        console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 0.75s) - forcing reset`)
+        this.forceResetCaterpillar()
+        return
+      }
     }
   }
   
   private forceResetCaterpillar(): void {
     const catType = this.catColor === CatColor.BLUE_CATERPILLAR ? 'Blue Caterpillar' : 'Yellow Caterpillar'
-    console.warn(`=== FORCE RESETTING STUCK ${catType.toUpperCase()} ===`)
+    console.warn(`🐛 === RESETTING STUCK ${catType.toUpperCase()} at X:${Math.round(this.x)} ===`)
     
     // Reset animation states
     if (this.catColor === CatColor.BLUE_CATERPILLAR) {
@@ -1263,6 +1274,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.blueCaterpillarEyeTimer = 0
       this.nextBlueCaterpillarBlinkTime = Math.random() * 1500 + 1500
       this.nextBlueCaterpillarEyeTime = Math.random() * 2000 + 1000
+      // Force texture update for blue caterpillar
+      if (this.scene && this.scene.textures.exists('blueCaterpillarEyesDown')) {
+        this.setTexture('blueCaterpillarEyesDown')
+      }
     } else {
       // Reset yellow caterpillar animations if needed
       this.yellowAnimationState = 'mouth_closed'
@@ -1276,25 +1291,31 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.velocityStuckTimer = 0
     this.positionHistory = []
     
-    // Reset movement
-    this.randomMoveTimer = 500 // Reset timer
+    // Reset movement timers
+    this.randomMoveTimer = 200 // Quick reset to get moving again
     this.turnDelayTimer = 0
     
-    // Force a direction change
-    this.direction = Math.random() < 0.5 ? -1 : 1
+    // Force a direction change - prefer moving toward center
+    const centerX = (this.platformBounds.left + this.platformBounds.right) / 2
+    if (this.x < centerX) {
+      this.direction = 1 // Move right toward center
+    } else {
+      this.direction = -1 // Move left toward center
+    }
     
-    // Ensure position is within bounds
-    const safeX = Math.max(
-      this.platformBounds.left + 30,
-      Math.min(this.platformBounds.right - 30, this.x)
-    )
-    this.setX(safeX)
+    // Reposition to safe location if needed
+    if (this.x <= this.platformBounds.left + 20 || this.x >= this.platformBounds.right - 20) {
+      // Move to a random safe position near center
+      const safeX = this.platformBounds.left + 50 + Math.random() * (this.platformBounds.right - this.platformBounds.left - 100)
+      this.setX(safeX)
+      console.log(`🐛 Repositioned ${catType} to safe X:${Math.round(safeX)}`)
+    }
     
-    // Apply velocity with small boost
-    this.setVelocityX(this.moveSpeed * this.direction * 1.1)
+    // Apply velocity with boost to get unstuck
+    this.setVelocityX(this.moveSpeed * this.direction * 1.5)
     
-    // Reset to normal speed after 300ms
-    this.scene.time.delayedCall(300, () => {
+    // Reset to normal speed after 500ms
+    this.scene.time.delayedCall(500, () => {
       if (this.active) {
         this.setVelocityX(this.moveSpeed * this.direction)
       }
