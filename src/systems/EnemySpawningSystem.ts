@@ -7,6 +7,7 @@ export enum EnemyType {
   BASEBLU = 'baseblu',         // Blue blocker - very slow, immovable obstacle
   BEETLE = 'beetle',           // Red beetle - simple patrol
   CATERPILLAR = 'caterpillar', // Yellow cat - slow random movement
+  BLUE_CATERPILLAR = 'blue_caterpillar', // Blue caterpillar variant - slightly faster
   CHOMPER = 'chomper',         // Blue cat - standard patrol
   SNAIL = 'snail',            // Red cat - faster patrol  
   JUMPER = 'jumper',          // Green cat - bouncing movement
@@ -52,6 +53,14 @@ export class EnemySpawningSystem {
       pointValue: 50,
       description: 'Slow random movement'
     },
+    [EnemyType.BLUE_CATERPILLAR]: {
+      type: EnemyType.BLUE_CATERPILLAR,
+      color: 'blue_caterpillar',
+      difficultyScore: 0.7,
+      speed: 0.7,
+      pointValue: 50,  // Same points as yellow caterpillar
+      description: 'Slightly faster caterpillar variant'
+    },
     [EnemyType.CHOMPER]: {
       type: EnemyType.CHOMPER,
       color: 'blue', 
@@ -89,7 +98,8 @@ export class EnemySpawningSystem {
   private static readonly LEVEL_SPAWN_WEIGHTS: Record<string, SpawnWeights> = {
     // Levels 1-3: Tutorial Introduction
     'tutorial_early': {
-      [EnemyType.CATERPILLAR]: 0.70,  // 70% - Yellow Cat
+      [EnemyType.CATERPILLAR]: 0.50,  // 50% - Yellow Cat
+      [EnemyType.BLUE_CATERPILLAR]: 0.20, // 20% - Blue Caterpillar
       [EnemyType.BEETLE]: 0.30,       // 30% - Beetle
       [EnemyType.BASEBLU]: 0.00,
       [EnemyType.CHOMPER]: 0.00,
@@ -99,7 +109,8 @@ export class EnemySpawningSystem {
     },
     // Levels 4-10: Tutorial with Variety
     'tutorial_late': {
-      [EnemyType.CATERPILLAR]: 0.50,  // 50% - Yellow Cat
+      [EnemyType.CATERPILLAR]: 0.35,  // 35% - Yellow Cat
+      [EnemyType.BLUE_CATERPILLAR]: 0.15, // 15% - Blue Caterpillar
       [EnemyType.BEETLE]: 0.25,       // 25% - Beetle
       [EnemyType.CHOMPER]: 0.15,      // 15% - Blue Cat (Chomper)
       [EnemyType.SNAIL]: 0.10,        // 10% - Red Cat (Snail) - NEW!
@@ -109,8 +120,9 @@ export class EnemySpawningSystem {
     },
     // Levels 11-20: Basic Challenge
     'basic': {
-      [EnemyType.CHOMPER]: 0.50,      // 50% - Blue Cat
-      [EnemyType.CATERPILLAR]: 0.20,  // 20% - Yellow Cat (reduced)
+      [EnemyType.CHOMPER]: 0.45,      // 45% - Blue Cat
+      [EnemyType.CATERPILLAR]: 0.15,  // 15% - Yellow Cat (reduced)
+      [EnemyType.BLUE_CATERPILLAR]: 0.10, // 10% - Blue Caterpillar
       [EnemyType.BEETLE]: 0.15,       // 15% - Beetle (reduced)
       [EnemyType.SNAIL]: 0.15,        // 15% - Red Cat (Snail) - INCREASED!
       [EnemyType.BASEBLU]: 0.00,
@@ -123,6 +135,7 @@ export class EnemySpawningSystem {
       [EnemyType.CHOMPER]: 0.35,      // 35% - Blue Cat
       [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu (max 1 per floor)
       [EnemyType.CATERPILLAR]: 0.00,
+      [EnemyType.BLUE_CATERPILLAR]: 0.00,
       [EnemyType.BEETLE]: 0.00,
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
@@ -134,6 +147,7 @@ export class EnemySpawningSystem {
       [EnemyType.STALKER]: 0.125,     // 12.5% - Red Cat Stalker
       [EnemyType.BASEBLU]: 0.125,     // 12.5% - BaseBlu
       [EnemyType.CATERPILLAR]: 0.00,
+      [EnemyType.BLUE_CATERPILLAR]: 0.00,
       [EnemyType.BEETLE]: 0.00,
       [EnemyType.CHOMPER]: 0.00
     },
@@ -144,6 +158,7 @@ export class EnemySpawningSystem {
       [EnemyType.BASEBLU]: 0.25,      // 25% - BaseBlu (max 2 per floor)
       // 10% mixed earlier enemies
       [EnemyType.CATERPILLAR]: 0.025, // 2.5%
+      [EnemyType.BLUE_CATERPILLAR]: 0.00, // 0%
       [EnemyType.BEETLE]: 0.025,      // 2.5%
       [EnemyType.CHOMPER]: 0.025,     // 2.5%
       [EnemyType.SNAIL]: 0.025        // 2.5%
@@ -155,7 +170,8 @@ export class EnemySpawningSystem {
       [EnemyType.BASEBLU]: 0.15,      // 15%
       [EnemyType.SNAIL]: 0.15,        // 15%
       [EnemyType.CHOMPER]: 0.15,      // 15%
-      [EnemyType.CATERPILLAR]: 0.10,  // 10%
+      [EnemyType.CATERPILLAR]: 0.05,  // 5%
+      [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5%
       [EnemyType.BEETLE]: 0.05        // 5%
     }
   }

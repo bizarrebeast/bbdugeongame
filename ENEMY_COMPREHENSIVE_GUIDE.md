@@ -2,7 +2,7 @@
 
 ## Complete Enemy Roster with Movement, Scoring, and Distribution
 
-### 1. **Caterpillar (Yellow Cat)**
+### 1. **Caterpillar (Yellow)**
 - **Points**: 50
 - **Speed**: 0.6x (48 units/sec)
 - **Difficulty Score**: 0.5
@@ -10,14 +10,29 @@
   - Slow random movement
   - Changes direction randomly
   - Unpredictable but slow
-- **Visual**: Yellow cat sprite with expressions
+- **Visual**: Yellow caterpillar sprite with mouth/eye animations
 - **Spawn Distribution** (6-Tier System):
-  - Tutorial (1-10): 70%
-  - Basic (11-20): 30%
+  - Tutorial (1-10): 50-35%
+  - Basic (11-20): 15%
   - Speed+ (21-50): 0%
-  - BEAST (51+): 10%
+  - BEAST (51+): 5%
 
-### 2. **Beetle**
+### 2. **Blue Caterpillar (Variant)**
+- **Points**: 50
+- **Speed**: 0.7x (56 units/sec)
+- **Difficulty Score**: 0.7
+- **Movement Pattern**: 
+  - More predictable than yellow caterpillar
+  - Changes direction less frequently
+  - Longer intervals between direction changes
+- **Visual**: Blue caterpillar sprite with eye movement animations
+- **Spawn Distribution** (6-Tier System):
+  - Tutorial (1-10): 20-15%
+  - Basic (11-20): 10%
+  - Speed+ (21-50): 0%
+  - BEAST (51+): 5%
+
+### 3. **Beetle**
 - **Points**: 75
 - **Speed**: 1.0x (80 units/sec)
 - **Difficulty Score**: 0.8
@@ -33,7 +48,7 @@
   - Speed+ (21-50): 0%
   - BEAST (51+): 5%
 
-### 3. **Chomper (Blue Cat)**
+### 4. **Chomper (Blue Cat)**
 - **Points**: 100
 - **Speed**: 1.0x (80 units/sec)
 - **Difficulty Score**: 1.0
@@ -49,7 +64,7 @@
   - Advanced+ (31-50): 2.5%
   - BEAST (51+): 15%
 
-### 4. **Snail (Red Cat)**
+### 5. **Snail (Red Cat)**
 - **Points**: 150
 - **Speed**: 1.2x (96 units/sec)
 - **Difficulty Score**: 1.5
@@ -66,7 +81,7 @@
   - Expert+ (41+): 2.5%
   - BEAST (51+): 15%
 
-### 5. **Jumper (Green Cat)**
+### 6. **Jumper (Green Cat)**
 - **Points**: 200
 - **Speed**: 1.5x (120 units/sec)
 - **Difficulty Score**: 2.5
@@ -83,7 +98,7 @@
   - Expert (41-50): 30%
   - BEAST (51+): 20%
 
-### 6. **Stalker (Red Cat Variant)**
+### 7. **Stalker (Red Cat Variant)**
 - **Points**: 300
 - **Speed**: 1.5x+ (120+ units/sec, increases during chase)
 - **Difficulty Score**: 4.0
@@ -103,7 +118,7 @@
   - Expert (41-50): 35%
   - BEAST (51+): 20%
 
-### 7. **BaseBlu (Blue Blocker)**
+### 8. **BaseBlu (Blue Blocker)**
 - **Points**: 1000 (only when invincible)
 - **Speed**: 0.25x (20 units/sec - very slow)
 - **Difficulty Score**: 2.0
@@ -195,6 +210,126 @@
    - "Stalker ambush" - 2 stalkers on opposite sides
    - "BaseBlu gate" - BaseBlu blocking ladder access
 
+## Complete Enemy Addition Checklist
+
+### 1. **Pre-Development Planning**
+- [ ] Review available sprite assets
+- [ ] Define enemy name and type
+- [ ] Determine point value (50-1000 range)
+- [ ] Set difficulty score (0.5-4.0 scale)
+- [ ] Design movement pattern and behavior
+- [ ] Define speed multiplier (0.25x-2.0x of base 80)
+- [ ] Plan special abilities/mechanics
+- [ ] Determine hitbox dimensions
+- [ ] Plan animation states and transitions
+
+### 2. **Asset Preparation**
+- [ ] Verify all sprite textures exist
+- [ ] List all animation frames needed
+- [ ] Define sprite dimensions
+- [ ] Plan sprite offset positioning
+- [ ] Check for color variations needed
+- [ ] Document texture keys
+
+### 3. **Enemy Class Implementation**
+- [ ] Create new TypeScript class file in `/src/objects/`
+- [ ] Extend `Phaser.Physics.Arcade.Sprite`
+- [ ] Implement constructor with platform bounds
+- [ ] Set up physics body (size, offset, gravity)
+- [ ] Configure collision properties
+- [ ] Implement movement pattern in `update()`
+- [ ] Add animation system if needed
+- [ ] Implement `squish()` method for death
+- [ ] Add `reverseDirection()` for collisions
+- [ ] Include special abilities/states
+- [ ] Add getter methods for properties
+
+### 4. **Integration with Game Systems**
+- [ ] Add enemy type to spawn system enums
+- [ ] Register in `EnemySpawningSystem.ts`
+- [ ] Add to difficulty tier distributions
+- [ ] Configure spawn probabilities per level
+- [ ] Set max spawn limits per floor
+- [ ] Add to anti-clustering logic
+- [ ] Update collision groups
+
+### 5. **Scene Integration**
+- [ ] Import enemy class in `GameScene.ts`
+- [ ] Add to enemy groups/pools
+- [ ] Set up collision handlers with player
+- [ ] Add collision handlers with other enemies
+- [ ] Configure platform collision
+- [ ] Add score/point handling
+- [ ] Implement kill tracking
+
+### 6. **Level Distribution Setup**
+- [ ] Define spawn percentages for Tutorial (1-10)
+- [ ] Define spawn percentages for Basic (11-20)
+- [ ] Define spawn percentages for Speed (21-30)
+- [ ] Define spawn percentages for Advanced (31-40)
+- [ ] Define spawn percentages for Expert (41-50)
+- [ ] Define spawn percentages for BEAST (51+)
+- [ ] Set speed scaling per tier
+
+### 7. **Testing Phase**
+- [ ] Create test level with only new enemy
+- [ ] Test basic movement patterns
+- [ ] Verify collision detection works
+- [ ] Test player jump kills
+- [ ] Test invincibility interactions
+- [ ] Check platform edge behavior
+- [ ] Verify animation transitions
+- [ ] Test with other enemies present
+- [ ] Check spawn distribution
+
+### 8. **Balance & Tuning**
+- [ ] Adjust movement speed
+- [ ] Fine-tune hitbox size
+- [ ] Balance point values
+- [ ] Adjust difficulty rating
+- [ ] Tweak spawn rates
+- [ ] Test at different level tiers
+- [ ] Verify anti-clustering works
+- [ ] Check performance impact
+
+### 9. **Documentation**
+- [ ] Update `ENEMY_COMPREHENSIVE_GUIDE.md`
+- [ ] Add to enemy roster table
+- [ ] Document movement patterns
+- [ ] Update tier distribution tables
+- [ ] Add special notes/mechanics
+- [ ] Update recommended combinations
+
+### 10. **Final Integration**
+- [ ] Merge into main enemy system
+- [ ] Test full game progression
+- [ ] Verify BEAST mode balance
+- [ ] Check mobile performance
+- [ ] Test with all power-ups
+- [ ] Verify score calculations
+- [ ] Final difficulty assessment
+
+## Color Variation Checklist (for existing enemies)
+
+### 1. **Sprite Creation**
+- [ ] Identify base enemy for variation
+- [ ] Create new color sprite assets
+- [ ] Maintain same dimensions as original
+- [ ] Keep animation frame consistency
+
+### 2. **Code Updates**
+- [ ] Add new color to `CatColor` enum (if applicable)
+- [ ] Update texture loading logic
+- [ ] Modify spawn selection logic
+- [ ] Keep same behavior patterns
+
+### 3. **Differentiation**
+- [ ] Adjust point values if needed
+- [ ] Modify speed/difficulty slightly
+- [ ] Consider unique behavior tweaks
+- [ ] Update visual indicators
+
 ---
 *Updated: August 2024 - Complete 6-tier enemy system with anti-clustering distribution*  
 *Latest: Enhanced with intelligent spawn patterns and production-ready balance*
+*Added: Complete enemy addition and color variation checklists*

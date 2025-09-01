@@ -4,7 +4,8 @@ export enum CatColor {
   BLUE = 'blue',
   YELLOW = 'yellow',
   GREEN = 'green',
-  RED = 'red'
+  RED = 'red',
+  BLUE_CATERPILLAR = 'blue_caterpillar'
 }
 
 /**
@@ -82,6 +83,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private nextGreenEyeTime: number = 0
   private nextGreenBlinkTime: number = 0
   
+  // Blue caterpillar animation system
+  private blueCaterpillarAnimationState: 'eyesRight' | 'eyesLeft' | 'eyesDown' | 'blinking' = 'eyesDown'
+  private blueCaterpillarEyeTimer: number = 0
+  private blueCaterpillarBlinkTimer: number = 0
+  private nextBlueCaterpillarEyeTime: number = 0
+  private nextBlueCaterpillarBlinkTime: number = 0
+  
   // Stalker properties (special type of red enemy)
   private isStalker: boolean = false
   private stalkerState: 'hidden' | 'activated' | 'chasing' = 'hidden'
@@ -119,7 +127,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     color?: CatColor | string,
     isStalker: boolean = false
   ) {
-    const colors = [CatColor.BLUE, CatColor.YELLOW, CatColor.GREEN, CatColor.RED]
+    const colors = [CatColor.BLUE, CatColor.YELLOW, CatColor.GREEN, CatColor.RED, CatColor.BLUE_CATERPILLAR]
     
     // Convert string color to CatColor enum if needed
     let catColor: CatColor
@@ -144,6 +152,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       textureKey = 'greenEnemy'
     } else if (catColor === CatColor.RED) {
       textureKey = 'redEnemyMouthClosedEyes1'
+    } else if (catColor === CatColor.BLUE_CATERPILLAR) {
+      textureKey = 'blueCaterpillarEyesDown'
     } else {
       // This shouldn't happen with proper enemy spawning
       // Unexpected cat color fallback (replaced console.log)
@@ -203,6 +213,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       // Caterpillar hitbox debug info (replaced console.log)
       
+    } else if (catColor === CatColor.BLUE_CATERPILLAR && this.body instanceof Phaser.Physics.Arcade.Body) {
+      // Blue caterpillar - custom hitbox size
+      const defaultWidth = this.body.width
+      const defaultHeight = this.body.height
+      this.body.setSize(54, 20)  // Set exact hitbox size to 54x20
+      
+      // DON'T set offset here - we'll do it in the visual setup section
+      // to avoid conflicts between the two offset calls
+      
     } else if (catColor === CatColor.RED && this.body instanceof Phaser.Physics.Arcade.Body) {
       // Increase Snail (red patrol enemy) hitbox by 50%
       this.body.setSize(48, 48)  // 32*1.5=48 for both dimensions
@@ -260,7 +279,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Only green enemies (bouncing) need gravity
     if (this.body instanceof Phaser.Physics.Arcade.Body) {
       if (catColor !== CatColor.GREEN) {
-        this.body.setAllowGravity(false) // Blue, Yellow, Red patrol without gravity
+        this.body.setAllowGravity(false) // Blue, Yellow, Red, Blue Caterpillar patrol without gravity
       } else {
         // Green enemies keep gravity for bouncing behavior
         // Green enemy physics setup (replaced console.log)
@@ -272,18 +291,63 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // For all yellow enemy animation sprites - use 54x21.6 size (90% of original)
       this.setDisplaySize(54, 21.6)
       
+      console.log('🟡 YELLOW CATERPILLAR SETUP:')
+      console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
+      console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
+      console.log('  Texture key:', textureKey)
+      
       // Align bottom edge of sprite with bottom edge of hitbox
       // setOffset positions the TOP-LEFT corner of the sprite
       // Sprite: 54x21.6, Hitbox: 70x28 (after 30% reduction)
       // To align bottom edges:
       // - X: Center sprite horizontally relative to hitbox: (70-54)/2 = 8px to the right
       // - Y: Move sprite down so bottoms align: (28-21.6) = 6.4px down
-      this.setOffset(15, 4) // Moved 20 pixels left total (-5 + 20 = 15)
+      this.setOffset(15, 5) // Adjusted Y offset for better floor alignment
       
-      // Caterpillar sprite offset debug (replaced console.log)
+      console.log('  Offset applied:', 15, ',', 5)
       
       this.setFlipX(false)
       this.initializeYellowEnemyAnimations()
+    } else if (catColor === CatColor.BLUE_CATERPILLAR && this.isBlueCaterpillarAnimationSprite(textureKey)) {
+      // Blue caterpillar - larger size (64 wide, proportionally scaled)
+      this.setDisplaySize(64, 25.6)
+      
+      console.log('🔵 BLUE CATERPILLAR SETUP:')
+      console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
+      console.log('  Physics body size: 54 x 20 (set earlier)')
+      console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
+      console.log('  Texture key:', textureKey)
+      
+      // We need to position the 54x20 physics body relative to the 64x25.6 visual sprite
+      // The physics body should be centered horizontally and aligned with floor
+      // Original texture size affects the offset calculation
+      const originalWidth = this.texture.get().width
+      const originalHeight = this.texture.get().height
+      
+      // Calculate offset to center the 54x20 physics body on the sprite
+      // First, center it relative to original texture size
+      const centerOffsetX = (originalWidth - 54) / 2
+      const centerOffsetY = (originalHeight - 20) / 2
+      
+      // Now adjust for floor alignment
+      // Set to exact values for proper positioning
+      const finalOffsetX = 23
+      const finalOffsetY = 15
+      
+      this.setOffset(finalOffsetX, finalOffsetY)
+      
+      console.log('  Calculated center offset:', centerOffsetX, ',', centerOffsetY)
+      console.log('  Final offset applied:', finalOffsetX, ',', finalOffsetY)
+      console.log('  Sprite position:', this.x, ',', this.y)
+      
+      this.setFlipX(false)
+      this.initializeBlueCaterpillarAnimations()
+      
+      // Log final setup
+      if (this.body instanceof Phaser.Physics.Arcade.Body) {
+        console.log('  Final physics body offset:', this.body.offset.x, ',', this.body.offset.y)
+        console.log('  Physics body position:', this.body.x, ',', this.body.y)
+      }
     } else if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
       // For all blue enemy animation sprites - use consistent positioning
       this.setDisplaySize(36, 36)
@@ -369,6 +433,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         const yellowSpeedMultiplier = isEarlyLevel ? 0.4 : 0.6  // 40% speed in levels 1-10, 60% after
         this.moveSpeed = this.baseSpeed * yellowSpeedMultiplier * this.individualSpeedMultiplier
         break
+      case CatColor.BLUE_CATERPILLAR:
+        // Blue caterpillar - slightly faster than yellow, more predictable movement
+        const blueSpeedMultiplier = isEarlyLevel ? 0.5 : 0.7  // 50% speed in levels 1-10, 70% after
+        this.moveSpeed = this.baseSpeed * blueSpeedMultiplier * this.individualSpeedMultiplier
+        break
       case CatColor.GREEN:
         // Reduce green bouncer speed for more manageable gameplay
         this.moveSpeed = this.baseSpeed * 1.0 * this.individualSpeedMultiplier  // Reduced from 1.5x to 1.0x
@@ -419,6 +488,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       case CatColor.YELLOW:
         this.updateYellowPatrol(delta)
         this.updateYellowEnemyAnimations(delta)
+        this.checkIfCaterpillarStuck(delta)  // Add stuck detection for yellow too
+        break
+      case CatColor.BLUE_CATERPILLAR:
+        this.updateBlueCaterpillarPatrol(delta)
+        this.updateBlueCaterpillarAnimations(delta)
+        this.checkIfCaterpillarStuck(delta)  // Add stuck detection
         break
       case CatColor.GREEN:
         this.updateGreenBounce(delta)
@@ -530,14 +605,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.turnDelayTimer -= delta
     }
     
-    // Check boundaries with turn delay to prevent synchronized turning
-    if (this.x <= this.platformBounds.left + 10) {
+    // Check if velocity is being blocked (likely by spike or wall)
+    const velocityBlocked = Math.abs(this.body!.velocity.x) < 5 && Math.abs(this.moveSpeed) > 0
+    
+    // Check boundaries with velocity detection for spikes
+    const edgeBuffer = 35 // Increased to account for spike collision bodies
+    if (this.x <= this.platformBounds.left + edgeBuffer || (velocityBlocked && this.direction === -1)) {
       if (this.turnDelayTimer <= 0) {
         this.direction = 1
         // Add random delay before next possible turn (100-500ms)
         this.turnDelayTimer = 100 + Math.random() * 400
       }
-    } else if (this.x >= this.platformBounds.right - 10) {
+    } else if (this.x >= this.platformBounds.right - edgeBuffer || (velocityBlocked && this.direction === 1)) {
       if (this.turnDelayTimer <= 0) {
         this.direction = -1
         // Add random delay before next possible turn (100-500ms)
@@ -1035,6 +1114,115 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
   }
   
+  private checkIfCaterpillarStuck(delta: number): void {
+    // Similar to chomper stuck detection but adapted for caterpillars
+    
+    // Track position history
+    this.positionCheckTimer += delta
+    if (this.positionCheckTimer >= this.positionCheckInterval) {
+      this.positionHistory.push(this.x)
+      if (this.positionHistory.length > 6) { // Keep last 6 positions (1.5 seconds)
+        this.positionHistory.shift()
+      }
+      this.positionCheckTimer = 0
+    }
+    
+    // Check velocity stuck (caterpillars should always be moving)
+    if (Math.abs(this.body!.velocity.x) < 1) {
+      this.velocityStuckTimer += delta
+      
+      // If velocity is zero for too long and not at edge
+      if (this.velocityStuckTimer > 800 && 
+          this.x > this.platformBounds.left + 30 && 
+          this.x < this.platformBounds.right - 30) {
+        console.warn('Caterpillar velocity stuck - forcing reset')
+        this.forceResetCaterpillar()
+        return
+      }
+    } else {
+      this.velocityStuckTimer = 0
+    }
+    
+    // Check if stuck in same position
+    if (this.positionHistory.length >= 4) {
+      const allSame = this.positionHistory.every(pos => 
+        Math.abs(pos - this.positionHistory[0]) < 3
+      )
+      
+      if (allSame && this.x > this.platformBounds.left + 30 && 
+          this.x < this.platformBounds.right - 30) {
+        console.warn('Caterpillar position stuck (not at edge) - forcing reset')
+        this.forceResetCaterpillar()
+        return
+      }
+    }
+    
+    // Check if caterpillar is outside platform bounds (safety check)
+    if (this.x < this.platformBounds.left - 10 || this.x > this.platformBounds.right + 10) {
+      console.error('Caterpillar escaped platform bounds - forcing reset')
+      this.forceResetCaterpillar()
+    }
+  }
+  
+  private forceResetCaterpillar(): void {
+    const catType = this.catColor === CatColor.BLUE_CATERPILLAR ? 'Blue Caterpillar' : 'Yellow Caterpillar'
+    console.warn(`=== FORCE RESETTING STUCK ${catType.toUpperCase()} ===`)
+    
+    // Reset animation states
+    if (this.catColor === CatColor.BLUE_CATERPILLAR) {
+      this.blueCaterpillarAnimationState = 'eyesDown'
+      this.blueCaterpillarBlinkTimer = 0
+      this.blueCaterpillarEyeTimer = 0
+      this.nextBlueCaterpillarBlinkTime = Math.random() * 1500 + 1500
+      this.nextBlueCaterpillarEyeTime = Math.random() * 2000 + 1000
+    } else {
+      // Reset yellow caterpillar animations if needed
+      this.yellowAnimationState = 'mouth_closed'
+      this.yellowBlinkTimer = 0
+      this.yellowMouthTimer = 0
+    }
+    
+    // Reset stuck detection
+    this.stuckTimer = 0
+    this.positionCheckTimer = 0
+    this.velocityStuckTimer = 0
+    this.positionHistory = []
+    
+    // Reset movement
+    this.randomMoveTimer = 500 // Reset timer
+    this.turnDelayTimer = 0
+    
+    // Force a direction change
+    this.direction = Math.random() < 0.5 ? -1 : 1
+    
+    // Ensure position is within bounds
+    const safeX = Math.max(
+      this.platformBounds.left + 30,
+      Math.min(this.platformBounds.right - 30, this.x)
+    )
+    this.setX(safeX)
+    
+    // Apply velocity with small boost
+    this.setVelocityX(this.moveSpeed * this.direction * 1.1)
+    
+    // Reset to normal speed after 300ms
+    this.scene.time.delayedCall(300, () => {
+      if (this.active) {
+        this.setVelocityX(this.moveSpeed * this.direction)
+      }
+    })
+    
+    // Mark as recovered
+    this.setData('recoveredFromStuck', true)
+    this.setData('stuckRecoveryCount', (this.getData('stuckRecoveryCount') || 0) + 1)
+    
+    // If stuck too many times, mark for potential removal
+    if (this.getData('stuckRecoveryCount') >= 3) {
+      console.error(`${catType} stuck 3+ times - may need manual intervention`)
+      this.setData('needsReplacement', true)
+    }
+  }
+  
   // ============== RED ENEMY ANIMATION SYSTEM ==============
   
   private isRedEnemyAnimationSprite(textureKey: string): boolean {
@@ -1065,37 +1253,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Update timers
-    this.blinkTimer += delta
-    this.biteTimer += delta // Reusing for expression changes
-    this.blinkAnimationTimer += delta
+    this.biteTimer += delta // For mouth expression changes
     
-    // Handle blinking animation
-    if (this.yellowEnemyAnimationState === 'blinking') {
-      if (this.blinkAnimationTimer >= 200) { // 200ms blink
-        // Return to previous state (mouth open or closed)
-        this.yellowEnemyAnimationState = this.biteTimer >= this.nextExpressionTime ? 'mouthOpen' : 'mouthClosed'
-        this.blinkAnimationTimer = 0
-        this.nextBlinkTime = this.blinkTimer + Math.random() * 1000 + 1000 // 1-2 seconds
-      }
-    }
-    
+    // BLINKING DISABLED - Only animate mouth
     // Handle expression changes (mouth open/closed)
-    if (this.biteTimer >= this.nextExpressionTime && this.yellowEnemyAnimationState !== 'blinking') {
+    if (this.biteTimer >= this.nextExpressionTime) {
       this.yellowEnemyAnimationState = this.yellowEnemyAnimationState === 'mouthClosed' ? 'mouthOpen' : 'mouthClosed'
       this.nextExpressionTime = this.biteTimer + Math.random() * 3000 + 3000 // 3-6 seconds
     }
     
-    // Handle random blinking
-    if (this.blinkTimer >= this.nextBlinkTime && this.yellowEnemyAnimationState !== 'blinking') {
-      this.yellowEnemyAnimationState = 'blinking'
-      this.blinkAnimationTimer = 0
-    }
-    
-    // Set appropriate texture based on current state
+    // Set appropriate texture based on current state (no blinking)
     let newTexture = 'yellowEnemyMouthClosedEyeOpen'
-    if (this.yellowEnemyAnimationState === 'blinking') {
-      newTexture = this.biteTimer >= this.nextExpressionTime ? 'yellowEnemyMouthOpenBlinking' : 'yellowEnemyMouthClosedBlinking'
-    } else if (this.yellowEnemyAnimationState === 'mouthOpen') {
+    if (this.yellowEnemyAnimationState === 'mouthOpen') {
       newTexture = 'yellowEnemyMouthOpenEyeOpen'
     }
     
@@ -1525,6 +1694,144 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     if (this.scene.textures.exists(textureKey)) {
       this.setTexture(textureKey)
+    }
+  }
+  
+  // ============== BLUE CATERPILLAR ANIMATION SYSTEM ==============
+  
+  private isBlueCaterpillarAnimationSprite(textureKey: string): boolean {
+    return [
+      'blueCaterpillarEyesRight',
+      'blueCaterpillarEyesLeft',
+      'blueCaterpillarEyesDown',
+      'blueCaterpillarBlinking'
+    ].includes(textureKey)
+  }
+  
+  private initializeBlueCaterpillarAnimations(): void {
+    // Set random initial timers to make enemies feel unique
+    this.nextBlueCaterpillarBlinkTime = Math.random() * 1500 + 1500 // 1.5-3 seconds
+    this.nextBlueCaterpillarEyeTime = Math.random() * 2000 + 1000 // 1-3 seconds
+    this.blueCaterpillarAnimationState = 'eyesDown'
+  }
+  
+  private updateBlueCaterpillarPatrol(delta: number): void {
+    // More predictable movement than yellow caterpillar
+    this.randomMoveTimer -= delta
+    
+    if (this.randomMoveTimer <= 0) {
+      // Less erratic than yellow, changes direction less often
+      const changeChance = 0.15 // 15% chance to change direction
+      
+      if (Math.random() < changeChance) {
+        this.direction = Math.random() < 0.5 ? -1 : 1
+      }
+      
+      // Longer intervals between potential direction changes
+      this.randomMoveTimer = 1500 + Math.random() * 1500 // 1.5-3 seconds
+    }
+    
+    // Handle turn delay timer
+    if (this.turnDelayTimer > 0) {
+      this.turnDelayTimer -= delta
+    }
+    
+    // Check if velocity is being blocked (likely by spike or wall)
+    const velocityBlocked = Math.abs(this.body!.velocity.x) < 5 && Math.abs(this.moveSpeed) > 0
+    
+    // Enhanced boundary checking - use both position AND velocity blocking
+    const edgeBuffer = 35 // Increased buffer to account for spike collision bodies
+    if (this.x <= this.platformBounds.left + edgeBuffer || (velocityBlocked && this.direction === -1)) {
+      if (this.turnDelayTimer <= 0) {
+        this.direction = 1
+        this.turnDelayTimer = 100 + Math.random() * 400
+        // Force position away from edge to prevent getting stuck
+        this.setX(Math.max(this.platformBounds.left + edgeBuffer, this.x))
+      }
+    } else if (this.x >= this.platformBounds.right - edgeBuffer || (velocityBlocked && this.direction === 1)) {
+      if (this.turnDelayTimer <= 0) {
+        this.direction = -1
+        this.turnDelayTimer = 100 + Math.random() * 400
+        // Force position away from edge to prevent getting stuck
+        this.setX(Math.min(this.platformBounds.right - edgeBuffer, this.x))
+      }
+    }
+    
+    // Apply velocity
+    this.setVelocityX(this.moveSpeed * this.direction)
+    
+    // Safety check: Ensure caterpillar stays within bounds
+    if (this.x < this.platformBounds.left + 5 || this.x > this.platformBounds.right - 5) {
+      const constrainedX = Math.max(this.platformBounds.left + 10, Math.min(this.platformBounds.right - 10, this.x))
+      this.setX(constrainedX)
+      this.direction *= -1 // Reverse direction when constrained
+      this.setVelocityX(this.moveSpeed * this.direction)
+    }
+    
+    // Flip sprite based on direction
+    if (this.isBlueCaterpillarAnimationSprite(this.texture.key)) {
+      this.setFlipX(this.direction === 1) // Flip when going right
+    }
+  }
+  
+  private updateBlueCaterpillarAnimations(delta: number): void {
+    // Only animate if using the blue caterpillar sprites
+    if (!this.isBlueCaterpillarAnimationSprite(this.texture.key)) {
+      return
+    }
+    
+    // Update timers
+    this.blueCaterpillarBlinkTimer += delta
+    this.blueCaterpillarEyeTimer += delta
+    
+    // Handle blinking animation
+    if (this.blueCaterpillarAnimationState === 'blinking') {
+      if (this.blueCaterpillarBlinkTimer >= 200) { // 200ms blink
+        // Return to previous eye state
+        this.blueCaterpillarAnimationState = 'eyesDown'
+        this.blueCaterpillarBlinkTimer = 0
+        this.nextBlueCaterpillarBlinkTime = Math.random() * 1500 + 1500 // 1.5-3 seconds
+      }
+    }
+    
+    // Handle eye movement (looking around)
+    if (this.blueCaterpillarEyeTimer >= this.nextBlueCaterpillarEyeTime && 
+        this.blueCaterpillarAnimationState !== 'blinking') {
+      // Cycle through eye positions
+      const states: Array<'eyesRight' | 'eyesLeft' | 'eyesDown'> = ['eyesRight', 'eyesLeft', 'eyesDown']
+      const currentIndex = states.indexOf(this.blueCaterpillarAnimationState as any)
+      const nextIndex = (currentIndex + 1) % states.length
+      this.blueCaterpillarAnimationState = states[nextIndex]
+      this.nextBlueCaterpillarEyeTime = Math.random() * 2000 + 1000 // 1-3 seconds
+      this.blueCaterpillarEyeTimer = 0
+    }
+    
+    // Handle random blinking
+    if (this.blueCaterpillarBlinkTimer >= this.nextBlueCaterpillarBlinkTime && 
+        this.blueCaterpillarAnimationState !== 'blinking') {
+      this.blueCaterpillarAnimationState = 'blinking'
+      this.blueCaterpillarBlinkTimer = 0
+    }
+    
+    // Set appropriate texture based on current state
+    let newTexture = 'blueCaterpillarEyesDown'
+    switch (this.blueCaterpillarAnimationState) {
+      case 'eyesRight':
+        newTexture = 'blueCaterpillarEyesRight'
+        break
+      case 'eyesLeft':
+        newTexture = 'blueCaterpillarEyesLeft'
+        break
+      case 'eyesDown':
+        newTexture = 'blueCaterpillarEyesDown'
+        break
+      case 'blinking':
+        newTexture = 'blueCaterpillarBlinking'
+        break
+    }
+    
+    if (this.texture.key !== newTexture && this.scene && this.scene.textures.exists(newTexture)) {
+      this.setTexture(newTexture)
     }
   }
 }

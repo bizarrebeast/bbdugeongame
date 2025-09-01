@@ -503,10 +503,17 @@ export class GameScene extends Phaser.Scene {
     this.load.image('crystal-cavern-bg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20quest%20background%20compressed-UKsRHy0KcxBQz6FuHbeLvlwcbd3LdS.png?ATB5')
     
     // Load yellow enemy animation sprites
-    this.load.image('yellowEnemyMouthOpenEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20eye%20open-4dEmp2gPrn80UE2QOE1uSSovKJjcCe.png?SLUI')
-    this.load.image('yellowEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20open%20blinking-P7cSu0iZ5zBpKeOKavnHVjoGU2bDOb.png?0gaY')
-    this.load.image('yellowEnemyMouthClosedEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20closed%20eye%20open-SR2cCNicBFEj13QRyTyxMqjKZoYU81.png?entK')
-    this.load.image('yellowEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/yellow%20mouth%20clsoed%20blinking-eb9OM0fEGjDh4iRuoUCVztOGLLSBSV.png?eDZv')
+    // Updated caterpillar sprites
+    this.load.image('yellowEnemyMouthOpenEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar1%20eyes%20open%20mouth%20open-lQoAdkobZ4H1EzQlITXFW8pLyuzlpU.png?vG8O')
+    this.load.image('yellowEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar1%20eyes%20closed%20mouth%20open-jvUJJbRjevmC71Cgw86fpsQGJQkwGK.png?yXzx')
+    this.load.image('yellowEnemyMouthClosedEyeOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar1%20eyes%20open%20mouth%20closed-6A2FG9PKDMrBHdE76pV9iALE66ogtp.png?L3eK')
+    this.load.image('yellowEnemyMouthClosedBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar1%20eyes%20closed%20mouth%20closed-Fv7QiPIbIYgPuqmUeGF8Gu234h9Xie.png?nEys')
+    
+    // Load blue caterpillar variant sprites
+    this.load.image('blueCaterpillarEyesRight', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar3%20eyes%20right-rgnZpnvBWDB5xqNXCcFANHRKrytkRu.png?wuBQ')
+    this.load.image('blueCaterpillarEyesLeft', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar3%20eyes%20left-HsnjWSiRWtlaEQbj1rkVr1tbwQc9ky.png?gCNM')
+    this.load.image('blueCaterpillarEyesDown', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar3%20eyes%20down-WvFuBIqZBj1tTCA5FZUSNSRakKAXY3.png?EWfJ')
+    this.load.image('blueCaterpillarBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/caterpillar3%20eyes%20blinking-JvNYqKH2z9dUyLPOko1QE2GJXwuL36.png?vqim')
     
     // Load new gem collectible sprites
     this.load.image('gem-big-blue', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/big%20blue%20gem-GzKKZKUsDMh3CXMEIV4OmMl4ksrqqm.png?sill')
@@ -5368,6 +5375,7 @@ export class GameScene extends Phaser.Scene {
       let enemyType: EnemyType
       switch(catColor) {
         case 'yellow': enemyType = EnemyType.CATERPILLAR; break
+        case 'blue_caterpillar': enemyType = EnemyType.BLUE_CATERPILLAR; break
         case 'blue': enemyType = EnemyType.CHOMPER; break
         case 'red': enemyType = EnemyType.SNAIL; break  // Note: could be stalker but we'll use snail points for now
         case 'green': enemyType = EnemyType.JUMPER; break
@@ -5393,6 +5401,7 @@ export class GameScene extends Phaser.Scene {
     let enemyType: EnemyType
     switch(catColor) {
       case 'yellow': enemyType = EnemyType.CATERPILLAR; break
+      case 'blue_caterpillar': enemyType = EnemyType.BLUE_CATERPILLAR; break
       case 'blue': enemyType = EnemyType.CHOMPER; break
       case 'red': enemyType = EnemyType.SNAIL; break  // Note: could be stalker but we'll use snail points for now
       case 'green': enemyType = EnemyType.JUMPER; break
@@ -5441,6 +5450,9 @@ export class GameScene extends Phaser.Scene {
     switch (catColor) {
       case 'yellow':
         squishSound = 'squish-caterpillar'
+        break
+      case 'blue_caterpillar':
+        squishSound = 'player-land'  // Use player landing sound for blue caterpillar
         break
       case 'blue':
         squishSound = 'squish-chomper'
@@ -5531,8 +5543,28 @@ export class GameScene extends Phaser.Scene {
     // Check if enemy is already squished to prevent multiple kills
     if (enemy.isSquished) return
     
+    // Determine base points based on enemy type
+    let basePoints = 200 // Default
+    
+    if (enemy.constructor.name === 'Beetle') {
+      basePoints = 75 // Beetle points
+    } else if (enemy.constructor.name === 'Cat') {
+      const catColor = enemy.getCatColor()
+      let enemyType: EnemyType
+      switch(catColor) {
+        case 'yellow': enemyType = EnemyType.CATERPILLAR; break
+        case 'blue_caterpillar': enemyType = EnemyType.BLUE_CATERPILLAR; break
+        case 'blue': enemyType = EnemyType.CHOMPER; break
+        case 'red': 
+          enemyType = enemy.isStalker ? EnemyType.STALKER : EnemyType.SNAIL
+          break
+        case 'green': enemyType = EnemyType.JUMPER; break
+        default: enemyType = EnemyType.CHOMPER; break
+      }
+      basePoints = EnemySpawningSystem.getPointValue(enemyType)
+    }
+    
     // Award triple points for invincibility kills
-    const basePoints = 200
     const triplePoints = basePoints * 3
     this.score += triplePoints
     this.updateScoreDisplay()
@@ -5549,6 +5581,9 @@ export class GameScene extends Phaser.Scene {
       switch (catColor) {
         case 'yellow':
           squishSound = 'squish-caterpillar'
+          break
+        case 'blue_caterpillar':
+          squishSound = 'player-land'  // Use player landing sound for blue caterpillar
           break
         case 'blue':
           squishSound = 'squish-chomper'
@@ -8381,6 +8416,7 @@ export class GameScene extends Phaser.Scene {
       
       switch(color) {
         case 'yellow': return 'caterpillar'
+        case 'blue_caterpillar': return 'caterpillar'  // Track blue caterpillar as caterpillar
         case 'blue': return 'chomper'
         case 'red': return isStalker ? 'stalker' : 'snail'
         case 'green': return 'bouncer'
