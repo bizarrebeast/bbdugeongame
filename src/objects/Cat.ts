@@ -228,54 +228,79 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // to avoid conflicts between the two offset calls
       
     } else if (catColor === CatColor.RED && this.body instanceof Phaser.Physics.Arcade.Body) {
-      // Increase Snail (red patrol enemy) hitbox by 50%
-      this.body.setSize(48, 48)  // 32*1.5=48 for both dimensions
-      // Center the larger hitbox on the sprite (accounting for 14px sprite offset down)
-      this.body.setOffset(-8, -8 + 14)  // Offset to center: (-8, 6) to account for sprite movement
+      // Snail (red patrol enemy) - CIRCULAR hitbox for smoother movement!
+      // Note: Stalkers also use RED color but are handled separately by isStalker check
+      if (!this.isStalker) {
+        // Regular Snail enemy - use circular hitbox
+        // 30x30 circle as requested
+        const desiredRadius = 15  // 30px diameter circle
+        
+        // For red enemies, texture and display sizes may vary
+        // Calculate proper radius in texture space
+        const textureWidth = this.texture.get().width
+        const displaySize = this.isStalker ? 42 : 52  // From visual setup: stalkers 42x42, snails 52x52
+        const scale = displaySize / textureWidth
+        const radiusInTextureSpace = desiredRadius / scale
+        
+        // Set circular hitbox
+        this.body.setCircle(radiusInTextureSpace)
+        
+        // Center the circular hitbox
+        const circleDiameter = radiusInTextureSpace * 2
+        const offsetX = (textureWidth - circleDiameter) / 2
+        const offsetY = (textureWidth - circleDiameter) / 2 + 14 / scale  // +14px visual offset from before
+        
+        this.body.setOffset(offsetX, offsetY)
+        
+        console.log('🔴 SNAIL CIRCULAR HITBOX:')
+        console.log('  Circle radius:', radiusInTextureSpace, 'px (texture space)')
+        console.log('  Body is circular:', this.body.isCircle)
+        console.log('  Display size:', displaySize, 'x', displaySize)
+      } else {
+        // Stalker - keep rectangular hitbox for now
+        this.body.setSize(48, 48)  // 32*1.5=48 for both dimensions
+        this.body.setOffset(-8, -8 + 14)  // Offset to center: (-8, 6) to account for sprite movement
+      }
     } else if (catColor === CatColor.GREEN && this.body instanceof Phaser.Physics.Arcade.Body) {
-      // Green bouncer - custom hitbox size 26x22 in screen pixels
-      // Phaser's setSize works in texture space, not display space
-      // If texture is 84x84 displayed at 36x36, scale is 36/84 = 0.428571
-      // To get 26x22 screen pixels, we need: 26/0.428571 = 60.67, 22/0.428571 = 51.33
+      // Green bouncer - CIRCULAR hitbox for smoother bouncing!
+      // Using a circle with radius of ~12 pixels (24px diameter) in screen space
       const textureWidth = this.texture.get().width
       const textureHeight = this.texture.get().height
       const scaleX = this.displayWidth / textureWidth
       const scaleY = this.displayHeight / textureHeight
       
-      // Calculate the body size in texture space to achieve desired screen size
-      const desiredScreenWidth = 26
-      const desiredScreenHeight = 22
-      const bodyWidthInTextureSpace = desiredScreenWidth / scaleX
-      const bodyHeightInTextureSpace = desiredScreenHeight / scaleY
+      // Calculate the radius in texture space to achieve desired screen size
+      // We want approximately 24px diameter circle in screen space
+      const desiredScreenRadius = 12
+      // Use the average scale since circles need uniform scaling
+      const avgScale = (scaleX + scaleY) / 2
+      const radiusInTextureSpace = desiredScreenRadius / avgScale
       
-      this.body.setSize(bodyWidthInTextureSpace, bodyHeightInTextureSpace)
+      // Set circular hitbox!
+      this.body.setCircle(radiusInTextureSpace)
       
-      console.log('🟢 GREEN BOUNCER HITBOX SETUP:')
-      console.log('  Body size requested: 26 x 22')
-      console.log('  Body size actual:', this.body.width, 'x', this.body.height)
+      console.log('🟢 GREEN BOUNCER CIRCULAR HITBOX:')
+      console.log('  Circle radius requested:', desiredScreenRadius, 'px (screen space)')
+      console.log('  Circle radius actual:', radiusInTextureSpace, 'px (texture space)')
+      console.log('  Body is circular:', this.body.isCircle)
       console.log('  Current sprite display size:', this.displayWidth, 'x', this.displayHeight)
-      console.log('  Sprite position:', this.x, ',', this.y)
-      console.log('  Texture key:', this.texture.key)
-      console.log('  Texture frame size:', this.texture.get().width, 'x', this.texture.get().height)
+      console.log('  Texture frame size:', textureWidth, 'x', textureHeight)
       
-      // The physics body offset positions the hitbox relative to the sprite's top-left corner
-      // Keep the hitbox centered as it was working correctly
-      // To move visual sprite up 5px relative to the hitbox:
-      // We offset the hitbox down 5px from center
-      
-      // First center the hitbox (this was correct)
-      const hitboxCenterX = (textureWidth - bodyWidthInTextureSpace) / 2
-      const hitboxCenterY = (textureHeight - bodyHeightInTextureSpace) / 2
+      // Center the circular hitbox on the sprite
+      // For a circle, the offset positions the top-left of the bounding box
+      // We need to account for the circle's diameter when centering
+      const circleDiameter = radiusInTextureSpace * 2
+      const offsetX = (textureWidth - circleDiameter) / 2
+      const offsetY = (textureHeight - circleDiameter) / 2
       
       // Apply visual offset: sprite up 5px means hitbox down 5px
-      const visualOffsetX = 0  // No horizontal offset
-      const visualOffsetY = 5 / scaleY  // Move hitbox down in texture space
+      const visualOffsetY = 5 / avgScale  // Move hitbox down in texture space
       
-      this.body.setOffset(hitboxCenterX + visualOffsetX, hitboxCenterY + visualOffsetY)
+      this.body.setOffset(offsetX, offsetY + visualOffsetY)
       
-      console.log('  Physics offset applied:', this.body.offset.x, ',', this.body.offset.y)
-      console.log('  Scales:', scaleX, scaleY)
-      console.log('  Visual offset in texture space:', visualOffsetX, visualOffsetY)
+      console.log('  Circle offset applied:', this.body.offset.x, ',', this.body.offset.y)
+      console.log('  Average scale:', avgScale)
+      console.log('  Visual offset in texture space:', 0, visualOffsetY)
     }
     
     this.setCollideWorldBounds(true)
