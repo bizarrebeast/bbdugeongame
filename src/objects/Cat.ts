@@ -257,9 +257,30 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         console.log('  Body is circular:', this.body.isCircle)
         console.log('  Display size:', displaySize, 'x', displaySize)
       } else {
-        // Stalker - keep rectangular hitbox for now
-        this.body.setSize(48, 48)  // 32*1.5=48 for both dimensions
-        this.body.setOffset(-8, -8 + 14)  // Offset to center: (-8, 6) to account for sprite movement
+        // Stalker - use circular hitbox for better chasing behavior
+        // 24px diameter circle as requested
+        const desiredRadius = 12  // 24px diameter circle
+        
+        // Calculate proper radius in texture space
+        const textureWidth = this.texture.get().width
+        const displaySize = 42  // Stalkers are 42x42
+        const scale = displaySize / textureWidth
+        const radiusInTextureSpace = desiredRadius / scale
+        
+        // Set circular hitbox
+        this.body.setCircle(radiusInTextureSpace)
+        
+        // Center the circular hitbox
+        const circleDiameter = radiusInTextureSpace * 2
+        const offsetX = (textureWidth - circleDiameter) / 2
+        const offsetY = (textureWidth - circleDiameter) / 2 + 14 / scale  // +14px visual offset
+        
+        this.body.setOffset(offsetX, offsetY)
+        
+        console.log('👁️ STALKER CIRCULAR HITBOX:')
+        console.log('  Circle radius:', radiusInTextureSpace, 'px (texture space)')
+        console.log('  Body is circular:', this.body.isCircle)
+        console.log('  Display size:', displaySize, 'x', displaySize)
       }
     } else if (catColor === CatColor.GREEN && this.body instanceof Phaser.Physics.Arcade.Body) {
       // Green bouncer - CIRCULAR hitbox for smoother bouncing!
