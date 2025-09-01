@@ -6,7 +6,7 @@
 ### ✅ COMPLETED (6-Tier Enemy System & Production Polish Sprint)
 - **Game is fully playable** with sophisticated progressive difficulty system
 - **6-Tier Enemy System**: Complete progressive spawning across Tutorial → Basic → Speed → Advanced → Expert → BEAST tiers
-- **7 Enemy Types**: Caterpillar (50pts), Beetle (75pts), Chomper (100pts), Snail (150pts), Jumper (200pts), Stalker (300pts), BaseBlu (1000pts)
+- **9 Enemy Types**: Caterpillar (50pts), Blue Caterpillar (50pts), Beetle (75pts), Chomper (100pts), Snail (150pts), Jumper (200pts), Stalker (300pts), Rex (500pts), BaseBlu (1000pts)
 - **Enhanced Distribution**: Anti-clustering algorithms with intelligent directional assignment preventing enemy clustering
 - **Speed Scaling**: Progressive enemy speed increases (1.0x → 1.25x) across difficulty tiers
 - **Combat System**: Variable point values, jump-to-kill with combo multipliers and point popups

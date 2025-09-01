@@ -63,39 +63,49 @@ Your adventure takes you through 5 magnificent crystal cavern chapters, each wit
 
 ## Know Your Enemies
 
-Learn to recognize and defeat these seven unique foes:
+Learn to recognize and defeat these nine unique foes:
 
 ### 1. **Caterpillar** (50 points)
 - **Appearance**: Yellow, segmented crawler
 - **Behavior**: Moves slowly in random patterns
 - **Strategy**: Easy to avoid or stomp, perfect for beginners
 
-### 2. **Rollz** (75 points)
+### 2. **Blue Caterpillar** (50 points)
+- **Appearance**: Blue variant of the caterpillar
+- **Behavior**: More predictable movement than yellow caterpillar
+- **Strategy**: Changes direction less frequently, easier to predict
+
+### 3. **Rollz/Beetle** (75 points)
 - **Appearance**: Round beetle that rolls along platforms
 - **Behavior**: Simple back-and-forth patrol
 - **Strategy**: Time your jumps when Rollz turns around
 
-### 3. **Chomper** (100 points)
+### 4. **Chomper** (100 points)
 - **Appearance**: Blue blob with a big mouth
 - **Behavior**: Standard patrol pattern
 - **Strategy**: Watch their movement pattern and strike from above
 
-### 4. **Snail** (150 points)
+### 5. **Snail** (150 points)
 - **Appearance**: Red creature with a spiral shell
 - **Behavior**: Faster patrol than expected from a snail!
 - **Strategy**: Don't underestimate their speed - time jumps carefully
 
-### 5. **Bouncer** (200 points)
+### 6. **Bouncer** (200 points)
 - **Appearance**: Green energetic blob
 - **Behavior**: Bounces rapidly across platforms
 - **Strategy**: Predict bounce patterns and attack at peak height
 
-### 6. **Stalker** (300 points)
+### 7. **Stalker** (300 points)
 - **Appearance**: Purple menace with glowing eyes
 - **Behavior**: Activates when you're near and chases BizBe
 - **Strategy**: Lure them away from your path or quickly stomp them
 
-### 7. **Blu** (1000 points - when invincible)
+### 8. **Rex** (500 points)
+- **Appearance**: Square enemy with eyes that blink
+- **Behavior**: Patrols while performing periodic flipping jumps
+- **Strategy**: High value target - time your attacks between jumps
+
+### 9. **Blu** (1000 points - when invincible)
 - **Appearance**: Large blue immovable guardian
 - **Behavior**: Blocks paths, cannot be defeated normally
 - **Strategy**: Only vulnerable when BizBe has invincibility power-up
@@ -296,7 +306,7 @@ pritical for long runs
 While playing Treasure Quest, challenge yourself with these goals:
 
 - **Gem Collector**: Collect 150 gems in a single run
-- **Enemy Slayer**: Defeat all 7 enemy types
+- **Enemy Slayer**: Defeat all 9 enemy types
 - **Treasure Hunter**: Open 10 treasure chests
 - **Chapter Master**: Complete all 5 chapters
 - **Beast Tamer**: Reach level 60 in Beast Mode

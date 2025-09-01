@@ -159,12 +159,13 @@
   - Light green particle burst on death
   - Passes through other Rex enemies
 - **Spawn Distribution** (6-Tier System):
-  - Tutorial (1-10): 0%
-  - Basic (11-20): Currently TestScene only
-  - Speed (21-30): Currently TestScene only
-  - Advanced (31-40): Currently TestScene only
-  - Expert (41-50): Currently TestScene only
-  - BEAST (51+): Currently TestScene only
+  - Tutorial Early (1-3): 0%
+  - Tutorial Late (4-10): 10%
+  - Basic (11-20): 15%
+  - Speed (21-30): 15%
+  - Advanced (31-40): 15%
+  - Expert (41-50): 15%
+  - BEAST (51+): 15%
 
 ## 6-Tier Progressive System
 
@@ -354,6 +355,6 @@
 - [ ] Update visual indicators
 
 ---
-*Updated: August 2024 - Complete 6-tier enemy system with anti-clustering distribution*  
-*Latest: Enhanced with intelligent spawn patterns and production-ready balance*
-*Added: Complete enemy addition and color variation checklists*
+*Updated: September 2024 - Rex enemy fully integrated into main game*  
+*Latest: Complete 9-enemy roster with Rex flipping enemy (500 points)*
+*Added: Blue Caterpillar stuck detection improvements, Rex spawn distribution*

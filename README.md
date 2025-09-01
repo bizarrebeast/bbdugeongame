@@ -192,7 +192,10 @@ bizarre-underground/
 - **`Player.ts`**: Enhanced player with 9 custom animations and smart state management
 - **`LevelManager.ts`**: Progressive difficulty system (levels 1-50, then BEAST MODE endless)
 - **`EnemySpawningSystem.ts`**: Sophisticated 6-tier enemy spawning with anti-clustering algorithms
-- **`Cat.ts`**: Smart enemy AI system with 7 enemy types and variable point values
+- **`Cat.ts`**: Smart enemy AI system with multiple enemy types and variable point values
+- **`Rex.ts`**: Flipping enemy with jump mechanics and particle effects (500 points)
+- **`Beetle.ts`**: Rolling beetle enemy with bite animations (75 points)
+- **`BaseBlu.ts`**: Immovable blocker enemy, only defeated when invincible (1000 points)
 - **`Door.ts`**: Industrial-style doors with wooden panels and hardware
 
 ## Available Commands
