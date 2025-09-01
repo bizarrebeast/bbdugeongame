@@ -403,6 +403,11 @@ export class GameScene extends Phaser.Scene {
     this.load.image('blueEnemyMouthOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open-4hO9JLZDfnWgcQWlvfqiU7SCOXaA0g.png?sh1i')
     this.load.image('blueEnemyMouthOpenBlinking', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blue%20enemy%20mouth%20open%20blinking-Nl5UA9KyScZCBwu9BrKXR0IdNk3aen.png?B9Tr')
     
+    // Load purple chomper sprites (visual variant of blue chomper)
+    this.load.image('purpleEnemyMouthClosed', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/chomper2%20closed%20mouth-l01A99F3sINIeGx2hkb33YVS16xa3k.png?DjP8')
+    this.load.image('purpleEnemyMouthPartialOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/chomper2%20mid%20mouth-OvzgXzA7k4tlCopnJB6tiD0RqjATsS.png?wV23')
+    this.load.image('purpleEnemyMouthOpen', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/chomper2%20full%20open%20mouth-H4bWdRYA3801jLzUyCiuevtXxj8Hmu.png?MkMw')
+    
     // Load red enemy animation sprites (8 sprites for patrol, bite, and blink)
     this.load.image('redEnemyMouthClosedEyes1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%201-RKF3p3F7fxdBSfen8UD9UGqIzf8zlv.png?xRpM')
     this.load.image('redEnemyMouthClosedEyes2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/mouth%20closed%20eyes%202-vLWsEKkj7nPhdADyj947N0FQDi3QUf.png?Z82J')
@@ -3104,7 +3109,12 @@ export class GameScene extends Phaser.Scene {
           
         } else {
           // Create regular Cat enemy
-          const color = EnemySpawningSystem.getColorForEnemyType(enemyType)
+          let color = EnemySpawningSystem.getColorForEnemyType(enemyType)
+          
+          // Randomly choose between blue and purple for chompers (50/50 mix for variety)
+          if (enemyType === EnemyType.CHOMPER && Math.random() < 0.5) {
+            color = 'purple'
+          }
           
           const cat = new Cat(
             this,
@@ -5377,6 +5387,7 @@ export class GameScene extends Phaser.Scene {
         case 'yellow': enemyType = EnemyType.CATERPILLAR; break
         case 'blue_caterpillar': enemyType = EnemyType.BLUE_CATERPILLAR; break
         case 'blue': enemyType = EnemyType.CHOMPER; break
+        case 'purple': enemyType = EnemyType.CHOMPER; break  // Purple chomper variant
         case 'red': enemyType = EnemyType.SNAIL; break  // Note: could be stalker but we'll use snail points for now
         case 'green': enemyType = EnemyType.JUMPER; break
         default: enemyType = EnemyType.CHOMPER; break
@@ -5455,6 +5466,7 @@ export class GameScene extends Phaser.Scene {
         squishSound = 'player-land'  // Use player landing sound for blue caterpillar
         break
       case 'blue':
+      case 'purple':  // Purple chomper uses same sound as blue
         squishSound = 'squish-chomper'
         break
       case 'red':
@@ -8418,6 +8430,7 @@ export class GameScene extends Phaser.Scene {
         case 'yellow': return 'caterpillar'
         case 'blue_caterpillar': return 'caterpillar'  // Track blue caterpillar as caterpillar
         case 'blue': return 'chomper'
+        case 'purple': return 'chomper'  // Track purple chomper as chomper
         case 'red': return isStalker ? 'stalker' : 'snail'
         case 'green': return 'bouncer'
         default: 

@@ -2,6 +2,7 @@ import GameSettings from "../config/GameSettings"
 
 export enum CatColor {
   BLUE = 'blue',
+  PURPLE = 'purple',  // Purple chomper - visual variant of blue
   YELLOW = 'yellow',
   GREEN = 'green',
   RED = 'red',
@@ -146,6 +147,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     if (catColor === CatColor.BLUE) {
       textureKey = 'blueEnemyMouthClosed'
+    } else if (catColor === CatColor.PURPLE) {
+      textureKey = 'purpleEnemyMouthClosed'  // Purple chomper variant
     } else if (catColor === CatColor.YELLOW) {
       textureKey = 'yellowEnemyMouthClosedEyeOpen'
     } else if (catColor === CatColor.GREEN) {
@@ -190,11 +193,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Caterpillar enemy debug info (replaced console.log)
     
     // Apply enemy hitbox sizing AFTER physics body is created
-    if (catColor === CatColor.BLUE && this.body instanceof Phaser.Physics.Arcade.Body) {
+    if ((catColor === CatColor.BLUE || catColor === CatColor.PURPLE) && this.body instanceof Phaser.Physics.Arcade.Body) {
       this.body.setSize(63.5, 45)  // Decreased width by 4px: 67.5-4=63.5, height stays 45
       
       // Adjust physics body offset to align with sprite visual
-      const isAnimationSprite = this.isBlueEnemyAnimationSprite(textureKey)
+      const isAnimationSprite = catColor === CatColor.BLUE ? 
+        this.isBlueEnemyAnimationSprite(textureKey) : 
+        this.isPurpleEnemyAnimationSprite(textureKey)
       const spriteYOffset = isAnimationSprite ? 32 : 19  // Updated offsets after moving down 26px total
       
       // Center the hitbox on the sprite visual
@@ -354,6 +359,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.setOffset(3 - 2 + 4, 58 - 18 - 8) // Move left 6px total (2px + 4px) and down 26 pixels
       this.setFlipX(false)
       this.initializeBlueEnemyAnimations()
+    } else if (catColor === CatColor.PURPLE && this.isPurpleEnemyAnimationSprite(textureKey)) {
+      // Purple chomper - same size and behavior as blue
+      this.setDisplaySize(36, 36)
+      this.setOffset(3 - 2 + 4, 58 - 18 - 8) // Same positioning as blue
+      this.setFlipX(false)
+      this.initializeBlueEnemyAnimations()  // Purple uses same animation system as blue
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
       const displaySize = this.isStalker ? 42 : 52 // Stalkers: 20% smaller (42x42), regular red: (52x52)
@@ -426,6 +437,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     switch (this.catColor) {
       case CatColor.BLUE:
+      case CatColor.PURPLE:  // Purple chompers have same speed as blue
         this.moveSpeed = this.baseSpeed * this.individualSpeedMultiplier
         break
       case CatColor.YELLOW:
@@ -481,6 +493,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     switch (this.catColor) {
       case CatColor.BLUE:
+      case CatColor.PURPLE:  // Purple uses same patrol and animations as blue
         this.updateBluePatrol()
         this.updateBlueEnemyAnimations(delta)
         this.checkIfChomperStuck(delta)  // Check for stuck state
@@ -569,8 +582,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     // Movement during bite is already handled above
     
-    // Update sprite flip for all blue enemy sprites
-    if (this.catColor === CatColor.BLUE) {
+    // Update sprite flip for all blue and purple enemy sprites
+    if (this.catColor === CatColor.BLUE || this.catColor === CatColor.PURPLE) {
       this.setFlipX(this.direction > 0) // Flip when moving right
     }
   }
@@ -837,6 +850,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     ].includes(textureKey)
   }
   
+  private isPurpleEnemyAnimationSprite(textureKey: string): boolean {
+    return [
+      'purpleEnemyMouthClosed',
+      'purpleEnemyMouthPartialOpen',
+      'purpleEnemyMouthOpen'
+    ].includes(textureKey)
+  }
+  
   
   private initializeYellowEnemyAnimations(): void {
     // Set random initial timers to make enemies feel unique
@@ -853,11 +874,17 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateBlueEnemyAnimations(delta: number): void {
-    // Only animate if using the new animation sprites
-    if (!this.isBlueEnemyAnimationSprite(this.texture.key)) {
+    // Only animate if using the new animation sprites (blue or purple)
+    if (!this.isBlueEnemyAnimationSprite(this.texture.key) && !this.isPurpleEnemyAnimationSprite(this.texture.key)) {
       // Only fix the texture once, not every frame
       if (this.catColor === CatColor.BLUE && !this.blueTextureFixed && this.scene.textures.exists('blueEnemyMouthClosed')) {
         this.setTexture('blueEnemyMouthClosed')
+        this.setDisplaySize(36, 36)
+        this.blueTextureFixed = true  // Mark as fixed so we don't keep resetting
+        // Re-initialize animations after fixing texture
+        this.initializeBlueEnemyAnimations()
+      } else if (this.catColor === CatColor.PURPLE && !this.blueTextureFixed && this.scene.textures.exists('purpleEnemyMouthClosed')) {
+        this.setTexture('purpleEnemyMouthClosed')
         this.setDisplaySize(36, 36)
         this.blueTextureFixed = true  // Mark as fixed so we don't keep resetting
         // Re-initialize animations after fixing texture
@@ -966,8 +993,21 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Check if scene still exists (enemy might be destroyed or scene cleaning up)
     if (!this.scene) return
     
-    if (this.scene.textures.exists(textureKey)) {
-      this.setTexture(textureKey)
+    // Convert texture key for purple chompers
+    let actualTextureKey = textureKey
+    if (this.catColor === CatColor.PURPLE) {
+      // Map blue texture names to purple equivalents
+      if (textureKey === 'blueEnemyMouthClosed') {
+        actualTextureKey = 'purpleEnemyMouthClosed'
+      } else if (textureKey === 'blueEnemyMouthPartialOpen') {
+        actualTextureKey = 'purpleEnemyMouthPartialOpen'
+      } else if (textureKey === 'blueEnemyMouthOpen') {
+        actualTextureKey = 'purpleEnemyMouthOpen'
+      }
+    }
+    
+    if (this.scene.textures.exists(actualTextureKey)) {
+      this.setTexture(actualTextureKey)
       // Maintain consistent display size and positioning
       this.setDisplaySize(36, 36)
       
@@ -976,8 +1016,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Just preserve the current flip state
     } else {
       // Fallback to default texture if requested texture doesn't exist
-      if (this.scene.textures.exists('blueEnemyMouthClosed')) {
-        this.setTexture('blueEnemyMouthClosed')
+      const fallbackTexture = this.catColor === CatColor.PURPLE ? 
+        'purpleEnemyMouthClosed' : 'blueEnemyMouthClosed'
+      if (this.scene.textures.exists(fallbackTexture)) {
+        this.setTexture(fallbackTexture)
         this.setDisplaySize(36, 36)
       }
     }
@@ -1736,19 +1778,17 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.turnDelayTimer -= delta
     }
     
-    // Check if velocity is being blocked (likely by spike or wall)
-    const velocityBlocked = Math.abs(this.body!.velocity.x) < 5 && Math.abs(this.moveSpeed) > 0
-    
-    // Enhanced boundary checking - use both position AND velocity blocking
-    const edgeBuffer = 35 // Increased buffer to account for spike collision bodies
-    if (this.x <= this.platformBounds.left + edgeBuffer || (velocityBlocked && this.direction === -1)) {
+    // Simple boundary checking - just use position, not velocity
+    // Blue caterpillars should patrol smoothly through ladders
+    const edgeBuffer = 35 // Buffer to turn before reaching edge
+    if (this.x <= this.platformBounds.left + edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
         this.direction = 1
         this.turnDelayTimer = 100 + Math.random() * 400
         // Force position away from edge to prevent getting stuck
         this.setX(Math.max(this.platformBounds.left + edgeBuffer, this.x))
       }
-    } else if (this.x >= this.platformBounds.right - edgeBuffer || (velocityBlocked && this.direction === 1)) {
+    } else if (this.x >= this.platformBounds.right - edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
         this.direction = -1
         this.turnDelayTimer = 100 + Math.random() * 400

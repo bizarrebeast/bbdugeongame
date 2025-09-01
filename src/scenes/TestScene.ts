@@ -437,8 +437,10 @@ export class TestScene extends Phaser.Scene {
     // Enemy types and their display names
     const enemies = [
       { type: EnemyType.CATERPILLAR, name: 'CTRPLR', color: 'yellow' },
+      { type: EnemyType.BLUE_CATERPILLAR, name: 'BLU-CAT', color: 'blue_caterpillar' },
       { type: EnemyType.BEETLE, name: 'BEETLE', color: 'red' },
       { type: EnemyType.CHOMPER, name: 'CHMPR', color: 'blue' },
+      { type: EnemyType.CHOMPER, name: 'P-CHMP', color: 'purple' },  // Purple chomper variant
       { type: EnemyType.SNAIL, name: 'SNAIL', color: 'red' },
       { type: EnemyType.JUMPER, name: 'JUMPER', color: 'green' },
       { type: EnemyType.STALKER, name: 'STALKR', color: 'red' },
@@ -484,29 +486,6 @@ export class TestScene extends Phaser.Scene {
         button: btn,
         text: btnText,
         enemyType: enemy.type
-      })
-    })
-    
-    // Random spawn button
-    const randomBtn = this.add.rectangle(startX + 90, startY + 230, 120, 30, 0x8844ff)
-    randomBtn.setStrokeStyle(2, 0xffffff)
-    randomBtn.setInteractive({ useHandCursor: true })
-    this.spawnMenuContainer.add(randomBtn)
-    
-    const randomText = this.add.text(startX + 90, startY + 230, 'RANDOM', {
-      fontSize: '12px',
-      color: '#ffffff',
-      fontFamily: 'monospace',
-      fontStyle: 'bold'
-    }).setOrigin(0.5)
-    this.spawnMenuContainer.add(randomText)
-    
-    randomBtn.on('pointerdown', () => {
-      const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)]
-      this.spawnEnemy(randomEnemy.type, randomEnemy.color)
-      randomBtn.setFillStyle(0xaa66ff)
-      this.time.delayedCall(100, () => {
-        randomBtn.setFillStyle(0x8844ff)
       })
     })
   }
@@ -647,8 +626,10 @@ export class TestScene extends Phaser.Scene {
   private createEnemyButtonsInMenu(menuX: number, startY: number): void {
     const enemies = [
       { type: EnemyType.CATERPILLAR, name: 'CTRPLR', color: 'yellow' },
+      { type: EnemyType.BLUE_CATERPILLAR, name: 'BLU-CAT', color: 'blue_caterpillar' },
       { type: EnemyType.BEETLE, name: 'BEETLE', color: 'red' },
       { type: EnemyType.CHOMPER, name: 'CHMPR', color: 'blue' },
+      { type: EnemyType.CHOMPER, name: 'P-CHMP', color: 'purple' },  // Purple chomper variant
       { type: EnemyType.SNAIL, name: 'SNAIL', color: 'red' },
       { type: EnemyType.JUMPER, name: 'JUMPER', color: 'green' },
       { type: EnemyType.STALKER, name: 'STALKR', color: 'red' },
@@ -679,29 +660,6 @@ export class TestScene extends Phaser.Scene {
         this.time.delayedCall(100, () => {
           btn.setFillStyle(0x444444)
         })
-      })
-    })
-    
-    // Random button
-    const randomBtn = this.add.rectangle(menuX + 100, startY + 140, 120, 30, 0x8844ff)
-    randomBtn.setStrokeStyle(2, 0xffffff)
-    randomBtn.setInteractive({ useHandCursor: true })
-    this.spawnMenuContainer.add(randomBtn)
-    
-    const randomText = this.add.text(menuX + 100, startY + 140, 'RANDOM', {
-      fontSize: '12px',
-      color: '#ffffff',
-      fontFamily: 'monospace',
-      fontStyle: 'bold'
-    }).setOrigin(0.5)
-    this.spawnMenuContainer.add(randomText)
-    
-    randomBtn.on('pointerdown', () => {
-      const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)]
-      this.spawnEnemy(randomEnemy.type, randomEnemy.color)
-      randomBtn.setFillStyle(0xaa66ff)
-      this.time.delayedCall(100, () => {
-        randomBtn.setFillStyle(0x8844ff)
       })
     })
   }
