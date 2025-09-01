@@ -284,14 +284,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       this.setFlipX(false)
       this.initializeYellowEnemyAnimations()
-      this.addDebugVisualization()
     } else if (catColor === CatColor.BLUE && this.isBlueEnemyAnimationSprite(textureKey)) {
       // For all blue enemy animation sprites - use consistent positioning
       this.setDisplaySize(36, 36)
       this.setOffset(3 - 2 + 4, 58 - 18 - 8) // Move left 6px total (2px + 4px) and down 26 pixels
       this.setFlipX(false)
       this.initializeBlueEnemyAnimations()
-      this.addDebugVisualization()
     } else if (catColor === CatColor.RED && this.isRedEnemyAnimationSprite(textureKey)) {
       // For red enemy animation sprites - fine-tuned positioning
       const displaySize = this.isStalker ? 42 : 52 // Stalkers: 20% smaller (42x42), regular red: (52x52)
@@ -302,7 +300,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.setOffset(18, yOffset) // X=18 (moved LEFT 15px), Y=24/26 (stalkers UP, snails DOWN)
       this.setFlipX(false)
       this.initializeRedEnemyAnimations()
-      this.addDebugVisualization()
       
       if (this.isStalker) {
         // Stalker sprite positioning info (replaced console.log)
@@ -311,7 +308,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Green enemy - display size already set in constructor
       // Offset is handled in the physics body setup, not here
       this.setFlipX(false)
-      this.addDebugVisualization()
       
       console.log('🟢 GREEN VISUAL FINAL:')
       console.log('  Display size remains:', this.displayWidth, 'x', this.displayHeight)
@@ -319,7 +315,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     } else {
       // No fallback needed - all enemies should use proper animation sprites
       // Unknown sprite warning (replaced console.log)
-      this.addDebugVisualization()
     }
     
     // === FINAL VERIFICATION ===

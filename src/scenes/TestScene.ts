@@ -891,8 +891,15 @@ export class TestScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-H', () => {
       this.showHitboxes = !this.showHitboxes
       this.physics.world.drawDebug = this.showHitboxes
-      if (this.showHitboxes) {
+      
+      // Clear existing debug graphics if they exist
+      if (!this.showHitboxes && this.physics.world.debugGraphic) {
         this.physics.world.debugGraphic.clear()
+      }
+      
+      // Force creation of debug graphic when enabling
+      if (this.showHitboxes && !this.physics.world.debugGraphic) {
+        this.physics.world.createDebugGraphic()
       }
     })
   }
