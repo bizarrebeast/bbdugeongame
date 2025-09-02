@@ -92,6 +92,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private nextBlueCaterpillarBlinkTime: number = 0
   private blueCaterpillarAnimationDelay: number = 1500 // 1.5 second delay before animations start
   private blueCaterpillarAnimationsEnabled: boolean = false
+  private blueCaterpillarVelocityLogTimer: number = 0 // For periodic logging
   
   // Stalker properties (special type of red enemy)
   private isStalker: boolean = false
@@ -159,6 +160,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       textureKey = 'redEnemyMouthClosedEyes1'
     } else if (catColor === CatColor.BLUE_CATERPILLAR) {
       textureKey = 'blueCaterpillarEyesDown'
+      console.log('🐛🆕 CREATING BLUE CATERPILLAR at', {
+        x: Math.round(x),
+        y: Math.round(y),
+        platformLeft: platformLeft,
+        platformRight: platformRight,
+        platformWidth: platformRight - platformLeft
+      })
     } else {
       // This shouldn't happen with proper enemy spawning
       // Unexpected cat color fallback (replaced console.log)
@@ -478,11 +486,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       // Extra insurance for Blue Caterpillar movement
       if (this.catColor === CatColor.BLUE_CATERPILLAR) {
-        console.log('🐛 Blue Caterpillar initial setup:', {
-          x: this.x,
+        console.log('🐛🎬 Blue Caterpillar INITIAL SETUP:', {
+          x: Math.round(this.x),
           direction: this.direction,
-          moveSpeed: this.moveSpeed,
-          velocity: this.moveSpeed * this.direction
+          moveSpeed: Math.round(this.moveSpeed),
+          velocity: Math.round(this.moveSpeed * this.direction),
+          platformLeft: this.platformBounds.left,
+          platformRight: this.platformBounds.right,
+          animationsEnabled: this.blueCaterpillarAnimationsEnabled,
+          animationDelay: this.blueCaterpillarAnimationDelay
         })
       }
     }
@@ -1230,6 +1242,17 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.positionHistory.shift()
       }
       this.positionCheckTimer = 0
+      
+      // Log position tracking for Blue Caterpillar
+      if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length > 2) {
+        const movement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
+        console.log('🐛📍 Position tracking:', {
+          currentX: Math.round(this.x),
+          positionHistory: this.positionHistory.map(p => Math.round(p)),
+          totalMovement: Math.round(movement),
+          velocity: Math.round(this.body!.velocity.x)
+        })
+      }
     }
     
     // Check velocity stuck (caterpillars should always be moving)
@@ -1271,10 +1294,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Special check for Blue Caterpillar - check if it hasn't moved much
     if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 6) { // Increased to 6 (1.5 seconds)
       const recentMovement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
-      if (recentMovement < 20) { // Increased threshold from 10px to 20px
+      // Don't reset if we just turned (turnDelayTimer > 0 means we recently turned)
+      if (recentMovement < 20 && this.turnDelayTimer <= 0) { // Only reset if not recently turned
         console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 1.5s) - forcing reset`)
         this.forceResetCaterpillar()
         return
+      } else if (recentMovement < 20 && this.turnDelayTimer > 0) {
+        console.log(`🐛 Blue Caterpillar slow but just turned (timer: ${Math.round(this.turnDelayTimer)}ms) - allowing it`)
       }
     }
   }
@@ -1844,6 +1870,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // CRITICAL: Ensure velocity is always applied first
     if (Math.abs(this.body!.velocity.x) < 5) {
       // Velocity too low, force it
+      console.log('🐛⚠️ Blue Caterpillar velocity too low!', {
+        x: Math.round(this.x),
+        currentVelocity: this.body!.velocity.x,
+        direction: this.direction,
+        moveSpeed: this.moveSpeed,
+        settingTo: this.moveSpeed * this.direction
+      })
       this.setVelocityX(this.moveSpeed * this.direction)
     }
     
@@ -1872,29 +1905,86 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     const edgeBuffer = 35 // Buffer to turn before reaching edge
     if (this.x <= this.platformBounds.left + edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
+        console.log('🐛↻ TURNING RIGHT at left edge', {
+          x: Math.round(this.x),
+          leftBound: this.platformBounds.left,
+          oldDirection: this.direction
+        })
         this.direction = 1
-        this.turnDelayTimer = 100 + Math.random() * 400
+        this.turnDelayTimer = 100 + Math.random() * 200  // Reduced delay: 100-300ms instead of 100-500ms
         // Force position away from edge to prevent getting stuck
-        this.setX(Math.max(this.platformBounds.left + edgeBuffer, this.x))
+        const newX = Math.max(this.platformBounds.left + edgeBuffer + 5, this.x)  // Extra 5px buffer
+        this.setX(newX)
+        // IMMEDIATELY apply new velocity to prevent stuck state
+        this.setVelocityX(this.moveSpeed * this.direction)
+        console.log('🐛→ Applied immediate velocity after turn:', this.moveSpeed * this.direction)
       }
     } else if (this.x >= this.platformBounds.right - edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
+        console.log('🐛↻ TURNING LEFT at right edge', {
+          x: Math.round(this.x),
+          rightBound: this.platformBounds.right,
+          oldDirection: this.direction
+        })
         this.direction = -1
-        this.turnDelayTimer = 100 + Math.random() * 400
+        this.turnDelayTimer = 100 + Math.random() * 200  // Reduced delay: 100-300ms instead of 100-500ms
         // Force position away from edge to prevent getting stuck
-        this.setX(Math.min(this.platformBounds.right - edgeBuffer, this.x))
+        const newX = Math.min(this.platformBounds.right - edgeBuffer - 5, this.x)  // Extra 5px buffer
+        this.setX(newX)
+        // IMMEDIATELY apply new velocity to prevent stuck state
+        this.setVelocityX(this.moveSpeed * this.direction)
+        console.log('🐛← Applied immediate velocity after turn:', this.moveSpeed * this.direction)
       }
     }
     
     // Apply velocity
-    this.setVelocityX(this.moveSpeed * this.direction)
+    const newVelocity = this.moveSpeed * this.direction
+    const beforeVelocity = this.body!.velocity.x
+    this.setVelocityX(newVelocity)
+    const afterVelocity = this.body!.velocity.x
+    
+    // Check if velocity was actually set
+    if (Math.abs(afterVelocity - newVelocity) > 1) {
+      console.log('🐛❌ VELOCITY NOT SET PROPERLY!', {
+        expected: Math.round(newVelocity),
+        beforeSet: Math.round(beforeVelocity),
+        afterSet: Math.round(afterVelocity),
+        difference: Math.round(afterVelocity - newVelocity)
+      })
+    }
+    
+    // Log velocity application every second
+    if (!this.blueCaterpillarVelocityLogTimer) {
+      this.blueCaterpillarVelocityLogTimer = 0
+    }
+    this.blueCaterpillarVelocityLogTimer += delta
+    if (this.blueCaterpillarVelocityLogTimer > 1000) {
+      console.log('🐛📊 Blue Caterpillar patrol status', {
+        x: Math.round(this.x),
+        velocity: Math.round(this.body!.velocity.x),
+        direction: this.direction,
+        moveSpeed: Math.round(this.moveSpeed),
+        expectedVelocity: Math.round(newVelocity),
+        animationsEnabled: this.blueCaterpillarAnimationsEnabled,
+        animState: this.blueCaterpillarAnimationState,
+        bodyEnabled: this.body!.enable,
+        bodyMoves: this.body!.moves
+      })
+      this.blueCaterpillarVelocityLogTimer = 0
+    }
     
     // Safety check: Ensure caterpillar stays within bounds
     if (this.x < this.platformBounds.left + 5 || this.x > this.platformBounds.right - 5) {
+      console.log('🐛🚨 SAFETY CONSTRAINT TRIGGERED!', {
+        x: Math.round(this.x),
+        leftBound: this.platformBounds.left,
+        rightBound: this.platformBounds.right
+      })
       const constrainedX = Math.max(this.platformBounds.left + 10, Math.min(this.platformBounds.right - 10, this.x))
       this.setX(constrainedX)
       this.direction *= -1 // Reverse direction when constrained
       this.setVelocityX(this.moveSpeed * this.direction)
+      console.log('🐛🔄 Force reversed to', this.direction)
     }
     
     // Flip sprite based on direction
@@ -1909,7 +1999,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.blueCaterpillarAnimationDelay -= delta
       if (this.blueCaterpillarAnimationDelay <= 0) {
         this.blueCaterpillarAnimationsEnabled = true
-        console.log('🐛 Blue Caterpillar animations enabled after delay')
+        console.log('🐛✨ Blue Caterpillar animations ENABLED after delay', {
+          x: Math.round(this.x),
+          velocity: Math.round(this.body!.velocity.x),
+          direction: this.direction
+        })
       }
       return // Skip animations until delay passes
     }
