@@ -1344,15 +1344,23 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       newYellowCat.setSpeedMultiplier(this.speedMultiplier)
     }
     
-    // Add to the appropriate enemy group
+    // Add to the appropriate enemy groups
     const gameScene = this.scene as any
     if (gameScene.yellowEnemies) {
       gameScene.yellowEnemies.add(newYellowCat)
     }
+    // CRITICAL: Also add to main cats group for collision detection!
+    if (gameScene.cats) {
+      gameScene.cats.add(newYellowCat)
+    }
     
-    // Remove this Blue Caterpillar from its group
+    // Remove this Blue Caterpillar from its groups
     if (gameScene.blueCaterpillars) {
       gameScene.blueCaterpillars.remove(this)
+    }
+    // Also remove from main cats group
+    if (gameScene.cats) {
+      gameScene.cats.remove(this)
     }
     
     // Destroy this Blue Caterpillar
