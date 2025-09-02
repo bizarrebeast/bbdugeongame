@@ -615,6 +615,8 @@ export class GameScene extends Phaser.Scene {
     this.load.audio('squish-snail', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%203-22EnbLa2GEVZPJCf7zWpqhYHS6V4K2.wav?h9e6') // Red cat
     this.load.audio('squish-jumper', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%201%20sfx-MBkO4SrZ1IVUJ6jqjHWa5L0NURtkJH.wav?qytP') // Green bouncer
     this.load.audio('squish-stalker', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/enemy%20squish%203-22EnbLa2GEVZPJCf7zWpqhYHS6V4K2.wav?h9e6') // Red stalker (same as snail)
+    this.load.audio('squish-baseblu', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/blu%20squish%20sound-E5dxYXO43VnhG528IWOuy39JyeqnOf.wav?2NUq') // BaseBlu
+    this.load.audio('squish-rex', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/rex%20squish%20sound-ZUynOxrurJ001uUoNvxJPYAg8dlChO.wav?FwYW') // Rex
     
     // Load new custom floor tiles
     this.load.image('floor-tile-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Floor%201-jbZVv42Z0BQYmH6sJLCOBTJs4op2eT.png?mhnt')
@@ -5217,6 +5219,9 @@ export class GameScene extends Phaser.Scene {
       this.gameStats.enemyKills.blu++
       this.gameStats.totalEnemiesDefeated++
       
+      // Play BaseBlu-specific squish sound
+      this.playSoundEffect('squish-baseblu', 0.5)
+      
       // Make player bounce (same as other enemies killed by pendant)
       playerBody.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
       
@@ -5496,7 +5501,7 @@ export class GameScene extends Phaser.Scene {
         squishSound = 'squish-caterpillar'
         break
       case 'blue_caterpillar':
-        squishSound = 'player-land'  // Use player landing sound for blue caterpillar
+        squishSound = 'squish-baseblu'  // Use BaseBlu sound for blue caterpillar (better than player-land)
         break
       case 'blue':
       case 'purple':  // Purple chomper uses same sound as blue
@@ -5689,8 +5694,8 @@ export class GameScene extends Phaser.Scene {
     this.gameStats.enemyKills.rex++
     this.gameStats.totalEnemiesDefeated++
     
-    // Play Rex-specific squish sound (use bouncer sound for now)
-    this.playSoundEffect('squish-jumper', 0.5)
+    // Play Rex-specific squish sound
+    this.playSoundEffect('squish-rex', 0.5)
     
     // Squish Rex with particle animation
     rex.squish()
@@ -5743,7 +5748,7 @@ export class GameScene extends Phaser.Scene {
           squishSound = 'squish-caterpillar'
           break
         case 'blue_caterpillar':
-          squishSound = 'player-land'  // Use player landing sound for blue caterpillar
+          squishSound = 'squish-baseblu'  // Use BaseBlu sound for blue caterpillar
           break
         case 'blue':
           squishSound = 'squish-chomper'
