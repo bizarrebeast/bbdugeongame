@@ -4,7 +4,7 @@
  */
 
 export const GameSettings = {
-  debug: false,  // Debug mode disabled - no visual debug overlays
+  debug: true,  // Debug mode enabled for TestScene access (physics debug is separate)
 
   canvas: {
     width: 450,  // Portrait mode - 9:16 aspect ratio
