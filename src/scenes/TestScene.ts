@@ -37,6 +37,7 @@ export class TestScene extends Phaser.Scene {
   private speedMultiplier: number = 1
   private isInvincible: boolean = false
   private showHitboxes: boolean = false
+  private selectedFloor: number = 1  // Default to floor 1
   
   // UI elements
   private statsText!: Phaser.GameObjects.Text
@@ -243,7 +244,7 @@ export class TestScene extends Phaser.Scene {
     
     // Menu background - taller to fit all controls
     const bgWidth = 200
-    const bgHeight = 420  // Increased height for all controls
+    const bgHeight = 460  // Increased height for floor selector and all controls
     const bg = this.add.rectangle(menuX + 100, menuY + 200, bgWidth, bgHeight, 0x000000, 0.8)
     bg.setStrokeStyle(2, 0x00ff00)
     this.spawnMenuContainer.add(bg)
@@ -271,6 +272,10 @@ export class TestScene extends Phaser.Scene {
     })
     
     let currentY = menuY + 20
+    
+    // FLOOR SELECTOR
+    this.createFloorSelectorInMenu(menuX + 100, currentY)
+    currentY += 40
     
     // SPEED CONTROLS
     this.createSpeedControlsInMenu(menuX + 100, currentY)
@@ -491,9 +496,17 @@ export class TestScene extends Phaser.Scene {
   }
   
   private spawnEnemy(type: EnemyType | string, color: string): void {
-    // Choose random platform
-    const platformIndex = Math.floor(Math.random() * this.platformSpawnPoints.length)
-    const spawnPoint = this.platformSpawnPoints[platformIndex]
+    // Use selected floor (floors are indexed 0, 1, 2 from bottom to top)
+    // Floor 1 = index 2 (top), Floor 2 = index 1 (middle), Floor 3 = index 0 (bottom)
+    const floorIndex = 3 - this.selectedFloor
+    
+    // Make sure the floor index is valid
+    if (floorIndex < 0 || floorIndex >= this.platformSpawnPoints.length) {
+      console.warn('Invalid floor selected:', this.selectedFloor)
+      return
+    }
+    
+    const spawnPoint = this.platformSpawnPoints[floorIndex]
     
     // Add some random X offset
     const xOffset = (Math.random() - 0.5) * spawnPoint.width * 0.8
@@ -542,6 +555,55 @@ export class TestScene extends Phaser.Scene {
     this.beetles.clear(true, true)
     this.stalkerCats.clear(true, true)
     this.rexEnemies.clear(true, true)
+  }
+  
+  private createFloorSelectorInMenu(x: number, y: number): void {
+    // Floor label
+    const floorLabel = this.add.text(x - 60, y, 'Floor:', {
+      fontSize: '12px',
+      color: '#ffffff',
+      fontFamily: 'monospace'
+    })
+    this.spawnMenuContainer.add(floorLabel)
+    
+    // Floor display
+    const floorDisplay = this.add.text(x, y, `${this.selectedFloor}`, {
+      fontSize: '12px',
+      color: '#00ff00',
+      fontFamily: 'monospace',
+      fontStyle: 'bold'
+    }).setOrigin(0.5)
+    this.spawnMenuContainer.add(floorDisplay)
+    
+    // Floor down button
+    const downBtn = this.add.text(x - 25, y, '◄', {
+      fontSize: '16px',
+      color: '#ffff00',
+      fontFamily: 'monospace'
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true })
+    this.spawnMenuContainer.add(downBtn)
+    
+    downBtn.on('pointerdown', () => {
+      if (this.selectedFloor > 1) {
+        this.selectedFloor--
+        floorDisplay.setText(`${this.selectedFloor}`)
+      }
+    })
+    
+    // Floor up button
+    const upBtn = this.add.text(x + 25, y, '►', {
+      fontSize: '16px',
+      color: '#ffff00',
+      fontFamily: 'monospace'
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true })
+    this.spawnMenuContainer.add(upBtn)
+    
+    upBtn.on('pointerdown', () => {
+      if (this.selectedFloor < 3) {
+        this.selectedFloor++
+        floorDisplay.setText(`${this.selectedFloor}`)
+      }
+    })
   }
   
   private createSpeedControlsInMenu(x: number, y: number): void {
