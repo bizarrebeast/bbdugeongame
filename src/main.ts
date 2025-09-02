@@ -41,7 +41,7 @@ const config: Phaser.Types.Core.GameConfig = {
     default: "arcade",
     arcade: {
       gravity: { y: GameSettings.game.gravity },
-      debug: true,  // Temporarily showing hitboxes for debugging
+      debug: false,  // Hitboxes disabled for production
     },
   },
   // Audio configuration for better mobile compatibility
