@@ -565,6 +565,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   update(time: number, delta: number): void {
     if (this.isSquished) return
     
+    // Safety check: Stop processing if body is destroyed (e.g., during replacement)
+    if (!this.body) return
+    
     // Update collision cooldown for all enemy types
     this.collisionCooldown -= delta
     
@@ -1267,7 +1270,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Check velocity stuck (caterpillars should always be moving)
-    if (Math.abs(this.body!.velocity.x) < 1) {
+    // Safety check: body might be undefined if caterpillar is being destroyed
+    if (!this.body) return
+    
+    if (Math.abs(this.body.velocity.x) < 1) {
       this.velocityStuckTimer += delta
       
       // If velocity is zero for too long and not at edge - REDUCED TIME FOR FASTER RECOVERY
@@ -1916,8 +1922,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private updateBlueCaterpillarPatrol(delta: number): void {
     // Check if body is enabled and can move
     if (!this.body || !this.body.enable) {
-      console.log('🐛❌ Blue Caterpillar body disabled!')
-      return
+      return // Body disabled or destroyed, stop processing
     }
     
     // Track actual movement to detect stuck state
