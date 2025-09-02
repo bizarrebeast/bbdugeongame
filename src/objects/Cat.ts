@@ -1319,6 +1319,39 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     */
   }
   
+  private replaceSelfWithYellowCaterpillar(): void {
+    // Create a Yellow Caterpillar at the same position
+    const newYellowCat = new Cat(
+      this.scene,
+      this.x,
+      this.y,
+      CatColor.YELLOW,
+      this.platformBounds.left,
+      this.platformBounds.right
+    )
+    
+    // Copy over the speed multiplier
+    if (this.speedMultiplier) {
+      newYellowCat.setSpeedMultiplier(this.speedMultiplier)
+    }
+    
+    // Add to the appropriate enemy group
+    const gameScene = this.scene as any
+    if (gameScene.yellowEnemies) {
+      gameScene.yellowEnemies.add(newYellowCat)
+    }
+    
+    // Remove this Blue Caterpillar from its group
+    if (gameScene.blueCaterpillars) {
+      gameScene.blueCaterpillars.remove(this)
+    }
+    
+    // Destroy this Blue Caterpillar
+    this.destroy()
+    
+    console.log('🟡 Yellow Caterpillar created as replacement at x:', Math.round(newYellowCat.x))
+  }
+  
   private forceResetCaterpillar(): void {
     const catType = this.catColor === CatColor.BLUE_CATERPILLAR ? 'Blue Caterpillar' : 'Yellow Caterpillar'
     console.warn(`🐛 === RESETTING STUCK ${catType.toUpperCase()} at X:${Math.round(this.x)} ===`)
@@ -1896,28 +1929,14 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     const movementThisFrame = Math.abs(this.x - this.blueCaterpillarLastX)
     if (movementThisFrame < 0.01) { // Less than 0.01 pixels moved
       this.blueCaterpillarStuckFrames++
-      if (this.blueCaterpillarStuckFrames === 30) { // After 0.5 seconds
-        console.log('🐛🔴 CATERPILLAR NOT MOVING!', {
-          x: Math.round(this.x),
-          stuckFrames: this.blueCaterpillarStuckFrames,
-          velocity: this.body!.velocity.x,
-          direction: this.direction,
-          bodyPosition: { x: (this.body as Phaser.Physics.Arcade.Body).x, y: (this.body as Phaser.Physics.Arcade.Body).y }
-        })
+      if (this.blueCaterpillarStuckFrames === 60) { // After 1 second of being stuck
+        console.log('🐛➡️🟡 Blue Caterpillar stuck! Replacing with Yellow at x:', Math.round(this.x))
         
-        // Try to unstick by resetting body position
-        const body = this.body as Phaser.Physics.Arcade.Body
-        body.reset(this.x, this.y)
-        console.log('🐛🔧 Reset physics body')
+        // Replace this Blue Caterpillar with a Yellow one
+        this.replaceSelfWithYellowCaterpillar()
+        return // Exit early since we're destroying this caterpillar
       }
     } else {
-      if (this.blueCaterpillarStuckFrames > 0) {
-        console.log('🐛✅ Movement resumed!', {
-          x: Math.round(this.x),
-          movement: movementThisFrame.toFixed(3),
-          wasStuckFor: this.blueCaterpillarStuckFrames
-        })
-      }
       this.blueCaterpillarStuckFrames = 0
     }
     this.blueCaterpillarLastX = this.x
@@ -1925,17 +1944,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // ALWAYS apply velocity every frame - don't check, just apply
     // Something is clearing velocity, so we need to constantly reapply it
     this.setVelocityX(this.moveSpeed * this.direction)
-    
-    // FALLBACK: If physics isn't working, manually move the caterpillar
-    if (this.blueCaterpillarStuckFrames > 60) { // After 1 second of being stuck
-      const moveAmount = (this.moveSpeed * delta / 1000) * this.direction
-      this.x += moveAmount
-      console.log('🐛🔧 MANUAL MOVEMENT OVERRIDE!', {
-        x: Math.round(this.x),
-        moveAmount: moveAmount.toFixed(2),
-        direction: this.direction
-      })
-    }
     
     // Log if velocity isn't sticking (but only once per second to reduce spam)
     if (!this.blueCaterpillarVelocityCheckTimer) {
@@ -1969,11 +1977,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     const edgeBuffer = 35 // Buffer to turn before reaching edge
     if (this.x <= this.platformBounds.left + edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
-        console.log('🐛↻ TURNING RIGHT at left edge', {
-          x: Math.round(this.x),
-          leftBound: this.platformBounds.left,
-          oldDirection: this.direction
-        })
         this.direction = 1
         this.turnDelayTimer = 100 + Math.random() * 200  // Reduced delay: 100-300ms instead of 100-500ms
         // Force position away from edge to prevent getting stuck
@@ -1981,15 +1984,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.setX(newX)
         // IMMEDIATELY apply new velocity to prevent stuck state
         this.setVelocityX(this.moveSpeed * this.direction)
-        console.log('🐛→ Applied immediate velocity after turn:', this.moveSpeed * this.direction)
       }
     } else if (this.x >= this.platformBounds.right - edgeBuffer) {
       if (this.turnDelayTimer <= 0) {
-        console.log('🐛↻ TURNING LEFT at right edge', {
-          x: Math.round(this.x),
-          rightBound: this.platformBounds.right,
-          oldDirection: this.direction
-        })
         this.direction = -1
         this.turnDelayTimer = 100 + Math.random() * 200  // Reduced delay: 100-300ms instead of 100-500ms
         // Force position away from edge to prevent getting stuck
@@ -1997,7 +1994,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.setX(newX)
         // IMMEDIATELY apply new velocity to prevent stuck state
         this.setVelocityX(this.moveSpeed * this.direction)
-        console.log('🐛← Applied immediate velocity after turn:', this.moveSpeed * this.direction)
       }
     }
     
@@ -2005,50 +2001,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Just ensure it's still applied after all the edge checks
     this.setVelocityX(this.moveSpeed * this.direction)
     
-    // Log velocity application every second
-    if (!this.blueCaterpillarVelocityLogTimer) {
-      this.blueCaterpillarVelocityLogTimer = 0
-    }
-    this.blueCaterpillarVelocityLogTimer += delta
-    if (this.blueCaterpillarVelocityLogTimer > 1000) {
-      // Check for physics body issues
-      const bodyImmovable = (this.body as Phaser.Physics.Arcade.Body).immovable
-      const bodyDrag = (this.body as Phaser.Physics.Arcade.Body).drag
-      const bodyMass = (this.body as Phaser.Physics.Arcade.Body).mass
-      const bodyBlocked = (this.body as Phaser.Physics.Arcade.Body).blocked
-      
-      console.log('🐛📊 Blue Caterpillar PHYSICS DIAGNOSTICS', {
-        position: { x: Math.round(this.x), y: Math.round(this.y) },
-        velocity: { x: Math.round(this.body!.velocity.x), y: Math.round(this.body!.velocity.y) },
-        movement: {
-          direction: this.direction,
-          moveSpeed: Math.round(this.moveSpeed),
-          expectedVelocity: Math.round(this.moveSpeed * this.direction)
-        },
-        bodyState: {
-          enabled: this.body!.enable,
-          moves: this.body!.moves,
-          immovable: bodyImmovable,
-          mass: bodyMass,
-          drag: { x: bodyDrag.x, y: bodyDrag.y }
-        },
-        collision: {
-          blocked: {
-            none: bodyBlocked.none,
-            up: bodyBlocked.up,
-            down: bodyBlocked.down,
-            left: bodyBlocked.left,
-            right: bodyBlocked.right
-          },
-          touching: this.body!.touching
-        },
-        animation: {
-          enabled: this.blueCaterpillarAnimationsEnabled,
-          state: this.blueCaterpillarAnimationState
-        }
-      })
-      this.blueCaterpillarVelocityLogTimer = 0
-    }
     
     // Safety check: Ensure caterpillar stays within bounds
     if (this.x < this.platformBounds.left + 5 || this.x > this.platformBounds.right - 5) {
