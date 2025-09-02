@@ -90,9 +90,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private blueCaterpillarBlinkTimer: number = 0
   private nextBlueCaterpillarEyeTime: number = 0
   private nextBlueCaterpillarBlinkTime: number = 0
-  private blueCaterpillarAnimationDelay: number = 1500 // 1.5 second delay before animations start
-  private blueCaterpillarAnimationsEnabled: boolean = false
+  private blueCaterpillarAnimationDelay: number = 0 // NO DELAY - testing if animations interfere
+  private blueCaterpillarAnimationsEnabled: boolean = true // Start enabled
   private blueCaterpillarVelocityLogTimer: number = 0 // For periodic logging
+  private blueCaterpillarVelocityCheckTimer: number = 0 // For checking if velocity sticks
+  private blueCaterpillarLastX: number = 0 // Track last position
+  private blueCaterpillarStuckFrames: number = 0 // Count frames without movement
   
   // Stalker properties (special type of red enemy)
   private isStalker: boolean = false
@@ -486,6 +489,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       // Extra insurance for Blue Caterpillar movement
       if (this.catColor === CatColor.BLUE_CATERPILLAR) {
+        // ENSURE body is movable
+        if (this.body) {
+          this.body.setImmovable(false)
+          this.body.moves = true
+        }
+        
         console.log('🐛🎬 Blue Caterpillar INITIAL SETUP:', {
           x: Math.round(this.x),
           direction: this.direction,
@@ -494,7 +503,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
           platformLeft: this.platformBounds.left,
           platformRight: this.platformBounds.right,
           animationsEnabled: this.blueCaterpillarAnimationsEnabled,
-          animationDelay: this.blueCaterpillarAnimationDelay
+          animationDelay: this.blueCaterpillarAnimationDelay,
+          bodyImmovable: this.body?.immovable,
+          bodyMoves: this.body?.moves
         })
       }
     }
@@ -1291,11 +1302,13 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.forceResetCaterpillar()
     }
     
-    // Special check for Blue Caterpillar - check if it hasn't moved much
-    if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 6) { // Increased to 6 (1.5 seconds)
+    // DISABLED: Blue Caterpillar stuck detection - it's causing more problems than it solves
+    // The caterpillar keeps getting stuck at specific positions like x=271
+    // Let's just let it move naturally without interference
+    /*
+    if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 6) {
       const recentMovement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
-      // Don't reset if we just turned (turnDelayTimer > 0 means we recently turned)
-      if (recentMovement < 20 && this.turnDelayTimer <= 0) { // Only reset if not recently turned
+      if (recentMovement < 20 && this.turnDelayTimer <= 0) {
         console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 1.5s) - forcing reset`)
         this.forceResetCaterpillar()
         return
@@ -1303,6 +1316,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         console.log(`🐛 Blue Caterpillar slow but just turned (timer: ${Math.round(this.turnDelayTimer)}ms) - allowing it`)
       }
     }
+    */
   }
   
   private forceResetCaterpillar(): void {
@@ -1867,33 +1881,83 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateBlueCaterpillarPatrol(delta: number): void {
-    // CRITICAL: Ensure velocity is always applied first
-    if (Math.abs(this.body!.velocity.x) < 5) {
-      // Velocity too low, force it
-      console.log('🐛⚠️ Blue Caterpillar velocity too low!', {
+    // Check if body is enabled and can move
+    if (!this.body || !this.body.enable) {
+      console.log('🐛❌ Blue Caterpillar body disabled!')
+      return
+    }
+    
+    // Track actual movement to detect stuck state
+    if (!this.blueCaterpillarLastX) {
+      this.blueCaterpillarLastX = this.x
+      this.blueCaterpillarStuckFrames = 0
+    }
+    
+    const movementThisFrame = Math.abs(this.x - this.blueCaterpillarLastX)
+    if (movementThisFrame < 0.01) { // Less than 0.01 pixels moved
+      this.blueCaterpillarStuckFrames++
+      if (this.blueCaterpillarStuckFrames === 30) { // After 0.5 seconds
+        console.log('🐛🔴 CATERPILLAR NOT MOVING!', {
+          x: Math.round(this.x),
+          stuckFrames: this.blueCaterpillarStuckFrames,
+          velocity: this.body!.velocity.x,
+          direction: this.direction,
+          bodyPosition: { x: (this.body as Phaser.Physics.Arcade.Body).x, y: (this.body as Phaser.Physics.Arcade.Body).y }
+        })
+        
+        // Try to unstick by resetting body position
+        const body = this.body as Phaser.Physics.Arcade.Body
+        body.reset(this.x, this.y)
+        console.log('🐛🔧 Reset physics body')
+      }
+    } else {
+      if (this.blueCaterpillarStuckFrames > 0) {
+        console.log('🐛✅ Movement resumed!', {
+          x: Math.round(this.x),
+          movement: movementThisFrame.toFixed(3),
+          wasStuckFor: this.blueCaterpillarStuckFrames
+        })
+      }
+      this.blueCaterpillarStuckFrames = 0
+    }
+    this.blueCaterpillarLastX = this.x
+    
+    // ALWAYS apply velocity every frame - don't check, just apply
+    // Something is clearing velocity, so we need to constantly reapply it
+    this.setVelocityX(this.moveSpeed * this.direction)
+    
+    // FALLBACK: If physics isn't working, manually move the caterpillar
+    if (this.blueCaterpillarStuckFrames > 60) { // After 1 second of being stuck
+      const moveAmount = (this.moveSpeed * delta / 1000) * this.direction
+      this.x += moveAmount
+      console.log('🐛🔧 MANUAL MOVEMENT OVERRIDE!', {
         x: Math.round(this.x),
-        currentVelocity: this.body!.velocity.x,
+        moveAmount: moveAmount.toFixed(2),
+        direction: this.direction
+      })
+    }
+    
+    // Log if velocity isn't sticking (but only once per second to reduce spam)
+    if (!this.blueCaterpillarVelocityCheckTimer) {
+      this.blueCaterpillarVelocityCheckTimer = 0
+    }
+    this.blueCaterpillarVelocityCheckTimer += delta
+    
+    if (this.blueCaterpillarVelocityCheckTimer > 500 && Math.abs(this.body!.velocity.x) < 5) {
+      console.log('🐛⚠️ Velocity not sticking!', {
+        x: Math.round(this.x),
+        velocityAfterSet: this.body!.velocity.x,
         direction: this.direction,
         moveSpeed: this.moveSpeed,
-        settingTo: this.moveSpeed * this.direction
+        bodyBlocked: this.body.blocked,
+        bodyTouching: this.body.touching,
+        bodyEmbedded: this.body.embedded
       })
-      this.setVelocityX(this.moveSpeed * this.direction)
+      this.blueCaterpillarVelocityCheckTimer = 0
     }
     
-    // More predictable movement than yellow caterpillar
-    this.randomMoveTimer -= delta
-    
-    if (this.randomMoveTimer <= 0) {
-      // Less erratic than yellow, changes direction less often
-      const changeChance = 0.15 // 15% chance to change direction
-      
-      if (Math.random() < changeChance) {
-        this.direction = Math.random() < 0.5 ? -1 : 1
-      }
-      
-      // Longer intervals between potential direction changes
-      this.randomMoveTimer = 1500 + Math.random() * 1500 // 1.5-3 seconds
-    }
+    // SIMPLIFIED: No random direction changes for testing
+    // Blue caterpillar should only turn at edges
     
     // Handle turn delay timer
     if (this.turnDelayTimer > 0) {
@@ -1937,21 +2001,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       }
     }
     
-    // Apply velocity
-    const newVelocity = this.moveSpeed * this.direction
-    const beforeVelocity = this.body!.velocity.x
-    this.setVelocityX(newVelocity)
-    const afterVelocity = this.body!.velocity.x
-    
-    // Check if velocity was actually set
-    if (Math.abs(afterVelocity - newVelocity) > 1) {
-      console.log('🐛❌ VELOCITY NOT SET PROPERLY!', {
-        expected: Math.round(newVelocity),
-        beforeSet: Math.round(beforeVelocity),
-        afterSet: Math.round(afterVelocity),
-        difference: Math.round(afterVelocity - newVelocity)
-      })
-    }
+    // Velocity is already being applied at the start of this function
+    // Just ensure it's still applied after all the edge checks
+    this.setVelocityX(this.moveSpeed * this.direction)
     
     // Log velocity application every second
     if (!this.blueCaterpillarVelocityLogTimer) {
@@ -1959,16 +2011,41 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     this.blueCaterpillarVelocityLogTimer += delta
     if (this.blueCaterpillarVelocityLogTimer > 1000) {
-      console.log('🐛📊 Blue Caterpillar patrol status', {
-        x: Math.round(this.x),
-        velocity: Math.round(this.body!.velocity.x),
-        direction: this.direction,
-        moveSpeed: Math.round(this.moveSpeed),
-        expectedVelocity: Math.round(newVelocity),
-        animationsEnabled: this.blueCaterpillarAnimationsEnabled,
-        animState: this.blueCaterpillarAnimationState,
-        bodyEnabled: this.body!.enable,
-        bodyMoves: this.body!.moves
+      // Check for physics body issues
+      const bodyImmovable = (this.body as Phaser.Physics.Arcade.Body).immovable
+      const bodyDrag = (this.body as Phaser.Physics.Arcade.Body).drag
+      const bodyMass = (this.body as Phaser.Physics.Arcade.Body).mass
+      const bodyBlocked = (this.body as Phaser.Physics.Arcade.Body).blocked
+      
+      console.log('🐛📊 Blue Caterpillar PHYSICS DIAGNOSTICS', {
+        position: { x: Math.round(this.x), y: Math.round(this.y) },
+        velocity: { x: Math.round(this.body!.velocity.x), y: Math.round(this.body!.velocity.y) },
+        movement: {
+          direction: this.direction,
+          moveSpeed: Math.round(this.moveSpeed),
+          expectedVelocity: Math.round(this.moveSpeed * this.direction)
+        },
+        bodyState: {
+          enabled: this.body!.enable,
+          moves: this.body!.moves,
+          immovable: bodyImmovable,
+          mass: bodyMass,
+          drag: { x: bodyDrag.x, y: bodyDrag.y }
+        },
+        collision: {
+          blocked: {
+            none: bodyBlocked.none,
+            up: bodyBlocked.up,
+            down: bodyBlocked.down,
+            left: bodyBlocked.left,
+            right: bodyBlocked.right
+          },
+          touching: this.body!.touching
+        },
+        animation: {
+          enabled: this.blueCaterpillarAnimationsEnabled,
+          state: this.blueCaterpillarAnimationState
+        }
       })
       this.blueCaterpillarVelocityLogTimer = 0
     }
