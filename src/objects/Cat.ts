@@ -565,9 +565,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   update(time: number, delta: number): void {
     if (this.isSquished) return
     
-    // Safety check: Stop processing if body is destroyed (e.g., during replacement)
-    if (!this.body) return
-    
     // Update collision cooldown for all enemy types
     this.collisionCooldown -= delta
     
@@ -579,31 +576,34 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Movement logging temporarily disabled to see creation logs
     
-    switch (this.catColor) {
-      case CatColor.BLUE:
-      case CatColor.PURPLE:  // Purple uses same patrol and animations as blue
-        this.updateBluePatrol()
-        this.updateBlueEnemyAnimations(delta)
-        this.checkIfChomperStuck(delta)  // Check for stuck state
-        break
-      case CatColor.YELLOW:
-        this.updateYellowPatrol(delta)
-        this.updateYellowEnemyAnimations(delta)
-        this.checkIfCaterpillarStuck(delta)  // Add stuck detection for yellow too
-        break
-      case CatColor.BLUE_CATERPILLAR:
-        this.updateBlueCaterpillarPatrol(delta)
-        this.updateBlueCaterpillarAnimations(delta)
-        this.checkIfCaterpillarStuck(delta)  // Add stuck detection
-        break
-      case CatColor.GREEN:
-        this.updateGreenBounce(delta)
-        this.updateGreenEnemyAnimations(delta)
-        break
-      case CatColor.RED:
-        this.updateRedPatrol()
-        this.updateRedEnemyAnimations(delta)
-        break
+    // Only update movement if body exists
+    if (this.body) {
+      switch (this.catColor) {
+        case CatColor.BLUE:
+        case CatColor.PURPLE:  // Purple uses same patrol and animations as blue
+          this.updateBluePatrol()
+          this.updateBlueEnemyAnimations(delta)
+          this.checkIfChomperStuck(delta)  // Check for stuck state
+          break
+        case CatColor.YELLOW:
+          this.updateYellowPatrol(delta)
+          this.updateYellowEnemyAnimations(delta)
+          this.checkIfCaterpillarStuck(delta)  // Add stuck detection for yellow too
+          break
+        case CatColor.BLUE_CATERPILLAR:
+          this.updateBlueCaterpillarPatrol(delta)
+          this.updateBlueCaterpillarAnimations(delta)
+          this.checkIfCaterpillarStuck(delta)  // Add stuck detection
+          break
+        case CatColor.GREEN:
+          this.updateGreenBounce(delta)
+          this.updateGreenEnemyAnimations(delta)
+          break
+        case CatColor.RED:
+          this.updateRedPatrol()
+          this.updateRedEnemyAnimations(delta)
+          break
+      }
     }
   }
   
