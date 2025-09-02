@@ -105,11 +105,11 @@ export class EnemySpawningSystem {
   }
 
   private static readonly LEVEL_SPAWN_WEIGHTS: Record<string, SpawnWeights> = {
-    // Levels 1-3: Tutorial Introduction
+    // Levels 1-4: Learning Phase
     'tutorial_early': {
-      [EnemyType.CATERPILLAR]: 0.50,  // 50% - Yellow Cat
+      [EnemyType.CATERPILLAR]: 0.40,  // 40% - Yellow Cat
+      [EnemyType.BEETLE]: 0.40,       // 40% - Beetle
       [EnemyType.BLUE_CATERPILLAR]: 0.20, // 20% - Blue Caterpillar
-      [EnemyType.BEETLE]: 0.30,       // 30% - Beetle
       [EnemyType.BASEBLU]: 0.00,
       [EnemyType.CHOMPER]: 0.00,
       [EnemyType.SNAIL]: 0.00,
@@ -117,92 +117,139 @@ export class EnemySpawningSystem {
       [EnemyType.STALKER]: 0.00,
       [EnemyType.REX]: 0.00
     },
-    // Levels 4-10: Tutorial with Variety
-    'tutorial_late': {
-      [EnemyType.CATERPILLAR]: 0.30,  // 30% - Yellow Cat (reduced for Rex)
+    // Levels 5-7: Patrol Patterns
+    'patrol': {
+      [EnemyType.CATERPILLAR]: 0.30,  // 30% - Yellow Cat
+      [EnemyType.BEETLE]: 0.25,       // 25% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.20, // 20% - Blue Caterpillar
+      [EnemyType.CHOMPER]: 0.25,      // 25% - Chomper introduced
+      [EnemyType.BASEBLU]: 0.00,
+      [EnemyType.SNAIL]: 0.00,
+      [EnemyType.JUMPER]: 0.00,
+      [EnemyType.STALKER]: 0.00,
+      [EnemyType.REX]: 0.00
+    },
+    // Levels 8-11: Speed Challenge
+    'speed_intro': {
+      [EnemyType.CATERPILLAR]: 0.20,  // 20% - Yellow Cat
+      [EnemyType.BEETLE]: 0.20,       // 20% - Beetle
       [EnemyType.BLUE_CATERPILLAR]: 0.15, // 15% - Blue Caterpillar
-      [EnemyType.BEETLE]: 0.20,       // 20% - Beetle (reduced for Rex)
-      [EnemyType.CHOMPER]: 0.15,      // 15% - Blue Cat (Chomper)
-      [EnemyType.SNAIL]: 0.10,        // 10% - Red Cat (Snail)
-      [EnemyType.REX]: 0.10,          // 10% - Rex (introduced early)
+      [EnemyType.CHOMPER]: 0.30,      // 30% - Chomper
+      [EnemyType.SNAIL]: 0.15,        // 15% - Snail introduced
       [EnemyType.BASEBLU]: 0.00,
       [EnemyType.JUMPER]: 0.00,
-      [EnemyType.STALKER]: 0.00
+      [EnemyType.STALKER]: 0.00,
+      [EnemyType.REX]: 0.00
     },
-    // Levels 11-20: Basic Challenge
-    'basic': {
-      [EnemyType.CHOMPER]: 0.40,      // 40% - Blue Cat (reduced for Rex)
-      [EnemyType.CATERPILLAR]: 0.10,  // 10% - Yellow Cat (reduced)
+    // Levels 12-14: High Value Target (Rex introduced)
+    'rex_intro': {
+      [EnemyType.CATERPILLAR]: 0.15,  // 15% - Yellow Cat
+      [EnemyType.BEETLE]: 0.15,       // 15% - Beetle
       [EnemyType.BLUE_CATERPILLAR]: 0.10, // 10% - Blue Caterpillar
-      [EnemyType.BEETLE]: 0.10,       // 10% - Beetle (reduced)
-      [EnemyType.SNAIL]: 0.15,        // 15% - Red Cat (Snail)
-      [EnemyType.REX]: 0.15,          // 15% - Rex
+      [EnemyType.CHOMPER]: 0.25,      // 25% - Chomper
+      [EnemyType.SNAIL]: 0.20,        // 20% - Snail
+      [EnemyType.REX]: 0.15,          // 15% - Rex appears as 500-point reward
       [EnemyType.BASEBLU]: 0.00,
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
     },
-    // Levels 21-30: Speed Increase
-    'speed': {
-      [EnemyType.SNAIL]: 0.40,        // 40% - Red Cat (reduced for Rex)
-      [EnemyType.CHOMPER]: 0.30,      // 30% - Blue Cat (reduced for Rex)
+    // Levels 15-19: Obstacles
+    'obstacles': {
+      [EnemyType.CATERPILLAR]: 0.10,  // 10% - Yellow Cat
+      [EnemyType.BEETLE]: 0.10,       // 10% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.10, // 10% - Blue Caterpillar
       [EnemyType.REX]: 0.15,          // 15% - Rex
-      [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu (max 1 per floor)
-      [EnemyType.CATERPILLAR]: 0.00,
-      [EnemyType.BLUE_CATERPILLAR]: 0.00,
-      [EnemyType.BEETLE]: 0.00,
+      [EnemyType.CHOMPER]: 0.20,      // 20% - Chomper
+      [EnemyType.SNAIL]: 0.20,        // 20% - Snail
+      [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu adds strategy
       [EnemyType.JUMPER]: 0.00,
       [EnemyType.STALKER]: 0.00
     },
-    // Levels 31-40: Advanced Mechanics
+    // Levels 20-24: The Hunter (Stalker introduced)
+    'hunter': {
+      [EnemyType.CATERPILLAR]: 0.10,  // 10% - Yellow Cat
+      [EnemyType.BEETLE]: 0.10,       // 10% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5% - Blue Caterpillar
+      [EnemyType.REX]: 0.15,          // 15% - Rex
+      [EnemyType.CHOMPER]: 0.20,      // 20% - Chomper
+      [EnemyType.SNAIL]: 0.20,        // 20% - Snail
+      [EnemyType.BASEBLU]: 0.10,      // 10% - BaseBlu (max 1 per floor)
+      [EnemyType.STALKER]: 0.10,      // 10% - Stalker adds tension
+      [EnemyType.JUMPER]: 0.00
+    },
+    // Levels 25-29: Bouncing Variety (Jumper introduced)
+    'bouncing': {
+      [EnemyType.CATERPILLAR]: 0.05,  // 5% - Yellow Cat
+      [EnemyType.BEETLE]: 0.05,       // 5% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5% - Blue Caterpillar
+      [EnemyType.REX]: 0.10,          // 10% - Rex (will alternate with Jumper)
+      [EnemyType.JUMPER]: 0.15,       // 15% - Jumper introduced
+      [EnemyType.CHOMPER]: 0.15,      // 15% - Chomper
+      [EnemyType.SNAIL]: 0.20,        // 20% - Snail
+      [EnemyType.BASEBLU]: 0.10,      // 10% - BaseBlu (max 1 per floor)
+      [EnemyType.STALKER]: 0.15       // 15% - Stalker
+    },
+    // Levels 30-34: Advanced Mix
     'advanced': {
-      [EnemyType.JUMPER]: 0.35,       // 35% - Green Cat (reduced for Rex)
-      [EnemyType.SNAIL]: 0.25,        // 25% - Red Cat (reduced for Rex)
-      [EnemyType.REX]: 0.15,          // 15% - Rex
-      [EnemyType.STALKER]: 0.125,     // 12.5% - Red Cat Stalker
-      [EnemyType.BASEBLU]: 0.125,     // 12.5% - BaseBlu
-      [EnemyType.CATERPILLAR]: 0.00,
-      [EnemyType.BLUE_CATERPILLAR]: 0.00,
-      [EnemyType.BEETLE]: 0.00,
-      [EnemyType.CHOMPER]: 0.00
+      [EnemyType.CATERPILLAR]: 0.05,  // 5% - Yellow Cat
+      [EnemyType.BEETLE]: 0.05,       // 5% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5% - Blue Caterpillar
+      [EnemyType.REX]: 0.15,          // 15% - Rex (will alternate with Jumper)
+      [EnemyType.JUMPER]: 0.15,       // 15% - Jumper
+      [EnemyType.CHOMPER]: 0.15,      // 15% - Chomper
+      [EnemyType.SNAIL]: 0.15,        // 15% - Snail
+      [EnemyType.BASEBLU]: 0.10,      // 10% - BaseBlu (max 1 per floor)
+      [EnemyType.STALKER]: 0.15       // 15% - Stalker
     },
-    // Levels 41-50: Expert Challenge
+    // Levels 35-39: Advanced Mix II
+    'advanced_2': {
+      [EnemyType.CATERPILLAR]: 0.05,  // 5% - Yellow Cat
+      [EnemyType.BEETLE]: 0.05,       // 5% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.00, // 0% - Blue Caterpillar
+      [EnemyType.REX]: 0.10,          // 10% - Rex (will alternate with Jumper)
+      [EnemyType.JUMPER]: 0.20,       // 20% - Jumper
+      [EnemyType.CHOMPER]: 0.15,      // 15% - Chomper
+      [EnemyType.SNAIL]: 0.20,        // 20% - Snail
+      [EnemyType.BASEBLU]: 0.10,      // 10% - BaseBlu (max 1 per floor)
+      [EnemyType.STALKER]: 0.15       // 15% - Stalker
+    },
+    // Levels 40-49: Expert Balance
     'expert': {
-      [EnemyType.STALKER]: 0.30,      // 30% - Red Cat Stalker (reduced for Rex)
-      [EnemyType.JUMPER]: 0.25,       // 25% - Green Cat (reduced for Rex)
-      [EnemyType.BASEBLU]: 0.20,      // 20% - BaseBlu (reduced for Rex)
-      [EnemyType.REX]: 0.15,          // 15% - Rex
-      // 10% mixed earlier enemies
-      [EnemyType.CATERPILLAR]: 0.025, // 2.5%
-      [EnemyType.BLUE_CATERPILLAR]: 0.00, // 0%
-      [EnemyType.BEETLE]: 0.025,      // 2.5%
-      [EnemyType.CHOMPER]: 0.025,     // 2.5%
-      [EnemyType.SNAIL]: 0.025        // 2.5%
+      [EnemyType.CATERPILLAR]: 0.05,  // 5% - Yellow Cat
+      [EnemyType.BEETLE]: 0.05,       // 5% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.00, // 0% - Blue Caterpillar
+      [EnemyType.REX]: 0.15,          // 15% - Rex (will alternate with Jumper)
+      [EnemyType.JUMPER]: 0.15,       // 15% - Jumper
+      [EnemyType.CHOMPER]: 0.10,      // 10% - Chomper
+      [EnemyType.SNAIL]: 0.15,        // 15% - Snail
+      [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu (max 1 per floor)
+      [EnemyType.STALKER]: 0.20       // 20% - Stalker
     },
-    // Levels 51+: BEAST MODE - Chaos Variety
+    // Levels 50+: BEAST MODE - All enemies balanced
     'beast': {
-      [EnemyType.STALKER]: 0.15,      // 15% - Balanced mix (reduced for Rex)
-      [EnemyType.JUMPER]: 0.15,       // 15% (reduced for Rex)
-      [EnemyType.REX]: 0.15,          // 15% - Rex
-      [EnemyType.BASEBLU]: 0.15,      // 15%
-      [EnemyType.SNAIL]: 0.15,        // 15%
-      [EnemyType.CHOMPER]: 0.10,      // 10% (reduced for Rex)
-      [EnemyType.CATERPILLAR]: 0.05,  // 5%
-      [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5%
-      [EnemyType.BEETLE]: 0.05        // 5%
+      [EnemyType.CATERPILLAR]: 0.05,  // 5% - Yellow Cat
+      [EnemyType.BEETLE]: 0.05,       // 5% - Beetle
+      [EnemyType.BLUE_CATERPILLAR]: 0.05, // 5% - Blue Caterpillar
+      [EnemyType.REX]: 0.10,          // 10% - Rex (will alternate with Jumper)
+      [EnemyType.JUMPER]: 0.10,       // 10% - Jumper
+      [EnemyType.CHOMPER]: 0.15,      // 15% - Chomper
+      [EnemyType.SNAIL]: 0.15,        // 15% - Snail
+      [EnemyType.BASEBLU]: 0.15,      // 15% - BaseBlu (max 1 per floor)
+      [EnemyType.STALKER]: 0.20       // 20% - Stalker
     }
   }
 
   /**
    * Get max enemies per floor based on level tier
-   * Reduced difficulty scaling for better gameplay balance
+   * From Simple Enemy Distribution Plan
    */
   static getMaxEnemiesPerFloor(levelNumber: number): number {
-    if (levelNumber <= 10) return 2      // 1-2 per floor
-    else if (levelNumber <= 20) return 2 // 1-2 per floor (was 3)
-    else if (levelNumber <= 30) return 3 // 2-3 per floor (was 4)
-    else if (levelNumber <= 40) return 3 // 2-3 per floor (was 5)
-    else if (levelNumber <= 50) return 4 // 3-4 per floor (was 5)
-    else return 4                        // 3-4 per floor for BEAST MODE (was 5)
+    if (levelNumber <= 10) return 2      // Levels 1-10: 1-2 enemies
+    else if (levelNumber <= 20) return 3 // Levels 11-20: 2-3 enemies
+    else if (levelNumber <= 30) return 3 // Levels 21-30: 2-3 enemies
+    else if (levelNumber <= 40) return 4 // Levels 31-40: 3-4 enemies
+    else if (levelNumber <= 50) return 4 // Levels 41-50: 3-4 enemies
+    else return 5                        // Levels 51+: 4-5 enemies (BEAST MODE)
   }
 
   /**
@@ -236,33 +283,39 @@ export class EnemySpawningSystem {
   }
 
   /**
-   * Get BaseBlu max per floor based on level
+   * Get BaseBlu max per floor - ALWAYS 1 maximum
    */
   static getBaseBluMaxPerFloor(levelNumber: number): number {
-    if (levelNumber <= 20) return 0      // No BaseBlu
-    else if (levelNumber <= 30) return 1 // Max 1 per floor
-    else if (levelNumber <= 40) return 2 // No specific limit stated, using 2
-    else return 2                        // Max 2 per floor (41+)
+    if (levelNumber <= 14) return 0      // No BaseBlu until level 15
+    else return 1                        // Max 1 per floor for ALL levels
   }
 
   /**
    * Get spawn weights based on level
    */
   static getSpawnWeights(levelNumber: number): SpawnWeights {
-    if (levelNumber <= 3) {
-      return this.LEVEL_SPAWN_WEIGHTS['tutorial_early']
-    } else if (levelNumber <= 10) {
-      return this.LEVEL_SPAWN_WEIGHTS['tutorial_late']
-    } else if (levelNumber <= 20) {
-      return this.LEVEL_SPAWN_WEIGHTS['basic']
-    } else if (levelNumber <= 30) {
-      return this.LEVEL_SPAWN_WEIGHTS['speed']
-    } else if (levelNumber <= 40) {
-      return this.LEVEL_SPAWN_WEIGHTS['advanced']
-    } else if (levelNumber <= 50) {
-      return this.LEVEL_SPAWN_WEIGHTS['expert']
+    if (levelNumber <= 4) {
+      return this.LEVEL_SPAWN_WEIGHTS['tutorial_early']  // Levels 1-4: Learning Phase
+    } else if (levelNumber <= 7) {
+      return this.LEVEL_SPAWN_WEIGHTS['patrol']          // Levels 5-7: Patrol Patterns
+    } else if (levelNumber <= 11) {
+      return this.LEVEL_SPAWN_WEIGHTS['speed_intro']     // Levels 8-11: Speed Challenge
+    } else if (levelNumber <= 14) {
+      return this.LEVEL_SPAWN_WEIGHTS['rex_intro']       // Levels 12-14: Rex appears
+    } else if (levelNumber <= 19) {
+      return this.LEVEL_SPAWN_WEIGHTS['obstacles']       // Levels 15-19: BaseBlu introduced
+    } else if (levelNumber <= 24) {
+      return this.LEVEL_SPAWN_WEIGHTS['hunter']          // Levels 20-24: Stalker appears
+    } else if (levelNumber <= 29) {
+      return this.LEVEL_SPAWN_WEIGHTS['bouncing']        // Levels 25-29: Jumper introduced
+    } else if (levelNumber <= 34) {
+      return this.LEVEL_SPAWN_WEIGHTS['advanced']        // Levels 30-34: Advanced Mix
+    } else if (levelNumber <= 39) {
+      return this.LEVEL_SPAWN_WEIGHTS['advanced_2']      // Levels 35-39: Advanced Mix II
+    } else if (levelNumber <= 49) {
+      return this.LEVEL_SPAWN_WEIGHTS['expert']          // Levels 40-49: Expert Balance
     } else {
-      return this.LEVEL_SPAWN_WEIGHTS['beast']
+      return this.LEVEL_SPAWN_WEIGHTS['beast']           // Levels 50+: BEAST MODE
     }
   }
 
@@ -270,9 +323,20 @@ export class EnemySpawningSystem {
    * Select enemies to spawn for a floor
    */
   static selectEnemiesForFloor(levelNumber: number, floorNumber: number): EnemyType[] {
-    const weights = this.getSpawnWeights(levelNumber)
+    const weights = {...this.getSpawnWeights(levelNumber)} // Clone weights to modify
     const maxEnemies = this.getMaxEnemiesPerFloor(levelNumber)
     const baseBluMaxPerFloor = this.getBaseBluMaxPerFloor(levelNumber)
+    
+    // Apply "one bouncing enemy per floor" rule
+    // If both Rex and Jumper have weights > 0, choose one for this floor
+    if (weights[EnemyType.REX] > 0 && weights[EnemyType.JUMPER] > 0) {
+      // Randomly choose which bouncing enemy this floor gets
+      if (Math.random() < 0.5) {
+        weights[EnemyType.JUMPER] = 0  // No Jumper on Rex floors
+      } else {
+        weights[EnemyType.REX] = 0      // No Rex on Jumper floors
+      }
+    }
     
     const selectedEnemies: EnemyType[] = []
     let baseBluCount = 0
