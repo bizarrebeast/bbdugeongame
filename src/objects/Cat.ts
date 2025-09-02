@@ -1245,6 +1245,9 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private checkIfCaterpillarStuck(delta: number): void {
+    // Safety check: body might be undefined if caterpillar is being destroyed
+    if (!this.body) return
+    
     // Similar to chomper stuck detection but adapted for caterpillars
     const catType = this.catColor === CatColor.BLUE_CATERPILLAR ? 'Blue Caterpillar' : 'Yellow Caterpillar'
     
@@ -1264,7 +1267,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
           currentX: Math.round(this.x),
           positionHistory: this.positionHistory.map(p => Math.round(p)),
           totalMovement: Math.round(movement),
-          velocity: Math.round(this.body!.velocity.x)
+          velocity: this.body ? Math.round(this.body.velocity.x) : 0
         })
       }
     }
