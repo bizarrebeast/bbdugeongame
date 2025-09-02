@@ -3,6 +3,7 @@ import GameSettings from "../config/GameSettings"
 export class TouchControls {
   private scene: Phaser.Scene
   private enabled: boolean = true  // Track if controls are enabled
+  private isMobileDevice: boolean = false  // Track if on mobile device
   
   // Touchpad system (replaces D-pad buttons)
   private touchpadContainer: Phaser.GameObjects.Container
@@ -51,10 +52,37 @@ export class TouchControls {
     this.scene = scene
     this.touchpadCenter = { x: 110, y: 680 }
     
+    // Detect if on mobile device
+    this.detectMobileDevice()
+    
     this.createTouchpad()
     this.createJumpButton()
     this.createActionButton()
     this.setupInputHandlers()
+  }
+  
+  private detectMobileDevice(): void {
+    // Check for touch support and common mobile indicators
+    const isTouchDevice = ('ontouchstart' in window) || 
+                         (navigator.maxTouchPoints > 0) ||
+                         ((navigator as any).msMaxTouchPoints > 0)
+    
+    // Check user agent for mobile devices
+    const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+    const isMobileUA = mobileRegex.test(navigator.userAgent)
+    
+    // Check screen size (mobile devices typically have smaller screens)
+    const isSmallScreen = window.innerWidth <= 768
+    
+    // Device is mobile if it has touch AND (mobile UA OR small screen)
+    this.isMobileDevice = isTouchDevice && (isMobileUA || isSmallScreen)
+    
+    console.log('Mobile device detection:', {
+      isTouchDevice,
+      isMobileUA,
+      isSmallScreen,
+      isMobileDevice: this.isMobileDevice
+    })
   }
 
   private createTouchpad(): void {
@@ -152,6 +180,7 @@ export class TouchControls {
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     if (!this.enabled) return  // Don't handle input if disabled
+    if (!this.isMobileDevice) return  // Only work on mobile devices
     
     const touchX = pointer.x
     const touchY = pointer.y
@@ -264,6 +293,7 @@ export class TouchControls {
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {
     if (!this.enabled) return  // Don't handle input if disabled
+    if (!this.isMobileDevice) return  // Only work on mobile devices
     
     // Check if this pointer is controlling the touchpad
     if (pointer.id === this.touchpadPointerId) {
@@ -273,6 +303,7 @@ export class TouchControls {
 
   private handlePointerUp(pointer: Phaser.Input.Pointer): void {
     if (!this.enabled) return  // Don't handle input if disabled
+    if (!this.isMobileDevice) return  // Only work on mobile devices
     
     // Check touchpad release
     if (pointer.id === this.touchpadPointerId) {
