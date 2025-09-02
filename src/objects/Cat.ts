@@ -90,6 +90,8 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   private blueCaterpillarBlinkTimer: number = 0
   private nextBlueCaterpillarEyeTime: number = 0
   private nextBlueCaterpillarBlinkTime: number = 0
+  private blueCaterpillarAnimationDelay: number = 1500 // 1.5 second delay before animations start
+  private blueCaterpillarAnimationsEnabled: boolean = false
   
   // Stalker properties (special type of red enemy)
   private isStalker: boolean = false
@@ -394,6 +396,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.setFlipX(false)
       this.initializeBlueCaterpillarAnimations()
       
+      // Delay animations to let movement establish first
+      this.blueCaterpillarAnimationsEnabled = false
+      this.blueCaterpillarAnimationDelay = 1500 // 1.5 seconds
+      
       // Log final setup
       if (this.body instanceof Phaser.Physics.Arcade.Body) {
         console.log('  Final physics body offset:', this.body.offset.x, ',', this.body.offset.y)
@@ -469,6 +475,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Stalker hidden and waiting (replaced console.log)
     } else {
       this.setVelocityX(this.moveSpeed * this.direction)
+      
+      // Extra insurance for Blue Caterpillar movement
+      if (this.catColor === CatColor.BLUE_CATERPILLAR) {
+        console.log('🐛 Blue Caterpillar initial setup:', {
+          x: this.x,
+          direction: this.direction,
+          moveSpeed: this.moveSpeed,
+          velocity: this.moveSpeed * this.direction
+        })
+      }
     }
   }
   
@@ -493,7 +509,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         break
       case CatColor.BLUE_CATERPILLAR:
         // Blue caterpillar - slightly faster than yellow, more predictable movement
-        const blueSpeedMultiplier = isEarlyLevel ? 0.5 : 0.7  // 50% speed in levels 1-10, 70% after
+        const blueSpeedMultiplier = isEarlyLevel ? 0.65 : 0.8  // Increased: 65% speed in levels 1-10, 80% after
         this.moveSpeed = this.baseSpeed * blueSpeedMultiplier * this.individualSpeedMultiplier
         break
       case CatColor.GREEN:
@@ -1253,10 +1269,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Special check for Blue Caterpillar - check if it hasn't moved much
-    if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 3) {
+    if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 6) { // Increased to 6 (1.5 seconds)
       const recentMovement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
-      if (recentMovement < 10) { // If moved less than 10 pixels in last 0.75 seconds
-        console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 0.75s) - forcing reset`)
+      if (recentMovement < 20) { // Increased threshold from 10px to 20px
+        console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 1.5s) - forcing reset`)
         this.forceResetCaterpillar()
         return
       }
@@ -1825,6 +1841,12 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateBlueCaterpillarPatrol(delta: number): void {
+    // CRITICAL: Ensure velocity is always applied first
+    if (Math.abs(this.body!.velocity.x) < 5) {
+      // Velocity too low, force it
+      this.setVelocityX(this.moveSpeed * this.direction)
+    }
+    
     // More predictable movement than yellow caterpillar
     this.randomMoveTimer -= delta
     
@@ -1882,6 +1904,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   }
   
   private updateBlueCaterpillarAnimations(delta: number): void {
+    // Delay animations to let movement establish
+    if (!this.blueCaterpillarAnimationsEnabled) {
+      this.blueCaterpillarAnimationDelay -= delta
+      if (this.blueCaterpillarAnimationDelay <= 0) {
+        this.blueCaterpillarAnimationsEnabled = true
+        console.log('🐛 Blue Caterpillar animations enabled after delay')
+      }
+      return // Skip animations until delay passes
+    }
+    
     // Only animate if using the blue caterpillar sprites
     if (!this.isBlueCaterpillarAnimationSprite(this.texture.key)) {
       return
