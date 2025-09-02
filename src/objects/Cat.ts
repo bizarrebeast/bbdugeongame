@@ -1330,13 +1330,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   private replaceSelfWithYellowCaterpillar(): void {
     // Create a Yellow Caterpillar at the same position
+    // Use exact same parameters as normal spawning
     const newYellowCat = new Cat(
       this.scene,
       this.x,
       this.y,
-      CatColor.YELLOW,
       this.platformBounds.left,
-      this.platformBounds.right
+      this.platformBounds.right,
+      'yellow',  // Use string 'yellow' for caterpillar
+      false      // Not a stalker
     )
     
     // Copy over the speed multiplier
