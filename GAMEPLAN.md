@@ -42,6 +42,13 @@ A retro arcade climbing game where the player climbs levels on ladders in an end
   - **Beast Mode Exclusives:** 13 unique Beast Mode-only backgrounds
   - **Beast Mode (51+):** Random rotation of ALL 70 backgrounds for ultimate variety
 
+### Bonus Levels ✅ IMPLEMENTED
+- **Occurrence:** After completing levels 10, 20, 30, 40, and 50
+- **Structure:** 5 floors with no enemies
+- **Rewards:** 2 guaranteed treasure chests, abundant collectibles
+- **Purpose:** Risk-free score boosting opportunities
+- **Special:** Uses unique bonus level backgrounds from the 70-background collection
+
 ### Target Experience
 Fast-paced arcade excitement with a nostalgic feel - players should experience the thrill of 'just one more level' as they chase high scores, combined with the satisfying challenge of mastering timing and pattern recognition.
 
@@ -88,21 +95,26 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 
 ## Enemies & Obstacles ✅ FULLY ENHANCED
 
-### Enemy Types ✅ 6-TIER PROGRESSIVE SYSTEM
-- **6-Tier Difficulty System:** ✅ Complete progressive enemy spawning across all levels
-  - **Tutorial (1-10):** Caterpillar (70%), Beetle (30%) - Learning basics
-  - **Basic (11-20):** Chomper (50%), Caterpillar (30%), Beetle (20%) - Skill building  
+### Enemy Types ✅ PROGRESSIVE TIER SYSTEM
+- **Enhanced Tier Difficulty System:** ✅ Complete progressive enemy spawning across all levels
+  - **Tutorial Early (1-4):** Caterpillar (40%), Beetle (40%), Blue Caterpillar (20%) - Learning basics
+  - **Patrol (5-7):** Caterpillar (30%), Beetle (25%), Blue Caterpillar (20%), Chomper (25%) - Patrol patterns
+  - **Speed Intro (8-11):** Chomper (30%), Caterpillar (20%), Beetle (20%), Blue Caterpillar (15%), Snail (15%) - Speed challenge
+  - **Rex Intro (12-14):** Chomper (25%), Snail (20%), Rex (15%), others mixed - High value targets
+  - **Basic (15-20):** Mixed with emphasis on Chomper and Snail - Skill building
   - **Speed (21-30):** Snail (50%), Chomper (35%), BaseBlu (15%) - Faster enemies
   - **Advanced (31-40):** Jumper (40%), Snail (35%), Stalker (12.5%), BaseBlu (12.5%) - Complex mechanics
   - **Expert (41-50):** Stalker (35%), Jumper (30%), BaseBlu (25%) + mix (10%) - Master challenge
   - **BEAST (51+):** Balanced chaos mix for infinite play
-- **7 Enemy Types:** ✅ Complete roster with variable point values (50-1000 points)
+- **9 Enemy Types:** ✅ Complete roster with variable point values (50-1000 points)
   - **Caterpillar (Yellow):** Slow random movement (50 points, 0.6x speed)
+  - **Blue Caterpillar:** Caterpillar variant, slightly faster (50 points, 0.7x speed)
   - **Beetle (Red):** Simple patrol, predictable (75 points, 1.0x speed)
   - **Chomper (Blue):** Standard patrol with animations (100 points, 1.0x speed)
   - **Snail (Red):** Faster patrol movement (150 points, 1.2x speed)
   - **Jumper (Green):** Fast bouncing movement (200 points, 1.5x speed)
   - **Stalker (Red):** Mine-like activation + chase AI (300 points, 1.5x+ speed)
+  - **Rex:** Square flipping enemy with periodic jumps (500 points, 0.75x speed)
   - **BaseBlu (Blue):** Immovable blocker (1000 points when invincible, 0.25x speed)
 - **Enhanced Spawning System:** ✅ Anti-clustering distribution with intelligent placement
   - Smart spawn patterns preventing enemy clustering
@@ -259,6 +271,20 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - **Debug Visualization:** Hitbox visibility enabled for development testing
 - Future: Potential for unlockable characters with slight stat variations
 
+## Debug & Testing Features ✅ IMPLEMENTED
+
+### Test Scene
+- **Access:** Press 'T' key in debug mode (GameSettings.debug = true)
+- **Features:**
+  - Spawn any enemy type on selected floor
+  - Speed multiplier controls (0.5x to 5x)
+  - Invincibility toggle for testing
+  - Hitbox visualization
+  - Unified control menu for all testing options
+  - Enemy spawn buttons for all 9 enemy types
+  - Real-time stats display
+  - Keyboard shortcuts for quick testing
+
 ## Technical Implementation Notes
 
 ### Phaser.js Considerations
@@ -371,6 +397,9 @@ Fast-paced arcade excitement with a nostalgic feel - players should experience t
 - Enhanced enemy physics with proper platform bounds checking
 - No enemy spawning on ground floor (floor 0) for safer gameplay
 - No collectibles spawn on floor 0 to ensure clean intro animation
+- **9 Enemy Types:** Including Blue Caterpillar and Rex enemy additions
+- **Bonus Level System:** Special reward levels after every 10 levels
+- **Test Scene:** Comprehensive debug environment for development
 - **ENEMY_COMPREHENSIVE_GUIDE.md:** Complete documentation for all enemy types, movements, and spawning patterns
 
 ---
