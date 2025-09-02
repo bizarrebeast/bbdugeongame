@@ -111,18 +111,6 @@ export class TestScene extends Phaser.Scene {
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setScrollFactor(0).setDepth(1000) // High depth to be on top
-    
-    // Add subtitle with instructions
-    this.add.text(
-      this.cameras.main.centerX,
-      50,
-      'Jump on enemies to squish • Use ladders to climb',
-      {
-        fontSize: '10px',
-        color: '#88ff88',
-        fontFamily: 'monospace'
-      }
-    ).setOrigin(0.5).setScrollFactor(0).setDepth(1000) // High depth to be on top
   }
   
   private createPlatforms(): void {
@@ -184,7 +172,7 @@ export class TestScene extends Phaser.Scene {
     const ladderTopY = platformY[platformY.length - 1] - 20  // Top platform minus 20
     const ladderBottomY = groundY
     const totalLadderHeight = ladderBottomY - ladderTopY
-    const numLeftLadderTiles = Math.ceil(totalLadderHeight / 32) + 1
+    const numLeftLadderTiles = Math.ceil(totalLadderHeight / 32)  // Remove the +1 to skip top piece
     
     for (let j = 0; j < numLeftLadderTiles; j++) {
       const ladderY = ladderBottomY - j * 32
@@ -196,7 +184,7 @@ export class TestScene extends Phaser.Scene {
     
     // CREATE SECOND CONTINUOUS LADDER (right side) for variety
     const rightLadderX = this.cameras.main.centerX + 150
-    const numRightLadderTiles = Math.ceil(totalLadderHeight / 32) + 1
+    const numRightLadderTiles = Math.ceil(totalLadderHeight / 32)  // Remove the +1 to skip top piece
     
     for (let j = 0; j < numRightLadderTiles; j++) {
       const ladderY = ladderBottomY - j * 32

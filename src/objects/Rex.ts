@@ -38,8 +38,8 @@ export class Rex extends Phaser.Physics.Arcade.Sprite {
     // Ensure sprite maintains square aspect ratio
     this.setOrigin(0.5, 0.5)
     
-    // Set CIRCULAR hitbox - 38px diameter (slightly smaller than visual)
-    const desiredRadius = 19  // 38px diameter circle
+    // Set CIRCULAR hitbox - 36px diameter (slightly smaller than visual)
+    const desiredRadius = 18  // 36px diameter circle
     
     // Calculate radius in texture space
     const textureWidth = this.texture.get().width
