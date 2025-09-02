@@ -4,7 +4,7 @@
  */
 
 export const GameSettings = {
-  debug: true,  // Debug mode enabled for TestScene access (hitboxes removed from main game)
+  debug: false,  // Debug mode disabled - no visual debug overlays
 
   canvas: {
     width: 450,  // Portrait mode - 9:16 aspect ratio
