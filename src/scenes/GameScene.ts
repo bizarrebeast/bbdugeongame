@@ -584,6 +584,9 @@ export class GameScene extends Phaser.Scene {
     this.load.audio('powerup-collect', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/collect%20pendant%20or%20crystal%20ball-rEQiBqrl32yuqNts0U4A3Muol63Fxr.wav?eDiE')
     this.load.audio('treasure-chest-open', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/treasure%20chest%20opening%20sfx-qA8VU8UtwVC4fnaW67wfvM2IzTJRep.wav?WLuy')
     
+    // Menu sound
+    this.load.audio('menu-toggle', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/menu%20sound-uBdZpD8zUrdGkuqw7jw0j9339NP2wC.wav?rHPB')
+    
     // Player movement sounds
     this.load.audio('jump-1', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%201%20sfx-Cfx219m2NwhVClkP67iebiwcV0HiF5.wav?GDjY')
     this.load.audio('jump-2', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/player%20jumping%202%20sfx-UU3Gj2quONoFPk7SO3OI3koGgiSRGY.wav?4Zrt')

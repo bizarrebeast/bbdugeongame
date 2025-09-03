@@ -469,6 +469,11 @@ export class MenuOverlay {
     this.isOpen = true
     this.container.setVisible(true)
     
+    // Play menu open sound if sound effects are enabled
+    if (this.soundEffectsEnabled) {
+      this.scene.sound.play('menu-toggle', { volume: 0.5 })
+    }
+    
     // Debug visualization removed - buttons are working
     
     // Update SDK indicator
@@ -714,6 +719,11 @@ export class MenuOverlay {
   close(): void {
     if (!this.isOpen) {
       return
+    }
+    
+    // Play menu close sound if sound effects are enabled
+    if (this.soundEffectsEnabled) {
+      this.scene.sound.play('menu-toggle', { volume: 0.3 })
     }
     
     // Set flag immediately
