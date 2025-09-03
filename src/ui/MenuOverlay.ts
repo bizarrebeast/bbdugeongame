@@ -140,6 +140,11 @@ export class MenuOverlay {
     const divider3 = this.createDivider(isDgen1 ? 200 : 140)  // Adjusted for new layout
     
     // Resume button (positioned at bottom of menu)
+    // CHECK: Make sure we're not creating duplicate buttons
+    if (this.container.getByName('resumeButton')) {
+      console.error('⚠️ RESUME BUTTON ALREADY EXISTS!')
+    }
+    
     const resumeBtn = this.createButton(
       0, isDgen1 ? 240 : 180,  // Adjusted for new layout
       'RESUME GAME',
@@ -262,12 +267,20 @@ export class MenuOverlay {
     
     // DEBUG: Log the actual bounds of this rectangle
     if (text === "RESUME GAME") {
-      console.log('🔴 RESUME BUTTON RECT:', {
+      const initialBounds = bgRect.getBounds()
+      console.log('🔴 RESUME BUTTON RECT CREATION:', {
         containerY: y,
-        rectLocalY: 0,
-        rectHeight: buttonHeight,
-        expectedBounds: `Y: ${y - 25} to ${y + 25}`,
-        buttonWidth: buttonWidth
+        rectLocalPos: `(${bgRect.x}, ${bgRect.y})`,
+        rectSize: `${buttonWidth}x${buttonHeight}`,
+        initialBounds: {
+          x: initialBounds.x,
+          y: initialBounds.y,
+          left: initialBounds.left,
+          right: initialBounds.right,
+          top: initialBounds.top,
+          bottom: initialBounds.bottom
+        },
+        expectedY: `${y - 25} to ${y + 25}`
       })
     }
     
@@ -307,12 +320,23 @@ export class MenuOverlay {
       // Log detailed info for phantom resume clicks
       if (text === "RESUME GAME") {
         const worldPos = container.getWorldTransformMatrix()
+        const bounds = bgRect.getBounds()
         console.log('🚨 RESUME PHANTOM CLICK ANALYSIS:', {
           containerCreatedAt: y,
           containerCurrentY: container.y,
-          rectBounds: bgRect.getBounds(),
+          rectBounds: {
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+            left: bounds.left,
+            right: bounds.right,
+            top: bounds.top,
+            bottom: bounds.bottom
+          },
+          bgRectPos: `(${bgRect.x}, ${bgRect.y})`,
           pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`,
-          worldTransform: worldPos,
+          containerToPointer: `(${Math.round(pointer.x - container.x)}, ${Math.round(pointer.y - container.y)})`,
           parentContainer: container.parentContainer?.name || 'main'
         })
       }
