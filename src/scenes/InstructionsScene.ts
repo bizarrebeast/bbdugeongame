@@ -39,7 +39,7 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Load background image
+    // Load background image - same for both versions
     this.load.image('instructionsBg', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Treasure%20Quest%20BG%205-pVHhUmXIAvnZT4aFVRFgYvljKibVS0.png?qco1')
     
     // Load game sprites for visual references

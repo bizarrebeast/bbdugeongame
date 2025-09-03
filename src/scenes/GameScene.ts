@@ -909,15 +909,32 @@ export class GameScene extends Phaser.Scene {
   }
   
   private getChapterSplashUrl(level: number): string {
-    const splashUrls: { [key: number]: string } = {
-      1: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Crystal%20Cavern%20Chapter%20marker-xVVl4RJLl7pqY1teeQdZ9YR8qRbIbf.png',
-      11: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Volcanic%20Crystal%20Cavern%20Chapter%20marker-DrODhcdT2pkFF5SP0zLVzzpmHeZwBl.png',
-      21: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Steampunk%20Crystal%20Cavern%20Chapter%20marker-Oerxv49ruukEeuSe6Dz9Epj2apX18R.png',
-      31: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Electrified%20Crystal%20Cavern%20Chapter%20marker-GstidG6WUl0ZXoFwC2l5HOqWCrXgaA.png',
-      41: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Galatic%20Crystal%20Cavern%20Chapter%20marker-HTsVFy9CSXYas98BckhvpCBkEV4AwP.png',
-      51: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Beast%20Mode%20splash%20page-hnSUzR7voB81jfSXp0WpSwdDWEm4LD.png'
+    // Check if this is dgen1 version
+    const isDgen1 = this.registry.get('isDgen1') || window.location.port === '3001';
+    
+    if (isDgen1) {
+      // dgen1 720x720 chapter splash URLs
+      const dgen1SplashUrls: { [key: number]: string } = {
+        1: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/crystal%20caverns%20splash%20page%20dgen1-fOxjnn8s5iQTzCwVP6HTwo2oZnoWlN.png?V8Du',
+        11: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/volcano%20crystal%20caverns%20splash%20page%20dgen1-MoVRItepiBcZZdhmpb1d5ullyQ725t.png?8mEz',
+        21: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/steampunk%20crystal%20caverns%20splash%20page%20dgen1-B4jgMlUeWbOa7kvIZfra56G4UiUFoY.png?lJqO',
+        31: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/electrified%20crystal%20caverns%20splash%20page%20dgen1-RJXfreqjj1XpJaMYUsYJBansc4BTAJ.png?B3oR',
+        41: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/galactic%20crystal%20caverns%20splash%20page%20dgen1-zSJaaqpe1StXM8hf8IoYDYjx4vIsAz.png?Az4J',
+        51: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/beast%20mode%20crystal%20caverns%20splash%20page%20dgen1-6RPxHcIi1lHMpFEHGCwglRqzwKdNjW.png?Riu8'
+      }
+      return dgen1SplashUrls[level] || ''
+    } else {
+      // Regular 800x800 chapter splash URLs
+      const splashUrls: { [key: number]: string } = {
+        1: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Crystal%20Cavern%20Chapter%20marker-xVVl4RJLl7pqY1teeQdZ9YR8qRbIbf.png',
+        11: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Volcanic%20Crystal%20Cavern%20Chapter%20marker-DrODhcdT2pkFF5SP0zLVzzpmHeZwBl.png',
+        21: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Steampunk%20Crystal%20Cavern%20Chapter%20marker-Oerxv49ruukEeuSe6Dz9Epj2apX18R.png',
+        31: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Electrified%20Crystal%20Cavern%20Chapter%20marker-GstidG6WUl0ZXoFwC2l5HOqWCrXgaA.png',
+        41: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Galatic%20Crystal%20Cavern%20Chapter%20marker-HTsVFy9CSXYas98BckhvpCBkEV4AwP.png',
+        51: 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/Beast%20Mode%20splash%20page-hnSUzR7voB81jfSXp0WpSwdDWEm4LD.png'
+      }
+      return splashUrls[level] || ''
     }
-    return splashUrls[level] || ''
   }
   
   // Method no longer needed - moved to init()

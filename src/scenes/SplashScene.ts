@@ -9,8 +9,18 @@ export class SplashScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Load title background image
-    this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST%20Bizarre%20Beasts%20BIZarcade%20splash%20page-ydgNu2S0haL0dzmlz4oZLjqZMXaiQo.png?j2A1')
+    // Check if this is dgen1 version
+    const isDgen1 = this.registry.get('isDgen1') || window.location.port === '3001';
+    
+    // Load appropriate background image based on version
+    if (isDgen1) {
+      console.log('🎮 Loading dgen1 splash (720x720)');
+      this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/splash%20page%20dgen1-Fh7ukfdeGjMSeC55Peq00Ip9l8GzhI.png?d0YY');
+    } else {
+      // Load regular 800px splash image
+      console.log('🎮 Loading regular splash (800x800)');
+      this.load.image('titleBackground', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/TREASURE%20QUEST%20Bizarre%20Beasts%20BIZarcade%20splash%20page-ydgNu2S0haL0dzmlz4oZLjqZMXaiQo.png?j2A1');
+    }
     
     // Load splash page sound
     this.load.audio('splash-sound', 'https://lqy3lriiybxcejon.public.blob.vercel-storage.com/d281be5d-2111-4a73-afb0-19b2a18c80a9/splash%20page%20sfx-2Un9YwdWUGtqQ3ynYGocaBKgQmQTmD.wav?X7j7')
