@@ -404,9 +404,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isAirborne = true
         this.jumpReleased = false
         
-        // Higher initial velocity for touch input to compensate for touch detection
+        // Same initial velocity for both touch and keyboard for consistent gameplay
         const isTouchInput = this.touchControls?.jumpPressed || false
-        const initialVelocity = isTouchInput ? -175 : this.MIN_JUMP_VELOCITY // -175 for touch, -120 for keyboard
+        const initialVelocity = -150 // Unified initial velocity for both input methods (was -175 touch, -120 keyboard)
         
         // Apply initial jump velocity
         this.setVelocityY(initialVelocity)
@@ -432,10 +432,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             
             // Apply incremental upward force instead of setting absolute velocity
             // This creates a smoother jump arc without sudden velocity changes
-            // Stronger boost force for touch input to compensate for detection issues
+            // Unified boost force for both input methods for consistent gameplay
             const isTouchInput = this.touchControls?.jumpPressed || false
-            const baseBoostForce = isTouchInput ? -30 : -20 // -30 for touch, -20 for keyboard
-            const boostForce = baseBoostForce * boostMultiplier
+            // CRITICAL FIX: Scale boost force by delta time to make it framerate-independent!
+            // Convert delta from milliseconds to seconds, then scale the force
+            const deltaSeconds = delta / 1000
+            // Boost force is now in units per second, not per frame
+            const baseBoostForce = -1600 // Unified force per second for both inputs
+            const boostForce = baseBoostForce * boostMultiplier * deltaSeconds
             const currentVelocity = this.body!.velocity.y
             const newVelocity = Math.max(currentVelocity + boostForce, this.MAX_JUMP_VELOCITY)
             
