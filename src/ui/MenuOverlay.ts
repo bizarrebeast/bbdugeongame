@@ -82,6 +82,8 @@ export class MenuOverlay {
       () => this.openInstructionsScene(),
       0x4a148c // Purple
     )
+    instructionsBtn.setName('instructionsButton')
+    console.log('📌 Created Instructions button at Y=-180')
     
     // Divider line
     const divider1 = this.createDivider(-130)
@@ -93,6 +95,8 @@ export class MenuOverlay {
       this.soundEffectsEnabled,
       (enabled) => this.setSoundEffects(enabled)
     )
+    this.soundToggle.setName('soundToggle')
+    console.log('📌 Created Sound toggle at Y=-80')
     
     // Music toggle
     this.musicToggle = this.createToggleSwitch(
@@ -101,6 +105,8 @@ export class MenuOverlay {
       this.musicEnabled,
       (enabled) => this.setMusic(enabled)
     )
+    this.musicToggle.setName('musicToggle')
+    console.log('📌 Created Music toggle at Y=-30')
     
     // Divider line after toggles
     const divider2 = this.createDivider(20)
@@ -133,8 +139,9 @@ export class MenuOverlay {
       0x32CD32 // Keep green for resume
     )
     resumeBtn.setName('resumeButton')
+    console.log('📌 Created Resume button at Y=' + (isDgen1 ? 240 : 180))
     
-    console.log('📍 Button Positions:', {
+    console.log('📍 FINAL Button Positions:', {
       instructions: -180,
       soundToggle: -80,
       musicToggle: -30,
@@ -605,20 +612,45 @@ export class MenuOverlay {
     const debugGraphics = this.scene.add.graphics()
     debugGraphics.setName('debugGraphics')
     
-    // Get actual element positions by finding them in the container
-    const instructionsBtn = this.container.list.find((child: any) => 
-      child instanceof Phaser.GameObjects.Container && child.y === -180
-    ) as Phaser.GameObjects.Container
+    // Log all container children with their positions
+    console.log('📦 MENU CONTAINER ELEMENTS:', {
+      containerPos: `(${this.container.x}, ${this.container.y})`,
+      childCount: this.container.list.length
+    })
     
-    const soundToggle = this.container.list.find((child: any) => 
-      child instanceof Phaser.GameObjects.Container && child.y === -80
-    ) as Phaser.GameObjects.Container
+    this.container.list.forEach((child: any, index: number) => {
+      if (child instanceof Phaser.GameObjects.Container) {
+        const name = child.name || 'unnamed'
+        console.log(`  [${index}] Container '${name}': Y=${child.y}, X=${child.x}`)
+        // Log children of this container
+        if (child.list && child.list.length > 0) {
+          child.list.forEach((subChild: any, subIndex: number) => {
+            if (subChild instanceof Phaser.GameObjects.Text && subChild.text) {
+              console.log(`    └─ Text: "${subChild.text.substring(0, 20)}..." at (${subChild.x}, ${subChild.y})`)
+            } else if (subChild instanceof Phaser.GameObjects.Rectangle) {
+              console.log(`    └─ Rectangle at (${subChild.x}, ${subChild.y}) size: ${subChild.width}x${subChild.height}`)
+            }
+          })
+        }
+      } else if (child instanceof Phaser.GameObjects.Text) {
+        console.log(`  [${index}] Text: "${child.text.substring(0, 30)}..." at Y=${child.y}`)
+      } else if (child instanceof Phaser.GameObjects.Graphics) {
+        console.log(`  [${index}] Graphics/Divider at Y=${child.y}`)
+      }
+    })
     
-    const musicToggle = this.container.list.find((child: any) => 
-      child instanceof Phaser.GameObjects.Container && child.y === -30
-    ) as Phaser.GameObjects.Container
-    
+    // Get actual element positions - use names for better reliability
+    const instructionsBtn = this.container.getByName('instructionsButton') as Phaser.GameObjects.Container
+    const soundToggle = this.container.getByName('soundToggle') as Phaser.GameObjects.Container  
+    const musicToggle = this.container.getByName('musicToggle') as Phaser.GameObjects.Container
     const resumeBtn = this.container.getByName('resumeButton') as Phaser.GameObjects.Container
+    
+    console.log('🎯 FOUND ELEMENTS:', {
+      instructionsBtn: instructionsBtn ? `Y=${instructionsBtn.y}` : 'NOT FOUND',
+      soundToggle: soundToggle ? `Y=${soundToggle.y}` : 'NOT FOUND',
+      musicToggle: musicToggle ? `Y=${musicToggle.y}` : 'NOT FOUND',
+      resumeBtn: resumeBtn ? `Y=${resumeBtn.y}` : 'NOT FOUND'
+    })
     
     // Draw hit areas for all interactive elements based on ACTUAL positions
     const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001'
@@ -758,6 +790,17 @@ export class MenuOverlay {
     
     // Check toggles FIRST before buttons to prioritize them
     const buttonHalfWidth = cameraWidth <= 500 ? 160 : 170;  // Narrower hit area for portrait mode
+    
+    // Log what we're checking for hits
+    if (isRegularVersion) {
+      console.log('🎮 HIT TEST ZONES:', {
+        instructionsZone: `Y: ${-180-25} to ${-180+25}`,
+        soundToggleZone: `Y: ${-80-15} to ${-80+15}, X: ${80-30} to ${80+30}`,
+        musicToggleZone: `Y: ${-30-15} to ${-30+15}, X: ${80-30} to ${80+30}`,
+        resumeZone: `Y: ${180-25} to ${180+25}`,
+        clickedAt: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`
+      })
+    }
     
     // Check sound toggle manually - use relative positions
     const soundToggleX = 80  // Relative to container center
