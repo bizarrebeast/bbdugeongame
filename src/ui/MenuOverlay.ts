@@ -21,13 +21,7 @@ export class MenuOverlay {
   
   constructor(scene: GameScene) {
     this.scene = scene
-    console.log('🍔 MenuOverlay Constructor:', {
-      canvasWidth: scene.cameras.main.width,
-      canvasHeight: scene.cameras.main.height,
-      gameSettingsCanvas: GameSettings.canvas,
-      port: window.location.port,
-      isDgen1: scene.registry.get('isDgen1')
-    })
+    // Constructor - menu overlay initialized
     this.loadSettings()
     this.create()
   }
@@ -38,14 +32,7 @@ export class MenuOverlay {
     const centerX = camera.width / 2
     const centerY = camera.height / 2
     
-    console.log('📐 Menu Layout Calculations:', {
-      cameraWidth: camera.width,
-      cameraHeight: camera.height,
-      centerX: centerX,
-      centerY: centerY,
-      scrollX: camera.scrollX,
-      scrollY: camera.scrollY
-    })
+    // Menu layout calculated based on camera dimensions
     
     // Main container for entire menu - positioned at camera center
     this.container = this.scene.add.container(centerX, centerY)
@@ -83,7 +70,6 @@ export class MenuOverlay {
       0x4a148c // Purple
     )
     instructionsBtn.setName('instructionsButton')
-    console.log('📌 Created Instructions button at Y=-180')
     
     // Divider line
     const divider1 = this.createDivider(-130)
@@ -96,7 +82,6 @@ export class MenuOverlay {
       (enabled) => this.setSoundEffects(enabled)
     )
     this.soundToggle.setName('soundToggle')
-    console.log('📌 Created Sound toggle at Y=-80')
     
     // Music toggle
     this.musicToggle = this.createToggleSwitch(
@@ -106,18 +91,9 @@ export class MenuOverlay {
       (enabled) => this.setMusic(enabled)
     )
     this.musicToggle.setName('musicToggle')
-    console.log('📌 Created Music toggle at Y=-30')
     
     // Divider line after toggles
     const divider2 = this.createDivider(20)
-    
-    // Debug: Check for phantom elements
-    console.log('🔍 Elements between toggles check:', {
-      soundToggleY: this.soundToggle?.y,
-      musicToggleY: this.musicToggle?.y,
-      divider2Y: 20,
-      containerChildCount: this.container.list.length
-    })
     
     // Add Wallet Button for dgen1 version only
     let walletBtn = null;
@@ -252,7 +228,6 @@ export class MenuOverlay {
     onClick: () => void,
     color: number = 0x4a148c
   ): Phaser.GameObjects.Container {
-    console.log(`🔘 Creating button "${text}" at position (${x}, ${y})`)
     const container = this.scene.add.container(x, y)
     
     // Use a rectangle game object instead of graphics for better hit detection
@@ -265,24 +240,7 @@ export class MenuOverlay {
     const bgRect = this.scene.add.rectangle(0, 0, buttonWidth, buttonHeight, color, 0.8)
     bgRect.setStrokeStyle(2, 0xFFD700)
     
-    // DEBUG: Log the actual bounds of this rectangle
-    if (text === "RESUME GAME") {
-      const initialBounds = bgRect.getBounds()
-      console.log('🔴 RESUME BUTTON RECT CREATION:', {
-        containerY: y,
-        rectLocalPos: `(${bgRect.x}, ${bgRect.y})`,
-        rectSize: `${buttonWidth}x${buttonHeight}`,
-        initialBounds: {
-          x: initialBounds.x,
-          y: initialBounds.y,
-          left: initialBounds.left,
-          right: initialBounds.right,
-          top: initialBounds.top,
-          bottom: initialBounds.bottom
-        },
-        expectedY: `${y - 25} to ${y + 25}`
-      })
-    }
+    // Rectangle bounds set correctly
     
     // Button text
     const btnText = this.scene.add.text(0, 0, text, {
@@ -332,27 +290,12 @@ export class MenuOverlay {
         const isValidClick = relativeY >= expectedMinY && relativeY <= expectedMaxY &&
                            relativeX >= expectedMinX && relativeX <= expectedMaxX
         
-        console.log('🎮 RESUME BUTTON CLICK VALIDATION:', {
-          clickPos: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`,
-          expectedY: `${expectedMinY} to ${expectedMaxY}`,
-          expectedX: `${expectedMinX} to ${expectedMaxX}`,
-          isValid: isValidClick,
-          bounds: {
-            top: bounds.top,
-            bottom: bounds.bottom,
-            left: bounds.left,
-            right: bounds.right
-          }
-        })
-        
         // ONLY process click if it's within expected bounds
         if (!isValidClick) {
-          console.log('❌ Rejecting phantom resume click - outside expected bounds!')
-          return  // Don't process this click
+          return  // Reject phantom click outside bounds
         }
       }
       
-      console.log(`👆 Button clicked: "${text}" at container Y=${y}`)
       onClick()
     })
     
@@ -469,7 +412,6 @@ export class MenuOverlay {
   }
   
   private createBizarreInfo(y: number): Phaser.GameObjects.Container {
-    console.log(`ℹ️ Creating BizarreBeasts info at Y:${y}`)
     const container = this.scene.add.container(0, y)
     
     // Project name
@@ -618,27 +560,8 @@ export class MenuOverlay {
       return
     }
     
-    console.log('🍔 Opening menu overlay')
     this.isOpen = true
     this.container.setVisible(true)
-    
-    // Add debug visualization for regular version
-    const isRegularVersion = this.scene.cameras.main.width <= 500
-    if (isRegularVersion) {
-      // Log immediate positions
-      console.log('🔍 IMMEDIATE ELEMENT CHECK:')
-      this.container.list.forEach((child: any, index: number) => {
-        if (child instanceof Phaser.GameObjects.Container && child.name) {
-          console.log(`  ${child.name}: Y=${child.y}`)
-        }
-      })
-      
-      // Delay slightly to ensure all elements are added
-      this.scene.time.delayedCall(100, () => {
-        console.log('🕒 DELAYED DEBUG CHECK (100ms):')
-        this.addDebugVisualization()
-      })
-    }
     
     // Update SDK indicator
     const indicators = this.container.list.filter(obj => 
