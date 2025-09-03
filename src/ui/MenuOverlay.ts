@@ -316,30 +316,43 @@ export class MenuOverlay {
     // })
     
     bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      console.log(`👆 Button clicked: "${text}" at container Y=${y}`)
-      // Log detailed info for phantom resume clicks
+      // For resume button, validate the click is actually within expected bounds
       if (text === "RESUME GAME") {
-        const worldPos = container.getWorldTransformMatrix()
         const bounds = bgRect.getBounds()
-        console.log('🚨 RESUME PHANTOM CLICK ANALYSIS:', {
-          containerCreatedAt: y,
-          containerCurrentY: container.y,
-          rectBounds: {
-            x: bounds.x,
-            y: bounds.y,
-            width: bounds.width,
-            height: bounds.height,
-            left: bounds.left,
-            right: bounds.right,
+        const mainContainer = this.container
+        const relativeX = pointer.x - mainContainer.x
+        const relativeY = pointer.y - mainContainer.y
+        
+        // Expected bounds for resume button at Y=180
+        const expectedMinY = y - 25  // 155
+        const expectedMaxY = y + 25  // 205
+        const expectedMinX = -160    // Half button width
+        const expectedMaxX = 160
+        
+        const isValidClick = relativeY >= expectedMinY && relativeY <= expectedMaxY &&
+                           relativeX >= expectedMinX && relativeX <= expectedMaxX
+        
+        console.log('🎮 RESUME BUTTON CLICK VALIDATION:', {
+          clickPos: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`,
+          expectedY: `${expectedMinY} to ${expectedMaxY}`,
+          expectedX: `${expectedMinX} to ${expectedMaxX}`,
+          isValid: isValidClick,
+          bounds: {
             top: bounds.top,
-            bottom: bounds.bottom
-          },
-          bgRectPos: `(${bgRect.x}, ${bgRect.y})`,
-          pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`,
-          containerToPointer: `(${Math.round(pointer.x - container.x)}, ${Math.round(pointer.y - container.y)})`,
-          parentContainer: container.parentContainer?.name || 'main'
+            bottom: bounds.bottom,
+            left: bounds.left,
+            right: bounds.right
+          }
         })
+        
+        // ONLY process click if it's within expected bounds
+        if (!isValidClick) {
+          console.log('❌ Rejecting phantom resume click - outside expected bounds!')
+          return  // Don't process this click
+        }
       }
+      
+      console.log(`👆 Button clicked: "${text}" at container Y=${y}`)
       onClick()
     })
     
