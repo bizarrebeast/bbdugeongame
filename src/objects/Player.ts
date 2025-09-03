@@ -516,10 +516,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Track climbing movement for animation (only vertical movement counts as "moving" on ladder)
       this.isMoving = climbingMovement
       
+      // CRITICAL: Block ALL exits when at ladder bottom and pressing down
+      // This prevents the breakthrough bug with touch controls
+      const blockExit = atLadderBottom && downPressed
+      
       // Allow horizontal movement to exit ladder ONLY if:
       // 1. Not moving vertically (prevents diagonal input from exiting)
       // 2. Not at or below the ladder bottom (prevents falling through bottom)
-      if ((leftPressed || rightPressed) && !upPressed && !downPressed && !atLadderBottom) {
+      // 3. Not pressing down at the bottom (prevents breakthrough bug)
+      if ((leftPressed || rightPressed) && !upPressed && !downPressed && !atLadderBottom && !blockExit) {
         this.exitClimbing()
         // Apply horizontal movement immediately after exiting
         const currentSpeed = GameSettings.game.playerSpeed * this.speedMultiplier
@@ -534,8 +539,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // 1. Not trying to climb up (prevents accidental jumps when trying to climb)
       // 2. For ground floor ladders, always allow jumping
       // 3. For other ladders, don't allow jumping from the very bottom
+      // 4. Not blocked by down press at bottom
       const isGroundFloorLadder = ladderBottom >= GameSettings.canvas.height - GameSettings.game.tileSize * 3
-      if (jumpJustPressed && !upPressed && (isGroundFloorLadder || !atLadderBottom)) {
+      if (jumpJustPressed && !upPressed && (isGroundFloorLadder || !atLadderBottom) && !blockExit) {
         this.exitClimbing()
         this.setVelocityY(this.MAX_JUMP_VELOCITY)
         this.playJumpSound() // Play jump sound when jumping off ladder
