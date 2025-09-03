@@ -621,10 +621,19 @@ export class MenuOverlay {
       childCount: this.container.list.length
     })
     
+    // Find specific elements
+    let actualMusicToggleY = null
+    let actualSoundToggleY = null
+    
     this.container.list.forEach((child: any, index: number) => {
       if (child instanceof Phaser.GameObjects.Container) {
         const name = child.name || 'unnamed'
         console.log(`  [${index}] Container '${name}': Y=${child.y}, X=${child.x}`)
+        
+        // Track actual positions of named elements
+        if (name === 'musicToggle') actualMusicToggleY = child.y
+        if (name === 'soundToggle') actualSoundToggleY = child.y
+        
         // Log children of this container
         if (child.list && child.list.length > 0) {
           child.list.forEach((subChild: any, subIndex: number) => {
@@ -639,6 +648,19 @@ export class MenuOverlay {
         console.log(`  [${index}] Text: "${child.text.substring(0, 30)}..." at Y=${child.y}`)
       } else if (child instanceof Phaser.GameObjects.Graphics) {
         console.log(`  [${index}] Graphics/Divider at Y=${child.y}`)
+      }
+    })
+    
+    console.log('⚠️ VISUAL POSITIONS VS HIT ZONES:', {
+      musicToggle: {
+        visual: actualMusicToggleY,
+        hitZone: '-45 to -15',
+        mismatch: actualMusicToggleY !== -30
+      },
+      soundToggle: {
+        visual: actualSoundToggleY,
+        hitZone: '-95 to -65',
+        mismatch: actualSoundToggleY !== -80
       }
     })
     
