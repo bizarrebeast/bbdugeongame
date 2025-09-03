@@ -184,7 +184,9 @@ export class MenuOverlay {
     const panel = this.scene.add.graphics()
     
     // Draw purple panel with border - centered relative to container
-    const panelWidth = Math.min(400, this.scene.cameras.main.width - 40)
+    // Adjust width for narrow portrait mode (450px) vs square modes (720px/800px)
+    const cameraWidth = this.scene.cameras.main.width;
+    const panelWidth = Math.min(cameraWidth <= 500 ? 380 : 400, cameraWidth - 40)
     // Increased panel height to accommodate all elements (was 500, now 600)
     const panelHeight = Math.min(600, this.scene.cameras.main.height - 40)
     const panelX = -panelWidth / 2
@@ -218,7 +220,9 @@ export class MenuOverlay {
     const container = this.scene.add.container(x, y)
     
     // Use a rectangle game object instead of graphics for better hit detection
-    const buttonWidth = 340
+    // Adjust button width for narrow portrait mode
+    const cameraWidth = this.scene.cameras.main.width;
+    const buttonWidth = cameraWidth <= 500 ? 320 : 340
     const buttonHeight = 50
     
     // Create visual background rectangle
@@ -591,50 +595,106 @@ export class MenuOverlay {
     const containerX = this.container.x
     const containerY = this.container.y
     const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001'
+    const cameraWidth = this.scene.cameras.main.width
+    const isRegularVersion = cameraWidth <= 500
     
-    console.log('🎯 Manual hit test at:', {
-      pointerX: Math.round(pointer.x),
-      pointerY: Math.round(pointer.y),
-      containerPos: `(${containerX}, ${containerY})`
-    })
-    
-    // Check resume button manually - button position depends on dgen1
-    const resumeBtnX = containerX + 0
-    const resumeBtnY = containerY + (isDgen1 ? 240 : 180)  // Updated position
-    if (Math.abs(pointer.x - resumeBtnX) < 170 && Math.abs(pointer.y - resumeBtnY) < 25) {
-      console.log('✅ Resume button hit!')
-      this.close()
+    // Enhanced debugging for regular version
+    if (isRegularVersion) {
+      console.log('🎯 Regular Menu Hit Test:', {
+        pointerX: Math.round(pointer.x),
+        pointerY: Math.round(pointer.y),
+        containerPos: `(${containerX}, ${containerY})`,
+        cameraWidth: cameraWidth,
+        version: 'REGULAR (450x800)'
+      })
+    } else {
+      console.log('🎯 Manual hit test at:', {
+        pointerX: Math.round(pointer.x),
+        pointerY: Math.round(pointer.y),
+        containerPos: `(${containerX}, ${containerY})`
+      })
     }
     
-    // Check instructions button manually  
-    const instrBtnX = containerX + 0
-    const instrBtnY = containerY + (-180)  // Updated position
-    if (Math.abs(pointer.x - instrBtnX) < 170 && Math.abs(pointer.y - instrBtnY) < 25) {
-      console.log('✅ Instructions button hit!')
-      this.openInstructionsScene()
-    }
+    // Check toggles FIRST before buttons to prioritize them
+    const buttonHalfWidth = cameraWidth <= 500 ? 160 : 170;  // Narrower hit area for portrait mode
     
     // Check sound toggle manually
     const soundToggleX = containerX + 80
     const soundToggleY = containerY + (-80)  // Updated position
-    if (Math.abs(pointer.x - soundToggleX) < 30 && Math.abs(pointer.y - soundToggleY) < 15) {
+    const soundHit = Math.abs(pointer.x - soundToggleX) < 30 && Math.abs(pointer.y - soundToggleY) < 15
+    
+    if (isRegularVersion && soundHit) {
+      console.log('🔊 Sound Toggle HIT at:', {
+        toggleCenter: `(${soundToggleX}, ${soundToggleY})`,
+        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+      })
+    }
+    
+    if (soundHit) {
       console.log('✅ Sound toggle hit!')
       this.setSoundEffects(!this.soundEffectsEnabled)
+      return  // Early return to prevent checking other buttons
     }
     
     // Check music toggle manually
     const musicToggleX = containerX + 80
     const musicToggleY = containerY + (-30)  // Updated position
-    if (Math.abs(pointer.x - musicToggleX) < 30 && Math.abs(pointer.y - musicToggleY) < 15) {
+    const musicHit = Math.abs(pointer.x - musicToggleX) < 30 && Math.abs(pointer.y - musicToggleY) < 15
+    
+    if (isRegularVersion && musicHit) {
+      console.log('🎵 Music Toggle HIT at:', {
+        toggleCenter: `(${musicToggleX}, ${musicToggleY})`,
+        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+      })
+    }
+    
+    if (musicHit) {
       console.log('✅ Music toggle hit!')
       this.setMusic(!this.musicEnabled)
+      return  // Early return to prevent checking other buttons
+    }
+    
+    // Check resume button manually - button position depends on dgen1
+    const resumeBtnX = containerX + 0
+    const resumeBtnY = containerY + (isDgen1 ? 240 : 180)  // Updated position
+    const resumeHit = Math.abs(pointer.x - resumeBtnX) < buttonHalfWidth && Math.abs(pointer.y - resumeBtnY) < 25
+    
+    if (isRegularVersion && resumeHit) {
+      console.log('📍 Resume Button HIT at:', {
+        btnCenter: `(${resumeBtnX}, ${resumeBtnY})`,
+        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+      })
+    }
+    
+    if (resumeHit) {
+      console.log('✅ Resume button hit!')
+      this.close()
+      return
+    }
+    
+    // Check instructions button manually
+    const instrBtnX = containerX + 0
+    const instrBtnY = containerY + (-180)  // Updated position
+    const instrHit = Math.abs(pointer.x - instrBtnX) < buttonHalfWidth && Math.abs(pointer.y - instrBtnY) < 25
+    
+    if (isRegularVersion && instrHit) {
+      console.log('📍 Instructions Button HIT at:', {
+        btnCenter: `(${instrBtnX}, ${instrBtnY})`,
+        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+      })
+    }
+    
+    if (instrHit) {
+      console.log('✅ Instructions button hit!')
+      this.openInstructionsScene()
+      return
     }
     
     // Check wallet button for dgen1
     if (isDgen1) {
       const walletBtnX = containerX + 0
       const walletBtnY = containerY + 70
-      if (Math.abs(pointer.x - walletBtnX) < 170 && Math.abs(pointer.y - walletBtnY) < 25) {
+      if (Math.abs(pointer.x - walletBtnX) < buttonHalfWidth && Math.abs(pointer.y - walletBtnY) < 25) {
         console.log('✅ Wallet button hit!')
         this.handleWalletConnect()
       }
