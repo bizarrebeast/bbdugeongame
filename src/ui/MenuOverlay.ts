@@ -125,8 +125,8 @@ export class MenuOverlay {
       walletBtn.setName('walletButton')
     }
     
-    // BizarreBeasts info (moved down if wallet button exists)
-    const bizarreInfo = this.createBizarreInfo(isDgen1 ? 120 : 60)  // Adjusted for toggles
+    // BizarreBeasts info (moved down to avoid blocking toggles)
+    const bizarreInfo = this.createBizarreInfo(isDgen1 ? 120 : 80)  // Moved down from 60 to 80 to avoid blocking music toggle
     
     // Divider line before resume button
     const divider3 = this.createDivider(isDgen1 ? 200 : 140)  // Adjusted for new layout
