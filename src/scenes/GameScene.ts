@@ -6330,14 +6330,15 @@ export class GameScene extends Phaser.Scene {
       }
     }
     
-    // More generous exit conditions - don't trap player at ladder tops
+    // More generous exit conditions at top, strict at bottom to prevent breakthrough
     if (playerObj.getIsClimbing()) {
       const ladderRect = ladder as Phaser.GameObjects.Rectangle
       const topOfLadder = ladderRect.y - ladderRect.height / 2
       const bottomOfLadder = ladderRect.y + ladderRect.height / 2
       
-      // Exit climbing if player moves way beyond ladder bounds (more generous)
-      if (playerObj.y < topOfLadder - 32 || playerObj.y > bottomOfLadder + 32) {
+      // Exit climbing if player moves beyond ladder bounds
+      // Generous at top (32px buffer) but strict at bottom (8px) to prevent falling through
+      if (playerObj.y < topOfLadder - 32 || playerObj.y > bottomOfLadder + 8) {
         playerObj.exitClimbing()
       }
     }
