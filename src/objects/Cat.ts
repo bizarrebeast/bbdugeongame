@@ -1277,7 +1277,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       if (this.velocityStuckTimer > 400 && // Reduced from 800ms to 400ms
           this.x > this.platformBounds.left + 30 && 
           this.x < this.platformBounds.right - 30) {
-        console.warn(`🐛 ${catType} velocity stuck at X:${Math.round(this.x)} - forcing reset`)
+        // console.warn(`🐛 ${catType} velocity stuck at X:${Math.round(this.x)} - forcing reset`)
         this.forceResetCaterpillar()
         return
       }
@@ -1293,7 +1293,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       
       if (allSame && this.x > this.platformBounds.left + 30 && 
           this.x < this.platformBounds.right - 30) {
-        console.warn(`🐛 ${catType} position stuck at X:${Math.round(this.x)} (not at edge) - forcing reset`)
+        // console.warn(`🐛 ${catType} position stuck at X:${Math.round(this.x)} (not at edge) - forcing reset`)
         this.forceResetCaterpillar()
         return
       }
@@ -1301,7 +1301,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Check if caterpillar is outside platform bounds (safety check)
     if (this.x < this.platformBounds.left - 10 || this.x > this.platformBounds.right + 10) {
-      console.error(`🐛 ${catType} escaped platform bounds at X:${Math.round(this.x)} - forcing reset`)
+      // console.error(`🐛 ${catType} escaped platform bounds at X:${Math.round(this.x)} - forcing reset`)
       this.forceResetCaterpillar()
     }
     
@@ -1312,7 +1312,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length >= 6) {
       const recentMovement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
       if (recentMovement < 20 && this.turnDelayTimer <= 0) {
-        console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 1.5s) - forcing reset`)
+        // console.warn(`🐛 Blue Caterpillar barely moving (${Math.round(recentMovement)}px in 1.5s) - forcing reset`)
         this.forceResetCaterpillar()
         return
       } else if (recentMovement < 20 && this.turnDelayTimer > 0) {
@@ -1367,7 +1367,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
   
   private forceResetCaterpillar(): void {
     const catType = this.catColor === CatColor.BLUE_CATERPILLAR ? 'Blue Caterpillar' : 'Yellow Caterpillar'
-    console.warn(`🐛 === RESETTING STUCK ${catType.toUpperCase()} at X:${Math.round(this.x)} ===`)
+    // console.warn(`🐛 === RESETTING STUCK ${catType.toUpperCase()} at X:${Math.round(this.x)} ===`)
     
     // Reset animation states
     if (this.catColor === CatColor.BLUE_CATERPILLAR) {
@@ -1410,7 +1410,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Move to a random safe position near center
       const safeX = this.platformBounds.left + 50 + Math.random() * (this.platformBounds.right - this.platformBounds.left - 100)
       this.setX(safeX)
-      console.log(`🐛 Repositioned ${catType} to safe X:${Math.round(safeX)}`)
+      // console.log(`🐛 Repositioned ${catType} to safe X:${Math.round(safeX)}`)
     }
     
     // Apply velocity with boost to get unstuck
@@ -1429,7 +1429,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // If stuck too many times, mark for potential removal
     if (this.getData('stuckRecoveryCount') >= 3) {
-      console.error(`${catType} stuck 3+ times - may need manual intervention`)
+      // console.error(`${catType} stuck 3+ times - may need manual intervention`)
       this.setData('needsReplacement', true)
     }
   }
@@ -1964,15 +1964,15 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.blueCaterpillarVelocityCheckTimer += delta
     
     if (this.blueCaterpillarVelocityCheckTimer > 500 && Math.abs(this.body!.velocity.x) < 5) {
-      console.log('🐛⚠️ Velocity not sticking!', {
-        x: Math.round(this.x),
-        velocityAfterSet: this.body!.velocity.x,
-        direction: this.direction,
-        moveSpeed: this.moveSpeed,
-        bodyBlocked: this.body.blocked,
-        bodyTouching: this.body.touching,
-        bodyEmbedded: this.body.embedded
-      })
+      // console.log('🐛⚠️ Velocity not sticking!', {
+      //   x: Math.round(this.x),
+      //   velocityAfterSet: this.body!.velocity.x,
+      //   direction: this.direction,
+      //   moveSpeed: this.moveSpeed,
+      //   bodyBlocked: this.body.blocked,
+      //   bodyTouching: this.body.touching,
+      //   bodyEmbedded: this.body.embedded
+      // })
       this.blueCaterpillarVelocityCheckTimer = 0
     }
     
@@ -2016,16 +2016,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Safety check: Ensure caterpillar stays within bounds
     if (this.x < this.platformBounds.left + 5 || this.x > this.platformBounds.right - 5) {
-      console.log('🐛🚨 SAFETY CONSTRAINT TRIGGERED!', {
-        x: Math.round(this.x),
-        leftBound: this.platformBounds.left,
-        rightBound: this.platformBounds.right
-      })
+      // console.log('🐛🚨 SAFETY CONSTRAINT TRIGGERED!', {
+      //   x: Math.round(this.x),
+      //   leftBound: this.platformBounds.left,
+      //   rightBound: this.platformBounds.right
+      // })
       const constrainedX = Math.max(this.platformBounds.left + 10, Math.min(this.platformBounds.right - 10, this.x))
       this.setX(constrainedX)
       this.direction *= -1 // Reverse direction when constrained
       this.setVelocityX(this.moveSpeed * this.direction)
-      console.log('🐛🔄 Force reversed to', this.direction)
+      // console.log('🐛🔄 Force reversed to', this.direction)
     }
     
     // Flip sprite based on direction

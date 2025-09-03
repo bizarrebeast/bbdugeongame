@@ -21,6 +21,13 @@ export class MenuOverlay {
   
   constructor(scene: GameScene) {
     this.scene = scene
+    console.log('🍔 MenuOverlay Constructor:', {
+      canvasWidth: scene.cameras.main.width,
+      canvasHeight: scene.cameras.main.height,
+      gameSettingsCanvas: GameSettings.canvas,
+      port: window.location.port,
+      isDgen1: scene.registry.get('isDgen1')
+    })
     this.loadSettings()
     this.create()
   }
@@ -30,6 +37,15 @@ export class MenuOverlay {
     const camera = this.scene.cameras.main
     const centerX = camera.width / 2
     const centerY = camera.height / 2
+    
+    console.log('📐 Menu Layout Calculations:', {
+      cameraWidth: camera.width,
+      cameraHeight: camera.height,
+      centerX: centerX,
+      centerY: centerY,
+      scrollX: camera.scrollX,
+      scrollY: camera.scrollY
+    })
     
     // Main container for entire menu - positioned at camera center
     this.container = this.scene.add.container(centerX, centerY)
@@ -50,8 +66,8 @@ export class MenuOverlay {
     // Main menu panel - positioned at center relative to container
     this.menuPanel = this.createMenuPanel()
     
-    // Title
-    const title = this.scene.add.text(0, -200, 'GAME MENU', {
+    // Title (moved up to accommodate larger panel)
+    const title = this.scene.add.text(0, -250, 'GAME MENU', {
       fontSize: '18px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFD700', // Keep gold for title
@@ -59,42 +75,43 @@ export class MenuOverlay {
     })
     title.setOrigin(0.5)
     
-    // Instructions button
+    // Instructions button (moved up slightly)
     const instructionsBtn = this.createButton(
-      0, -140, 
+      0, -180, 
       'VIEW INSTRUCTIONS',
       () => this.openInstructionsScene(),
       0x4a148c // Purple
     )
     
     // Divider line
-    const divider1 = this.createDivider(-100)
+    const divider1 = this.createDivider(-130)
     
-    // TEMPORARILY DISABLED - Sound and music toggles
-    // this.soundToggle = this.createToggleSwitch(
-    //   'Sound\nEffects',
-    //   -60,
-    //   this.soundEffectsEnabled,
-    //   (enabled) => this.setSoundEffects(enabled)
-    // )
+    // Sound and music toggles - RE-ENABLED
+    this.soundToggle = this.createToggleSwitch(
+      'Sound\nEffects',
+      -80,
+      this.soundEffectsEnabled,
+      (enabled) => this.setSoundEffects(enabled)
+    )
     
-    // // Music toggle
-    // this.musicToggle = this.createToggleSwitch(
-    //   'Music',
-    //   -10,
-    //   this.musicEnabled,
-    //   (enabled) => this.setMusic(enabled)
-    // )
+    // Music toggle
+    this.musicToggle = this.createToggleSwitch(
+      'Music',
+      -30,
+      this.musicEnabled,
+      (enabled) => this.setMusic(enabled)
+    )
     
-    // Divider line (moved up from 30 to -30 to close the gap)
-    const divider2 = this.createDivider(-30)
+    // Divider line after toggles
+    const divider2 = this.createDivider(20)
     
     // Add Wallet Button for dgen1 version only
     let walletBtn = null;
     const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001';
     if (isDgen1) {
+      console.log('💰 Creating wallet button for dgen1')
       walletBtn = this.createButton(
-        0, 10,
+        0, 70,  // Moved down to account for toggles
         '💰 CONNECT WALLET',
         () => this.handleWalletConnect(),
         0x6366f1 // Ethereum blue/purple
@@ -103,19 +120,28 @@ export class MenuOverlay {
     }
     
     // BizarreBeasts info (moved down if wallet button exists)
-    const bizarreInfo = this.createBizarreInfo(isDgen1 ? 60 : 0)
+    const bizarreInfo = this.createBizarreInfo(isDgen1 ? 120 : 60)  // Adjusted for toggles
     
-    // Divider line (moved up from 170 to 110)
-    const divider3 = this.createDivider(110)
+    // Divider line before resume button
+    const divider3 = this.createDivider(isDgen1 ? 200 : 140)  // Adjusted for new layout
     
-    // Resume button (moved up from 210 to 150)
+    // Resume button (positioned at bottom of menu)
     const resumeBtn = this.createButton(
-      0, 150,
+      0, isDgen1 ? 240 : 180,  // Adjusted for new layout
       'RESUME GAME',
       () => this.close(),
       0x32CD32 // Keep green for resume
     )
     resumeBtn.setName('resumeButton')
+    
+    console.log('📍 Button Positions:', {
+      instructions: -180,
+      soundToggle: -80,
+      musicToggle: -30,
+      wallet: isDgen1 ? 70 : 'N/A',
+      bizarreInfo: isDgen1 ? 120 : 60,
+      resumeButton: isDgen1 ? 240 : 180
+    })
     
     // Add all elements to container
     // IMPORTANT: Add background FIRST so it's behind everything
@@ -126,8 +152,8 @@ export class MenuOverlay {
       title,                   // Then all UI elements on top
       instructionsBtn,
       divider1,
-      // this.soundToggle,  // DISABLED
-      // this.musicToggle,  // DISABLED
+      this.soundToggle,  // RE-ENABLED
+      this.musicToggle,  // RE-ENABLED
       divider2
     ];
     
@@ -159,9 +185,16 @@ export class MenuOverlay {
     
     // Draw purple panel with border - centered relative to container
     const panelWidth = Math.min(400, this.scene.cameras.main.width - 40)
-    const panelHeight = Math.min(500, this.scene.cameras.main.height - 40)
+    // Increased panel height to accommodate all elements (was 500, now 600)
+    const panelHeight = Math.min(600, this.scene.cameras.main.height - 40)
     const panelX = -panelWidth / 2
     const panelY = -panelHeight / 2
+    
+    console.log('🖼️ Panel dimensions:', {
+      width: panelWidth,
+      height: panelHeight,
+      position: `(${panelX}, ${panelY})`
+    })
     
     
     // Purple background with gold border
@@ -181,6 +214,7 @@ export class MenuOverlay {
     onClick: () => void,
     color: number = 0x4a148c
   ): Phaser.GameObjects.Container {
+    console.log(`🔘 Creating button "${text}" at position (${x}, ${y})`)
     const container = this.scene.add.container(x, y)
     
     // Use a rectangle game object instead of graphics for better hit detection
@@ -223,6 +257,7 @@ export class MenuOverlay {
     // })
     
     bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      console.log(`👆 Button clicked: "${text}" at (${x}, ${y})`)
       onClick()
     })
     
@@ -339,6 +374,7 @@ export class MenuOverlay {
   }
   
   private createBizarreInfo(y: number): Phaser.GameObjects.Container {
+    console.log(`ℹ️ Creating BizarreBeasts info at Y:${y}`)
     const container = this.scene.add.container(0, y)
     
     // Project name
@@ -367,23 +403,17 @@ export class MenuOverlay {
     })
     contractAddress.setOrigin(0.5)
     
-    // Creator info
-    const creatorText = this.scene.add.text(0, 70, 'Created by @bizarrebeast', {
+    // Creator info (adjusted to not overlap with resume button)
+    const creatorText = this.scene.add.text(0, 60, 'Created by @bizarrebeast', {
       fontSize: '10px',
       fontFamily: '"Press Start 2P", system-ui',
       color: '#FFD700'
     })
     creatorText.setOrigin(0.5)
     
-    // Join info
-    const joinText = this.scene.add.text(0, 95, 'Join /bizarrebeasts', {
-      fontSize: '10px',
-      fontFamily: '"Press Start 2P", system-ui',
-      color: '#FFD700'
-    })
-    joinText.setOrigin(0.5)
+    // Removed 'Join /bizarrebeasts' text as requested
     
-    container.add([projectName, contractLabel, contractAddress, creatorText, joinText])
+    container.add([projectName, contractLabel, contractAddress, creatorText])
     
     return container
   }
@@ -428,6 +458,7 @@ export class MenuOverlay {
   }
   
   private setSoundEffects(enabled: boolean): void {
+    console.log(`🔊 Sound effects ${enabled ? 'enabled' : 'disabled'}`)
     this.soundEffectsEnabled = enabled
     this.scene.registry.set('sfxEnabled', enabled)
     this.saveSettings()
@@ -445,6 +476,7 @@ export class MenuOverlay {
   }
   
   private setMusic(enabled: boolean): void {
+    console.log(`🎵 Music ${enabled ? 'enabled' : 'disabled'}`)
     this.musicEnabled = enabled
     this.scene.registry.set('musicEnabled', enabled)
     this.saveSettings()
@@ -487,9 +519,11 @@ export class MenuOverlay {
   
   open(): void {
     if (this.isOpen) {
+      console.log('⚠️ Menu already open, ignoring open() call')
       return
     }
     
+    console.log('🍔 Opening menu overlay')
     this.isOpen = true
     this.container.setVisible(true)
     
@@ -556,34 +590,54 @@ export class MenuOverlay {
     // Get the main container's world position
     const containerX = this.container.x
     const containerY = this.container.y
+    const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001'
     
-    // Check resume button manually - button is at Y=150 relative to container
-    // Container is at Y=400, so button is at world Y=550
+    console.log('🎯 Manual hit test at:', {
+      pointerX: Math.round(pointer.x),
+      pointerY: Math.round(pointer.y),
+      containerPos: `(${containerX}, ${containerY})`
+    })
+    
+    // Check resume button manually - button position depends on dgen1
     const resumeBtnX = containerX + 0
-    const resumeBtnY = containerY + 150  // Back to correct position
+    const resumeBtnY = containerY + (isDgen1 ? 240 : 180)  // Updated position
     if (Math.abs(pointer.x - resumeBtnX) < 170 && Math.abs(pointer.y - resumeBtnY) < 25) {
+      console.log('✅ Resume button hit!')
       this.close()
     }
     
     // Check instructions button manually  
     const instrBtnX = containerX + 0
-    const instrBtnY = containerY + (-140)
+    const instrBtnY = containerY + (-180)  // Updated position
     if (Math.abs(pointer.x - instrBtnX) < 170 && Math.abs(pointer.y - instrBtnY) < 25) {
+      console.log('✅ Instructions button hit!')
       this.openInstructionsScene()
     }
     
-    // Check sound toggle manually (re-enabled)
+    // Check sound toggle manually
     const soundToggleX = containerX + 80
-    const soundToggleY = containerY + (-60)
+    const soundToggleY = containerY + (-80)  // Updated position
     if (Math.abs(pointer.x - soundToggleX) < 30 && Math.abs(pointer.y - soundToggleY) < 15) {
+      console.log('✅ Sound toggle hit!')
       this.setSoundEffects(!this.soundEffectsEnabled)
     }
     
-    // Check music toggle manually (re-enabled)
+    // Check music toggle manually
     const musicToggleX = containerX + 80
-    const musicToggleY = containerY + (-10)
+    const musicToggleY = containerY + (-30)  // Updated position
     if (Math.abs(pointer.x - musicToggleX) < 30 && Math.abs(pointer.y - musicToggleY) < 15) {
+      console.log('✅ Music toggle hit!')
       this.setMusic(!this.musicEnabled)
+    }
+    
+    // Check wallet button for dgen1
+    if (isDgen1) {
+      const walletBtnX = containerX + 0
+      const walletBtnY = containerY + 70
+      if (Math.abs(pointer.x - walletBtnX) < 170 && Math.abs(pointer.y - walletBtnY) < 25) {
+        console.log('✅ Wallet button hit!')
+        this.handleWalletConnect()
+      }
     }
   }
   
@@ -737,9 +791,11 @@ export class MenuOverlay {
   
   close(): void {
     if (!this.isOpen) {
+      console.log('⚠️ Menu already closed, ignoring close() call')
       return
     }
     
+    console.log('🍔 Closing menu overlay')
     // Set flag immediately
     this.isOpen = false
     
@@ -907,6 +963,7 @@ export class MenuOverlay {
   }
   
   private openInstructionsScene(): void {
+    console.log('📖 Opening instructions scene')
     
     // Keep menu state but hide it
     this.container.setVisible(false)
@@ -924,12 +981,67 @@ export class MenuOverlay {
   }
   
   private async handleWalletConnect(): Promise<void> {
-    const platform = this.scene.registry.get('platform');
+    console.log('💰 handleWalletConnect called')
+    
+    // Try to get platform from multiple sources
+    let platform = this.scene.registry.get('platform');
+    
+    // If not in scene registry, try game registry
+    if (!platform && this.scene.game) {
+      platform = this.scene.game.registry.get('platform');
+      console.log('📱 Platform found in game registry:', !!platform);
+    }
+    
+    // If still not found, try global window object
+    if (!platform && (window as any).platform) {
+      platform = (window as any).platform;
+      console.log('📱 Platform found in window.platform:', !!platform);
+    }
+    
+    // Also try window.gamePlatform
+    if (!platform && (window as any).gamePlatform) {
+      platform = (window as any).gamePlatform;
+      console.log('📱 Platform found in window.gamePlatform:', !!platform);
+    }
     
     if (!platform) {
-      console.error('Platform not found');
+      console.error('❌ Platform not found in any registry');
+      console.log('🔍 Scene Registry keys:', Object.keys(this.scene.registry.list));
+      console.log('🔍 Game Registry keys:', Object.keys(this.scene.game?.registry.list || {}));
+      console.log('🔍 Window.platform exists?', !!(window as any).platform);
+      console.log('🔍 Full registry contents:', {
+        sceneRegistry: this.scene.registry.list,
+        gameRegistry: this.scene.game?.registry.list,
+        window: {
+          platform: (window as any).platform,
+          game: (window as any).game
+        }
+      });
+      
+      // Try to import and create platform directly as fallback
+      console.log('🔧 Attempting to create platform directly...');
+      import('../utils/GamePlatform').then(module => {
+        const fallbackPlatform = module.detectPlatform();
+        console.log('✅ Created fallback platform:', fallbackPlatform);
+        
+        // Store it for future use
+        this.scene.game.registry.set('platform', fallbackPlatform);
+        (window as any).platform = fallbackPlatform;
+        
+        // Try again with the new platform
+        this.handleWalletConnect();
+      }).catch(err => {
+        console.error('❌ Failed to create fallback platform:', err);
+      });
+      
       return;
     }
+    
+    console.log('📱 Platform object:', platform)
+    console.log('🔍 Platform constructor name:', platform?.constructor?.name)
+    console.log('🔍 Platform methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(platform || {})))
+    console.log('🔌 Platform.connectWallet exists?', typeof platform.connectWallet === 'function')
+    console.log('🔌 Platform.connectWallet value:', platform.connectWallet)
     
     // Update button text to show loading
     const walletBtn = this.container.getByName('walletButton') as Phaser.GameObjects.Container;
@@ -941,9 +1053,9 @@ export class MenuOverlay {
       try {
         const address = await platform.connectWallet();
         if (address) {
-          // Update button text with address
-          const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
-          btnText.setText(`💰 ${shortAddress}`);
+          // Update button text to show connected status
+          btnText.setText('💰 CONNECTED');
+          console.log(`✅ Wallet connected: ${address}`);
         } else {
           btnText.setText(originalText);
         }

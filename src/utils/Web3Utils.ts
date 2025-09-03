@@ -75,12 +75,15 @@ export class Web3Manager {
           '--w3m-color-mix-strength': 40,
           '--w3m-font-family': '"Press Start 2P", monospace',
           '--w3m-border-radius-master': '4px',
-          '--w3m-font-size-master': '14px'
+          '--w3m-font-size-master': '10px'  // Reduced from 14px
         }
       });
 
       // Set up event listeners
       this.setupEventListeners();
+      
+      // Add custom CSS to fix text sizes in the modal
+      this.injectCustomModalStyles();
       
       this.isInitialized = true;
       console.log('= Web3Manager initialized with Reown AppKit');
@@ -108,6 +111,189 @@ export class Web3Manager {
     });
   }
 
+  /**
+   * Inject custom CSS to fix modal text sizes
+   */
+  private injectCustomModalStyles(): void {
+    const styleId = 'bz-w3m-custom-styles';
+    
+    // Check if styles already exist
+    if (document.getElementById(styleId)) return;
+    
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+      /* Fix Web3Modal text sizes for 720x720 game */
+      w3m-modal {
+        --w3m-font-size-master: 10px !important;
+      }
+      
+      /* Wallet list items */
+      w3m-modal w3m-router w3m-connect-view w3m-wallet-button {
+        font-size: 10px !important;
+      }
+      
+      /* Modal titles */
+      w3m-modal h1, w3m-modal h2, w3m-modal h3 {
+        font-size: 12px !important;
+      }
+      
+      /* Regular text */
+      w3m-modal p, w3m-modal span, w3m-modal div {
+        font-size: 10px !important;
+      }
+      
+      /* Buttons */
+      w3m-modal button, w3m-modal wui-button {
+        font-size: 10px !important;
+        padding: 8px 12px !important;
+      }
+      
+      /* Input fields */
+      w3m-modal input {
+        font-size: 10px !important;
+      }
+      
+      /* Fix modal size for smaller screen */
+      w3m-modal w3m-router {
+        max-width: 400px !important;
+        max-height: 500px !important;
+      }
+      
+      /* Fix QR code size */
+      w3m-modal w3m-qr-code, w3m-modal wui-qr-code {
+        width: 200px !important;
+        height: 200px !important;
+      }
+      
+      /* Fix wallet icons */
+      w3m-modal img.wallet-icon,
+      w3m-modal wui-image,
+      w3m-modal wui-wallet-image {
+        width: 32px !important;
+        height: 32px !important;
+      }
+      
+      /* Fix close button */
+      w3m-modal w3m-header wui-icon-button {
+        width: 24px !important;
+        height: 24px !important;
+      }
+      
+      /* Hide ALL Web3Modal/AppKit buttons until game starts */
+      w3m-button,
+      w3m-account-button,
+      w3m-connect-button,
+      w3m-network-button,
+      appkit-button,
+      appkit-account-button,
+      appkit-connect-button,
+      appkit-network-button,
+      [data-testid="w3m-button"],
+      [data-testid="w3m-account-button"],
+      [data-testid="w3m-connect-button"],
+      .w3m-button,
+      .w3m-account-button,
+      .w3m-connect-button {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      
+      /* Also hide any floating/fixed positioned wallet elements */
+      div[style*="position: fixed"][style*="z-index"],
+      div[style*="position: absolute"][style*="z-index: 9999"],
+      div[style*="position: absolute"][style*="z-index: 999999"] {
+        display: none !important;
+      }
+      
+      /* Show the buttons after game starts (will be toggled via class) */
+      body.game-started w3m-button,
+      body.game-started w3m-account-button,
+      body.game-started w3m-connect-button,
+      body.game-started w3m-network-button,
+      body.game-started appkit-button,
+      body.game-started appkit-account-button,
+      body.game-started appkit-connect-button,
+      body.game-started appkit-network-button,
+      body.game-started [data-testid="w3m-button"],
+      body.game-started [data-testid="w3m-account-button"],
+      body.game-started [data-testid="w3m-connect-button"],
+      body.game-started .w3m-button,
+      body.game-started .w3m-account-button,
+      body.game-started .w3m-connect-button {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+    `;
+    
+    document.head.appendChild(style);
+    console.log('🎨 Custom W3M styles injected');
+    
+    // Also use MutationObserver to catch any dynamically added wallet buttons
+    this.watchForWalletButtons();
+  }
+  
+  /**
+   * Watch for dynamically added wallet buttons and hide them
+   */
+  private watchForWalletButtons(): void {
+    const observer = new MutationObserver((mutations) => {
+      // Only hide if game hasn't started yet
+      if (document.body.classList.contains('game-started')) return;
+      
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            
+            // Check if this is a wallet button element
+            const selectors = [
+              'w3m-button',
+              'w3m-account-button',
+              'w3m-connect-button',
+              'appkit-button',
+              'appkit-account-button',
+              'appkit-connect-button'
+            ];
+            
+            const tagName = element.tagName?.toLowerCase();
+            
+            if (selectors.includes(tagName)) {
+              console.log(`🚫 Hiding wallet button element: ${tagName}`);
+              element.style.display = 'none';
+              element.style.visibility = 'hidden';
+            }
+            
+            // Also check for wallet buttons inside this element
+            selectors.forEach(selector => {
+              const walletButtons = element.querySelectorAll(selector);
+              walletButtons.forEach((btn) => {
+                const btnElement = btn as HTMLElement;
+                console.log(`🚫 Hiding nested wallet button: ${selector}`);
+                btnElement.style.display = 'none';
+                btnElement.style.visibility = 'hidden';
+              });
+            });
+          }
+        });
+      });
+    });
+    
+    // Start observing the entire document for changes
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Store observer reference for cleanup if needed
+    (window as any).__walletButtonObserver = observer;
+    console.log('👀 Watching for wallet button elements');
+  }
+  
   /**
    * Handle account changes
    */
@@ -258,7 +444,7 @@ export class Web3Manager {
       const CONTRACT_ADDRESS = '0x...'; // Your contract address
       const CONTRACT_ABI = []; // Your contract ABI
 
-      console.log('=� Would save score on-chain:', scoreData);
+      console.log('=� Would save score on-chain:', scoreData);
       
       // Example contract interaction (uncomment when contract is deployed):
       /*
@@ -316,6 +502,63 @@ export class Web3Manager {
       .slice(0, limit);
   }
 
+  /**
+   * Show the wallet button (call after splash screen)
+   */
+  showWalletButton(): void {
+    // Add class to body to show the wallet button
+    document.body.classList.add('game-started');
+    
+    // Also remove inline styles that may have been added
+    const walletButtons = document.querySelectorAll(`
+      w3m-button,
+      w3m-account-button,
+      w3m-connect-button,
+      appkit-button,
+      appkit-account-button,
+      appkit-connect-button
+    `);
+    
+    walletButtons.forEach((btn) => {
+      const element = btn as HTMLElement;
+      element.style.removeProperty('display');
+      element.style.removeProperty('visibility');
+    });
+    
+    // Stop the observer if it exists
+    if ((window as any).__walletButtonObserver) {
+      (window as any).__walletButtonObserver.disconnect();
+      delete (window as any).__walletButtonObserver;
+    }
+    
+    console.log('👋 Wallet button now visible');
+  }
+  
+  /**
+   * Hide the wallet button (for splash screens)
+   */
+  hideWalletButton(): void {
+    document.body.classList.remove('game-started');
+    
+    // Force hide any existing wallet buttons
+    const walletButtons = document.querySelectorAll(`
+      w3m-button,
+      w3m-account-button,
+      w3m-connect-button,
+      appkit-button,
+      appkit-account-button,
+      appkit-connect-button
+    `);
+    
+    walletButtons.forEach((btn) => {
+      const element = btn as HTMLElement;
+      element.style.display = 'none';
+      element.style.visibility = 'hidden';
+    });
+    
+    console.log('👋 Wallet button hidden');
+  }
+  
   /**
    * Show account modal (for viewing account details)
    */

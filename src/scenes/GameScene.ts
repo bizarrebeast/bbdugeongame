@@ -675,6 +675,12 @@ export class GameScene extends Phaser.Scene {
     console.log('🎮 GameScene.create() started at', performance.now())
     console.log('📊 showLoadingScreen flag:', this.showLoadingScreen)
     
+    // Show wallet button now that game has started (after splash)
+    const platform = this.game.registry.get('platform') || (window as any).platform || (window as any).gamePlatform;
+    if (platform && platform.showWalletButton) {
+      platform.showWalletButton();
+    }
+    
     // Debug logging for alignment issues
     console.log('🎯 Scene Dimensions:', {
       game: {
@@ -1786,6 +1792,17 @@ export class GameScene extends Phaser.Scene {
       
       // Add debug gridlines for alignment testing
       this.createDebugGridlines()
+    }
+    
+    // Ensure platform is available in registry before creating menu
+    if (!this.registry.get('platform') && !this.game.registry.get('platform')) {
+      // Check if platform exists in window
+      if ((window as any).platform) {
+        this.game.registry.set('platform', (window as any).platform);
+        console.log('🎮 Platform copied from window to registry');
+      } else {
+        console.warn('⚠️ Platform not found anywhere when creating menu');
+      }
     }
     
     // Create menu overlay (after HUD is created)

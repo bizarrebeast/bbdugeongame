@@ -66,6 +66,9 @@ const platform = detectPlatform()
 game.registry.set('platform', platform)
 game.registry.set('isDgen1', true)
 
+// Also store platform globally for menu access
+(window as any).platform = platform
+
 // Initialize game state
 game.registry.set('isReplay', false)
 
@@ -77,6 +80,7 @@ console.log('🎮 dgen1 Version Initialized', {
   canvas: `${GameSettings.canvas.width}x${GameSettings.canvas.height}`,
   viewport: `${window.innerWidth}x${window.innerHeight}`,
   platform: 'dgen1',
+  platformObject: platform,
   wallet: typeof (window as any).ethereum !== 'undefined' ? 'available' : 'not found'
 })
 
@@ -106,6 +110,10 @@ console.log('📐 Canvas & Container Metrics:', {
     resolution: (config.scale as any)?.resolution
   }
 })
+
+// Store platform globally immediately for access before game ready
+(window as any).gamePlatform = platform;
+console.log('🌐 Platform stored globally as window.gamePlatform');
 
 // Setup game ready event
 game.events.once("ready", () => {

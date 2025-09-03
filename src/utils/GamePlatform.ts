@@ -13,6 +13,11 @@ export interface GamePlatform {
   getHighScore(): Promise<number>;
   saveGameState?(state: any): Promise<void>;
   loadGameState?(): Promise<any>;
+  connectWallet?(): Promise<string | null>;  // Optional - only for dgen1
+  disconnectWallet?(): Promise<void>;  // Optional - only for dgen1
+  showWalletAccount?(): Promise<void>;  // Optional - only for dgen1
+  showWalletButton?(): void;  // Optional - show wallet button after splash
+  hideWalletButton?(): void;  // Optional - hide wallet button during splash
 }
 
 /**
@@ -59,6 +64,12 @@ export class RemixPlatform implements GamePlatform {
     // Remix doesn't provide high score API
     return 0;
   }
+  
+  // Wallet methods not available on Remix platform
+  async connectWallet(): Promise<string | null> {
+    console.log('Wallet connection not available on Remix platform');
+    return null;
+  }
 }
 
 /**
@@ -91,6 +102,9 @@ export class Dgen1Platform implements GamePlatform {
         this.walletConnected = true;
         console.log('✅ Wallet already connected:', this.walletAddress);
       }
+      
+      // Hide wallet button initially (will show after splash)
+      this.hideWalletButton();
     } catch (error) {
       console.log('Web3 initialization optional - game continues normally');
     }
@@ -228,6 +242,21 @@ export class Dgen1Platform implements GamePlatform {
   }
 
   /**
+   * Show/hide wallet button
+   */
+  showWalletButton(): void {
+    if (this.web3Manager && this.web3Manager.showWalletButton) {
+      this.web3Manager.showWalletButton();
+    }
+  }
+  
+  hideWalletButton(): void {
+    if (this.web3Manager && this.web3Manager.hideWalletButton) {
+      this.web3Manager.hideWalletButton();
+    }
+  }
+  
+  /**
    * Show wallet account modal
    */
   async showWalletAccount(): Promise<void> {
@@ -245,13 +274,15 @@ export function detectPlatform(): GamePlatform {
   const isDgen1 = 
     window.location.hostname.includes('dgen1') ||
     window.location.search.includes('dgen1=true') ||
+    window.location.port === '3001' ||  // Check for dgen1 dev port
+    ((window as any).game && (window as any).game.registry?.get('isDgen1')) ||  // Check game registry
     (window.innerWidth === 720 && window.innerHeight === 720);
   
   if (isDgen1) {
-    console.log('🎮 Detected dgen1 platform');
+    console.log('🎮 Detected dgen1 platform (port:', window.location.port, ', registry:', (window as any).game?.registry?.get('isDgen1'), ')');
     return new Dgen1Platform();
   } else {
-    console.log('🎮 Using Remix/Farcade platform');
+    console.log('🎮 Using Remix/Farcade platform (port:', window.location.port, ')');
     return new RemixPlatform();
   }
 }
