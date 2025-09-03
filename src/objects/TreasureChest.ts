@@ -33,8 +33,9 @@ export class TreasureChest {
     body.setSize(40, 30)
     body.setOffset(-20, -15 + 4) // +4 to compensate for sprite being moved up
     
-    // Add debug hitbox visualization
-    if (GameSettings.debug) {
+    // Add debug hitbox visualization (disabled for production)
+    const showDebugHitbox = false  // Set to true to enable debug hitboxes
+    if (showDebugHitbox && GameSettings.debug) {
       this.createDebugHitbox(x, y)
     }
     

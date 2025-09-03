@@ -5,7 +5,7 @@
 
 export const GameSettings = {
   buildType: 'dgen1',  // Identify this as a dgen1 build
-  debug: true,  // Enable debug for alignment testing
+  debug: false,  // Debug mode disabled
   
   canvas: {
     width: 720,   // Square format for dgen1
