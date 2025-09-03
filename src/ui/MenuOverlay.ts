@@ -260,6 +260,17 @@ export class MenuOverlay {
     const bgRect = this.scene.add.rectangle(0, 0, buttonWidth, buttonHeight, color, 0.8)
     bgRect.setStrokeStyle(2, 0xFFD700)
     
+    // DEBUG: Log the actual bounds of this rectangle
+    if (text === "RESUME GAME") {
+      console.log('🔴 RESUME BUTTON RECT:', {
+        containerY: y,
+        rectLocalY: 0,
+        rectHeight: buttonHeight,
+        expectedBounds: `Y: ${y - 25} to ${y + 25}`,
+        buttonWidth: buttonWidth
+      })
+    }
+    
     // Button text
     const btnText = this.scene.add.text(0, 0, text, {
       fontSize: '14px',
@@ -292,10 +303,18 @@ export class MenuOverlay {
     // })
     
     bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      console.log(`👆 Button clicked: "${text}" at (${x}, ${y})`)
-      // Log stack trace to find phantom clicks
+      console.log(`👆 Button clicked: "${text}" at container Y=${y}`)
+      // Log detailed info for phantom resume clicks
       if (text === "RESUME GAME") {
-        console.log('📍 Resume button click source:', new Error().stack?.split('\n')[2])
+        const worldPos = container.getWorldTransformMatrix()
+        console.log('🚨 RESUME PHANTOM CLICK ANALYSIS:', {
+          containerCreatedAt: y,
+          containerCurrentY: container.y,
+          rectBounds: bgRect.getBounds(),
+          pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`,
+          worldTransform: worldPos,
+          parentContainer: container.parentContainer?.name || 'main'
+        })
       }
       onClick()
     })
