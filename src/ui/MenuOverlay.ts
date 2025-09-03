@@ -164,6 +164,14 @@ export class MenuOverlay {
       divider2
     ];
     
+    // Log positions right before adding
+    console.log('🎯 PRE-ADD POSITIONS:', {
+      soundToggle: this.soundToggle ? this.soundToggle.y : 'null',
+      musicToggle: this.musicToggle ? this.musicToggle.y : 'null',
+      instructionsBtn: instructionsBtn ? instructionsBtn.y : 'null',
+      resumeBtn: resumeBtn ? resumeBtn.y : 'null'
+    });
+    
     if (walletBtn) {
       elements.push(walletBtn);
     }
@@ -175,6 +183,14 @@ export class MenuOverlay {
     );
     
     this.container.add(elements)
+    
+    // Log positions right after adding
+    console.log('🎯 POST-ADD POSITIONS:')
+    this.container.list.forEach((child: any) => {
+      if (child instanceof Phaser.GameObjects.Container && child.name) {
+        console.log(`  ${child.name}: Y=${child.y}`)
+      }
+    })
     
     // Move background to back to ensure it doesn't block menu interactions
     this.container.sendToBack(this.backgroundOverlay)
@@ -541,8 +557,17 @@ export class MenuOverlay {
     // Add debug visualization for regular version
     const isRegularVersion = this.scene.cameras.main.width <= 500
     if (isRegularVersion) {
+      // Log immediate positions
+      console.log('🔍 IMMEDIATE ELEMENT CHECK:')
+      this.container.list.forEach((child: any, index: number) => {
+        if (child instanceof Phaser.GameObjects.Container && child.name) {
+          console.log(`  ${child.name}: Y=${child.y}`)
+        }
+      })
+      
       // Delay slightly to ensure all elements are added
-      this.scene.time.delayedCall(50, () => {
+      this.scene.time.delayedCall(100, () => {
+        console.log('🕒 DELAYED DEBUG CHECK (100ms):')
         this.addDebugVisualization()
       })
     }
