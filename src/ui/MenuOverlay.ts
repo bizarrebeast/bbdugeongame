@@ -531,7 +531,11 @@ export class MenuOverlay {
     this.isOpen = true
     this.container.setVisible(true)
     
-    // Debug visualization removed - buttons are working
+    // Add debug visualization for regular version
+    const isRegularVersion = this.scene.cameras.main.width <= 500
+    if (isRegularVersion) {
+      this.addDebugVisualization()
+    }
     
     // Update SDK indicator
     const indicators = this.container.list.filter(obj => 
@@ -590,27 +594,129 @@ export class MenuOverlay {
     })
   }
   
-  private manualHitTest(pointer: Phaser.Input.Pointer): void {
-    // Get the main container's world position
-    const containerX = this.container.x
-    const containerY = this.container.y
+  private addDebugVisualization(): void {
+    // Remove any existing debug graphics
+    const existingDebug = this.container.getByName('debugGraphics')
+    if (existingDebug) {
+      existingDebug.destroy()
+    }
+    
+    // Create debug graphics
+    const debugGraphics = this.scene.add.graphics()
+    debugGraphics.setName('debugGraphics')
+    
+    // Draw hit areas for all interactive elements
     const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001'
-    const cameraWidth = this.scene.cameras.main.width
+    const buttonHalfWidth = this.scene.cameras.main.width <= 500 ? 160 : 170
+    
+    // Instructions button hit area (yellow)
+    debugGraphics.lineStyle(2, 0xFFFF00, 0.8)
+    debugGraphics.strokeRect(-buttonHalfWidth, -180 - 25, buttonHalfWidth * 2, 50)
+    
+    // Sound toggle hit area (cyan) 
+    debugGraphics.lineStyle(2, 0x00FFFF, 0.8)
+    debugGraphics.strokeRect(80 - 30, -80 - 15, 60, 30)
+    
+    // Music toggle hit area (magenta)
+    debugGraphics.lineStyle(2, 0xFF00FF, 0.8)
+    debugGraphics.strokeRect(80 - 30, -30 - 15, 60, 30)
+    
+    // Resume button hit area (green)
+    const resumeY = isDgen1 ? 240 : 180
+    debugGraphics.lineStyle(2, 0x00FF00, 0.8)
+    debugGraphics.strokeRect(-buttonHalfWidth, resumeY - 25, buttonHalfWidth * 2, 50)
+    
+    // Add labels for each hit area
+    const labelStyle = {
+      fontSize: '10px',
+      fontFamily: 'monospace',
+      color: '#FFFFFF',
+      backgroundColor: '#000000',
+      padding: { x: 2, y: 1 }
+    }
+    
+    const instrLabel = this.scene.add.text(0, -180 - 40, 'INSTRUCTIONS', labelStyle)
+    instrLabel.setOrigin(0.5)
+    
+    const soundLabel = this.scene.add.text(80, -80 - 25, 'SOUND', labelStyle)
+    soundLabel.setOrigin(0.5)
+    
+    const musicLabel = this.scene.add.text(80, -30 - 25, 'MUSIC', labelStyle)
+    musicLabel.setOrigin(0.5)
+    
+    const resumeLabel = this.scene.add.text(0, resumeY - 40, 'RESUME', labelStyle)
+    resumeLabel.setOrigin(0.5)
+    
+    // Add center crosshair to show container origin
+    debugGraphics.lineStyle(2, 0xFF0000, 1)
+    debugGraphics.moveTo(-10, 0)
+    debugGraphics.lineTo(10, 0)
+    debugGraphics.moveTo(0, -10)
+    debugGraphics.lineTo(0, 10)
+    
+    const centerLabel = this.scene.add.text(15, 15, 'Container (0,0)', labelStyle)
+    centerLabel.setOrigin(0)
+    
+    // Add all debug elements to container
+    this.container.add([debugGraphics, instrLabel, soundLabel, musicLabel, resumeLabel, centerLabel])
+    
+    // Add pointer position tracker
+    const pointerText = this.scene.add.text(10, 10, '', {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#00FF00',
+      backgroundColor: '#000000',
+      padding: { x: 5, y: 5 }
+    })
+    pointerText.setScrollFactor(0)
+    pointerText.setDepth(10000)
+    pointerText.setName('pointerTracker')
+    
+    // Update pointer text on move
+    this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      const camera = this.scene.cameras.main
+      const containerX = camera.width / 2
+      const containerY = camera.height / 2
+      const relX = Math.round(pointer.x - containerX)
+      const relY = Math.round(pointer.y - containerY)
+      pointerText.setText(`Screen: (${Math.round(pointer.x)}, ${Math.round(pointer.y)})\nRelative: (${relX}, ${relY})\nContainer: (${containerX}, ${containerY})`)
+    })
+  }
+  
+  private manualHitTest(pointer: Phaser.Input.Pointer): void {
+    // The container has scrollFactor(0,0), so it stays fixed to camera
+    // But the pointer position needs to be in screen space, not world space
+    const camera = this.scene.cameras.main
+    const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001'
+    const cameraWidth = camera.width
     const isRegularVersion = cameraWidth <= 500
+    
+    // Container is always at center of camera view (since scrollFactor is 0)
+    const containerX = cameraWidth / 2
+    const containerY = camera.height / 2
+    
+    // Use screen coordinates for hit testing
+    const screenX = pointer.x
+    const screenY = pointer.y
+    
+    // Calculate relative position to container
+    const relativeX = screenX - containerX
+    const relativeY = screenY - containerY
     
     // Enhanced debugging for regular version
     if (isRegularVersion) {
       console.log('🎯 Regular Menu Hit Test:', {
-        pointerX: Math.round(pointer.x),
-        pointerY: Math.round(pointer.y),
-        containerPos: `(${containerX}, ${containerY})`,
-        cameraWidth: cameraWidth,
+        pointerScreen: `(${Math.round(screenX)}, ${Math.round(screenY)})`,
+        containerCenter: `(${containerX}, ${containerY})`,
+        relativePos: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`,
+        cameraSize: `${cameraWidth}x${camera.height}`,
+        cameraScroll: `(${Math.round(camera.scrollX)}, ${Math.round(camera.scrollY)})`,
         version: 'REGULAR (450x800)'
       })
     } else {
       console.log('🎯 Manual hit test at:', {
-        pointerX: Math.round(pointer.x),
-        pointerY: Math.round(pointer.y),
+        pointerX: Math.round(screenX),
+        pointerY: Math.round(screenY),
         containerPos: `(${containerX}, ${containerY})`
       })
     }
@@ -618,15 +724,15 @@ export class MenuOverlay {
     // Check toggles FIRST before buttons to prioritize them
     const buttonHalfWidth = cameraWidth <= 500 ? 160 : 170;  // Narrower hit area for portrait mode
     
-    // Check sound toggle manually
-    const soundToggleX = containerX + 80
-    const soundToggleY = containerY + (-80)  // Updated position
-    const soundHit = Math.abs(pointer.x - soundToggleX) < 30 && Math.abs(pointer.y - soundToggleY) < 15
+    // Check sound toggle manually - use relative positions
+    const soundToggleX = 80  // Relative to container center
+    const soundToggleY = -80  // Relative to container center
+    const soundHit = Math.abs(relativeX - soundToggleX) < 30 && Math.abs(relativeY - soundToggleY) < 15
     
     if (isRegularVersion && soundHit) {
       console.log('🔊 Sound Toggle HIT at:', {
         toggleCenter: `(${soundToggleX}, ${soundToggleY})`,
-        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+        relativeClick: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`
       })
     }
     
@@ -636,15 +742,15 @@ export class MenuOverlay {
       return  // Early return to prevent checking other buttons
     }
     
-    // Check music toggle manually
-    const musicToggleX = containerX + 80
-    const musicToggleY = containerY + (-30)  // Updated position
-    const musicHit = Math.abs(pointer.x - musicToggleX) < 30 && Math.abs(pointer.y - musicToggleY) < 15
+    // Check music toggle manually - use relative positions
+    const musicToggleX = 80  // Relative to container center
+    const musicToggleY = -30  // Relative to container center
+    const musicHit = Math.abs(relativeX - musicToggleX) < 30 && Math.abs(relativeY - musicToggleY) < 15
     
     if (isRegularVersion && musicHit) {
       console.log('🎵 Music Toggle HIT at:', {
         toggleCenter: `(${musicToggleX}, ${musicToggleY})`,
-        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+        relativeClick: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`
       })
     }
     
@@ -654,15 +760,15 @@ export class MenuOverlay {
       return  // Early return to prevent checking other buttons
     }
     
-    // Check resume button manually - button position depends on dgen1
-    const resumeBtnX = containerX + 0
-    const resumeBtnY = containerY + (isDgen1 ? 240 : 180)  // Updated position
-    const resumeHit = Math.abs(pointer.x - resumeBtnX) < buttonHalfWidth && Math.abs(pointer.y - resumeBtnY) < 25
+    // Check resume button manually - use relative positions
+    const resumeBtnX = 0  // Relative to container center
+    const resumeBtnY = isDgen1 ? 240 : 180  // Relative to container center
+    const resumeHit = Math.abs(relativeX - resumeBtnX) < buttonHalfWidth && Math.abs(relativeY - resumeBtnY) < 25
     
     if (isRegularVersion && resumeHit) {
       console.log('📍 Resume Button HIT at:', {
         btnCenter: `(${resumeBtnX}, ${resumeBtnY})`,
-        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+        relativeClick: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`
       })
     }
     
@@ -672,15 +778,15 @@ export class MenuOverlay {
       return
     }
     
-    // Check instructions button manually
-    const instrBtnX = containerX + 0
-    const instrBtnY = containerY + (-180)  // Updated position
-    const instrHit = Math.abs(pointer.x - instrBtnX) < buttonHalfWidth && Math.abs(pointer.y - instrBtnY) < 25
+    // Check instructions button manually - use relative positions
+    const instrBtnX = 0  // Relative to container center
+    const instrBtnY = -180  // Relative to container center
+    const instrHit = Math.abs(relativeX - instrBtnX) < buttonHalfWidth && Math.abs(relativeY - instrBtnY) < 25
     
     if (isRegularVersion && instrHit) {
       console.log('📍 Instructions Button HIT at:', {
         btnCenter: `(${instrBtnX}, ${instrBtnY})`,
-        pointerPos: `(${Math.round(pointer.x)}, ${Math.round(pointer.y)})`
+        relativeClick: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`
       })
     }
     
@@ -692,9 +798,9 @@ export class MenuOverlay {
     
     // Check wallet button for dgen1
     if (isDgen1) {
-      const walletBtnX = containerX + 0
-      const walletBtnY = containerY + 70
-      if (Math.abs(pointer.x - walletBtnX) < buttonHalfWidth && Math.abs(pointer.y - walletBtnY) < 25) {
+      const walletBtnX = 0  // Relative to container center
+      const walletBtnY = 70  // Relative to container center
+      if (Math.abs(relativeX - walletBtnX) < buttonHalfWidth && Math.abs(relativeY - walletBtnY) < 25) {
         console.log('✅ Wallet button hit!')
         this.handleWalletConnect()
       }

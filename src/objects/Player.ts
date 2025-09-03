@@ -292,37 +292,37 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.debugLogTimer += delta
     if (this.debugLogTimer > 2000) {
       this.debugLogTimer = 0
-      const bounds = this.getBounds()
-      console.log('🏃 Player Position:', {
-        position: { x: Math.round(this.x), y: Math.round(this.y) },
-        velocity: { x: Math.round(this.body.velocity.x), y: Math.round(this.body.velocity.y) },
-        bodyBounds: {
-          left: Math.round(this.body.left),
-          right: Math.round(this.body.right),
-          top: Math.round(this.body.top),
-          bottom: Math.round(this.body.bottom),
-          width: Math.round(this.body.width),
-          height: Math.round(this.body.height)
-        },
-        displayBounds: {
-          left: Math.round(bounds.left),
-          right: Math.round(bounds.right),
-          top: Math.round(bounds.top),
-          bottom: Math.round(bounds.bottom),
-          width: Math.round(bounds.width),
-          height: Math.round(bounds.height)
-        },
-        camera: {
-          scrollX: Math.round(this.scene.cameras.main.scrollX),
-          scrollY: Math.round(this.scene.cameras.main.scrollY),
-          width: this.scene.cameras.main.width,
-          height: this.scene.cameras.main.height
-        },
-        offset: {
-          x: Math.round(bounds.left - this.body.left),
-          y: Math.round(bounds.top - this.body.top)
-        }
-      })
+      // const bounds = this.getBounds()
+      // console.log('🏃 Player Position:', {
+      //   position: { x: Math.round(this.x), y: Math.round(this.y) },
+      //   velocity: { x: Math.round(this.body.velocity.x), y: Math.round(this.body.velocity.y) },
+      //   bodyBounds: {
+      //     left: Math.round(this.body.left),
+      //     right: Math.round(this.body.right),
+      //     top: Math.round(this.body.top),
+      //     bottom: Math.round(this.body.bottom),
+      //     width: Math.round(this.body.width),
+      //     height: Math.round(this.body.height)
+      //   },
+      //   displayBounds: {
+      //     left: Math.round(bounds.left),
+      //     right: Math.round(bounds.right),
+      //     top: Math.round(bounds.top),
+      //     bottom: Math.round(bounds.bottom),
+      //     width: Math.round(bounds.width),
+      //     height: Math.round(bounds.height)
+      //   },
+      //   camera: {
+      //     scrollX: Math.round(this.scene.cameras.main.scrollX),
+      //     scrollY: Math.round(this.scene.cameras.main.scrollY),
+      //     width: this.scene.cameras.main.width,
+      //     height: this.scene.cameras.main.height
+      //   },
+      //   offset: {
+      //     x: Math.round(bounds.left - this.body.left),
+      //     y: Math.round(bounds.top - this.body.top)
+      //   }
+      // })
     }
     
     // FLOOR CLIPPING PREVENTION - Multiple layers of protection
