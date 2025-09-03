@@ -605,26 +605,48 @@ export class MenuOverlay {
     const debugGraphics = this.scene.add.graphics()
     debugGraphics.setName('debugGraphics')
     
-    // Draw hit areas for all interactive elements
+    // Get actual element positions by finding them in the container
+    const instructionsBtn = this.container.list.find((child: any) => 
+      child instanceof Phaser.GameObjects.Container && child.y === -180
+    ) as Phaser.GameObjects.Container
+    
+    const soundToggle = this.container.list.find((child: any) => 
+      child instanceof Phaser.GameObjects.Container && child.y === -80
+    ) as Phaser.GameObjects.Container
+    
+    const musicToggle = this.container.list.find((child: any) => 
+      child instanceof Phaser.GameObjects.Container && child.y === -30
+    ) as Phaser.GameObjects.Container
+    
+    const resumeBtn = this.container.getByName('resumeButton') as Phaser.GameObjects.Container
+    
+    // Draw hit areas for all interactive elements based on ACTUAL positions
     const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001'
     const buttonHalfWidth = this.scene.cameras.main.width <= 500 ? 160 : 170
     
-    // Instructions button hit area (yellow)
-    debugGraphics.lineStyle(2, 0xFFFF00, 0.8)
-    debugGraphics.strokeRect(-buttonHalfWidth, -180 - 25, buttonHalfWidth * 2, 50)
+    // Instructions button hit area (yellow) - at actual position
+    if (instructionsBtn) {
+      debugGraphics.lineStyle(2, 0xFFFF00, 0.8)
+      debugGraphics.strokeRect(-buttonHalfWidth, instructionsBtn.y - 25, buttonHalfWidth * 2, 50)
+    }
     
-    // Sound toggle hit area (cyan) 
-    debugGraphics.lineStyle(2, 0x00FFFF, 0.8)
-    debugGraphics.strokeRect(80 - 30, -80 - 15, 60, 30)
+    // Sound toggle hit area (cyan) - at actual position
+    if (soundToggle) {
+      debugGraphics.lineStyle(2, 0x00FFFF, 0.8)
+      debugGraphics.strokeRect(80 - 30, soundToggle.y - 15, 60, 30)
+    }
     
-    // Music toggle hit area (magenta)
-    debugGraphics.lineStyle(2, 0xFF00FF, 0.8)
-    debugGraphics.strokeRect(80 - 30, -30 - 15, 60, 30)
+    // Music toggle hit area (magenta) - at actual position
+    if (musicToggle) {
+      debugGraphics.lineStyle(2, 0xFF00FF, 0.8)
+      debugGraphics.strokeRect(80 - 30, musicToggle.y - 15, 60, 30)
+    }
     
-    // Resume button hit area (green)
-    const resumeY = isDgen1 ? 240 : 180
-    debugGraphics.lineStyle(2, 0x00FF00, 0.8)
-    debugGraphics.strokeRect(-buttonHalfWidth, resumeY - 25, buttonHalfWidth * 2, 50)
+    // Resume button hit area (green) - at actual position
+    if (resumeBtn) {
+      debugGraphics.lineStyle(2, 0x00FF00, 0.8)
+      debugGraphics.strokeRect(-buttonHalfWidth, resumeBtn.y - 25, buttonHalfWidth * 2, 50)
+    }
     
     // Add labels for each hit area
     const labelStyle = {
@@ -635,17 +657,30 @@ export class MenuOverlay {
       padding: { x: 2, y: 1 }
     }
     
-    const instrLabel = this.scene.add.text(0, -180 - 40, 'INSTRUCTIONS', labelStyle)
-    instrLabel.setOrigin(0.5)
+    // Add labels at actual positions
+    if (instructionsBtn) {
+      const instrLabel = this.scene.add.text(0, instructionsBtn.y - 40, 'INSTR HIT', labelStyle)
+      instrLabel.setOrigin(0.5)
+      debugGraphics.add(instrLabel)
+    }
     
-    const soundLabel = this.scene.add.text(80, -80 - 25, 'SOUND', labelStyle)
-    soundLabel.setOrigin(0.5)
+    if (soundToggle) {
+      const soundLabel = this.scene.add.text(80, soundToggle.y - 25, 'SOUND HIT', labelStyle)
+      soundLabel.setOrigin(0.5)
+      debugGraphics.add(soundLabel)
+    }
     
-    const musicLabel = this.scene.add.text(80, -30 - 25, 'MUSIC', labelStyle)
-    musicLabel.setOrigin(0.5)
+    if (musicToggle) {
+      const musicLabel = this.scene.add.text(80, musicToggle.y - 25, 'MUSIC HIT', labelStyle)
+      musicLabel.setOrigin(0.5)
+      debugGraphics.add(musicLabel)
+    }
     
-    const resumeLabel = this.scene.add.text(0, resumeY - 40, 'RESUME', labelStyle)
-    resumeLabel.setOrigin(0.5)
+    if (resumeBtn) {
+      const resumeLabel = this.scene.add.text(0, resumeBtn.y - 40, 'RESUME HIT', labelStyle)
+      resumeLabel.setOrigin(0.5)
+      debugGraphics.add(resumeLabel)
+    }
     
     // Add center crosshair to show container origin
     debugGraphics.lineStyle(2, 0xFF0000, 1)
@@ -657,8 +692,8 @@ export class MenuOverlay {
     const centerLabel = this.scene.add.text(15, 15, 'Container (0,0)', labelStyle)
     centerLabel.setOrigin(0)
     
-    // Add all debug elements to container
-    this.container.add([debugGraphics, instrLabel, soundLabel, musicLabel, resumeLabel, centerLabel])
+    // Add debug graphics to container
+    this.container.add([debugGraphics, centerLabel])
     
     // Add pointer position tracker
     const pointerText = this.scene.add.text(10, 10, '', {
