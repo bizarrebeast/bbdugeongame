@@ -29,8 +29,16 @@ function generateQR(url) {
 const port = process.argv[2] || "3000"
 const localIP = getLocalIP()
 
+// Determine which config to use based on port
+const isDgen1 = port === "3001"
+const viteArgs = isDgen1 
+  ? ["vite", "--config", "vite.config.dgen1.js", "--host", "--port", port]
+  : ["vite", "--host", "--port", port]
+
+console.log(`🚀 Starting ${isDgen1 ? 'dgen1' : 'Remix'} version on port ${port}...`)
+
 // Start Vite server and capture its output to detect the actual port
-const viteProcess = spawn("npx", ["vite", "--host", "--port", port], {
+const viteProcess = spawn("npx", viteArgs, {
   stdio: ["inherit", "pipe", "pipe"],
   shell: true
 })

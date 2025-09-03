@@ -1,4 +1,4 @@
-import GameSettings from "../config/GameSettings"
+import GameSettings from "../config/GameSettingsLoader"
 import { SharedAssetManager } from "../systems/SharedAssetManager"
 import { LoadingScreenGenerator } from "../systems/LoadingScreenGenerator"
 

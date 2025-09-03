@@ -77,12 +77,24 @@ export class TouchControls {
     // Device is mobile if it has touch AND (mobile UA OR small screen)
     this.isMobileDevice = isTouchDevice && (isMobileUA || isSmallScreen)
     
-    console.log('Mobile device detection:', {
+    // FOR TESTING: Enable on desktop if debug mode or dgen1 build
+    const isDgen1 = (window as any).game?.registry?.get('isDgen1') || false
+    const enableForTesting = GameSettings.debug || isDgen1
+    
+    console.log('🎮 Touch Controls Detection:', {
       isTouchDevice,
       isMobileUA,
       isSmallScreen,
-      isMobileDevice: this.isMobileDevice
+      isMobileDevice: this.isMobileDevice,
+      enableForTesting,
+      finalEnabled: this.isMobileDevice || enableForTesting
     })
+    
+    // Override for testing on desktop
+    if (enableForTesting) {
+      this.isMobileDevice = true
+      console.log('⚠️ Touch controls enabled for desktop testing')
+    }
   }
 
   private createTouchpad(): void {
@@ -180,7 +192,18 @@ export class TouchControls {
 
   private handlePointerDown(pointer: Phaser.Input.Pointer): void {
     if (!this.enabled) return  // Don't handle input if disabled
-    if (!this.isMobileDevice) return  // Only work on mobile devices
+    if (!this.isMobileDevice) {
+      console.log('❌ Touch controls disabled - not mobile device')
+      return  // Only work on mobile devices
+    }
+    
+    console.log('👆 Pointer down:', {
+      x: pointer.x,
+      y: pointer.y,
+      id: pointer.id,
+      enabled: this.enabled,
+      isMobile: this.isMobileDevice
+    })
     
     const touchX = pointer.x
     const touchY = pointer.y
@@ -191,11 +214,24 @@ export class TouchControls {
       Math.pow(touchY - this.touchpadCenter.y, 2)
     )
     
+    console.log('🎯 Touchpad check:', {
+      distance: touchpadDist,
+      threshold: 92.5,
+      center: this.touchpadCenter,
+      touch: { x: touchX, y: touchY }
+    })
+    
     if (touchpadDist <= 92.5 && this.touchpadPointerId === -1) {
+      console.log('✅ Touchpad activated')
       this.touchpadPointerId = pointer.id
       // Immediately update position on initial touch for instant response
       this.updateTouchpadFromPosition(touchX, touchY)
       this.touchpadIndicator.setVisible(true)
+      // Visual feedback - make D-pad pulse
+      this.touchpadBackground.setTint(0xffff00)
+      this.scene.time.delayedCall(100, () => {
+        this.touchpadBackground.clearTint()
+      })
       // Force an immediate update to ensure direction is registered
       this.forceUpdate()
       return
@@ -208,12 +244,21 @@ export class TouchControls {
     const hitboxTop = 550  // Starts at y:550
     const hitboxBottom = GameSettings.canvas.height  // Goes all the way to bottom
     
+    console.log('🦘 Jump button check:', {
+      touchX,
+      touchY,
+      bounds: { left: jumpButtonLeft, right: jumpButtonRight, top: hitboxTop, bottom: hitboxBottom },
+      inBounds: touchX >= jumpButtonLeft && touchX <= jumpButtonRight && touchY >= hitboxTop && touchY <= hitboxBottom
+    })
+    
     if (touchX >= jumpButtonLeft && touchX <= jumpButtonRight && 
         touchY >= hitboxTop && touchY <= hitboxBottom) { // Within the rectangle
       if (this.jumpPointerId === -1) {
+        console.log('✅ Jump button pressed!')
         this.jumpPointerId = pointer.id
         this.jumpPressed = true
-        this.jumpButtonImage.setTint(0xaaaaaa) // Slightly dimmed when pressed
+        this.jumpButtonImage.setTint(0xffff00) // Yellow tint when pressed
+        this.jumpButtonImage.setScale(1.1) // Slightly bigger when pressed
       }
       return
     }
@@ -323,6 +368,8 @@ export class TouchControls {
       this.jumpPointerId = -1
       this.jumpPressed = false
       this.jumpButtonImage.clearTint() // Return to normal color when released
+      this.jumpButtonImage.setScale(1) // Return to normal size
+      console.log('🔄 Jump button released')
     }
     
     if (pointer.id === this.actionPointerId) {

@@ -1,5 +1,6 @@
 import { GameScene } from '../scenes/GameScene'
-import GameSettings from '../config/GameSettings'
+import GameSettings from '../config/GameSettingsLoader'
+import { addWalletUI, WalletUI } from './WalletUI'
 
 export class MenuOverlay {
   private scene: GameScene
@@ -16,6 +17,7 @@ export class MenuOverlay {
   private soundToggle: Phaser.GameObjects.Container | null = null
   private musicToggle: Phaser.GameObjects.Container | null = null
   private instructionsOverlay: Phaser.GameObjects.Container | null = null
+  private walletUI: WalletUI | null = null
   
   constructor(scene: GameScene) {
     this.scene = scene
@@ -87,8 +89,21 @@ export class MenuOverlay {
     // Divider line (moved up from 30 to -30 to close the gap)
     const divider2 = this.createDivider(-30)
     
-    // BizarreBeasts info (moved up from 60 to 0)
-    const bizarreInfo = this.createBizarreInfo(0)
+    // Add Wallet Button for dgen1 version only
+    let walletBtn = null;
+    const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001';
+    if (isDgen1) {
+      walletBtn = this.createButton(
+        0, 10,
+        '💰 CONNECT WALLET',
+        () => this.handleWalletConnect(),
+        0x6366f1 // Ethereum blue/purple
+      )
+      walletBtn.setName('walletButton')
+    }
+    
+    // BizarreBeasts info (moved down if wallet button exists)
+    const bizarreInfo = this.createBizarreInfo(isDgen1 ? 60 : 0)
     
     // Divider line (moved up from 170 to 110)
     const divider3 = this.createDivider(110)
@@ -105,7 +120,7 @@ export class MenuOverlay {
     // Add all elements to container
     // IMPORTANT: Add background FIRST so it's behind everything
     // Then add menu panel and interactive elements on top
-    this.container.add([
+    const elements = [
       this.backgroundOverlay,  // Background first (lowest depth)
       this.menuPanel,          // Panel on top of background
       title,                   // Then all UI elements on top
@@ -113,11 +128,20 @@ export class MenuOverlay {
       divider1,
       // this.soundToggle,  // DISABLED
       // this.musicToggle,  // DISABLED
-      divider2,
+      divider2
+    ];
+    
+    if (walletBtn) {
+      elements.push(walletBtn);
+    }
+    
+    elements.push(
       bizarreInfo,
       divider3,
       resumeBtn
-    ])
+    );
+    
+    this.container.add(elements)
     
     // Move background to back to ensure it doesn't block menu interactions
     this.container.sendToBack(this.backgroundOverlay)
@@ -897,6 +921,37 @@ export class MenuOverlay {
       fromMenu: true,  // This tells InstructionsScene to show "Close" instead of "Skip All"
       reopenMenu: true // This tells it to reopen the menu when closing
     })
+  }
+  
+  private async handleWalletConnect(): Promise<void> {
+    const platform = this.scene.registry.get('platform');
+    
+    if (!platform) {
+      console.error('Platform not found');
+      return;
+    }
+    
+    // Update button text to show loading
+    const walletBtn = this.container.getByName('walletButton') as Phaser.GameObjects.Container;
+    if (walletBtn) {
+      const btnText = walletBtn.list[1] as Phaser.GameObjects.Text;
+      const originalText = btnText.text;
+      btnText.setText('CONNECTING...');
+      
+      try {
+        const address = await platform.connectWallet();
+        if (address) {
+          // Update button text with address
+          const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+          btnText.setText(`💰 ${shortAddress}`);
+        } else {
+          btnText.setText(originalText);
+        }
+      } catch (error) {
+        console.error('Wallet connection failed:', error);
+        btnText.setText(originalText);
+      }
+    }
   }
   
   // Debug method removed - no longer needed

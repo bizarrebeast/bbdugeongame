@@ -8,8 +8,11 @@
     "dev": "node scripts/dev-server.js",
     "dev:3001": "node scripts/dev-server.js 3001",
     "dev:any": "node scripts/dev-server.js 0",
+    "dev:dgen1": "vite --config vite.config.dgen1.js",
     "preview": "vite preview",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "build:dgen1": "vite build --config vite.config.dgen1.js",
+    "preview:dgen1": "vite preview --config vite.config.dgen1.js"
   },
   "keywords": [
     "game",
@@ -25,12 +28,17 @@
     "@farcade/game-sdk": "^0.0.13",
     "@types/node": "^22.13.14",
     "cheerio": "^1.0.0",
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.25.9",
     "qrcode-terminal": "^0.12.0",
     "typescript": "^5.8.2",
     "vite": "^6.2.3"
   },
   "dependencies": {
-    "phaser": "^3.88.2"
+    "@reown/appkit": "^1.8.2",
+    "@reown/appkit-adapter-ethers": "^1.8.2",
+    "buffer": "^6.0.3",
+    "ethers": "^6.15.0",
+    "phaser": "^3.88.2",
+    "process": "^0.11.10"
   }
 }

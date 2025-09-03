@@ -1260,16 +1260,16 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       }
       this.positionCheckTimer = 0
       
-      // Log position tracking for Blue Caterpillar
-      if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length > 2) {
-        const movement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
-        console.log('🐛📍 Position tracking:', {
-          currentX: Math.round(this.x),
-          positionHistory: this.positionHistory.map(p => Math.round(p)),
-          totalMovement: Math.round(movement),
-          velocity: this.body ? Math.round(this.body.velocity.x) : 0
-        })
-      }
+      // Log position tracking for Blue Caterpillar (disabled for less console noise)
+      // if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length > 2) {
+      //   const movement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
+      //   console.log('🐛📍 Position tracking:', {
+      //     currentX: Math.round(this.x),
+      //     positionHistory: this.positionHistory.map(p => Math.round(p)),
+      //     totalMovement: Math.round(movement),
+      //     velocity: this.body ? Math.round(this.body.velocity.x) : 0
+      //   })
+      // }
     }
     
     // Check velocity stuck (caterpillars should always be moving)

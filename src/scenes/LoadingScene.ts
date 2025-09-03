@@ -1,4 +1,4 @@
-import GameSettings from "../config/GameSettings"
+import GameSettings from "../config/GameSettingsLoader"
 
 export class LoadingScene extends Phaser.Scene {
   constructor() {

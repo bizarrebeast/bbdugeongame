@@ -1,4 +1,4 @@
-import GameSettings from "../config/GameSettings"
+import GameSettings from "../config/GameSettingsLoader"
 import { Player } from "../objects/Player"
 import { Cat, CatColor } from "../objects/Cat"
 import { BaseBlu } from "../objects/BaseBlu"
@@ -675,6 +675,33 @@ export class GameScene extends Phaser.Scene {
     console.log('🎮 GameScene.create() started at', performance.now())
     console.log('📊 showLoadingScreen flag:', this.showLoadingScreen)
     
+    // Debug logging for alignment issues
+    console.log('🎯 Scene Dimensions:', {
+      game: {
+        width: this.game.config.width,
+        height: this.game.config.height,
+        resolution: this.game.config.resolution
+      },
+      camera: {
+        width: this.cameras.main.width,
+        height: this.cameras.main.height,
+        x: this.cameras.main.x,
+        y: this.cameras.main.y,
+        scrollX: this.cameras.main.scrollX,
+        scrollY: this.cameras.main.scrollY
+      },
+      physics: {
+        worldBounds: this.physics.world.bounds,
+        gravity: this.physics.world.gravity
+      },
+      scale: {
+        gameSize: this.scale.gameSize,
+        parentSize: this.scale.parentSize,
+        displaySize: this.scale.displaySize,
+        mode: this.scale.scaleMode
+      }
+    })
+    
     // Create loading screen if we're coming from instructions
     if (this.showLoadingScreen) {
       console.log('🎨 Creating loading screen elements...')
@@ -1230,12 +1257,20 @@ export class GameScene extends Phaser.Scene {
     // Position spawn at fourth floor tile from the left (tile 3, 0-indexed)
     const tileSize = GameSettings.game.tileSize
     const spawnX = (3.5 * tileSize) // Fourth tile center (tile 3)
-    // Place player on ground floor - platform center is at Y=784
-    // Platform is 32px tall, so platform top is at Y=768
-    // Player sprite center should be positioned so physics body bottom is above platform top
-    // With new offset, physics body extends from sprite center + 2 to sprite center + 32
-    // So to have physics body bottom at Y=768, sprite center should be at Y=736
-    const spawnY = 736  // Position player so physics body sits on platform
+    // Calculate spawn position based on actual canvas height
+    const groundFloorY = GameSettings.canvas.height - GameSettings.game.tileSize // Ground at Y=688 for 720px
+    // Match the exact position from intro animation
+    // Player physics body: 18x49 with offset (15, 12)
+    // We want physics body bottom at groundFloorY (688), so:
+    // y + 29 = 688, therefore y = 659
+    const spawnY = groundFloorY - 29  // This matches the intro animation end position
+    
+    console.log('👤 Player Spawn Calculation:', {
+      canvasHeight: GameSettings.canvas.height,
+      groundFloorY: groundFloorY,
+      spawnY: spawnY,
+      spawnX: spawnX
+    })
     
     
     this.player = new Player(
@@ -1489,8 +1524,15 @@ export class GameScene extends Phaser.Scene {
     
     // Set up camera to follow player
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1)
-    // Keep camera centered horizontally, only follow vertically
-    this.cameras.main.followOffset.set(0, 100)
+    // Adjust camera offset for dgen1's square format
+    const isDgen1 = this.game.registry.get('isDgen1') || false
+    if (isDgen1) {
+      // For 720x720, center the camera better with less vertical offset
+      this.cameras.main.followOffset.set(0, 50)
+    } else {
+      // Keep camera centered horizontally, only follow vertically
+      this.cameras.main.followOffset.set(0, 100)
+    }
     
     // Create visibility/vignette system
     this.createVisibilitySystem()
@@ -1741,6 +1783,9 @@ export class GameScene extends Phaser.Scene {
         console.log('🧪 Switching to TestScene...')
         this.scene.start('TestScene')
       })
+      
+      // Add debug gridlines for alignment testing
+      this.createDebugGridlines()
     }
     
     // Create menu overlay (after HUD is created)
@@ -2276,7 +2321,8 @@ export class GameScene extends Phaser.Scene {
   private createTestLevel(): void {
     const tileSize = GameSettings.game.tileSize
     const floorWidth = GameSettings.game.floorWidth
-    const floorSpacing = tileSize * 5 // Space between floors (increased for better vertical spacing)
+    // Use custom floor spacing for dgen1, or default calculation
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5) // Space between floors
     
     // Get the required floor count for this level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -2706,6 +2752,20 @@ export class GameScene extends Phaser.Scene {
     const ladderHeight = bottomY - topY + bottomExtension + topExtension
     const ladderY = (bottomY + bottomExtension + topY - topExtension) / 2
     
+    // Debug log for ladder positioning
+    const isDgen1 = this.game.registry.get('isDgen1') || false
+    if (isDgen1) {
+      console.log('🪜 Ladder created:', {
+        x: Math.round(x),
+        bottomY: Math.round(bottomY),
+        topY: Math.round(topY),
+        ladderY: Math.round(ladderY),
+        ladderHeight: Math.round(ladderHeight),
+        isGroundFloor,
+        canvasHeight: GameSettings.canvas.height
+      })
+    }
+    
     // Create the invisible ladder hitbox
     const ladder = this.add.rectangle(
       x + tileSize/2,
@@ -2802,7 +2862,7 @@ export class GameScene extends Phaser.Scene {
 
   private createCeilingSpikes(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
     
     // Skip ceiling spikes entirely for bonus levels
@@ -2926,7 +2986,7 @@ export class GameScene extends Phaser.Scene {
     // Get ladder positions from stored ladder data
     const positions: number[] = []
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     this.ladders.children.entries.forEach(ladder => {
       const ladderObj = ladder as Phaser.GameObjects.Rectangle
@@ -2955,7 +3015,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     const floorWidth = GameSettings.game.floorWidth
     
     // Using difficulty-based enemy spawning system (replaced console.log)
@@ -3464,7 +3524,7 @@ export class GameScene extends Phaser.Scene {
   private createTemporaryFloorGrid(): void {
     // Creating temporary floor grid (replaced console.log)
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     const canvasWidth = GameSettings.canvas.width
     
     // Create graphics object for drawing grid lines
@@ -3509,7 +3569,7 @@ export class GameScene extends Phaser.Scene {
     }
     
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     const floorWidth = GameSettings.game.floorWidth
     
     // Add stalker cats starting from floor 2, up to second-to-last floor (avoid door floor)
@@ -3620,7 +3680,7 @@ export class GameScene extends Phaser.Scene {
   
   private createAllCollectibles(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     // Get allowed collectible types for current level
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -3908,7 +3968,7 @@ export class GameScene extends Phaser.Scene {
 
   private createBonusLevelChests(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     // Place 2 treasure chests on floors 2 and 3 of the bonus level
     const chestFloors = [2, 3]
@@ -3954,7 +4014,7 @@ export class GameScene extends Phaser.Scene {
   
   private createBonusLevelCollectibles(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     // Creating collectibles for bonus level floors
     
@@ -4051,7 +4111,7 @@ export class GameScene extends Phaser.Scene {
 
   private createBonusLevelFreeLife(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     // Place guaranteed free life on floor 3 (middle floor) for easier access
     const targetFloor = 3 // Middle floor of 5-floor bonus level
@@ -4100,7 +4160,7 @@ export class GameScene extends Phaser.Scene {
 
   private createLevel10TestingCollectibles(): void {
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     // Place invincibility pendants on ALL floors for easy testing
     // Use all available floors from the layout
@@ -5864,6 +5924,83 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
+  private createDebugGridlines(): void {
+    const graphics = this.add.graphics()
+    graphics.lineStyle(1, 0x00ff00, 0.3) // Green lines with 30% opacity
+    graphics.setDepth(9999) // On top of everything
+    graphics.setScrollFactor(1) // Scrolls with camera
+    
+    // Draw horizontal gridlines every 32 pixels (tile size)
+    const tileSize = GameSettings.game.tileSize
+    const canvasHeight = GameSettings.canvas.height
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
+    
+    // Ground floor line (where player starts)
+    const groundY = canvasHeight - tileSize
+    graphics.lineStyle(2, 0xff0000, 0.5) // Red for ground floor
+    graphics.beginPath()
+    graphics.moveTo(-1000, groundY)
+    graphics.lineTo(2000, groundY)
+    graphics.stroke()
+    
+    // Add text label for ground floor
+    const groundText = this.add.text(10, groundY - 20, `Ground Floor (Y=${groundY})`, {
+      fontSize: '12px',
+      color: '#ff0000',
+      backgroundColor: '#000000'
+    })
+    groundText.setDepth(10000)
+    groundText.setScrollFactor(1)
+    
+    // Draw floor lines
+    for (let floor = 1; floor <= 10; floor++) {
+      const y = groundY - (floor * floorSpacing)
+      
+      // Main floor line
+      graphics.lineStyle(1, 0x00ffff, 0.4) // Cyan for floors
+      graphics.beginPath()
+      graphics.moveTo(-1000, y)
+      graphics.lineTo(2000, y)
+      graphics.stroke()
+      
+      // Floor label
+      const floorText = this.add.text(10, y - 15, `Floor ${floor} (Y=${y})`, {
+        fontSize: '10px',
+        color: '#00ffff',
+        backgroundColor: '#000000'
+      })
+      floorText.setDepth(10000)
+      floorText.setScrollFactor(1)
+    }
+    
+    // Draw tile grid lines (every 32px)
+    graphics.lineStyle(1, 0x00ff00, 0.2) // Green for tile grid
+    for (let y = 0; y < 2000; y += tileSize) {
+      graphics.beginPath()
+      graphics.moveTo(-1000, y)
+      graphics.lineTo(2000, y)
+      graphics.stroke()
+    }
+    
+    // Negative Y area (above ground)
+    for (let y = -tileSize; y > -2000; y -= tileSize) {
+      graphics.beginPath()
+      graphics.moveTo(-1000, y)
+      graphics.lineTo(2000, y)
+      graphics.stroke()
+    }
+    
+    console.log('📏 Debug Gridlines Created:', {
+      groundFloor: groundY,
+      floorSpacing: floorSpacing,
+      tileSize: tileSize,
+      canvasHeight: canvasHeight,
+      floor1Y: groundY - floorSpacing,
+      floor2Y: groundY - (2 * floorSpacing),
+      floor3Y: groundY - (3 * floorSpacing)
+    })
+  }
+  
   private createVisibilitySystem(): void {
     // Create single overlay image with transparent area for visibility
     this.visibilityMask = this.add.image(0, 0, 'visibilityOverlay')
@@ -6545,7 +6682,7 @@ export class GameScene extends Phaser.Scene {
     
     // Update current floor based on player position
     const tileSize = GameSettings.game.tileSize
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     const playerFloor = Math.max(0, Math.floor((GameSettings.canvas.height - this.player.y - tileSize/2) / floorSpacing))
     
     if (playerFloor !== this.currentFloor) {
@@ -6568,7 +6705,7 @@ export class GameScene extends Phaser.Scene {
   private generateNextFloors(): void {
     const tileSize = GameSettings.game.tileSize
     const floorWidth = GameSettings.game.floorWidth
-    const floorSpacing = tileSize * 5
+    const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5)
     
     // Check level limits
     const levelConfig = this.levelManager.getLevelConfig(this.levelManager.getCurrentLevel())
@@ -6788,58 +6925,170 @@ export class GameScene extends Phaser.Scene {
 
   private startLevelIntro(targetX: number, targetY: number): void {
     this.isLevelStarting = true
-    // Level intro start (replaced console.log)
     
     // Create entrance ladder extending below the floor
     const tileSize = GameSettings.game.tileSize
     const ladderX = tileSize/2 // Position ladder on the farthest left tile (tile 0)
     const floorY = GameSettings.canvas.height - tileSize/2
+    const groundFloorY = GameSettings.canvas.height - tileSize // Y=688 for 720px canvas
+    const platformTop = groundFloorY // Platform surface where player stands
     
-    // Entrance ladder setup (replaced console.log)
+    // Console log for debugging intro positions
+    console.log('🎬 Level Intro Start:', {
+      targetX: targetX,
+      targetY: targetY,
+      originalTargetY: targetY,
+      canvasHeight: GameSettings.canvas.height,
+      groundFloorY: groundFloorY,
+      platformTop: platformTop,
+      floorY: floorY,
+      playerPhysicsHeight: 30,
+      playerShouldEndAt: platformTop - 15 // Center of player when standing
+    })
     
-    // Create entrance ladder using new teal ladder sprite
-    const ladderTop = targetY - 60 // Extends above player position
-    const ladderBottom = GameSettings.canvas.height + 100 // Below screen
-    const ladderHeight = ladderBottom - ladderTop
-    const ladderCenterY = (ladderTop + ladderBottom) / 2 + 52
+    // Override targetY to ensure player ends up at correct position
+    // Player has physics body: 18x49 with offset (15, 12)
+    // Sprite origin is at center (0.5, 0.5), so for a 48x64 sprite:
+    // - Sprite top = y - 32
+    // - Physics body top = sprite top + offset.y = y - 32 + 12 = y - 20
+    // - Physics body bottom = physics body top + height = y - 20 + 49 = y + 29
+    // We want physics body bottom at platformTop (688), so:
+    // y + 29 = 688, therefore y = 659
+    targetY = platformTop - 29 // This positions player so physics body bottom touches platform
+    
+    console.log('🎯 Adjusted Target:', {
+      originalTargetY: arguments[1],
+      adjustedTargetY: targetY,
+      platformTop: platformTop,
+      willStandAt: targetY + 15 // Bottom of player sprite
+    })
+    
+    // Create entrance ladder with top edge 5px above ground floor
+    // We want the TOP EDGE of the ladder sprite to be at Y=683 (5px above ground floor)
+    // The ladder extends down below the screen for the intro climb
+    const ladderBottom = GameSettings.canvas.height + 80 // Extends 80px below screen (800)
+    
+    // To get the visual top at Y=683 (5px higher), we need to calculate based on desired height
+    // Let's make it about 150px tall for a reasonable climb
+    const desiredVisualHeight = 150
+    const ladderTopEdgeY = platformTop - 5  // Shift up 5px from ground floor
+    
+    // Since we want the visual TOP at 683, and height is 150:
+    // visualCenterY = 683 + (150/2) = 758
+    const visualCenterY = ladderTopEdgeY + (desiredVisualHeight / 2)
+    const visualHeight = desiredVisualHeight
+    
+    // Calculate the actual ladder bounds for the animation
+    const ladderTop = ladderTopEdgeY  // Top at 5px above ground floor
+    
+    console.log('🎨 Intro Ladder Visual Alignment:', {
+      visualTopEdge: visualCenterY - (visualHeight / 2),  // Should be 683 (5px above ground)
+      visualBottomEdge: visualCenterY + (visualHeight / 2),  // Should be 833
+      visualCenter: visualCenterY,
+      visualHeight: visualHeight,
+      groundFloorY: platformTop,
+      shiftedUp: 5  // Ladder shifted up 5px from ground floor
+    })
+    
+    console.log('🪜 Intro Ladder Setup:', {
+      ladderTop: Math.round(ladderTop),
+      ladderBottom: Math.round(ladderBottom),
+      visualHeight: Math.round(visualHeight),
+      visualCenterY: Math.round(visualCenterY),
+      targetY: Math.round(targetY),
+      platformTop: platformTop,
+      matchesGameplay: true
+    })
+    
+    // Add debug markers if in debug mode
+    if (GameSettings.debug) {
+      // Mark target position with a red circle
+      const targetMarker = this.add.circle(targetX, targetY, 5, 0xff0000, 0.8)
+      targetMarker.setDepth(10000)
+      
+      // Mark platform top with a green line
+      const platformLine = this.add.rectangle(360, platformTop, 720, 2, 0x00ff00, 0.8)
+      platformLine.setDepth(10000)
+      
+      // Mark ladder top and bottom with blue circles
+      const ladderTopMarker = this.add.circle(ladderX, ladderTop, 4, 0x0000ff, 0.8)
+      const ladderBottomMarker = this.add.circle(ladderX, ladderBottom, 4, 0x0000ff, 0.8)
+      ladderTopMarker.setDepth(10001)
+      ladderBottomMarker.setDepth(10001)
+      
+      // Add text labels
+      this.add.text(targetX + 10, targetY - 5, `Target: ${Math.round(targetY)}`, {
+        fontSize: '10px',
+        color: '#ff0000',
+        backgroundColor: '#000000'
+      }).setDepth(10002)
+      
+      // Clean up debug markers after animation
+      this.time.delayedCall(5000, () => {
+        targetMarker.destroy()
+        platformLine.destroy()
+        ladderTopMarker.destroy()
+        ladderBottomMarker.destroy()
+      })
+    }
     
     let entranceLadder: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics
     
     if (this.textures.exists('tealLadder')) {
-      // Use new teal ladder sprite with same scaling method as gameplay ladders
-      const visualHeight = ladderHeight // Use the actual height for intro
-      const visualCenterY = ladderCenterY + 1 // Match the 1px downward shift from gameplay ladders
-      entranceLadder = this.add.image(ladderX + 1, visualCenterY, 'tealLadder')  // Moved 1 pixel to the right
-      // Scale to match gameplay ladder proportions
+      // Position ladder with top edge at ground floor
+      entranceLadder = this.add.image(ladderX, visualCenterY, 'tealLadder')
+      // Scale to exact height
       entranceLadder.setDisplaySize(entranceLadder.width * (visualHeight / entranceLadder.height), visualHeight)
       entranceLadder.setDepth(5)
+      
+      console.log('🖼️ Ladder Sprite Positioned:', {
+        x: ladderX,
+        y: visualCenterY,
+        displayHeight: visualHeight,
+        topEdge: visualCenterY - (visualHeight / 2)
+      })
     } else {
-      // Fallback to graphics ladder
+      // Fallback to graphics ladder matching gameplay ladder visuals
       entranceLadder = this.add.graphics()
-      // Match visual positioning from gameplay ladders
-      const visualTop = ladderTop + 1 // Match 1px downward shift
-      const visualBottom = ladderBottom + 1
+      const visualTop = visualCenterY - visualHeight/2
+      const visualBottom = visualCenterY + visualHeight/2
+      
       entranceLadder.fillStyle(0x40e0d0, 1) // Teal color to match game theme
-      entranceLadder.fillRect(ladderX - 2, visualTop, 4, ladderHeight) // Center rail
-      entranceLadder.fillRect(ladderX - 13, visualTop, 26, 4) // Top rung
+      entranceLadder.fillRect(ladderX - 2, visualTop, 4, visualHeight) // Center rail
+      entranceLadder.fillRect(ladderX - 13, visualTop + 4, 26, 4) // Top rung (offset like gameplay)
       entranceLadder.fillRect(ladderX - 13, visualBottom - 4, 26, 4) // Bottom rung
       
-      // Middle rungs
-      const numRungs = Math.floor(ladderHeight / 32)
+      // Middle rungs matching gameplay spacing
+      const numRungs = Math.floor(visualHeight / 32)
       for (let i = 1; i < numRungs; i++) {
-        const rungY = visualTop + (i * (ladderHeight / (numRungs + 1)))
+        const rungY = visualTop + (i * (visualHeight / (numRungs + 1)))
         entranceLadder.fillRect(ladderX - 13, rungY, 26, 3)
       }
       
       entranceLadder.setDepth(5)
     }
     
-    // Ladder positioning info (replaced console.log)
-    
-    // Position player at bottom of ladder (off-screen)
-    const playerStartY = ladderBottom - 20
+    // Position player at bottom of ladder (off screen)
+    // Since ladder bottom is at 800, start player at 780 for a good climb
+    const playerStartY = GameSettings.canvas.height + 60 // Start at Y=780
     this.player.x = ladderX
     this.player.y = playerStartY
+    
+    // Ensure physics is disabled during intro
+    if (this.player.body) {
+      this.player.body.enable = false
+      console.log('⚠️ Physics disabled for intro animation')
+    }
+    
+    console.log('🎭 Player Intro Position:', {
+      playerStartY: playerStartY,
+      ladderBottom: ladderBottom,
+      ladderTop: ladderTop,
+      visualHeight: visualHeight,
+      targetY: targetY,
+      willClimbTo: targetY,
+      physicsEnabled: this.player.body?.enable || false
+    })
     
     // Set initial climbing sprite (or fallback)
     if (this.textures.exists('playerClimbLeftFoot')) {
@@ -6857,10 +7106,40 @@ export class GameScene extends Phaser.Scene {
     // Phase 1: Climbing animation - climb to the actual target Y (not floor Y)
     this.animatePlayerClimbing(ladderX, targetY, () => {
       // Phase 2: Bouncing animation
+      console.log('🎯 Starting bounce animation at Y:', Math.round(this.player.y))
       this.animatePlayerBouncing(targetX, targetY, () => {
         // Phase 3: Complete intro
+        console.log('✅ Intro animation complete! Player at:', {
+          x: Math.round(this.player.x),
+          y: Math.round(this.player.y),
+          targetY: Math.round(targetY),
+          aboutToEnablePhysics: true
+        })
+        
+        // Make sure player is at exact target position before enabling physics
+        this.player.setPosition(targetX, targetY)
+        
+        // CRITICAL: Sync physics body position with sprite position
+        // The body seems to be offset, so we need to manually sync it
+        this.player.body!.reset(targetX, targetY)
+        
+        // Re-enable physics AFTER position sync
         this.player.body!.enable = true
         this.isLevelStarting = false
+        
+        console.log('⚡ Physics re-enabled! Player now at:', {
+          x: Math.round(this.player.x),
+          y: Math.round(this.player.y),
+          bodyY: Math.round(this.player.body!.y),
+          bodyBottom: Math.round(this.player.body!.bottom),
+          bodyOffset: {
+            x: this.player.body!.offset.x,
+            y: this.player.body!.offset.y
+          },
+          velocity: this.player.body!.velocity,
+          gravity: this.physics.world.gravity,
+          shouldBeStandingAt: platformTop
+        })
         
         // Clear the progression flag now that intro is complete
         this.game.registry.set('levelProgression', false)
@@ -6885,11 +7164,14 @@ export class GameScene extends Phaser.Scene {
   }
   
   private animatePlayerClimbing(ladderX: number, targetY: number, onComplete: () => void): void {
-    // Climbing animation start (replaced console.log)
+    console.log('🧗 Climbing Animation Start:', {
+      currentY: Math.round(this.player.y),
+      targetY: Math.round(targetY),
+      distanceToClimb: Math.round(this.player.y - targetY)
+    })
     
     // Check if sprites are loaded
     const hasClimbSprites = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
-    // Climb sprites loaded status (replaced console.log)
     
     if (!hasClimbSprites) {
       console.warn('⚠️ Climb sprites not loaded! Using fallback animation')
@@ -6942,6 +7224,10 @@ export class GameScene extends Phaser.Scene {
   
   private animatePlayerBouncing(targetX: number, targetY: number, onComplete: () => void): void {
     // Sequence: jump off ladder → 2 bounces to target → idle + talking bubble
+    console.log('🏀 Bounce Animation Start:', {
+      currentPos: { x: Math.round(this.player.x), y: Math.round(this.player.y) },
+      targetPos: { x: Math.round(targetX), y: Math.round(targetY) }
+    })
     
     // Face right for movement
     this.player.setFlipX(false)
@@ -7142,7 +7428,7 @@ export class GameScene extends Phaser.Scene {
     // Only create door for non-endless levels
     if (!levelConfig.isEndless && levelConfig.floorCount > 0) {
       const tileSize = GameSettings.game.tileSize
-      const floorSpacing = tileSize * 5 // Same spacing as in createTestLevel
+      const floorSpacing = (GameSettings.game as any).floorSpacing || (tileSize * 5) // Same spacing as in createTestLevel
       
       // Calculate the Y position of the top floor
       const topFloor = levelConfig.floorCount - 1
@@ -8342,15 +8628,28 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
     
-    // Start over handler - trigger SDK game over then let Farcade handle restart
+    // Start over handler - for dgen1, restart directly without SDK
     restartButton.on('pointerdown', () => {
-      // Notify Farcade SDK of game over with final score
-      this.notifyFarcadeGameOver(finalScore)
+      console.log('🔄 Continue button clicked!')
       
-      // DO NOT restart the scene here - let Farcade handle it
-      // When player clicks "Play Again" in Farcade overlay,
-      // the SDK will trigger the play_again event which restarts properly
-      // This prevents the game from running behind Farcade's overlay
+      // Check if this is a dgen1 build (no SDK)
+      const isDgen1 = GameSettings.buildType === 'dgen1'
+      console.log('🎮 Build type check:', { buildType: GameSettings.buildType, isDgen1 })
+      
+      if (isDgen1) {
+        // For dgen1, restart the game directly
+        console.log('🚀 Restarting game for dgen1 build...')
+        this.restartGame()
+      } else {
+        // For regular builds, notify Farcade SDK of game over
+        console.log('📡 Notifying SDK for regular build...')
+        this.notifyFarcadeGameOver(finalScore)
+        
+        // DO NOT restart the scene here - let Farcade handle it
+        // When player clicks "Play Again" in Farcade overlay,
+        // the SDK will trigger the play_again event which restarts properly
+        // This prevents the game from running behind Farcade's overlay
+      }
     })
     
     // Hover effects
@@ -8366,11 +8665,19 @@ export class GameScene extends Phaser.Scene {
     
     // Keyboard support
     this.input.keyboard!.on('keydown-R', () => {
-      // Notify Farcade SDK of game over with final score
-      this.notifyFarcadeGameOver(finalScore)
+      // Check if this is a dgen1 build (no SDK)
+      const isDgen1 = GameSettings.buildType === 'dgen1'
       
-      // DO NOT restart the scene here - let Farcade handle it
-      // Same as the button click - prevents game from running behind overlay
+      if (isDgen1) {
+        // For dgen1, restart the game directly
+        this.restartGame()
+      } else {
+        // For regular builds, notify Farcade SDK of game over
+        this.notifyFarcadeGameOver(finalScore)
+        
+        // DO NOT restart the scene here - let Farcade handle it
+        // Same as the button click - prevents game from running behind overlay
+      }
     })
   }
 

@@ -1,4 +1,4 @@
-import GameSettings from "../config/GameSettings"
+import GameSettings from "../config/GameSettingsLoader"
 
 export class SplashScene extends Phaser.Scene {
   private titleImage!: Phaser.GameObjects.Image
