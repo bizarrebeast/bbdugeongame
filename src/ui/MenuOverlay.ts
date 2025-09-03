@@ -541,7 +541,10 @@ export class MenuOverlay {
     // Add debug visualization for regular version
     const isRegularVersion = this.scene.cameras.main.width <= 500
     if (isRegularVersion) {
-      this.addDebugVisualization()
+      // Delay slightly to ensure all elements are added
+      this.scene.time.delayedCall(50, () => {
+        this.addDebugVisualization()
+      })
     }
     
     // Update SDK indicator
@@ -825,11 +828,21 @@ export class MenuOverlay {
     const musicToggleY = -30  // Relative to container center
     const musicHit = Math.abs(relativeX - musicToggleX) < 30 && Math.abs(relativeY - musicToggleY) < 15
     
-    if (isRegularVersion && musicHit) {
-      console.log('🎵 Music Toggle HIT at:', {
-        toggleCenter: `(${musicToggleX}, ${musicToggleY})`,
-        relativeClick: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`
-      })
+    // Always log music toggle check details for debugging
+    if (isRegularVersion) {
+      const musicDistance = {
+        xDist: Math.abs(relativeX - musicToggleX),
+        yDist: Math.abs(relativeY - musicToggleY),
+        wouldHit: musicHit
+      }
+      if (Math.abs(relativeY - musicToggleY) < 50) { // If we're even close to music toggle Y
+        console.log('🎵 Music Toggle Check:', {
+          toggleCenter: `(${musicToggleX}, ${musicToggleY})`,
+          relativeClick: `(${Math.round(relativeX)}, ${Math.round(relativeY)})`,
+          distance: musicDistance,
+          hit: musicHit
+        })
+      }
     }
     
     if (musicHit) {
