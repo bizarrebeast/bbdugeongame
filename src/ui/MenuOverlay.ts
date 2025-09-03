@@ -111,6 +111,14 @@ export class MenuOverlay {
     // Divider line after toggles
     const divider2 = this.createDivider(20)
     
+    // Debug: Check for phantom elements
+    console.log('🔍 Elements between toggles check:', {
+      soundToggleY: this.soundToggle?.y,
+      musicToggleY: this.musicToggle?.y,
+      divider2Y: 20,
+      containerChildCount: this.container.list.length
+    })
+    
     // Add Wallet Button for dgen1 version only
     let walletBtn = null;
     const isDgen1 = this.scene.registry.get('isDgen1') || window.location.port === '3001';
@@ -285,6 +293,10 @@ export class MenuOverlay {
     
     bgRect.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       console.log(`👆 Button clicked: "${text}" at (${x}, ${y})`)
+      // Log stack trace to find phantom clicks
+      if (text === "RESUME GAME") {
+        console.log('📍 Resume button click source:', new Error().stack?.split('\n')[2])
+      }
       onClick()
     })
     
@@ -653,7 +665,8 @@ export class MenuOverlay {
     this.container.list.forEach((child: any, index: number) => {
       if (child instanceof Phaser.GameObjects.Container) {
         const name = child.name || 'unnamed'
-        console.log(`  [${index}] Container '${name}': Y=${child.y}, X=${child.x}`)
+        const isInteractive = child.input ? 'INTERACTIVE' : 'not-interactive'
+        console.log(`  [${index}] Container '${name}': Y=${child.y}, X=${child.x} [${isInteractive}]`)
         
         // Track actual positions of named elements
         if (name === 'musicToggle') actualMusicToggleY = child.y
@@ -662,17 +675,23 @@ export class MenuOverlay {
         // Log children of this container
         if (child.list && child.list.length > 0) {
           child.list.forEach((subChild: any, subIndex: number) => {
+            const subInteractive = subChild.input ? 'INTERACTIVE' : ''
             if (subChild instanceof Phaser.GameObjects.Text && subChild.text) {
-              console.log(`    └─ Text: "${subChild.text.substring(0, 20)}..." at (${subChild.x}, ${subChild.y})`)
+              console.log(`    └─ Text: "${subChild.text.substring(0, 20)}..." at (${subChild.x}, ${subChild.y}) ${subInteractive}`)
             } else if (subChild instanceof Phaser.GameObjects.Rectangle) {
-              console.log(`    └─ Rectangle at (${subChild.x}, ${subChild.y}) size: ${subChild.width}x${subChild.height}`)
+              console.log(`    └─ Rectangle at (${subChild.x}, ${subChild.y}) size: ${subChild.width}x${subChild.height} ${subInteractive}`)
             }
           })
         }
       } else if (child instanceof Phaser.GameObjects.Text) {
-        console.log(`  [${index}] Text: "${child.text.substring(0, 30)}..." at Y=${child.y}`)
+        const isInteractive = child.input ? 'INTERACTIVE' : ''
+        console.log(`  [${index}] Text: "${child.text.substring(0, 30)}..." at Y=${child.y} ${isInteractive}`)
       } else if (child instanceof Phaser.GameObjects.Graphics) {
-        console.log(`  [${index}] Graphics/Divider at Y=${child.y}`)
+        const isInteractive = child.input ? 'INTERACTIVE' : ''
+        console.log(`  [${index}] Graphics/Divider at Y=${child.y} ${isInteractive}`)
+      } else if (child instanceof Phaser.GameObjects.Rectangle) {
+        const isInteractive = child.input ? 'INTERACTIVE!' : ''
+        console.log(`  [${index}] Rectangle at Y=${child.y} size: ${child.width}x${child.height} ${isInteractive}`)
       }
     })
     
