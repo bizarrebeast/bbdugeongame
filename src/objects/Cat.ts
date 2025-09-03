@@ -163,13 +163,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       textureKey = 'redEnemyMouthClosedEyes1'
     } else if (catColor === CatColor.BLUE_CATERPILLAR) {
       textureKey = 'blueCaterpillarEyesDown'
-      console.log('🐛🆕 CREATING BLUE CATERPILLAR at', {
-        x: Math.round(x),
-        y: Math.round(y),
-        platformLeft: platformLeft,
-        platformRight: platformRight,
-        platformWidth: platformRight - platformLeft
-      })
+      // Blue caterpillar created
     } else {
       // This shouldn't happen with proper enemy spawning
       // Unexpected cat color fallback (replaced console.log)
@@ -355,10 +349,10 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // For all yellow enemy animation sprites - use 54x21.6 size (90% of original)
       this.setDisplaySize(54, 21.6)
       
-      console.log('🟡 YELLOW CATERPILLAR SETUP:')
-      console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
-      console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
-      console.log('  Texture key:', textureKey)
+      // console.log('🟡 YELLOW CATERPILLAR SETUP:')
+      // console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
+      // console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
+      // console.log('  Texture key:', textureKey)
       
       // Align bottom edge of sprite with bottom edge of hitbox
       // setOffset positions the TOP-LEFT corner of the sprite
@@ -368,7 +362,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // - Y: Move sprite down so bottoms align: (28-21.6) = 6.4px down
       this.setOffset(15, 5) // Adjusted Y offset for better floor alignment
       
-      console.log('  Offset applied:', 15, ',', 5)
+      // console.log('  Offset applied:', 15, ',', 5)
       
       this.setFlipX(false)
       this.initializeYellowEnemyAnimations()
@@ -376,11 +370,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Blue caterpillar - larger size (64 wide, proportionally scaled)
       this.setDisplaySize(64, 25.6)
       
-      console.log('🔵 BLUE CATERPILLAR SETUP:')
-      console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
-      console.log('  Physics body size: 54 x 20 (set earlier)')
-      console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
-      console.log('  Texture key:', textureKey)
+      // console.log('🔵 BLUE CATERPILLAR SETUP:')
+      // console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
+      // console.log('  Physics body size: 54 x 20 (set earlier)')
+      // console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
+      // console.log('  Texture key:', textureKey)
       
       // We need to position the 54x20 physics body relative to the 64x25.6 visual sprite
       // The physics body should be centered horizontally and aligned with floor
@@ -495,18 +489,18 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
           this.body.moves = true
         }
         
-        console.log('🐛🎬 Blue Caterpillar INITIAL SETUP:', {
-          x: Math.round(this.x),
-          direction: this.direction,
-          moveSpeed: Math.round(this.moveSpeed),
-          velocity: Math.round(this.moveSpeed * this.direction),
-          platformLeft: this.platformBounds.left,
-          platformRight: this.platformBounds.right,
-          animationsEnabled: this.blueCaterpillarAnimationsEnabled,
-          animationDelay: this.blueCaterpillarAnimationDelay,
-          bodyImmovable: this.body?.immovable,
-          bodyMoves: this.body?.moves
-        })
+        // console.log('🐛🎬 Blue Caterpillar INITIAL SETUP:', {
+        //   x: Math.round(this.x),
+        //   direction: this.direction,
+        //   moveSpeed: Math.round(this.moveSpeed),
+        //   velocity: Math.round(this.moveSpeed * this.direction),
+        //   platformLeft: this.platformBounds.left,
+        //   platformRight: this.platformBounds.right,
+        //   animationsEnabled: this.blueCaterpillarAnimationsEnabled,
+        //   animationDelay: this.blueCaterpillarAnimationDelay,
+        //   bodyImmovable: this.body?.immovable,
+        //   bodyMoves: this.body?.moves
+        // })
       }
     }
   }
@@ -1322,7 +1316,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.forceResetCaterpillar()
         return
       } else if (recentMovement < 20 && this.turnDelayTimer > 0) {
-        console.log(`🐛 Blue Caterpillar slow but just turned (timer: ${Math.round(this.turnDelayTimer)}ms) - allowing it`)
+        // console.log(`🐛 Blue Caterpillar slow but just turned (timer: ${Math.round(this.turnDelayTimer)}ms) - allowing it`)
       }
     }
     */
@@ -1368,7 +1362,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Destroy this Blue Caterpillar
     this.destroy()
     
-    console.log('🟡 Yellow Caterpillar created as replacement at x:', Math.round(newYellowCat.x))
+    // console.log('🟡 Yellow Caterpillar created as replacement at x:', Math.round(newYellowCat.x))
   }
   
   private forceResetCaterpillar(): void {
@@ -1948,7 +1942,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (movementThisFrame < 0.01) { // Less than 0.01 pixels moved
       this.blueCaterpillarStuckFrames++
       if (this.blueCaterpillarStuckFrames === 60) { // After 1 second of being stuck
-        console.log('🐛➡️🟡 Blue Caterpillar stuck! Replacing with Yellow at x:', Math.round(this.x))
+        // console.log('🐛➡️🟡 Blue Caterpillar stuck! Replacing with Yellow at x:', Math.round(this.x))
         
         // Replace this Blue Caterpillar with a Yellow one
         this.replaceSelfWithYellowCaterpillar()
@@ -2046,11 +2040,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.blueCaterpillarAnimationDelay -= delta
       if (this.blueCaterpillarAnimationDelay <= 0) {
         this.blueCaterpillarAnimationsEnabled = true
-        console.log('🐛✨ Blue Caterpillar animations ENABLED after delay', {
-          x: Math.round(this.x),
-          velocity: Math.round(this.body!.velocity.x),
-          direction: this.direction
-        })
+        // console.log('🐛✨ Blue Caterpillar animations ENABLED after delay', {
+        //   x: Math.round(this.x),
+        //   velocity: Math.round(this.body!.velocity.x),
+        //   direction: this.direction
+        // })
       }
       return // Skip animations until delay passes
     }
