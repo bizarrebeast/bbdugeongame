@@ -1396,6 +1396,21 @@ export class GameScene extends Phaser.Scene {
       this
     )
     
+    // Rex enemies also need to collide with floor spikes to walk across them
+    this.physics.add.collider(
+      this.rexEnemies,
+      this.spikes,
+      undefined, // No callback needed
+      (rex, spike) => {
+        // Process callback - return true to collide, false to pass through
+        const spikeObj = spike as Phaser.GameObjects.Rectangle
+        const isFloorSpike = spikeObj.getData('isFloorSpike')
+        // Only collide with floor spikes (pink spikes), pass through ceiling spikes
+        return isFloorSpike === true
+      },
+      this
+    )
+    
     // Stalker cats collide with platforms and floor spikes (after dropping)
     this.physics.add.collider(this.stalkerCats, this.platforms)
     // Stalker cats also only collide with floor spikes, not ceiling spikes
