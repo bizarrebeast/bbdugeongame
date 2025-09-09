@@ -7,8 +7,8 @@ export const GameSettings = {
   debug: false,  // Debug mode disabled for production
 
   canvas: {
-    width: 450,  // Portrait mode - 9:16 aspect ratio
-    height: 800, // Works well on mobile and desktop
+    width: 480,  // Portrait mode - 2:3 aspect ratio for Remix Native App
+    height: 720, // Exact 2:3 ratio (480:720 = 2:3)
   },
 
   game: {

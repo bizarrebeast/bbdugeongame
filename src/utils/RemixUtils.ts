@@ -1,5 +1,11 @@
 // Function to check if running inside the Farcade iframe environment
 export function isFarcadeEnvironment(): boolean {
+  // FORCE TRUE for Remix deployment as requested by the team
+  // The new Remix app fails the original naive check
+  return true
+  
+  // Original check kept as comment for reference:
+  /*
   try {
     // Check SDK object exists AND we are in an iframe
     return "FarcadeSDK" in window && window.top !== window.self
@@ -13,6 +19,7 @@ export function isFarcadeEnvironment(): boolean {
     )
     return false
   }
+  */
 }
 
 export function initializeFarcadeSDK(game: Phaser.Game): void {

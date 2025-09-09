@@ -163,13 +163,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       textureKey = 'redEnemyMouthClosedEyes1'
     } else if (catColor === CatColor.BLUE_CATERPILLAR) {
       textureKey = 'blueCaterpillarEyesDown'
-      console.log('🐛🆕 CREATING BLUE CATERPILLAR at', {
-        x: Math.round(x),
-        y: Math.round(y),
-        platformLeft: platformLeft,
-        platformRight: platformRight,
-        platformWidth: platformRight - platformLeft
-      })
     } else {
       // This shouldn't happen with proper enemy spawning
       // Unexpected cat color fallback (replaced console.log)
@@ -186,7 +179,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // This prevents the 84x84 default size from being used
     if (catColor === CatColor.GREEN) {
       this.setDisplaySize(36, 36)
-      console.log('🟢 GREEN INITIAL: Display size set to 36x36')
     }
     
     // Set up stalker if needed
@@ -265,7 +257,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         
         this.body.setOffset(offsetX, offsetY)
         
-        console.log('🔴 SNAIL CIRCULAR HITBOX:')
         console.log('  Circle radius:', radiusInTextureSpace, 'px (texture space)')
         console.log('  Body is circular:', this.body.isCircle)
         console.log('  Display size:', displaySize, 'x', displaySize)
@@ -290,7 +281,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         
         this.body.setOffset(offsetX, offsetY)
         
-        console.log('👁️ STALKER CIRCULAR HITBOX:')
         console.log('  Circle radius:', radiusInTextureSpace, 'px (texture space)')
         console.log('  Body is circular:', this.body.isCircle)
         console.log('  Display size:', displaySize, 'x', displaySize)
@@ -313,7 +303,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Set circular hitbox!
       this.body.setCircle(radiusInTextureSpace)
       
-      console.log('🟢 GREEN BOUNCER CIRCULAR HITBOX:')
       console.log('  Circle radius requested:', desiredScreenRadius, 'px (screen space)')
       console.log('  Circle radius actual:', radiusInTextureSpace, 'px (texture space)')
       console.log('  Body is circular:', this.body.isCircle)
@@ -355,7 +344,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // For all yellow enemy animation sprites - use 54x21.6 size (90% of original)
       this.setDisplaySize(54, 21.6)
       
-      console.log('🟡 YELLOW CATERPILLAR SETUP:')
       console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
       console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
       console.log('  Texture key:', textureKey)
@@ -376,7 +364,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Blue caterpillar - larger size (64 wide, proportionally scaled)
       this.setDisplaySize(64, 25.6)
       
-      console.log('🔵 BLUE CATERPILLAR SETUP:')
       console.log('  Visual sprite size:', this.displayWidth, 'x', this.displayHeight)
       console.log('  Physics body size: 54 x 20 (set earlier)')
       console.log('  Original texture size:', this.texture.get().width, 'x', this.texture.get().height)
@@ -447,7 +434,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Offset is handled in the physics body setup, not here
       this.setFlipX(false)
       
-      console.log('🟢 GREEN VISUAL FINAL:')
       console.log('  Display size remains:', this.displayWidth, 'x', this.displayHeight)
       console.log('  Physics body handles visual offset')
     } else {
@@ -494,19 +480,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
           this.body.setImmovable(false)
           this.body.moves = true
         }
-        
-        console.log('🐛🎬 Blue Caterpillar INITIAL SETUP:', {
-          x: Math.round(this.x),
-          direction: this.direction,
-          moveSpeed: Math.round(this.moveSpeed),
-          velocity: Math.round(this.moveSpeed * this.direction),
-          platformLeft: this.platformBounds.left,
-          platformRight: this.platformBounds.right,
-          animationsEnabled: this.blueCaterpillarAnimationsEnabled,
-          animationDelay: this.blueCaterpillarAnimationDelay,
-          bodyImmovable: this.body?.immovable,
-          bodyMoves: this.body?.moves
-        })
+        // Blue caterpillar initial setup complete
       }
     }
   }
@@ -1263,12 +1237,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Log position tracking for Blue Caterpillar
       if (this.catColor === CatColor.BLUE_CATERPILLAR && this.positionHistory.length > 2) {
         const movement = Math.abs(this.positionHistory[this.positionHistory.length - 1] - this.positionHistory[0])
-        console.log('🐛📍 Position tracking:', {
-          currentX: Math.round(this.x),
-          positionHistory: this.positionHistory.map(p => Math.round(p)),
-          totalMovement: Math.round(movement),
-          velocity: this.body ? Math.round(this.body.velocity.x) : 0
-        })
+        // Position tracking for stuck detection
       }
     }
     
@@ -1322,7 +1291,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
         this.forceResetCaterpillar()
         return
       } else if (recentMovement < 20 && this.turnDelayTimer > 0) {
-        console.log(`🐛 Blue Caterpillar slow but just turned (timer: ${Math.round(this.turnDelayTimer)}ms) - allowing it`)
       }
     }
     */
@@ -1368,7 +1336,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     // Destroy this Blue Caterpillar
     this.destroy()
     
-    console.log('🟡 Yellow Caterpillar created as replacement at x:', Math.round(newYellowCat.x))
   }
   
   private forceResetCaterpillar(): void {
@@ -1416,7 +1383,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       // Move to a random safe position near center
       const safeX = this.platformBounds.left + 50 + Math.random() * (this.platformBounds.right - this.platformBounds.left - 100)
       this.setX(safeX)
-      console.log(`🐛 Repositioned ${catType} to safe X:${Math.round(safeX)}`)
     }
     
     // Apply velocity with boost to get unstuck
@@ -1948,7 +1914,6 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     if (movementThisFrame < 0.01) { // Less than 0.01 pixels moved
       this.blueCaterpillarStuckFrames++
       if (this.blueCaterpillarStuckFrames === 60) { // After 1 second of being stuck
-        console.log('🐛➡️🟡 Blue Caterpillar stuck! Replacing with Yellow at x:', Math.round(this.x))
         
         // Replace this Blue Caterpillar with a Yellow one
         this.replaceSelfWithYellowCaterpillar()
@@ -1970,15 +1935,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     this.blueCaterpillarVelocityCheckTimer += delta
     
     if (this.blueCaterpillarVelocityCheckTimer > 500 && Math.abs(this.body!.velocity.x) < 5) {
-      console.log('🐛⚠️ Velocity not sticking!', {
-        x: Math.round(this.x),
-        velocityAfterSet: this.body!.velocity.x,
-        direction: this.direction,
-        moveSpeed: this.moveSpeed,
-        bodyBlocked: this.body.blocked,
-        bodyTouching: this.body.touching,
-        bodyEmbedded: this.body.embedded
-      })
+      // Velocity not sticking - will be replaced
       this.blueCaterpillarVelocityCheckTimer = 0
     }
     
@@ -2022,16 +1979,11 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
     
     // Safety check: Ensure caterpillar stays within bounds
     if (this.x < this.platformBounds.left + 5 || this.x > this.platformBounds.right - 5) {
-      console.log('🐛🚨 SAFETY CONSTRAINT TRIGGERED!', {
-        x: Math.round(this.x),
-        leftBound: this.platformBounds.left,
-        rightBound: this.platformBounds.right
-      })
+      // Safety constraint triggered - reversing direction
       const constrainedX = Math.max(this.platformBounds.left + 10, Math.min(this.platformBounds.right - 10, this.x))
       this.setX(constrainedX)
       this.direction *= -1 // Reverse direction when constrained
       this.setVelocityX(this.moveSpeed * this.direction)
-      console.log('🐛🔄 Force reversed to', this.direction)
     }
     
     // Flip sprite based on direction
@@ -2046,11 +1998,7 @@ export class Cat extends Phaser.Physics.Arcade.Sprite {
       this.blueCaterpillarAnimationDelay -= delta
       if (this.blueCaterpillarAnimationDelay <= 0) {
         this.blueCaterpillarAnimationsEnabled = true
-        console.log('🐛✨ Blue Caterpillar animations ENABLED after delay', {
-          x: Math.round(this.x),
-          velocity: Math.round(this.body!.velocity.x),
-          direction: this.direction
-        })
+        // Blue caterpillar animations enabled after delay
       }
       return // Skip animations until delay passes
     }

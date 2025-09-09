@@ -3,8 +3,8 @@
 ## 📊 Project Overview
 
 **Project Name:** Treasure Quest (formerly Bizarre Underground)  
-**Development Timeline:** May 5, 2024 - August 2025 (15+ months)  
-**Current Version:** 1.1.0 Optimized Release  
+**Development Timeline:** May 5, 2024 - September 2025 (16+ months)  
+**Current Version:** 1.2.1 Production Release  
 **Platform:** Remix (formerly Farcade)  
 **Technology Stack:** TypeScript, Phaser.js 3.88.2, Vite 6.3.5  
 
@@ -126,7 +126,7 @@
 - **Volume Control:** Adjustable with default 30% volume
 - **Settings Storage:** Preferences saved to localStorage
 
-### Sound Effects Library (20+ Unique Sounds)
+### Sound Effects Library (21+ Unique Sounds)
 **Player Actions:**
 - Jump sounds: 3 rotating variations for variety
 - Landing sound: Soft touchdown effect
@@ -154,6 +154,7 @@
 - Player death: Defeat sound
 - Game over: Dramatic ending
 - Splash screen: Opening chime
+- Menu open/close: Menu toggle sound (NEW)
 - Menu toggle: UI interaction
 
 ---
@@ -161,7 +162,7 @@
 ## 🔄 Version Control Statistics
 
 ### Git Metrics (Updated)
-- **Total Commits:** 310 (as of September 2025)
+- **Total Commits:** 320+ (as of September 2025)
 - **Major Contributors:** 
   - BizarreBeasts (primary developer)
   - Dylan Yarter (optimization specialist)
@@ -297,7 +298,11 @@
 
 ## 🏆 Achievement Summary
 
-### Recent Accomplishments (2025)
+### Recent Accomplishments (September 2025)
+- **Framerate-Independent Physics:** Fixed jump height variation across different framerates
+- **Rex Enemy Collision Fix:** Circular hitbox for proper spike collision
+- **Menu Sound Effects:** Added open/close sound for menu
+- **dgen1 Version Created:** Separate 720x720 build with Web3 integration
 - **Instant Loading:** Eliminated loading screen entirely
 - **Smart Memory Management:** Only loads what's needed
 - **Variable Jump System:** Restored precise platforming
@@ -341,7 +346,7 @@
 - **Enemy Types:** 9 unique enemies (45-50 sprites total)
 - **Backgrounds:** 70 unique backgrounds
 - **Sound Effects:** 20+ unique audio files
-- **Build Size:** ~334 KB (single HTML file)
+- **Build Size:** ~327 KB (single HTML file)
 - **Load Time:** < 0.1 seconds
 - **Memory Usage:** < 50MB active
 - **Starting Lives:** 3 (increased difficulty)
@@ -357,17 +362,31 @@
 - **Visual Assets:** 220+ total
   - 150 gameplay sprites
   - 70 background images
-- **Audio Assets:** 21+ total
+- **Audio Assets:** 22+ total
   - 1 background music track
-  - 20+ sound effects
+  - 21+ sound effects
 - **Code Optimization:** 43% reduction (21,812 → 12,428 lines)
 - **Memory Efficiency:** Only 10 backgrounds cached at once
 - **Performance:** 60 FPS desktop, 30+ mobile
 
 ## 📌 Developer Notes
 
-### September 2025 Update
-This update represents a major optimization pass, reducing load times by 98% and memory usage by 50%. The game now starts instantly while maintaining all features and content. The smart loading systems ensure resources are loaded only when needed, making the game performant on all devices.
+### September 3, 2025 Update
+This update includes critical gameplay fixes and a new platform version:
+
+**Critical Fixes:**
+- Fixed framerate-dependent jump physics (now consistent across 20-144 FPS)
+- Fixed Rex enemy collision with pink spikes (circular hitbox)
+- Fixed ladder breakthrough bug with touch controls
+- Added menu open/close sound effects
+
+**New dgen1 Version:**
+- Created separate repository for dgen1 team
+- 720x720 square format (vs 450x800 portrait)
+- Web3 wallet integration (Reown/WalletConnect)
+- BizarreBeasts ($BB) swap button integration
+- Mobile-only instructions (removed desktop references)
+- All splash/chapter screens in square format
 
 Key achievements:
 - Eliminated loading screens entirely
@@ -375,6 +394,7 @@ Key achievements:
 - Restored variable jump mechanics
 - Increased difficulty with 3 starting lives
 - Maintained 60 FPS on desktop
+- Created dedicated Web3 version for dgen1
 
 The codebase remains clean and scalable, with new systems like ObjectPool and VisibilityCulling providing professional-grade optimization.
 
@@ -396,10 +416,12 @@ The codebase remains clean and scalable, with new systems like ObjectPool and Vi
 *Built with passion, optimized with precision, delivered with pride.*
 
 **Current Build:** ✅ Feature Complete Production  
-**Version:** 1.2.0  
-**Platform:** Remix (formerly Farcade)  
-**Status:** FEATURE COMPLETE & OPTIMIZED 🚀
+**Version:** 1.2.1  
+**Platforms:** 
+  - Remix (formerly Farcade) - 450x800 portrait
+  - dgen1 Web3 - 720x720 square  
+**Status:** FEATURE COMPLETE & MULTI-PLATFORM 🚀
 
 ---
 
-*Stats updated on September 2, 2025*
+*Stats updated on September 3, 2025*

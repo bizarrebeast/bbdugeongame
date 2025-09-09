@@ -942,10 +942,10 @@ export class GameScene extends Phaser.Scene {
   private displayChapterSplash(level: number, onComplete: () => void): void {
     const splashKey = `chapter-${level}`
     
-    // Show the chapter splash image IMMEDIATELY at full opacity
+    // Show the chapter splash image aligned to TOP of screen (bottom gets cut off)
     const splashImage = this.add.image(
       this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
+      0,  // Align to top of screen
       splashKey
     )
     console.log(`📷 Splash image created: ${splashKey}`)
@@ -955,6 +955,7 @@ export class GameScene extends Phaser.Scene {
     const scaleY = this.cameras.main.height / splashImage.height
     const scale = Math.max(scaleX, scaleY)
     splashImage.setScale(scale)
+    splashImage.setOrigin(0.5, 0)  // Set origin to top-center instead of center-center
     splashImage.setDepth(10001)
     splashImage.setScrollFactor(0)
     splashImage.alpha = 1 // Start at full opacity - no fade in needed
@@ -1233,12 +1234,14 @@ export class GameScene extends Phaser.Scene {
     // Position spawn at fourth floor tile from the left (tile 3, 0-indexed)
     const tileSize = GameSettings.game.tileSize
     const spawnX = (3.5 * tileSize) // Fourth tile center (tile 3)
-    // Place player on ground floor - platform center is at Y=784
-    // Platform is 32px tall, so platform top is at Y=768
-    // Player sprite center should be positioned so physics body bottom is above platform top
-    // With new offset, physics body extends from sprite center + 2 to sprite center + 32
-    // So to have physics body bottom at Y=768, sprite center should be at Y=736
-    const spawnY = 736  // Position player so physics body sits on platform
+    // Calculate spawn position dynamically based on actual canvas height
+    // Ground floor platform is at bottom of screen
+    const platformY = GameSettings.canvas.height - tileSize/2  // Platform center
+    const platformTop = platformY - tileSize/2  // Platform top surface
+    // Player sprite center should be positioned so physics body bottom is at platform top
+    // With physics body offset, body extends from sprite center + 2 to sprite center + 32
+    // So to have physics body bottom at platformTop, sprite center should be at platformTop - 32
+    const spawnY = platformTop - 32  // Position player so physics body sits on platform
     
     
     this.player = new Player(
@@ -6807,58 +6810,79 @@ export class GameScene extends Phaser.Scene {
 
   private startLevelIntro(targetX: number, targetY: number): void {
     this.isLevelStarting = true
-    // Level intro start (replaced console.log)
+    console.log('🎬 === LEVEL INTRO START ===')
+    console.log('Canvas dimensions:', GameSettings.canvas.width, 'x', GameSettings.canvas.height)
+    console.log('Target spawn position (sprite center):', targetX, targetY)
+    console.log('Platform calculations:')
+    console.log('  - Platform center Y:', GameSettings.canvas.height - GameSettings.game.tileSize/2)
+    console.log('  - Platform top Y:', GameSettings.canvas.height - GameSettings.game.tileSize)
+    console.log('  - Player feet should be at Y:', targetY + 32)
     
     // Create entrance ladder extending below the floor
     const tileSize = GameSettings.game.tileSize
     const ladderX = tileSize/2 // Position ladder on the farthest left tile (tile 0)
     const floorY = GameSettings.canvas.height - tileSize/2
     
-    // Entrance ladder setup (replaced console.log)
+    console.log('Tile size:', tileSize)
+    console.log('Ladder X position:', ladderX)
+    console.log('Floor Y position:', floorY)
     
     // Create entrance ladder using new teal ladder sprite
-    const ladderTop = targetY - 60 // Extends above player position
-    const ladderBottom = GameSettings.canvas.height + 100 // Below screen
-    const ladderHeight = ladderBottom - ladderTop
-    const ladderCenterY = (ladderTop + ladderBottom) / 2 + 52
+    // Keep ladder same size as in-game ladders, but position it so top aligns with floor
+    // Standard ladder extends about 5 tiles in height (like in-game ladders)
+    const visualHeight = tileSize * 5 // Keep standard ladder height
+    const ladderTop = targetY // Ladder top aligns with spawn floor where player walks
+    const ladderBottom = ladderTop + visualHeight // Bottom extends down from top
+    const ladderCenterY = (ladderTop + ladderBottom) / 2 + 1 // Match 1px downward shift from in-game ladders
+    
+    console.log('🪜 LADDER CALCULATIONS:')
+    console.log('  - Ladder top:', ladderTop)
+    console.log('  - Ladder bottom:', ladderBottom)
+    console.log('  - Ladder height:', visualHeight)
+    console.log('  - Ladder center Y:', ladderCenterY)
+    console.log('  - Player spawn floor Y:', targetY)
     
     let entranceLadder: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics
     
     if (this.textures.exists('tealLadder')) {
-      // Use new teal ladder sprite with same scaling method as gameplay ladders
-      const visualHeight = ladderHeight // Use the actual height for intro
-      const visualCenterY = ladderCenterY + 1 // Match the 1px downward shift from gameplay ladders
-      entranceLadder = this.add.image(ladderX + 1, visualCenterY, 'tealLadder')  // Moved 1 pixel to the right
-      // Scale to match gameplay ladder proportions
+      // Use exact same sprite creation as in-game ladders for visual consistency
+      entranceLadder = this.add.image(ladderX + 1, ladderCenterY, 'tealLadder')  // Moved 1 pixel to the right, already has 1px shift in ladderCenterY
+      // Scale to proper height while maintaining aspect ratio - exactly like in-game ladders
       entranceLadder.setDisplaySize(entranceLadder.width * (visualHeight / entranceLadder.height), visualHeight)
       entranceLadder.setDepth(5)
     } else {
-      // Fallback to graphics ladder
+      // Fallback to graphics ladder - match in-game ladder style
       entranceLadder = this.add.graphics()
-      // Match visual positioning from gameplay ladders
-      const visualTop = ladderTop + 1 // Match 1px downward shift
-      const visualBottom = ladderBottom + 1
       entranceLadder.fillStyle(0x40e0d0, 1) // Teal color to match game theme
-      entranceLadder.fillRect(ladderX - 2, visualTop, 4, ladderHeight) // Center rail
-      entranceLadder.fillRect(ladderX - 13, visualTop, 26, 4) // Top rung
-      entranceLadder.fillRect(ladderX - 13, visualBottom - 4, 26, 4) // Bottom rung
+      entranceLadder.fillRect(ladderX - 2, ladderTop, 4, visualHeight) // Center rail
+      entranceLadder.fillRect(ladderX - 13, ladderTop, 26, 4) // Top rung
+      entranceLadder.fillRect(ladderX - 13, ladderBottom - 4, 26, 4) // Bottom rung
       
-      // Middle rungs
-      const numRungs = Math.floor(ladderHeight / 32)
+      // Middle rungs - consistent spacing like in-game ladders
+      const numRungs = Math.floor(visualHeight / 32)
       for (let i = 1; i < numRungs; i++) {
-        const rungY = visualTop + (i * (ladderHeight / (numRungs + 1)))
+        const rungY = ladderTop + (i * (visualHeight / (numRungs + 1)))
         entranceLadder.fillRect(ladderX - 13, rungY, 26, 3)
       }
       
       entranceLadder.setDepth(5)
     }
     
-    // Ladder positioning info (replaced console.log)
+    // Ladder positioning info
     
-    // Position player at bottom of ladder (off-screen)
-    const playerStartY = ladderBottom - 20
+    // Position player at bottom of ladder (may be on-screen now since ladder is positioned higher)
+    // Start player at bottom of ladder for climbing animation
+    const playerStartY = ladderBottom - 20 // Player starts near bottom of ladder
     this.player.x = ladderX
     this.player.y = playerStartY
+    
+    console.log('👤 PLAYER POSITIONING:')
+    console.log('  - Player start Y (bottom of ladder - 20):', playerStartY)
+    console.log('  - Player start X:', ladderX)
+    console.log('  - Player needs to climb to Y:', targetY)
+    console.log('  - Distance to climb:', targetY - playerStartY)
+    console.log('  - Spawn floor visual Y:', targetY)
+    console.log('  - Canvas height:', GameSettings.canvas.height)
     
     // Set initial climbing sprite (or fallback)
     if (this.textures.exists('playerClimbLeftFoot')) {
@@ -6868,7 +6892,11 @@ export class GameScene extends Phaser.Scene {
     }
     this.player.setDisplaySize(48, 64)
     
-    // Player start position (replaced console.log)
+    console.log('  - Player sprite size: 48x64')
+    console.log('  - Visual alignment check:')
+    console.log('    * Spawn floor is at Y:', targetY)
+    console.log('    * Player bottom when standing:', targetY + 32, '(half sprite height)')
+    console.log('    * Floor surface Y:', GameSettings.canvas.height - 16)
     
     // Debug markers removed - no longer needed
     // (These were causing red, green, and blue circles during ladder animation)
@@ -6904,11 +6932,16 @@ export class GameScene extends Phaser.Scene {
   }
   
   private animatePlayerClimbing(ladderX: number, targetY: number, onComplete: () => void): void {
-    // Climbing animation start (replaced console.log)
+    console.log('🧗 === CLIMBING ANIMATION START ===')
+    console.log('  - Ladder X:', ladderX)
+    console.log('  - Target Y (spawn floor center):', targetY)
+    console.log('  - Player current position:', this.player.x, this.player.y)
+    console.log('  - Distance to climb:', targetY - this.player.y)
+    console.log('  - Player should end with feet on floor at Y:', targetY + 32)
     
     // Check if sprites are loaded
     const hasClimbSprites = this.textures.exists('playerClimbLeftFoot') && this.textures.exists('playerClimbRightFoot')
-    // Climb sprites loaded status (replaced console.log)
+    console.log('  - Climb sprites available:', hasClimbSprites)
     
     if (!hasClimbSprites) {
       console.warn('⚠️ Climb sprites not loaded! Using fallback animation')
@@ -6941,18 +6974,25 @@ export class GameScene extends Phaser.Scene {
     })
     
     // Move player up the ladder
+    let lastLoggedProgress = -1
     this.tweens.add({
       targets: this.player,
       y: targetY,
       duration: 2000, // 2 seconds to climb
       ease: 'Linear',
       onUpdate: (tween) => {
-        if (climbFrame === 1) { // Log once during climb
-          // Climbing progress (replaced console.log)
+        // Log progress every 10%
+        const progress = Math.floor(tween.progress * 10)
+        if (progress !== lastLoggedProgress) {
+          lastLoggedProgress = progress
+          console.log(`  🧗 Climbing: ${progress * 10}% - Player Y: ${this.player.y.toFixed(1)} (Target: ${targetY})`)
         }
       },
       onComplete: () => {
-        // Climbing complete (replaced console.log)
+        console.log('🧗 === CLIMBING COMPLETE ===')
+        console.log('  - Final player Y:', this.player.y)
+        console.log('  - Target Y was:', targetY)
+        console.log('  - Y difference:', Math.abs(this.player.y - targetY))
         climbTimer.destroy()
         onComplete()
       }
@@ -6960,6 +7000,11 @@ export class GameScene extends Phaser.Scene {
   }
   
   private animatePlayerBouncing(targetX: number, targetY: number, onComplete: () => void): void {
+    console.log('🏃 === BOUNCING ANIMATION START ===')
+    console.log('  - Target position:', targetX, targetY)
+    console.log('  - Player current position:', this.player.x, this.player.y)
+    console.log('  - Horizontal distance to move:', targetX - this.player.x)
+    
     // Sequence: jump off ladder → 2 bounces to target → idle + talking bubble
     
     // Face right for movement
@@ -6968,25 +7013,44 @@ export class GameScene extends Phaser.Scene {
     // Use jumping sprite for bouncing animation
     const jumpTexture = this.textures.exists('playerJumpRightFoot') ? 'playerJumpRightFoot' : 'playerIdleEye1'
     this.player.setTexture(jumpTexture)
+    console.log('  - Using jump texture:', jumpTexture)
     
     // Create horizontal movement with 2 bounces to target position
+    let lastBounceProgress = -1
     this.tweens.add({
       targets: this.player,
       x: targetX,
       duration: 800, // Faster movement with only 2 bounces
       ease: 'Power2.easeOut',
+      onUpdate: (tween) => {
+        // Log progress every 10%
+        const progress = Math.floor(tween.progress * 10)
+        if (progress !== lastBounceProgress) {
+          lastBounceProgress = progress
+          console.log(`  🏃 Bouncing: ${progress * 10}% - Player pos: (${this.player.x.toFixed(1)}, ${this.player.y.toFixed(1)})`)
+        }
+      },
       onComplete: () => {
+        console.log('🏃 === BOUNCING COMPLETE ===')
+        console.log('  - Final player position:', this.player.x, this.player.y)
+        console.log('  - Target position was:', targetX, targetY)
+        console.log('  - Position difference: X:', Math.abs(this.player.x - targetX), 'Y:', Math.abs(this.player.y - targetY))
+        
         // Set to idle texture and trigger talking bubble
         this.changePlayerTexture('playerIdleEye1')
         
         // Trigger the talking bubble after a brief delay
         this.time.delayedCall(300, () => {
+          console.log('💭 Triggering talking bubble')
           // Trigger bubble system (this will show random thoughts/speech)
           if (this.player.onBubbleTrigger) {
             this.player.onBubbleTrigger()
           }
         })
         
+        console.log('✅ === ENTIRE INTRO SEQUENCE COMPLETE ===')
+        console.log('  - Player final position:', this.player.x, this.player.y)
+        console.log('  - Expected spawn position:', targetX, targetY)
         onComplete()
       }
     })
