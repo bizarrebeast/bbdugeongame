@@ -1363,7 +1363,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.stalkerCats, this.platforms)
     // Stalker cats also only collide with floor spikes, not ceiling spikes
     this.physics.add.collider(
-      this.stalkerCats, 
+      this.stalkerCats,
       this.spikes,
       undefined,
       (cat, spike) => {
@@ -1371,6 +1371,40 @@ export class GameScene extends Phaser.Scene {
         const isFloorSpike = spikeObj.getData('isFloorSpike')
         return isFloorSpike === true
       },
+      this
+    )
+
+    // Add enemy-to-enemy OVERLAP detection (not collision) to make them change direction
+    // This prevents clustering without causing them to get stuck
+    this.physics.add.overlap(
+      this.cats,
+      this.cats,
+      (enemy1, enemy2) => this.handleEnemyOverlap(enemy1, enemy2),
+      undefined,
+      this
+    )
+
+    this.physics.add.overlap(
+      this.beetles,
+      this.beetles,
+      (enemy1, enemy2) => this.handleEnemyOverlap(enemy1, enemy2),
+      undefined,
+      this
+    )
+
+    this.physics.add.overlap(
+      this.cats,
+      this.beetles,
+      (enemy1, enemy2) => this.handleEnemyOverlap(enemy1, enemy2),
+      undefined,
+      this
+    )
+
+    this.physics.add.overlap(
+      this.rexEnemies,
+      this.rexEnemies,
+      (enemy1, enemy2) => this.handleEnemyOverlap(enemy1, enemy2),
+      undefined,
       this
     )
     
@@ -1644,6 +1678,43 @@ export class GameScene extends Phaser.Scene {
       }
     }).setOrigin(0, 0.5).setDepth(100)
     this.levelText.setScrollFactor(0)
+
+    // DEBUG: Add real-time kill counter display
+    const debugKillDisplay = this.add.text(10, 140, '', {
+      fontSize: '10px',
+      color: '#00ff00',
+      fontFamily: 'monospace',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      padding: { x: 4, y: 2 }
+    }).setScrollFactor(0).setDepth(1000)
+
+    // Update kill display every frame with safety checks
+    const updateDebugDisplay = () => {
+      // Check if scene is still active and display exists
+      if (!this.scene || !this.scene.isActive() || !debugKillDisplay || !debugKillDisplay.active) {
+        return
+      }
+
+      try {
+        debugKillDisplay.setText([
+          'KILL TRACKER:',
+          `Cat: ${this.gameStats.enemyKills.caterpillar} | Roll: ${this.gameStats.enemyKills.rollz}`,
+          `Chmp: ${this.gameStats.enemyKills.chomper} | Snl: ${this.gameStats.enemyKills.snail}`,
+          `Bnc: ${this.gameStats.enemyKills.bouncer} | Stlk: ${this.gameStats.enemyKills.stalker}`,
+          `Rex: ${this.gameStats.enemyKills.rex} | Blu: ${this.gameStats.enemyKills.blu}`,
+          `Total: ${this.gameStats.totalEnemiesDefeated}`
+        ].join('\n'))
+      } catch (error) {
+        // Silently ignore errors during scene transitions
+      }
+    }
+
+    this.events.on('update', updateDebugDisplay)
+
+    // Clean up the event listener when scene shuts down
+    this.events.once('shutdown', () => {
+      this.events.off('update', updateDebugDisplay)
+    })
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
@@ -4717,7 +4788,16 @@ export class GameScene extends Phaser.Scene {
       undefined,
       this
     )
-    
+
+    // Add collision with Rex enemies (was missing!)
+    this.physics.add.overlap(
+      projectile,
+      this.rexEnemies,
+      (proj, enemy) => this.handleProjectileEnemyCollision(proj as CrystalBallProjectile, enemy),
+      undefined,
+      this
+    )
+
     // Add collision with platforms and spikes (for bouncing)
     this.physics.add.collider(projectile, this.platforms)
     this.physics.add.collider(projectile, this.spikes)
@@ -4741,17 +4821,29 @@ export class GameScene extends Phaser.Scene {
   
   private handleProjectileEnemyCollision(projectile: CrystalBallProjectile, enemy: any): void {
     console.log('💥 Crystal Ball projectile hit enemy!')
-    
+
     // Play crystal ball hit enemy sound
     this.playSoundEffect('crystal-ball-hit-enemy', 0.5)
-    
+
+    // Track enemy kill for stats BEFORE destroying the enemy
+    if (enemy) {
+      const enemyName = this.getEnemyTypeName(enemy)
+      if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+        this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
+        this.gameStats.totalEnemiesDefeated++
+        console.log(`✅ Crystal ball kill tracked: ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+      } else {
+        console.error(`❌ Crystal ball kill NOT tracked! Enemy type: ${enemyName}`)
+      }
+    }
+
     // Simple enemy defeat animation without portal effect
     if (enemy && enemy.body) {
       enemy.body.enable = false // Disable physics during animation
-      
+
       // Create a simple sparkle effect instead of portal
       this.createCrystalBallDefeatEffect(enemy.x, enemy.y)
-      
+
       // Animate enemy shrinking and fading
       this.tweens.add({
         targets: enemy,
@@ -4770,12 +4862,12 @@ export class GameScene extends Phaser.Scene {
         }
       })
     }
-    
+
     // Award points
     const basePoints = enemy.getPointValue ? enemy.getPointValue() : 100
     this.score += basePoints
     this.updateScoreDisplay()
-    
+
     // Create score popup
     this.showPointPopup(enemy.x, enemy.y - 20, basePoints)
     
@@ -5186,6 +5278,87 @@ export class GameScene extends Phaser.Scene {
     return !this.player.getIsClimbing()
   }
   
+  private handleEnemyOverlap(
+    enemy1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    enemy2: Phaser.Types.Physics.Arcade.GameObjectWithBody
+  ): void {
+    // Only process if both enemies have bodies and are active
+    if (!enemy1 || !enemy2 || !enemy1.body || !enemy2.body) return
+
+    // Skip if enemies are being destroyed
+    const enemy1Data = (enemy1 as any)
+    const enemy2Data = (enemy2 as any)
+    if (enemy1Data.isSquished || enemy2Data.isSquished) return
+
+    const body1 = enemy1.body as Phaser.Physics.Arcade.Body
+    const body2 = enemy2.body as Phaser.Physics.Arcade.Body
+
+    // Add cooldown to prevent rapid direction changes
+    const now = Date.now()
+    const cooldownTime = 1000 // 1 second cooldown
+
+    // Check if either enemy is in cooldown
+    const enemy1InCooldown = enemy1Data.lastSeparation && (now - enemy1Data.lastSeparation < cooldownTime)
+    const enemy2InCooldown = enemy2Data.lastSeparation && (now - enemy2Data.lastSeparation < cooldownTime)
+
+    if (enemy1InCooldown || enemy2InCooldown) return
+
+    // Calculate center distance
+    const distanceX = Math.abs(body1.center.x - body2.center.x)
+    const combinedHalfWidth = (body1.width + body2.width) / 2
+
+    // Only separate if overlapping significantly (80% or more)
+    if (distanceX < combinedHalfWidth * 0.8) {
+      // Mark separation time
+      enemy1Data.lastSeparation = now
+      enemy2Data.lastSeparation = now
+
+      // Determine which enemy should go which direction based on position
+      const enemy1GoesLeft = body1.center.x < body2.center.x
+
+      // Set directions opposite to each other
+      if (enemy1Data.direction !== undefined) {
+        enemy1Data.direction = enemy1GoesLeft ? -1 : 1
+      }
+      if (enemy2Data.direction !== undefined) {
+        enemy2Data.direction = enemy1GoesLeft ? 1 : -1
+      }
+
+      // Apply slight speed boost temporarily to help separation
+      const speedBoost = 1.2
+
+      // Update velocities with boost
+      if (enemy1.constructor.name === 'Cat' && enemy1Data.moveSpeed) {
+        body1.setVelocityX(enemy1Data.moveSpeed * enemy1Data.direction * speedBoost)
+      } else if (enemy1.constructor.name === 'Beetle' && enemy1Data.moveSpeed) {
+        body1.setVelocityX(enemy1Data.moveSpeed * enemy1Data.direction * speedBoost)
+      } else if (enemy1.constructor.name === 'Rex' && enemy1Data.moveSpeed) {
+        body1.setVelocityX(enemy1Data.moveSpeed * enemy1Data.direction * speedBoost)
+      }
+
+      if (enemy2.constructor.name === 'Cat' && enemy2Data.moveSpeed) {
+        body2.setVelocityX(enemy2Data.moveSpeed * enemy2Data.direction * speedBoost)
+      } else if (enemy2.constructor.name === 'Beetle' && enemy2Data.moveSpeed) {
+        body2.setVelocityX(enemy2Data.moveSpeed * enemy2Data.direction * speedBoost)
+      } else if (enemy2.constructor.name === 'Rex' && enemy2Data.moveSpeed) {
+        body2.setVelocityX(enemy2Data.moveSpeed * enemy2Data.direction * speedBoost)
+      }
+
+      // Remove speed boost after a short time
+      this.time.delayedCall(300, () => {
+        // Reset to normal speed
+        if (enemy1 && enemy1.body && enemy1Data.moveSpeed && enemy1Data.direction !== undefined) {
+          const b1 = enemy1.body as Phaser.Physics.Arcade.Body
+          b1.setVelocityX(enemy1Data.moveSpeed * enemy1Data.direction)
+        }
+        if (enemy2 && enemy2.body && enemy2Data.moveSpeed && enemy2Data.direction !== undefined) {
+          const b2 = enemy2.body as Phaser.Physics.Arcade.Body
+          b2.setVelocityX(enemy2Data.moveSpeed * enemy2Data.direction)
+        }
+      })
+    }
+  }
+
   private handlePlayerCatInteraction(
     player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     cat: Phaser.Types.Physics.Arcade.GameObjectWithBody
@@ -5454,16 +5627,24 @@ export class GameScene extends Phaser.Scene {
       const basePoints = EnemySpawningSystem.getPointValue(enemyType)
       this.score += basePoints
       this.updateScoreDisplay()
-      
+
+      // CRITICAL FIX: Track enemy kill even when climbing!
+      const enemyName = this.getEnemyTypeName(cat)
+      if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+        this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
+        this.gameStats.totalEnemiesDefeated++
+        console.log(`✅ Kill tracked (climbing): ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+      }
+
       // Make player bounce up (slightly less than normal jump)
       player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
-      
+
       // Squish the cat
       cat.squish()
-      
+
       // Show point popup at cat position
       this.showPointPopup(cat.x, cat.y - 20, basePoints)
-      
+
       return
     }
     
@@ -5754,7 +5935,15 @@ export class GameScene extends Phaser.Scene {
     const triplePoints = basePoints * 3
     this.score += triplePoints
     this.updateScoreDisplay()
-    
+
+    // CRITICAL FIX: Track enemy kill for invincibility kills!
+    const enemyName = this.getEnemyTypeName(enemy)
+    if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+      this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
+      this.gameStats.totalEnemiesDefeated++
+      console.log(`✅ Kill tracked (invincibility): ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+    }
+
     // Make player bounce slightly (less than normal jump)
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.5)
     
