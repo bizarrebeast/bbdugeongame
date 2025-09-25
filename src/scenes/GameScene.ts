@@ -104,22 +104,23 @@ export class GameScene extends Phaser.Scene {
   private beastModeLoadingText?: Phaser.GameObjects.Text
   private beastModeLoadingTimer?: Phaser.Time.TimerEvent
   
-  // Game statistics tracking
-  private gameStats = {
-    treasureChestsOpened: 0,
+  // Game statistics tracking - DO NOT REINITIALIZE WITH =
+  // This must persist across scene restarts until game over
+  private gameStats!: {
+    treasureChestsOpened: number
     enemyKills: {
-      caterpillar: 0,
-      rollz: 0,
-      chomper: 0,
-      snail: 0,
-      bouncer: 0,
-      stalker: 0,
-      rex: 0,
-      blu: 0
-    },
-    totalEnemiesDefeated: 0,
-    highestFloor: 0,
-    livesLost: 0
+      caterpillar: number
+      rollz: number
+      chomper: number
+      snail: number
+      bouncer: number
+      stalker: number
+      rex: number
+      blu: number
+    }
+    totalEnemiesDefeated: number
+    highestFloor: number
+    livesLost: number
   }
   
   // Background management
@@ -158,31 +159,60 @@ export class GameScene extends Phaser.Scene {
   private preloadChapterText?: Phaser.GameObjects.Text
   private preloadLoadingText?: Phaser.GameObjects.Text
   private instantLoadingScreen?: Phaser.GameObjects.Image
+  private reopenMenuAfterInit: boolean = false
+  // private debugKillTracker?: Phaser.GameObjects.Text // Debug tracker disabled
 
-  // WARNING: DUPLICATE init() METHOD - DO NOT DELETE WITHOUT CHECKING WITH DYLAN FIRST
-  // There are two init() methods in this file (line ~158 and line ~621)
-  // This duplication may be intentional for specific loading/initialization behavior
   init(data?: any): void {
     // Store flag to reopen menu after scene is ready
     this.reopenMenuAfterInit = data?.reopenMenu || false
-    
+
+    // Get gameStats from registry (persists across scene restarts and deaths)
+    this.gameStats = this.game.registry.get('gameStats')
+
+    // Only initialize gameStats if it doesn't exist (first time playing)
+    // Do NOT reset on death (playerLives === 0) - we want to keep tracking!
+    if (!this.gameStats) {
+      console.log('🎮 Initializing fresh gameStats tracking (first time)')
+      this.gameStats = {
+        treasureChestsOpened: 0,
+        enemyKills: {
+          caterpillar: 0,
+          rollz: 0,
+          chomper: 0,
+          snail: 0,
+          bouncer: 0,
+          stalker: 0,
+          rex: 0,
+          blu: 0
+        },
+        totalEnemiesDefeated: 0,
+        highestFloor: 0,
+        livesLost: 0
+      }
+      // Save to registry for persistence
+      this.game.registry.set('gameStats', this.gameStats)
+    } else {
+      console.log('📊 Continuing with existing gameStats:', this.gameStats)
+    }
+
     // Check if this is a continue after death
     const isDeathRetry = this.game.registry.get('isDeathRetry') || false
     const playerLives = this.game.registry.get('playerLives') || 0
-    
+
     // Set flag to show loading screen ONLY if this is NOT a replay or death retry
     const isReplay = this.game.registry.get('isReplay') || false
     const skipLoadingScreen = isReplay || (isDeathRetry && playerLives > 0)
     this.showLoadingScreen = !skipLoadingScreen
-    
+
     console.log(`🎬 Loading screen decision: isReplay=${isReplay}, isDeathRetry=${isDeathRetry}, skip=${skipLoadingScreen}, SHOW=${this.showLoadingScreen}`)
-    
+
+    // Set dark purple background to match instructions background color
+    // This minimizes the visual jump during the brief preload phase
+    this.cameras.main.setBackgroundColor('#1a0033')
+
     // Initialize managers that need scene references
     this.levelManager = new LevelManager()
     this.backgroundManager = new BackgroundManager(this)
-    
-    // Set purple background immediately (matching theme)
-    this.cameras.main.setBackgroundColor(0x2e2348)
     
     // Check if we have a pre-generated loading screen
     const currentLevel = this.registry.get('currentLevel') || 1
@@ -651,28 +681,54 @@ export class GameScene extends Phaser.Scene {
   // WARNING: DUPLICATE init() METHOD #2 - DO NOT DELETE WITHOUT CHECKING WITH DYLAN FIRST
   // This is the second init() method (first one is around line ~158)
   // This duplication may be intentional for specific loading/initialization behavior
+  // RESTORED - This handles loading screen initialization
   init(data?: any): void {
-    // Store flag to reopen menu after scene is ready
+    // Store flag to reopen menu after scene is ready (duplicate from first init)
     this.reopenMenuAfterInit = data?.reopenMenu || false
-    
+
+    // ALSO initialize gameStats here to ensure it's always set
+    // Get gameStats from registry (persists across scene restarts and deaths)
+    this.gameStats = this.game.registry.get('gameStats')
+
+    // Only initialize gameStats if it doesn't exist (first time playing)
+    if (!this.gameStats) {
+      console.log('🎮 Initializing fresh gameStats tracking (from 2nd init)')
+      this.gameStats = {
+        treasureChestsOpened: 0,
+        enemyKills: {
+          caterpillar: 0,
+          rollz: 0,
+          chomper: 0,
+          snail: 0,
+          bouncer: 0,
+          stalker: 0,
+          rex: 0,
+          blu: 0
+        },
+        totalEnemiesDefeated: 0,
+        highestFloor: 0,
+        livesLost: 0
+      }
+      // Save to registry for persistence
+      this.game.registry.set('gameStats', this.gameStats)
+    }
+
     // Check if this is a continue after death
     const isDeathRetry = this.game.registry.get('isDeathRetry') || false
     const playerLives = this.game.registry.get('playerLives') || 0
-    
+
     // Set flag to show loading screen ONLY if this is NOT a replay or death retry
     // On replay/continue, we skip the loading screen since assets are already loaded
     const isReplay = this.game.registry.get('isReplay') || false
     const skipLoadingScreen = isReplay || (isDeathRetry && playerLives > 0)
     this.showLoadingScreen = !skipLoadingScreen
-    
+
     console.log(`🎬 Loading screen decision (2nd init): isReplay=${isReplay}, isDeathRetry=${isDeathRetry}, skip=${skipLoadingScreen}, SHOW=${this.showLoadingScreen}`)
-    
+
     // Set dark purple background to match instructions background color
     // This minimizes the visual jump during the brief preload phase
     this.cameras.main.setBackgroundColor('#1a0033')
   }
-
-  private reopenMenuAfterInit: boolean = false
 
   create(): void {
     console.log('🎮 GameScene.create() started at', performance.now())
@@ -1019,8 +1075,7 @@ export class GameScene extends Phaser.Scene {
     // Sync level manager with registry
     this.levelManager.setCurrentLevel(currentLevelFromRegistry)
     
-    // Clear any cached level from localStorage
-    localStorage.removeItem('treasureQuest_currentLevel')
+    // No longer using localStorage for sandbox compatibility
     
     // Reset game state
     this.isGameOver = false
@@ -1679,42 +1734,6 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0, 0.5).setDepth(100)
     this.levelText.setScrollFactor(0)
 
-    // DEBUG: Add real-time kill counter display
-    const debugKillDisplay = this.add.text(10, 140, '', {
-      fontSize: '10px',
-      color: '#00ff00',
-      fontFamily: 'monospace',
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      padding: { x: 4, y: 2 }
-    }).setScrollFactor(0).setDepth(1000)
-
-    // Update kill display every frame with safety checks
-    const updateDebugDisplay = () => {
-      // Check if scene is still active and display exists
-      if (!this.scene || !this.scene.isActive() || !debugKillDisplay || !debugKillDisplay.active) {
-        return
-      }
-
-      try {
-        debugKillDisplay.setText([
-          'KILL TRACKER:',
-          `Cat: ${this.gameStats.enemyKills.caterpillar} | Roll: ${this.gameStats.enemyKills.rollz}`,
-          `Chmp: ${this.gameStats.enemyKills.chomper} | Snl: ${this.gameStats.enemyKills.snail}`,
-          `Bnc: ${this.gameStats.enemyKills.bouncer} | Stlk: ${this.gameStats.enemyKills.stalker}`,
-          `Rex: ${this.gameStats.enemyKills.rex} | Blu: ${this.gameStats.enemyKills.blu}`,
-          `Total: ${this.gameStats.totalEnemiesDefeated}`
-        ].join('\n'))
-      } catch (error) {
-        // Silently ignore errors during scene transitions
-      }
-    }
-
-    this.events.on('update', updateDebugDisplay)
-
-    // Clean up the event listener when scene shuts down
-    this.events.once('shutdown', () => {
-      this.events.off('update', updateDebugDisplay)
-    })
     
     // CENTER: Score and Invincibility Timer
     // Score display (center, top)
@@ -1815,7 +1834,7 @@ export class GameScene extends Phaser.Scene {
     this.updateLivesDisplay()
     this.updateCoinCounterDisplay()
     this.updateScoreDisplay() // Show correct total score from the start
-    
+
     // Create touch controls for mobile
     this.touchControls = new TouchControls(this)
     
@@ -4828,10 +4847,12 @@ export class GameScene extends Phaser.Scene {
     // Track enemy kill for stats BEFORE destroying the enemy
     if (enemy) {
       const enemyName = this.getEnemyTypeName(enemy)
-      if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+      if (this.gameStats && enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
         this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
         this.gameStats.totalEnemiesDefeated++
+        this.game.registry.set('gameStats', this.gameStats)  // Save to registry
         console.log(`✅ Crystal ball kill tracked: ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+        // this.updateDebugKillTracker() // Debug tracker disabled
       } else {
         console.error(`❌ Crystal ball kill NOT tracked! Enemy type: ${enemyName}`)
       }
@@ -5410,8 +5431,12 @@ export class GameScene extends Phaser.Scene {
       this.showPointPopup(baseBluObj.x, baseBluObj.y - 20, points)
       
       // Track BaseBlu kill for stats
-      this.gameStats.enemyKills.blu++
-      this.gameStats.totalEnemiesDefeated++
+      if (this.gameStats) {
+        this.gameStats.enemyKills.blu++
+        this.gameStats.totalEnemiesDefeated++
+        this.game.registry.set('gameStats', this.gameStats)  // Save to registry
+        // this.updateDebugKillTracker() // Debug tracker disabled
+      }
       
       // Play BaseBlu-specific squish sound
       this.playSoundEffect('squish-baseblu', 0.5)
@@ -5630,10 +5655,12 @@ export class GameScene extends Phaser.Scene {
 
       // CRITICAL FIX: Track enemy kill even when climbing!
       const enemyName = this.getEnemyTypeName(cat)
-      if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+      if (this.gameStats && enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
         this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
         this.gameStats.totalEnemiesDefeated++
+        this.game.registry.set('gameStats', this.gameStats)  // Save to registry
         console.log(`✅ Kill tracked (climbing): ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+        // this.updateDebugKillTracker() // Debug tracker disabled
       }
 
       // Make player bounce up (slightly less than normal jump)
@@ -5687,10 +5714,12 @@ export class GameScene extends Phaser.Scene {
     
     // Track enemy kill for stats
     const enemyName = this.getEnemyTypeName(cat)
-    if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+    if (this.gameStats && enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
       this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
       this.gameStats.totalEnemiesDefeated++
+      this.game.registry.set('gameStats', this.gameStats)  // Save to registry
       console.log(`✅ Kill tracked: ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+      // this.updateDebugKillTracker() // Debug tracker disabled
     } else {
       console.error(`❌ Kill NOT tracked! Enemy type: ${enemyName}`)
     }
@@ -5778,8 +5807,12 @@ export class GameScene extends Phaser.Scene {
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
     // Track beetle kill for stats
-    this.gameStats.enemyKills.rollz++
-    this.gameStats.totalEnemiesDefeated++
+    if (this.gameStats) {
+      this.gameStats.enemyKills.rollz++
+      this.gameStats.totalEnemiesDefeated++
+      this.game.registry.set('gameStats', this.gameStats)  // Save to registry
+      // this.updateDebugKillTracker() // Debug tracker disabled
+    }
     
     // Play beetle-specific squish sound
     this.playSoundEffect('squish-beetle', 0.5)
@@ -5893,8 +5926,12 @@ export class GameScene extends Phaser.Scene {
     player.setVelocityY(GameSettings.game.jumpVelocity * 0.7)
     
     // Track Rex kill for stats
-    this.gameStats.enemyKills.rex++
-    this.gameStats.totalEnemiesDefeated++
+    if (this.gameStats) {
+      this.gameStats.enemyKills.rex++
+      this.gameStats.totalEnemiesDefeated++
+      this.game.registry.set('gameStats', this.gameStats)  // Save to registry
+      // this.updateDebugKillTracker() // Debug tracker disabled
+    }
     
     // Play Rex-specific squish sound
     this.playSoundEffect('squish-rex', 0.5)
@@ -5938,10 +5975,12 @@ export class GameScene extends Phaser.Scene {
 
     // CRITICAL FIX: Track enemy kill for invincibility kills!
     const enemyName = this.getEnemyTypeName(enemy)
-    if (enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
+    if (this.gameStats && enemyName !== 'unknown' && enemyName in this.gameStats.enemyKills) {
       this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]++
       this.gameStats.totalEnemiesDefeated++
+      this.game.registry.set('gameStats', this.gameStats)  // Save to registry
       console.log(`✅ Kill tracked (invincibility): ${enemyName} | Total ${enemyName}: ${this.gameStats.enemyKills[enemyName as keyof typeof this.gameStats.enemyKills]} | Total enemies: ${this.gameStats.totalEnemiesDefeated}`)
+      // this.updateDebugKillTracker() // Debug tracker disabled
     }
 
     // Make player bounce slightly (less than normal jump)
@@ -6046,6 +6085,27 @@ export class GameScene extends Phaser.Scene {
     // Show total score = accumulated from completed levels + current level score
     const totalScore = this.accumulatedScore + this.score
     this.scoreText.setText(`${totalScore}`)
+  }
+
+  private updateDebugKillTracker(): void {
+    if (this.debugKillTracker && this.gameStats) {
+      const kills = this.gameStats.enemyKills
+      this.debugKillTracker.setText(
+        `DEBUG KILLS:\n` +
+        `Cat: ${kills.caterpillar}\n` +
+        `Rollz: ${kills.rollz}\n` +
+        `Chomp: ${kills.chomper}\n` +
+        `Snail: ${kills.snail}\n` +
+        `Bounce: ${kills.bouncer}\n` +
+        `Stalk: ${kills.stalker}\n` +
+        `Rex: ${kills.rex}\n` +
+        `Blu: ${kills.blu}\n` +
+        `Total: ${this.gameStats.totalEnemiesDefeated}`
+      )
+      console.log('📊 Debug tracker updated:', this.gameStats.enemyKills)
+    } else {
+      console.log('⚠️ Debug tracker not ready - gameStats:', this.gameStats)
+    }
   }
   
   private updateComboDisplay(): void {
@@ -6316,7 +6376,10 @@ export class GameScene extends Phaser.Scene {
     // Lose a life
     const oldLives = this.lives
     this.lives--
-    this.gameStats.livesLost++  // Track lives lost for stats
+    if (this.gameStats) {
+      this.gameStats.livesLost++  // Track lives lost for stats
+      this.game.registry.set('gameStats', this.gameStats)  // Save to registry
+    }
     this.game.registry.set('playerLives', this.lives)  // Save to registry
     this.updateLivesDisplay()
     
@@ -6441,7 +6504,10 @@ export class GameScene extends Phaser.Scene {
     this.playSoundEffect('treasure-chest-open', 0.5)
     
     // Track treasure chest opened
-    this.gameStats.treasureChestsOpened++
+    if (this.gameStats) {
+      this.gameStats.treasureChestsOpened++
+      this.game.registry.set('gameStats', this.gameStats)  // Save to registry
+    }
     
     // Award base chest points (2500)
     this.score += 2500
@@ -6762,8 +6828,11 @@ export class GameScene extends Phaser.Scene {
     if (playerFloor !== this.currentFloor) {
       // Floor changed - update tracking (no points awarded)
       this.currentFloor = playerFloor
-      // Track highest floor for stats
-      this.gameStats.highestFloor = Math.max(this.gameStats.highestFloor, playerFloor)
+      // Track highest floor for stats (with safety check for undefined gameStats)
+      if (this.gameStats) {
+        this.gameStats.highestFloor = Math.max(this.gameStats.highestFloor || 0, playerFloor)
+        this.game.registry.set('gameStats', this.gameStats)  // Save to registry
+      }
       // No floor text to update anymore - we show coins instead
     }
     
@@ -8415,23 +8484,11 @@ export class GameScene extends Phaser.Scene {
         fontStyle: 'bold'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
-    
-    // Floors Climbed
-    const floorsText = this.add.text(
-      popupX,
-      popupY - 100,
-      `Floors Climbed: ${this.gameStats.highestFloor}`,
-      {
-        fontSize: '10px',
-        color: '#9acf07',  // Green
-        fontFamily: '"Press Start 2P", system-ui'
-      }
-    ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
-    
+
     // Level Reached
     const levelText = this.add.text(
       popupX,
-      popupY - 80,
+      popupY - 100,
       `Level Reached: ${this.levelManager.getCurrentLevel()}`,
       {
         fontSize: '10px',
@@ -8439,11 +8496,11 @@ export class GameScene extends Phaser.Scene {
         fontFamily: '"Press Start 2P", system-ui'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
-    
+
     // Gems Collected
     const gemsText = this.add.text(
       popupX,
-      popupY - 60,
+      popupY - 80,
       `Gems Collected: ${this.totalGemsCollected + this.totalBlueGemsCollected + this.totalDiamondsCollected}`,
       {
         fontSize: '10px',
@@ -8451,12 +8508,12 @@ export class GameScene extends Phaser.Scene {
         fontFamily: '"Press Start 2P", system-ui'
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
-    
+
     // Treasure Chests
     const chestsText = this.add.text(
       popupX,
-      popupY - 40,
-      `Treasure Chests: ${this.gameStats.treasureChestsOpened}`,
+      popupY - 60,
+      `Treasure Chests: ${this.gameStats?.treasureChestsOpened || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8467,7 +8524,7 @@ export class GameScene extends Phaser.Scene {
     // COMBAT STATS Section Header
     const combatHeader = this.add.text(
       popupX,
-      popupY - 10,
+      popupY - 30,
       '⚔️ ENEMIES DEFEATED',
       {
         fontSize: '12px',
@@ -8484,7 +8541,7 @@ export class GameScene extends Phaser.Scene {
     const caterpillarText = this.add.text(
       popupX,
       enemyY,
-      `Caterpillar: ${this.gameStats.enemyKills.caterpillar}`,
+      `Caterpillar: ${this.gameStats?.enemyKills?.caterpillar || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8495,7 +8552,7 @@ export class GameScene extends Phaser.Scene {
     const rollzText = this.add.text(
       popupX,
       enemyY + 18,
-      `Rollz: ${this.gameStats.enemyKills.rollz}`,
+      `Rollz: ${this.gameStats?.enemyKills?.rollz || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8506,7 +8563,7 @@ export class GameScene extends Phaser.Scene {
     const chomperText = this.add.text(
       popupX,
       enemyY + 36,
-      `Chomper: ${this.gameStats.enemyKills.chomper}`,
+      `Chomper: ${this.gameStats?.enemyKills?.chomper || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8517,7 +8574,7 @@ export class GameScene extends Phaser.Scene {
     const snailText = this.add.text(
       popupX,
       enemyY + 54,
-      `Snail: ${this.gameStats.enemyKills.snail}`,
+      `Snail: ${this.gameStats?.enemyKills?.snail || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8528,7 +8585,7 @@ export class GameScene extends Phaser.Scene {
     const bouncerText = this.add.text(
       popupX,
       enemyY + 72,
-      `Bouncer: ${this.gameStats.enemyKills.bouncer}`,
+      `Bouncer: ${this.gameStats?.enemyKills?.bouncer || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8539,7 +8596,7 @@ export class GameScene extends Phaser.Scene {
     const stalkerText = this.add.text(
       popupX,
       enemyY + 90,
-      `Stalker: ${this.gameStats.enemyKills.stalker}`,
+      `Stalker: ${this.gameStats?.enemyKills?.stalker || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8550,7 +8607,7 @@ export class GameScene extends Phaser.Scene {
     const rexText = this.add.text(
       popupX,
       enemyY + 108,
-      `Rex: ${this.gameStats.enemyKills.rex}`,
+      `Rex: ${this.gameStats?.enemyKills?.rex || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8561,7 +8618,7 @@ export class GameScene extends Phaser.Scene {
     const bluText = this.add.text(
       popupX,
       enemyY + 126,
-      `Blu: ${this.gameStats.enemyKills.blu}`,
+      `Blu: ${this.gameStats?.enemyKills?.blu || 0}`,
       {
         fontSize: '10px',
         color: '#9acf07',  // Green
@@ -8573,7 +8630,7 @@ export class GameScene extends Phaser.Scene {
     const totalText = this.add.text(
       popupX,
       enemyY + 148,
-      `Total Enemies: ${this.gameStats.totalEnemiesDefeated}`,
+      `Total: ${this.gameStats?.totalEnemiesDefeated || 0}`,
       {
         fontSize: '11px',
         color: '#9acf07',  // Green
@@ -8861,34 +8918,115 @@ export class GameScene extends Phaser.Scene {
 
   // Helper method to get enemy type name for stats tracking
   private getEnemyTypeName(enemy: any): string {
-    if (enemy.constructor.name === 'Cat') {
-      // Use getter methods if available, fallback to properties
-      const color = enemy.getCatColor ? enemy.getCatColor() : 
-                     enemy.catColor || enemy.color || enemy.getData?.('color')
-      const isStalker = enemy.getIsStalker ? enemy.getIsStalker() : 
-                        enemy.isStalker || enemy.getData?.('isStalker')
-      
-      // Debug logging to verify it's working
-      console.log(`🎯 Enemy type detection - Color: ${color}, Stalker: ${isStalker}`)
-      
-      switch(color) {
-        case 'yellow': return 'caterpillar'
-        case 'blue_caterpillar': return 'caterpillar'  // Track blue caterpillar as caterpillar
-        case 'blue': return 'chomper'
-        case 'purple': return 'chomper'  // Track purple chomper as chomper
-        case 'red': return isStalker ? 'stalker' : 'snail'
-        case 'green': return 'bouncer'
-        default: 
-          console.warn('❌ Unknown enemy color:', color)
-          return 'unknown'
+    // COMPREHENSIVE ENEMY TYPE DETECTION
+    const constructorName = enemy.constructor?.name || 'Unknown'
+
+    // Log for debugging
+    console.log(`🔍 Enemy type detection - Constructor: ${constructorName}`)
+
+    // Handle Cat enemies (multiple types based on color)
+    if (constructorName === 'Cat' || enemy instanceof Cat) {
+      let color = null
+
+      // Try all methods to get color
+      if (typeof enemy.getCatColor === 'function') {
+        try {
+          color = enemy.getCatColor()
+        } catch (e) {
+          console.error('Error calling getCatColor:', e)
+        }
       }
-    } else if (enemy.constructor.name === 'Beetle') {
+
+      if (!color && enemy.catColor !== undefined) {
+        color = enemy.catColor
+      }
+
+      if (!color && enemy.color !== undefined) {
+        color = enemy.color
+      }
+
+      if (!color && typeof enemy.getData === 'function') {
+        try {
+          color = enemy.getData('color') || enemy.getData('catColor')
+        } catch (e) {
+          console.error('Error calling getData:', e)
+        }
+      }
+
+      // Check if it's a stalker
+      let isStalker = false
+      if (typeof enemy.getIsStalker === 'function') {
+        try {
+          isStalker = enemy.getIsStalker()
+        } catch (e) {
+          isStalker = false
+        }
+      }
+      if (!isStalker) {
+        isStalker = enemy.isStalker === true || enemy.getData?.('isStalker') === true
+      }
+
+      console.log(`🎨 Cat enemy - Color: ${color}, IsStalker: ${isStalker}`)
+
+      // Convert color to enemy type
+      if (color) {
+        const colorStr = String(color).toLowerCase()
+
+        // Handle all yellow variants (caterpillar)
+        if (colorStr.includes('yellow')) {
+          return 'caterpillar'
+        }
+
+        // Handle blue caterpillar specifically
+        if (colorStr === 'blue_caterpillar' || colorStr === 'bluecaterpillar') {
+          return 'caterpillar'
+        }
+
+        // Handle blue/purple chompers
+        if (colorStr === 'blue' || colorStr === 'purple') {
+          return 'chomper'
+        }
+
+        // Handle red enemies (snail or stalker)
+        if (colorStr === 'red') {
+          return isStalker ? 'stalker' : 'snail'
+        }
+
+        // Handle green bouncer
+        if (colorStr === 'green') {
+          return 'bouncer'
+        }
+      }
+
+      console.warn(`⚠️ Could not determine Cat enemy type - Color: ${color}`)
+      return 'unknown'
+    }
+
+    // Handle Beetle (Rollz)
+    if (constructorName === 'Beetle' || enemy instanceof Beetle) {
+      console.log(`🐞 Identified as Beetle/Rollz`)
       return 'rollz'
-    } else if (enemy.constructor.name === 'Rex') {
+    }
+
+    // Handle Rex
+    if (constructorName === 'Rex' || enemy instanceof Rex) {
+      console.log(`🦖 Identified as Rex`)
       return 'rex'
-    } else if (enemy.constructor.name === 'BaseBlu') {
+    }
+
+    // Handle BaseBlu
+    if (constructorName === 'BaseBlu' || enemy instanceof BaseBlu) {
+      console.log(`👻 Identified as BaseBlu`)
       return 'blu'
     }
+
+    // Handle StalkerCat (in case it's a separate class)
+    if (constructorName === 'StalkerCat') {
+      console.log(`👁️ Identified as StalkerCat`)
+      return 'stalker'
+    }
+
+    console.warn(`❌ Unknown enemy type - Constructor: ${constructorName}`)
     return 'unknown'
   }
 
@@ -8952,7 +9090,28 @@ export class GameScene extends Phaser.Scene {
     this.game.registry.set('totalCoins', 0) // Use correct key
     this.game.registry.set('livesEarned', 0) // Reset lives earned counter
     this.game.registry.set('accumulatedScore', 0)
-    
+
+    // CRITICAL: Reset gameStats for new game (START OVER button)
+    this.gameStats = {
+      treasureChestsOpened: 0,
+      enemyKills: {
+        caterpillar: 0,
+        rollz: 0,
+        chomper: 0,
+        snail: 0,
+        bouncer: 0,
+        stalker: 0,
+        rex: 0,
+        blu: 0
+      },
+      totalEnemiesDefeated: 0,
+      highestFloor: 0,
+      livesLost: 0
+    }
+    // Save reset gameStats to registry
+    this.game.registry.set('gameStats', this.gameStats)
+    console.log('🎮 Reset gameStats for new game')
+
     // Restart the scene
     this.scene.restart()
   }

@@ -441,24 +441,19 @@ export class MenuOverlay {
   }
   
   private loadSettings(): void {
-    const saved = localStorage.getItem('audioSettings')
-    if (saved) {
-      const settings = JSON.parse(saved)
-      this.soundEffectsEnabled = settings.soundEffectsEnabled !== false
-      this.musicEnabled = settings.musicEnabled !== false
-    }
-    
-    // Apply loaded settings
+    // Settings loading disabled for sandbox compatibility
+    // Settings reset each session
+    this.soundEffectsEnabled = true
+    this.musicEnabled = true
+
+    // Apply default settings
     this.scene.registry.set('sfxEnabled', this.soundEffectsEnabled)
     this.scene.registry.set('musicEnabled', this.musicEnabled)
   }
   
   private saveSettings(): void {
-    const settings = {
-      soundEffectsEnabled: this.soundEffectsEnabled,
-      musicEnabled: this.musicEnabled
-    }
-    localStorage.setItem('audioSettings', JSON.stringify(settings))
+    // Settings saving disabled for sandbox compatibility
+    // Settings only persist for current session
   }
   
   open(): void {
