@@ -3,6 +3,7 @@ import { SplashScene } from "./scenes/SplashScene"
 import { InstructionsScene } from "./scenes/InstructionsScene"
 import { GameScene } from "./scenes/GameScene"
 import { initializeFarcadeSDK } from "./utils/RemixUtils"
+import { initializeTelegram } from "./utils/TelegramUtils"
 import GameSettings from "./config/GameSettings"
 
 // Import TestScene conditionally (will be tree-shaken in production if debug is false)
@@ -83,6 +84,7 @@ console.log('🖥️ Viewport Debug:', {
 // Initialize Farcade SDK
 game.events.once("ready", () => {
   initializeFarcadeSDK(game)
+  initializeTelegram(game)
   
   // Set up audio context resumption on user interaction
   // This helps ensure audio works after page visibility changes or SDK unmute

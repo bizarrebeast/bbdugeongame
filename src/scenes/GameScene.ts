@@ -23,6 +23,7 @@ import { GemShapeGenerator, GemStyle, GemCut } from "../utils/GemShapes"
 import { MenuOverlay } from "../ui/MenuOverlay"
 import { BackgroundManager } from "../systems/BackgroundManager"
 import { SharedAssetManager } from "../systems/SharedAssetManager"
+import { isTelegramHost, notifyTelegramPlayStart, notifyTelegramPlayEnd, shareScore, triggerTelegramHaptic } from "../utils/TelegramUtils"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -8472,6 +8473,53 @@ export class GameScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(201).setScrollFactor(0)
     
+    // Personal best (Telegram only) — sits between Score and Performance Stats.
+    // If the current run beats the previous high, the text turns into a big
+    // celebratory "NEW BEST!" with a scaling tween + haptic punch.
+    if (isTelegramHost()) {
+      const prevBest = (this.game.registry.get('tgHighScore') as number | undefined) ?? 0
+      const isNewBest = finalScore > 0 && finalScore > prevBest
+      if (isNewBest) {
+        this.game.registry.set('tgHighScore', finalScore)
+      }
+
+      const label = isNewBest
+        ? 'NEW BEST!'
+        : prevBest > 0
+        ? `Best: ${prevBest.toLocaleString()}`
+        : null
+
+      if (label) {
+        const bestText = this.add.text(
+          popupX,
+          popupY - 132,
+          label,
+          {
+            fontSize: isNewBest ? '14px' : '10px',
+            color: isNewBest ? '#ffdd00' : '#9acf07',
+            fontFamily: '"Press Start 2P", system-ui',
+            fontStyle: 'bold',
+            stroke: '#4a148c',
+            strokeThickness: 1,
+            shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 3, fill: true }
+          }
+        ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
+
+        if (isNewBest) {
+          // Big pulsing celebration. Two yoyo pulses then settle to scale 1.
+          this.tweens.add({
+            targets: bestText,
+            scale: { from: 0.4, to: 1.4 },
+            duration: 400,
+            ease: 'Back.Out',
+            yoyo: true,
+            repeat: 2,
+          })
+          triggerTelegramHaptic('heavy')
+        }
+      }
+    }
+
     // PERFORMANCE STATS Section Header
     const perfHeader = this.add.text(
       popupX,
@@ -8697,10 +8745,52 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-R', () => {
       // Notify Farcade SDK of game over with final score
       this.notifyFarcadeGameOver(finalScore)
-      
+
       // DO NOT restart the scene here - let Farcade handle it
       // Same as the button click - prevents game from running behind overlay
     })
+
+    // Share Score button — only rendered inside Telegram. Sits below the CONTINUE
+    // button. Opens Telegram's native share sheet with the score and a link back
+    // to this game (?startapp=share for attribution).
+    if (isTelegramHost()) {
+      const shareButton = this.add.rectangle(
+        popupX,
+        popupY + 245,
+        150,
+        40,
+        0xff69b4  // Pink — matches the BB brand accent
+      ).setDepth(201).setScrollFactor(0)
+      shareButton.setInteractive({ useHandCursor: true })
+      shareButton.setStrokeStyle(2, 0xc6488d)  // Darker pink border
+
+      const shareText = this.add.text(
+        popupX,
+        popupY + 245,
+        'SHARE SCORE',
+        {
+          fontSize: '12px',
+          color: '#ffffff',
+          fontFamily: '"Press Start 2P", system-ui',
+          fontStyle: 'bold',
+          stroke: '#4a148c',
+          strokeThickness: 1,
+          shadow: { offsetX: 2, offsetY: 2, color: '#000000', blur: 3, fill: true }
+        }
+      ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
+
+      shareButton.on('pointerdown', () => {
+        shareScore(finalScore, 'Treasure Quest')
+      })
+      shareButton.on('pointerover', () => {
+        shareButton.setFillStyle(0xff8ec5)
+        shareText.setScale(1.05)
+      })
+      shareButton.on('pointerout', () => {
+        shareButton.setFillStyle(0xff69b4)
+        shareText.setScale(1.0)
+      })
+    }
   }
 
   private changePlayerTexture(textureKey: string): void {
@@ -9039,6 +9129,8 @@ export class GameScene extends Phaser.Scene {
     } catch (error) {
       // Fail silently if SDK not available
     }
+    // Also fire Telegram play_start (idempotent — only the first call per play counts).
+    notifyTelegramPlayStart()
   }
 
   private notifyFarcadeGameOver(score: number): void {
@@ -9048,6 +9140,15 @@ export class GameScene extends Phaser.Scene {
       }
     } catch (error) {
       // Fail silently if SDK not available
+    }
+    // Telegram has no overlay to gate the restart, so dispatch play_end and
+    // restart the scene directly. Idempotent — second call in the same play
+    // is a no-op inside notifyTelegramPlayEnd.
+    if (isTelegramHost()) {
+      notifyTelegramPlayEnd(score, {
+        level: this.game.registry.get('currentLevel'),
+      })
+      this.restartGame()
     }
   }
 
