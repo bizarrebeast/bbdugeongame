@@ -24,6 +24,7 @@ import { MenuOverlay } from "../ui/MenuOverlay"
 import { BackgroundManager } from "../systems/BackgroundManager"
 import { SharedAssetManager } from "../systems/SharedAssetManager"
 import { isTelegramHost, notifyTelegramPlayStart, notifyTelegramPlayEnd, shareScore, triggerTelegramHaptic } from "../utils/TelegramUtils"
+import { trackAnalytics } from "../utils/Analytics"
 
 export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup
@@ -8780,6 +8781,7 @@ export class GameScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(202).setScrollFactor(0)
 
       shareButton.on('pointerdown', () => {
+        trackAnalytics('share_score', { score: finalScore, value: finalScore })
         shareScore(finalScore, 'Treasure Quest')
       })
       shareButton.on('pointerover', () => {
@@ -9131,6 +9133,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Also fire Telegram play_start (idempotent — only the first call per play counts).
     notifyTelegramPlayStart()
+    trackAnalytics('play_start')
   }
 
   private notifyFarcadeGameOver(score: number): void {
@@ -9141,6 +9144,7 @@ export class GameScene extends Phaser.Scene {
     } catch (error) {
       // Fail silently if SDK not available
     }
+    trackAnalytics('play_end', { score, value: score })
     // Telegram has no overlay to gate the restart, so dispatch play_end and
     // restart the scene directly. Idempotent — second call in the same play
     // is a no-op inside notifyTelegramPlayEnd.
