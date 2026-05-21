@@ -18,11 +18,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@farcade/game-sdk@latest/dist/index.min.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ELH2WGKGQX"></script>
-    <script>
+    <!-- Each script tag carrying data-kids-strip is removed by scripts/build-kids.js
+         to produce a COPPA-safe build for kids.bizarrebeasts.io. The game's tracking
+         call sites guard on the presence of these globals (window.gtag, FarcadeSDK,
+         Telegram.WebApp.initData) and no-op when the scripts aren't loaded. Phaser
+         is kept (game engine, not a tracker). -->
+    <script data-kids-strip src="https://cdn.jsdelivr.net/npm/@farcade/game-sdk@latest/dist/index.min.js"></script>
+    <script data-kids-strip src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script data-kids-strip async src="https://www.googletagmanager.com/gtag/js?id=G-ELH2WGKGQX"></script>
+    <script data-kids-strip>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
