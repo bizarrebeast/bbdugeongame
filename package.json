@@ -9,7 +9,7 @@
     "dev:3001": "node scripts/dev-server.js 3001",
     "dev:any": "node scripts/dev-server.js 0",
     "preview": "vite preview",
-    "build": "node scripts/build.js && node scripts/build-kids.js",
+    "build": "node scripts/build.js && node scripts/build-kids.js && node scripts/build-remix.js",
     "copy-kids": "cp dist/kids.html ../bizarrebeasts-kids/public/games/treasure-quest/index.html"
   },
   "keywords": [

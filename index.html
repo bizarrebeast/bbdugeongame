@@ -7,14 +7,14 @@
     <meta name="description" content="Retro endless climber. Descend, collect treasure, survive the depths. A BizarreBeasts game." />
     <meta property="og:title" content="Treasure Quest" />
     <meta property="og:description" content="Retro endless climber. Descend, collect treasure, survive the depths." />
-    <meta property="og:image" content="https://treasurequest-tg.bizarrebeasts.io/treasurequest-splash.png" />
-    <meta property="og:url" content="https://treasurequest-tg.bizarrebeasts.io/" />
+    <meta data-remix-strip property="og:image" content="https://treasurequest-tg.bizarrebeasts.io/treasurequest-splash.png" />
+    <meta data-remix-strip property="og:url" content="https://treasurequest-tg.bizarrebeasts.io/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="BizarreBeasts" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Treasure Quest" />
     <meta name="twitter:description" content="Retro endless climber. Descend, collect treasure, survive the depths." />
-    <meta name="twitter:image" content="https://treasurequest-tg.bizarrebeasts.io/treasurequest-splash.png" />
+    <meta data-remix-strip name="twitter:image" content="https://treasurequest-tg.bizarrebeasts.io/treasurequest-splash.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -24,9 +24,9 @@
          Telegram.WebApp.initData) and no-op when the scripts aren't loaded. Phaser
          is kept (game engine, not a tracker). -->
     <script data-kids-strip src="https://cdn.jsdelivr.net/npm/@farcade/game-sdk@latest/dist/index.min.js"></script>
-    <script data-kids-strip src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script data-kids-strip async src="https://www.googletagmanager.com/gtag/js?id=G-ELH2WGKGQX"></script>
-    <script data-kids-strip>
+    <script data-kids-strip data-remix-strip src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script data-kids-strip data-remix-strip async src="https://www.googletagmanager.com/gtag/js?id=G-ELH2WGKGQX"></script>
+    <script data-kids-strip data-remix-strip>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
