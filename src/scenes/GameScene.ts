@@ -9137,14 +9137,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   private notifyFarcadeGameOver(score: number): void {
+    const hasFarcadeSDK = typeof window !== 'undefined' && !!(window as any).FarcadeSDK
     try {
-      if (typeof window !== 'undefined' && (window as any).FarcadeSDK) {
+      if (hasFarcadeSDK) {
         (window as any).FarcadeSDK.singlePlayer.actions.gameOver({ score })
       }
     } catch (error) {
       // Fail silently if SDK not available
     }
     trackAnalytics('play_end', { score, value: score })
+
+    // Only a real Farcade host shows its own overlay that fires play_again to
+    // restart. Detect it as SDK-present AND iframed.
+    let inFarcadeHost = false
+    try {
+      inFarcadeHost = hasFarcadeSDK && window.top !== window.self
+    } catch (e) {
+      inFarcadeHost = hasFarcadeSDK // cross-origin iframe access throws => assume embedded
+    }
+
     // Telegram has no overlay to gate the restart, so dispatch play_end and
     // restart the scene directly. Idempotent — second call in the same play
     // is a no-op inside notifyTelegramPlayEnd.
@@ -9153,7 +9164,13 @@ export class GameScene extends Phaser.Scene {
         level: this.game.registry.get('currentLevel'),
       })
       this.restartGame()
+    } else if (!inFarcadeHost) {
+      // Kids site / plain web: the Farcade SDK is absent (stripped) or we're not
+      // embedded in Farcade, so nothing will fire play_again. The CONTINUE button
+      // must restart directly, otherwise it does nothing.
+      this.restartGame()
     }
+    // else: real Farcade host — let its overlay drive play_again -> restartGame().
   }
 
   private triggerFarcadeHapticFeedback(): void {
